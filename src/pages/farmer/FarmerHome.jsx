@@ -1,0 +1,3693 @@
+import {
+  ArrowRight,
+  CalendarClock,
+  CalendarDays,
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  CircleHelp,
+  Clock3,
+  Coins,
+  MapPin,
+  MessageSquareText,
+  RefreshCw,
+  Scale,
+  ShieldCheck,
+  Wheat,
+} from "lucide-react";
+
+import {
+  Link,
+} from "react-router";
+
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import Header from "../../components/Header";
+import StatusBadge from "../../components/StatusBadge";
+
+import {
+  useLanguage,
+} from "../../translations/LanguageContext";
+
+import {
+  getCurrentFarmer,
+} from "../../data/appStore";
+
+
+const API_URL =
+  "http://localhost:5000/api";
+
+
+const ACTIVE_STATUSES = [
+  "CONFIRMED",
+  "ARRIVED",
+  "LATE",
+  "WEIGHING",
+  "PROCURED",
+  "PAYMENT_PENDING",
+];
+
+
+function FarmerHome() {
+
+  const {
+    t,
+    language,
+  } =
+    useLanguage();
+
+
+  const farmer =
+    getCurrentFarmer();
+
+
+  const [
+    bookings,
+    setBookings,
+  ] =
+    useState([]);
+
+
+  const [
+    loading,
+    setLoading,
+  ] =
+    useState(true);
+
+
+  const [
+    refreshing,
+    setRefreshing,
+  ] =
+    useState(false);
+
+
+  const [
+    error,
+    setError,
+  ] =
+    useState("");
+
+
+  const farmerId =
+    farmer?.id ||
+    null;
+
+
+  const loadBookings =
+    useCallback(
+      async (
+        showRefresh = false
+      ) => {
+
+        if (
+          !farmerId
+        ) {
+
+          setError(
+            getText(
+              language,
+              "Farmer account could not be loaded.",
+              "किसान खाता लोड नहीं हो सका।",
+              "రైతు ఖాతాను లోడ్ చేయలేకపోయాము."
+            )
+          );
+
+          setLoading(false);
+
+          return;
+
+        }
+
+
+        if (
+          showRefresh
+        ) {
+
+          setRefreshing(true);
+
+        }
+
+
+        try {
+
+          const response =
+            await fetch(
+              `${API_URL}/bookings`
+            );
+
+
+          const data =
+            await response.json();
+
+
+          if (
+            !response.ok
+          ) {
+
+            throw new Error(
+              data?.message ||
+              "Unable to load your bookings."
+            );
+
+          }
+
+
+          const allBookings =
+            Array.isArray(
+              data?.bookings
+            )
+              ? data.bookings
+              : [];
+
+
+          const farmerBookings =
+            allBookings.filter(
+              (
+                booking
+              ) =>
+                String(
+                  booking?.farmer_id ??
+                  ""
+                ) ===
+                String(
+                  farmerId
+                )
+            );
+
+
+          setBookings(
+            farmerBookings
+          );
+
+
+          setError("");
+
+
+        } catch (
+          loadError
+        ) {
+
+          console.error(
+            "FarmerHome loading error:",
+            loadError
+          );
+
+
+          setError(
+            loadError?.message ||
+            getText(
+              language,
+              "Unable to load your bookings.",
+              "आपकी बुकिंग लोड नहीं हो सकी।",
+              "మీ బుకింగ్‌లను లోడ్ చేయలేకపోయాము."
+            )
+          );
+
+
+        } finally {
+
+          setLoading(false);
+
+          setRefreshing(false);
+
+        }
+
+      },
+      [
+        farmerId,
+        language,
+      ]
+    );
+
+
+  useEffect(() => {
+
+    loadBookings();
+
+
+    const timer =
+      setInterval(
+        () =>
+          loadBookings(),
+        5000
+      );
+
+
+    return () => {
+
+      clearInterval(
+        timer
+      );
+
+    };
+
+  }, [
+    loadBookings,
+  ]);
+
+
+  const farmerName =
+    farmer?.name ||
+    getText(
+      language,
+      "Farmer",
+      "किसान",
+      "రైతు"
+    );
+
+
+  const firstName =
+    farmerName
+      .trim()
+      .split(/\s+/)[0] ||
+    farmerName;
+
+
+  const initials =
+    farmerName
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(
+        (
+          word
+        ) =>
+          word[0]
+      )
+      .join("")
+      .slice(
+        0,
+        2
+      )
+      .toUpperCase();
+
+
+  const activeBooking =
+    useMemo(
+      () => {
+
+        const rows =
+          bookings.filter(
+            (
+              booking
+            ) =>
+              ACTIVE_STATUSES.includes(
+                booking.status
+              )
+          );
+
+
+        if (
+          rows.length ===
+          0
+        ) {
+
+          return null;
+
+        }
+
+
+        return [
+          ...rows,
+        ].sort(
+          (
+            a,
+            b
+          ) =>
+            String(
+              a.date ||
+              ""
+            ).localeCompare(
+              String(
+                b.date ||
+                ""
+              )
+            ) ||
+            String(
+              a.slot_start ||
+              ""
+            ).localeCompare(
+              String(
+                b.slot_start ||
+                ""
+              )
+            )
+        )[0];
+
+      },
+      [
+        bookings,
+      ]
+    );
+
+
+  const latestCompleted =
+    useMemo(
+      () => {
+
+        const rows =
+          bookings.filter(
+            (
+              booking
+            ) =>
+              booking.status ===
+              "PAYMENT_SENT"
+          );
+
+
+        if (
+          rows.length ===
+          0
+        ) {
+
+          return null;
+
+        }
+
+
+        return [
+          ...rows,
+        ].sort(
+          (
+            a,
+            b
+          ) =>
+            String(
+              b.date ||
+              ""
+            ).localeCompare(
+              String(
+                a.date ||
+                ""
+              )
+            )
+        )[0];
+
+      },
+      [
+        bookings,
+      ]
+    );
+
+
+  const upcomingBookings =
+    useMemo(
+      () =>
+        [
+          ...bookings,
+        ]
+          .filter(
+            (
+              booking
+            ) =>
+              ACTIVE_STATUSES.includes(
+                booking.status
+              ) &&
+              booking.id !==
+                activeBooking?.id
+          )
+          .sort(
+            (
+              a,
+              b
+            ) =>
+              String(
+                a.date ||
+                ""
+              ).localeCompare(
+                String(
+                  b.date ||
+                  ""
+                )
+              ) ||
+              String(
+                a.slot_start ||
+                ""
+              ).localeCompare(
+                String(
+                  b.slot_start ||
+                  ""
+                )
+              )
+          )
+          .slice(
+            0,
+            4
+          ),
+      [
+        bookings,
+        activeBooking,
+      ]
+    );
+
+
+  const recentPayments =
+    useMemo(
+      () =>
+        [
+          ...bookings,
+        ]
+          .filter(
+            (
+              booking
+            ) =>
+              Number(
+                booking.payment_amount ||
+                0
+              ) > 0
+          )
+          .sort(
+            (
+              a,
+              b
+            ) =>
+              String(
+                b.date ||
+                ""
+              ).localeCompare(
+                String(
+                  a.date ||
+                  ""
+                )
+              )
+          )
+          .slice(
+            0,
+            5
+          ),
+      [
+        bookings,
+      ]
+    );
+
+
+  const recentBookings =
+    useMemo(
+      () =>
+        [
+          ...bookings,
+        ]
+          .sort(
+            (
+              a,
+              b
+            ) =>
+              String(
+                b.created_at ||
+                b.date ||
+                ""
+              ).localeCompare(
+                String(
+                  a.created_at ||
+                  a.date ||
+                  ""
+                )
+              )
+          )
+          .slice(
+            0,
+            5
+          ),
+      [
+        bookings,
+      ]
+    );
+
+
+  const monthSummary =
+    useMemo(
+      () => {
+
+        const today =
+          new Date();
+
+
+        const year =
+          today.getFullYear();
+
+
+        const month =
+          today.getMonth();
+
+
+        const rows =
+          bookings.filter(
+            (
+              booking
+            ) => {
+
+              if (
+                !booking.date
+              ) {
+
+                return false;
+
+              }
+
+
+              const date =
+                new Date(
+                  `${booking.date}T00:00:00`
+                );
+
+
+              return (
+                date.getFullYear() ===
+                  year &&
+                date.getMonth() ===
+                  month
+              );
+
+            }
+          );
+
+
+        const completed =
+          rows.filter(
+            (
+              booking
+            ) =>
+              [
+                "PROCURED",
+                "PAYMENT_PENDING",
+                "PAYMENT_SENT",
+              ].includes(
+                booking.status
+              )
+          );
+
+
+        const quantity =
+          completed.reduce(
+            (
+              total,
+              booking
+            ) =>
+              total +
+              Number(
+                booking.actual_quantity ??
+                booking.estimated_quantity ??
+                0
+              ),
+            0
+          );
+
+
+        const earned =
+          completed.reduce(
+            (
+              total,
+              booking
+            ) =>
+              total +
+              Number(
+                booking.payment_amount ||
+                0
+              ),
+            0
+          );
+
+
+        const cropMap =
+          {};
+
+
+        completed.forEach(
+          (
+            booking
+          ) => {
+
+            const crop =
+              booking.crop ||
+              "other";
+
+
+            if (
+              !cropMap[crop]
+            ) {
+
+              cropMap[crop] = {
+
+                crop,
+
+                quantity:
+                  0,
+
+                amount:
+                  0,
+
+                count:
+                  0,
+
+              };
+
+            }
+
+
+            cropMap[
+              crop
+            ].quantity +=
+              Number(
+                booking.actual_quantity ??
+                booking.estimated_quantity ??
+                0
+              );
+
+
+            cropMap[
+              crop
+            ].amount +=
+              Number(
+                booking.payment_amount ||
+                0
+              );
+
+
+            cropMap[
+              crop
+            ].count +=
+              1;
+
+          }
+        );
+
+
+        return {
+
+          bookings:
+            rows.length,
+
+          completed:
+            completed.length,
+
+          quantity,
+
+          earned,
+
+          crops:
+            Object.values(
+              cropMap
+            ),
+
+        };
+
+      },
+      [
+        bookings,
+      ]
+    );
+
+
+  const center =
+    getCenterDisplay(
+      activeBooking?.center_id ||
+      farmer?.preferred_center_id ||
+      farmer?.preferredCenterId ||
+      "main"
+    );
+
+
+  const activeStatusIndex =
+    activeBooking
+      ? getStatusIndex(
+          activeBooking.status
+        )
+      : 0;
+
+
+  const progressPercent =
+    activeBooking
+      ? (
+          activeStatusIndex /
+          6
+        ) *
+        100
+      : 0;
+
+
+  if (
+    !farmer
+  ) {
+
+    return (
+
+      <div className="farmer-home-page">
+
+        <Header />
+
+
+        <main className="farmer-home-container">
+
+          <section className="empty-state-card">
+
+            <div className="empty-state-icon">
+              <UserRoundIcon />
+            </div>
+
+
+            <span className="page-eyebrow">
+              FARMER PORTAL
+            </span>
+
+
+            <h1>
+
+              {getText(
+                language,
+                "Farmer account not found",
+                "किसान खाता नहीं मिला",
+                "రైతు ఖాతా కనుగొనబడలేదు"
+              )}
+
+            </h1>
+
+
+            <p>
+
+              {getText(
+                language,
+                "Please login again to continue using KrishiSetu.",
+                "KrishiSetu का उपयोग जारी रखने के लिए फिर लॉगिन करें।",
+                "KrishiSetu ఉపయోగించడానికి మళ్లీ లాగిన్ చేయండి."
+              )}
+
+            </p>
+
+
+            <Link
+              to="/farmer/login"
+              className="home-primary-action"
+            >
+
+              {getText(
+                language,
+                "Go to Login",
+                "लॉगिन पर जाएं",
+                "లాగిన్‌కు వెళ్లండి"
+              )}
+
+              <ArrowRight
+                size={18}
+              />
+
+            </Link>
+
+          </section>
+
+        </main>
+
+      </div>
+
+    );
+
+  }
+
+
+  if (
+    loading
+  ) {
+
+    return (
+
+      <div className="farmer-home-page">
+
+        <Header />
+
+
+        <main className="farmer-home-container">
+
+          <section className="empty-state-card">
+
+            <div className="empty-state-icon">
+
+              <RefreshCw
+                size={27}
+                className="loading-spin"
+              />
+
+            </div>
+
+
+            <span className="page-eyebrow">
+              FARMER PORTAL
+            </span>
+
+
+            <h1>
+
+              {getText(
+                language,
+                "Loading your dashboard",
+                "आपका डैशबोर्ड लोड हो रहा है",
+                "మీ డాష్‌బోర్డ్ లోడ్ అవుతోంది"
+              )}
+
+            </h1>
+
+
+            <p>
+
+              {getText(
+                language,
+                "Fetching your latest procurement information.",
+                "आपकी नवीनतम खरीद जानकारी लाई जा रही है।",
+                "మీ తాజా కొనుగోలు సమాచారాన్ని తీసుకువస్తున్నాము."
+              )}
+
+            </p>
+
+          </section>
+
+        </main>
+
+      </div>
+
+    );
+
+  }
+
+
+  if (
+    error &&
+    bookings.length ===
+      0
+  ) {
+
+    return (
+
+      <div className="farmer-home-page">
+
+        <Header />
+
+
+        <main className="farmer-home-container">
+
+          <section className="empty-state-card">
+
+            <div className="empty-state-icon">
+
+              <RefreshCw
+                size={27}
+              />
+
+            </div>
+
+
+            <span className="page-eyebrow">
+              CONNECTION
+            </span>
+
+
+            <h1>
+
+              {getText(
+                language,
+                "Could not load your bookings",
+                "आपकी बुकिंग लोड नहीं हो सकी",
+                "మీ బుకింగ్‌లను లోడ్ చేయలేకపోయాము"
+              )}
+
+            </h1>
+
+
+            <p>
+              {error}
+            </p>
+
+
+            <button
+              type="button"
+              className="home-primary-action"
+              onClick={() =>
+                loadBookings(true)
+              }
+            >
+
+              {getText(
+                language,
+                "Try Again",
+                "फिर कोशिश करें",
+                "మళ్లీ ప్రయత్నించండి"
+              )}
+
+              <ArrowRight
+                size={18}
+              />
+
+            </button>
+
+          </section>
+
+        </main>
+
+      </div>
+
+    );
+
+  }
+
+
+  return (
+
+    <div className="farmer-home-page">
+
+      <Header />
+
+
+      <main className="farmer-home-container">
+
+
+        {/* =================================================
+            WELCOME
+        ================================================= */}
+
+        <section className="farmer-welcome">
+
+          <div>
+
+            <span className="page-eyebrow">
+
+              {t(
+                "home.farmerPortal"
+              )}
+
+            </span>
+
+
+            <h1>
+
+              {t(
+                "home.greeting"
+              )}
+
+              {" "}
+
+              {firstName}.
+
+            </h1>
+
+
+            <p>
+
+              {
+                activeBooking
+                  ? getText(
+                      language,
+                      "Here is your latest procurement update.",
+                      "यह आपकी नवीनतम खरीद जानकारी है।",
+                      "ఇది మీ తాజా కొనుగోలు అప్‌డేట్."
+                    )
+                  : getText(
+                      language,
+                      "Manage your bookings, payments and procurement from one place.",
+                      "अपनी बुकिंग, भुगतान और खरीद को एक ही जगह से प्रबंधित करें।",
+                      "మీ బుకింగ్‌లు, చెల్లింపులు మరియు కొనుగోలును ఒకే చోట నిర్వహించండి."
+                    )
+              }
+
+            </p>
+
+          </div>
+
+
+          <div className="farmer-profile">
+
+            <div className="farmer-avatar">
+
+              {initials}
+
+            </div>
+
+
+            <div>
+
+              <strong>
+                {farmerName}
+              </strong>
+
+
+              <span>
+
+                {t(
+                  "home.registeredFarmer"
+                )}
+
+              </span>
+
+            </div>
+
+
+            <button
+              type="button"
+              className="farmer-refresh-button"
+              onClick={() =>
+                loadBookings(true)
+              }
+              disabled={
+                refreshing
+              }
+              title="Refresh"
+            >
+
+              <RefreshCw
+                size={16}
+                className={
+                  refreshing
+                    ? "loading-spin"
+                    : ""
+                }
+              />
+
+            </button>
+
+          </div>
+
+        </section>
+
+
+
+        {/* =================================================
+            MAIN BOOKING
+        ================================================= */}
+
+        {
+          activeBooking ? (
+
+            <section
+              className={
+                `next-booking-card ${
+                  activeBooking.status ===
+                  "PAYMENT_SENT"
+                    ? "payment-complete"
+                    : ""
+                }`
+              }
+            >
+
+              <div className="booking-card-top">
+
+                <div>
+
+                  <span className="card-eyebrow">
+
+                    {
+                      activeBooking.status ===
+                      "PAYMENT_SENT"
+                        ? getText(
+                            language,
+                            "LATEST PROCUREMENT",
+                            "नवीनतम खरीद",
+                            "తాజా కొనుగోలు"
+                          )
+                        : getText(
+                            language,
+                            "NEXT PROCUREMENT",
+                            "अगली खरीद",
+                            "తదుపరి కొనుగోలు"
+                          )
+                    }
+
+                  </span>
+
+
+                  <div className="booking-token-row">
+
+                    <div className="home-token">
+
+                      #
+                      {
+                        activeBooking.token ||
+                        activeBooking.id
+                      }
+
+                    </div>
+
+
+                    <StatusBadge
+                      status={
+                        activeBooking.status
+                      }
+                    />
+
+                  </div>
+
+                </div>
+
+
+                <div className="booking-confirmed-icon">
+
+                  {
+                    activeBooking.status ===
+                      "PAYMENT_SENT"
+                      ? (
+                        <CheckCircle2
+                          size={24}
+                        />
+                      )
+                      : (
+                        <CalendarClock
+                          size={24}
+                        />
+                      )
+                  }
+
+                </div>
+
+              </div>
+
+
+              <div className="booking-status-message">
+
+                <div className="status-message-icon">
+
+                  <CheckCircle2
+                    size={19}
+                  />
+
+                </div>
+
+
+                <div>
+
+                  <strong>
+
+                    {
+                      activeBooking.status ===
+                      "PAYMENT_SENT"
+                        ? getText(
+                            language,
+                            "Procurement completed",
+                            "खरीद पूरी हो गई",
+                            "కొనుగోలు పూర్తైంది"
+                          )
+                        : formatStatus(
+                            activeBooking.status
+                          )
+                    }
+
+                  </strong>
+
+
+                  <span>
+
+                    {
+                      getStatusMessage(
+                        activeBooking.status,
+                        language
+                      )
+                    }
+
+                  </span>
+
+                </div>
+
+              </div>
+
+
+              <div className="booking-main-details">
+
+                <div className="home-detail">
+
+                  <div className="home-detail-icon">
+
+                    <Clock3
+                      size={18}
+                    />
+
+                  </div>
+
+
+                  <div>
+
+                    <span>
+
+                      {getText(
+                        language,
+                        "Arrival window",
+                        "आने का समय",
+                        "రాక సమయం"
+                      )}
+
+                    </span>
+
+
+                    <strong>
+
+                      {
+                        formatDate(
+                          activeBooking.date,
+                          language
+                        )
+                      }
+
+                    </strong>
+
+
+                    <small>
+
+                      {
+                        formatTime(
+                          activeBooking.slot_start,
+                          activeBooking.slot_end
+                        )
+                      }
+
+                    </small>
+
+                  </div>
+
+                </div>
+
+
+                <div className="home-detail">
+
+                  <div className="home-detail-icon">
+
+                    <MapPin
+                      size={18}
+                    />
+
+                  </div>
+
+
+                  <div>
+
+                    <span>
+
+                      {getText(
+                        language,
+                        "Procurement center",
+                        "खरीद केंद्र",
+                        "కొనుగోలు కేంద్రం"
+                      )}
+
+                    </span>
+
+
+                    <strong>
+
+                      {
+                        center.name
+                      }
+
+                    </strong>
+
+
+                    <small>
+
+                      {
+                        getCropName(
+                          activeBooking.crop,
+                          language,
+                          t
+                        )
+                      }
+
+                      {" · "}
+
+                      {
+                        Number(
+                          activeBooking.actual_quantity ??
+                          activeBooking.estimated_quantity ??
+                          0
+                        ).toLocaleString()
+                      }
+
+                      {" kg"}
+
+                    </small>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              {
+                activeBooking.status ===
+                "PAYMENT_SENT" && (
+
+                  <div className="home-payment-complete-strip">
+
+                    <div>
+
+                      <span>
+
+                        {getText(
+                          language,
+                          "PAYMENT SENT",
+                          "भुगतान भेजा गया",
+                          "చెల్లింపు పంపబడింది"
+                        )}
+
+                      </span>
+
+
+                      <strong>
+
+                        {
+                          activeBooking.payment_amount
+                            ? `₹${Number(
+                                activeBooking.payment_amount
+                              ).toLocaleString(
+                                "en-IN",
+                                {
+                                  maximumFractionDigits:
+                                    2,
+                                }
+                              )}`
+                            : "—"
+                        }
+
+                      </strong>
+
+                    </div>
+
+
+                    <div>
+
+                      <span>
+
+                        {getText(
+                          language,
+                          "REFERENCE",
+                          "संदर्भ",
+                          "రిఫరెన్స్"
+                        )}
+
+                      </span>
+
+
+                      <strong>
+
+                        {
+                          activeBooking.payment_reference ||
+                          "—"
+                        }
+
+                      </strong>
+
+                    </div>
+
+                  </div>
+
+                )
+              }
+
+
+              <div className="booking-action-row">
+
+                <Link
+                  to={
+                    `/farmer/token?booking=${encodeURIComponent(
+                      activeBooking.id
+                    )}`
+                  }
+                  className="home-primary-action"
+                >
+
+                  {
+                    activeBooking.status ===
+                    "PAYMENT_SENT"
+                      ? getText(
+                          language,
+                          "View completed record",
+                          "पूरा रिकॉर्ड देखें",
+                          "పూర్తి రికార్డును చూడండి"
+                        )
+                      : getText(
+                          language,
+                          "Track procurement",
+                          "खरीद ट्रैक करें",
+                          "కొనుగోలును ట్రాక్ చేయండి"
+                        )
+                  }
+
+
+                  <ArrowRight
+                    size={18}
+                  />
+
+                </Link>
+
+
+                <Link
+                  to="/farmer/book"
+                  className="home-secondary-action"
+                >
+
+                  {getText(
+                    language,
+                    "Book another slot",
+                    "दूसरा स्लॉट बुक करें",
+                    "మరో స్లాట్ బుక్ చేయండి"
+                  )}
+
+                </Link>
+
+              </div>
+
+            </section>
+
+          ) : (
+
+            <section className="empty-state-card farmer-first-booking-card">
+
+              <div className="empty-state-icon">
+
+                <CalendarClock
+                  size={28}
+                />
+
+              </div>
+
+
+              <span className="page-eyebrow">
+
+                {getText(
+                  language,
+                  "READY TO START?",
+                  "शुरू करने के लिए तैयार?",
+                  "ప్రారంభించడానికి సిద్ధంగా ఉన్నారా?"
+                )}
+
+              </span>
+
+
+              <h1>
+
+                {getText(
+                  language,
+                  "Book your next procurement slot",
+                  "अपना अगला खरीद स्लॉट बुक करें",
+                  "మీ తదుపరి కొనుగోలు స్లాట్ బుక్ చేయండి"
+                )}
+
+              </h1>
+
+
+              <p>
+
+                {getText(
+                  language,
+                  "Choose your crop, quantity, center and arrival window.",
+                  "फसल, मात्रा, केंद्र और आने का समय चुनें।",
+                  "పంట, పరిమాణం, కేంద్రం మరియు రాక సమయాన్ని ఎంచుకోండి."
+                )}
+
+              </p>
+
+
+              <Link
+                to="/farmer/book"
+                className="home-primary-action"
+              >
+
+                {getText(
+                  language,
+                  "Book a procurement slot",
+                  "खरीद स्लॉट बुक करें",
+                  "కొనుగోలు స్లాట్ బుక్ చేయండి"
+                )}
+
+                <ArrowRight
+                  size={18}
+                />
+
+              </Link>
+
+            </section>
+
+          )
+        }
+
+
+
+        {/* =================================================
+            QUICK ACTIONS
+        ================================================= */}
+
+        <section className="farmer-home-grid">
+
+          <Link
+            to="/farmer/book"
+            className="home-feature-card booking-feature"
+          >
+
+            <div className="feature-card-top">
+
+              <div className="feature-icon">
+
+                <Wheat
+                  size={21}
+                />
+
+              </div>
+
+
+              <ArrowRight
+                size={18}
+              />
+
+            </div>
+
+
+            <h2>
+
+              {getText(
+                language,
+                "Book a procurement slot",
+                "खरीद स्लॉट बुक करें",
+                "కొనుగోలు స్లాట్ బుక్ చేయండి"
+              )}
+
+            </h2>
+
+
+            <p>
+
+              {getText(
+                language,
+                "Select your crop, quantity and convenient arrival window.",
+                "अपनी फसल, मात्रा और सुविधाजनक समय चुनें।",
+                "మీ పంట, పరిమాణం మరియు అనుకూలమైన రాక సమయాన్ని ఎంచుకోండి."
+              )}
+
+            </p>
+
+          </Link>
+
+
+          <Link
+            to="/farmer/history"
+            className="home-feature-card status-feature"
+          >
+
+            <div className="feature-card-top">
+
+              <div className="feature-icon">
+
+                <CalendarDays
+                  size={21}
+                />
+
+              </div>
+
+
+              <ArrowRight
+                size={18}
+              />
+
+            </div>
+
+
+            <h2>
+
+              {getText(
+                language,
+                "Procurement history",
+                "खरीद इतिहास",
+                "కొనుగోలు చరిత్ర"
+              )}
+
+            </h2>
+
+
+            <p>
+
+              {getText(
+                language,
+                "See your previous crops, quantities and procurement records.",
+                "अपनी पिछली फसलें, मात्रा और खरीद रिकॉर्ड देखें।",
+                "మీ గత పంటలు, పరిమాణాలు మరియు కొనుగోలు రికార్డులను చూడండి."
+              )}
+
+            </p>
+
+          </Link>
+
+
+          <Link
+            to="/farmer/payments"
+            className="home-feature-card help-feature"
+          >
+
+            <div className="feature-card-top">
+
+              <div className="feature-icon">
+
+                <Coins
+                  size={21}
+                />
+
+              </div>
+
+
+              <ArrowRight
+                size={18}
+              />
+
+            </div>
+
+
+            <h2>
+
+              {getText(
+                language,
+                "Payment history",
+                "भुगतान इतिहास",
+                "చెల్లింపు చరిత్ర"
+              )}
+
+            </h2>
+
+
+            <p>
+
+              {getText(
+                language,
+                "View payment amounts, references and completed payments.",
+                "भुगतान राशि, संदर्भ और पूरे हुए भुगतान देखें।",
+                "చెల్లింపు మొత్తాలు, రిఫరెన్స్‌లు మరియు పూర్తైన చెల్లింపులను చూడండి."
+              )}
+
+            </p>
+
+          </Link>
+
+        </section>
+
+
+
+        {/* =================================================
+            MONTHLY SUMMARY
+        ================================================= */}
+
+        <section className="home-month-summary-card">
+
+          <div className="home-section-heading">
+
+            <div>
+
+              <span className="card-eyebrow">
+
+                {getText(
+                  language,
+                  "THIS MONTH",
+                  "इस महीने",
+                  "ఈ నెల"
+                )}
+
+              </span>
+
+
+              <h2>
+
+                {getText(
+                  language,
+                  "Your procurement summary",
+                  "आपकी खरीद का सारांश",
+                  "మీ కొనుగోలు సారాంశం"
+                )}
+
+              </h2>
+
+
+              <p>
+
+                {
+                  formatCurrentMonth(
+                    language
+                  )
+                }
+
+              </p>
+
+            </div>
+
+
+            <Coins
+              size={21}
+            />
+
+          </div>
+
+
+          <div className="home-month-stats">
+
+            <MonthlyStat
+              label={getText(
+                language,
+                "Received",
+                "प्राप्त राशि",
+                "అందుకున్న మొత్తం"
+              )}
+              value={
+                `₹${monthSummary.earned.toLocaleString(
+                  "en-IN",
+                  {
+                    maximumFractionDigits:
+                      2,
+                  }
+                )}`
+              }
+              tone="green"
+            />
+
+
+            <MonthlyStat
+              label={getText(
+                language,
+                "Produce supplied",
+                "दी गई उपज",
+                "సరఫరా చేసిన పంట"
+              )}
+              value={
+                `${monthSummary.quantity.toLocaleString()} kg`
+              }
+              tone="blue"
+            />
+
+
+            <MonthlyStat
+              label={getText(
+                language,
+                "Completed",
+                "पूरी हुई खरीद",
+                "పూర్తైన కొనుగోళ్లు"
+              )}
+              value={
+                monthSummary.completed
+              }
+              tone="orange"
+            />
+
+          </div>
+
+
+          <div className="home-crop-summary-list">
+
+            {
+              monthSummary.crops.length ===
+                0 ? (
+
+                <div className="home-summary-empty">
+
+                  <Wheat
+                    size={19}
+                  />
+
+
+                  <span>
+
+                    {getText(
+                      language,
+                      "Your completed crop activity will appear here.",
+                      "पूरी हुई फसल गतिविधि यहां दिखाई देगी।",
+                      "మీ పూర్తైన పంట కార్యకలాపాలు ఇక్కడ కనిపిస్తాయి."
+                    )}
+
+                  </span>
+
+                </div>
+
+              ) : (
+
+                monthSummary.crops.map(
+                  (
+                    item
+                  ) => (
+
+                    <div
+                      key={
+                        item.crop
+                      }
+                      className="home-crop-summary-row"
+                    >
+
+                      <div className="home-crop-summary-icon">
+
+                        <Wheat
+                          size={16}
+                        />
+
+                      </div>
+
+
+                      <div>
+
+                        <strong>
+
+                          {
+                            getCropName(
+                              item.crop,
+                              language,
+                              t
+                            )
+                          }
+
+                        </strong>
+
+
+                        <span>
+
+                          {
+                            item.count
+                          }
+
+                          {" "}
+
+                          {getText(
+                            language,
+                            "procurements",
+                            "खरीद",
+                            "కొనుగోళ్లు"
+                          )}
+
+                        </span>
+
+                      </div>
+
+
+                      <div>
+
+                        <strong>
+
+                          {
+                            item.quantity.toLocaleString()
+                          }
+
+                          {" kg"}
+
+                        </strong>
+
+
+                        <span>
+
+                          ₹
+                          {
+                            item.amount.toLocaleString(
+                              "en-IN",
+                              {
+                                maximumFractionDigits:
+                                  2,
+                              }
+                            )
+                          }
+
+                        </span>
+
+                      </div>
+
+                    </div>
+
+                  )
+                )
+
+              )
+            }
+
+          </div>
+
+
+          <Link
+            to="/farmer/history"
+            className="home-inline-link"
+          >
+
+            {getText(
+              language,
+              "View full procurement history",
+              "पूरी खरीद हिस्ट्री देखें",
+              "పూర్తి కొనుగోలు చరిత్రను చూడండి"
+            )}
+
+            <ArrowRight
+              size={14}
+            />
+
+          </Link>
+
+        </section>
+
+
+
+        {/* =================================================
+            UPCOMING BOOKINGS
+        ================================================= */}
+
+        <section className="home-dashboard-section">
+
+          <div className="home-section-heading">
+
+            <div>
+
+              <span className="card-eyebrow">
+
+                {getText(
+                  language,
+                  "UPCOMING",
+                  "आगामी",
+                  "రాబోయేవి"
+                )}
+
+              </span>
+
+
+              <h2>
+
+                {getText(
+                  language,
+                  "Upcoming procurements",
+                  "आने वाली खरीद",
+                  "రాబోయే కొనుగోళ్లు"
+                )}
+
+              </h2>
+
+            </div>
+
+
+            <Link
+              to="/farmer/book"
+              className="home-inline-link"
+            >
+
+              {getText(
+                language,
+                "Book more",
+                "और बुक करें",
+                "మరిన్ని బుక్ చేయండి"
+              )}
+
+              <ArrowRight
+                size={14}
+              />
+
+            </Link>
+
+          </div>
+
+
+          {
+            upcomingBookings.length ===
+              0 ? (
+
+              <div className="home-summary-empty large">
+
+                <CalendarDays
+                  size={22}
+                />
+
+
+                <strong>
+
+                  {getText(
+                    language,
+                    "No other upcoming bookings",
+                    "कोई अन्य आगामी बुकिंग नहीं",
+                    "ఇతర రాబోయే బుకింగ్‌లు లేవు"
+                  )}
+
+                </strong>
+
+
+                <span>
+
+                  {getText(
+                    language,
+                    "Book another slot whenever you need to bring produce to the center.",
+                    "जब भी जरूरत हो, केंद्र पर उपज लाने के लिए दूसरा स्लॉट बुक करें।",
+                    "కేంద్రానికి పంట తీసుకురావాల్సినప్పుడు మరొక స్లాట్ బుక్ చేయండి."
+                  )}
+
+                </span>
+
+              </div>
+
+            ) : (
+
+              <div className="home-upcoming-list">
+
+                {
+                  upcomingBookings.map(
+                    (
+                      item
+                    ) => (
+
+                      <Link
+                        key={
+                          item.id
+                        }
+                        to={
+                          `/farmer/token?booking=${encodeURIComponent(
+                            item.id
+                          )}`
+                        }
+                        className="home-upcoming-row"
+                      >
+
+                        <div className="home-upcoming-token">
+
+                          #
+                          {
+                            item.token ||
+                            item.id
+                          }
+
+                        </div>
+
+
+                        <div className="home-upcoming-main">
+
+                          <strong>
+
+                            {
+                              getCropName(
+                                item.crop,
+                                language,
+                                t
+                              )
+                            }
+
+                          </strong>
+
+
+                          <span>
+
+                            {
+                              Number(
+                                item.estimated_quantity ||
+                                0
+                              ).toLocaleString()
+                            }
+
+                            {" kg"}
+
+                            {" · "}
+
+                            {
+                              formatDate(
+                                item.date,
+                                language
+                              )
+                            }
+
+                          </span>
+
+                        </div>
+
+
+                        <div className="home-upcoming-time">
+
+                          {
+                            formatTime(
+                              item.slot_start,
+                              item.slot_end
+                            )
+                          }
+
+                        </div>
+
+
+                        <ChevronRight
+                          size={15}
+                        />
+
+                      </Link>
+
+                    )
+                  )
+                }
+
+              </div>
+
+            )
+          }
+
+        </section>
+
+
+
+        {/* =================================================
+            RECENT PAYMENTS
+        ================================================= */}
+
+        <section className="home-dashboard-section">
+
+          <div className="home-section-heading">
+
+            <div>
+
+              <span className="card-eyebrow">
+
+                {getText(
+                  language,
+                  "PAYMENTS",
+                  "भुगतान",
+                  "చెల్లింపులు"
+                )}
+
+              </span>
+
+
+              <h2>
+
+                {getText(
+                  language,
+                  "Recent payments",
+                  "हाल के भुगतान",
+                  "ఇటీవలి చెల్లింపులు"
+                )}
+
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          {
+            recentPayments.length ===
+              0 ? (
+
+              <div className="home-summary-empty">
+
+                <Coins
+                  size={20}
+                />
+
+
+                <span>
+
+                  {getText(
+                    language,
+                    "Your completed payments will appear here.",
+                    "आपके पूरे हुए भुगतान यहां दिखाई देंगे।",
+                    "మీ పూర్తైన చెల్లింపులు ఇక్కడ కనిపిస్తాయి."
+                  )}
+
+                </span>
+
+              </div>
+
+            ) : (
+
+              <div className="home-payment-list">
+
+                {
+                  recentPayments.map(
+                    (
+                      item
+                    ) => (
+
+                      <Link
+                        key={
+                          item.id
+                        }
+                        to="/farmer/payments"
+                        className="home-payment-row"
+                      >
+
+                        <div className="home-payment-icon">
+
+                          <Check
+                            size={15}
+                          />
+
+                        </div>
+
+
+                        <div className="home-payment-main">
+
+                          <strong>
+
+                            {
+                              getCropName(
+                                item.crop,
+                                language,
+                                t
+                              )
+                            }
+
+                          </strong>
+
+
+                          <span>
+
+                            #
+                            {
+                              item.token ||
+                              item.id
+                            }
+
+                            {" · "}
+
+                            {
+                              formatDate(
+                                item.date,
+                                language
+                              )
+                            }
+
+                          </span>
+
+                        </div>
+
+
+                        <div className="home-payment-amount">
+
+                          <strong>
+
+                            ₹
+                            {
+                              Number(
+                                item.payment_amount ||
+                                0
+                              ).toLocaleString(
+                                "en-IN",
+                                {
+                                  maximumFractionDigits:
+                                    2,
+                                }
+                              )
+                            }
+
+                          </strong>
+
+
+                          <span>
+
+                            {getText(
+                              language,
+                              "Payment sent",
+                              "भुगतान भेजा गया",
+                              "చెల్లింపు పంపబడింది"
+                            )}
+
+                          </span>
+
+                        </div>
+
+
+                        <ChevronRight
+                          size={15}
+                        />
+
+                      </Link>
+
+                    )
+                  )
+                }
+
+              </div>
+
+            )
+          }
+
+
+          <Link
+            to="/farmer/payments"
+            className="home-inline-link"
+          >
+
+            {getText(
+              language,
+              "View all payments",
+              "सभी भुगतान देखें",
+              "అన్ని చెల్లింపులను చూడండి"
+            )}
+
+            <ArrowRight
+              size={14}
+            />
+
+          </Link>
+
+        </section>
+
+
+
+        {/* =================================================
+            CENTER
+        ================================================= */}
+
+        <section className="home-center-card">
+
+          <div className="home-center-main">
+
+            <div className="home-center-icon">
+
+              <MapPin
+                size={22}
+              />
+
+            </div>
+
+
+            <div>
+
+              <span className="card-eyebrow">
+
+                {getText(
+                  language,
+                  "YOUR PROCUREMENT CENTER",
+                  "आपका खरीद केंद्र",
+                  "మీ కొనుగోలు కేంద్రం"
+                )}
+
+              </span>
+
+
+              <h2>
+
+                {
+                  center.name
+                }
+
+              </h2>
+
+
+              <p>
+
+                {
+                  center.address
+                }
+
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div className="home-center-details">
+
+            <div>
+
+              <span>
+
+                {getText(
+                  language,
+                  "Working hours",
+                  "कार्य समय",
+                  "పని సమయం"
+                )}
+
+              </span>
+
+
+              <strong>
+
+                {
+                  center.openingTime
+                }
+
+                {" – "}
+
+                {
+                  center.closingTime
+                }
+
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <span>
+
+                {getText(
+                  language,
+                  "Capacity",
+                  "क्षमता",
+                  "సామర్థ్యం"
+                )}
+
+              </span>
+
+
+              <strong>
+
+                {
+                  center.capacity
+                }
+
+                {" / slot"}
+
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <span>
+
+                {getText(
+                  language,
+                  "Working days",
+                  "कार्य दिवस",
+                  "పని రోజులు"
+                )}
+
+              </span>
+
+
+              <strong>
+
+                {
+                  center.workingDays
+                }
+
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <div className="home-center-actions">
+
+            <a
+              href={
+                center.mapUrl ||
+                "#"
+              }
+              className="home-secondary-action"
+              onClick={(event) => {
+
+                if (
+                  !center.mapUrl
+                ) {
+
+                  event.preventDefault();
+
+                }
+
+              }}
+            >
+
+              <MapPin
+                size={15}
+              />
+
+              {getText(
+                language,
+                "Directions",
+                "दिशाएं",
+                "దిశలు"
+              )}
+
+            </a>
+
+
+            <a
+              href={
+                center.phone
+                  ? `tel:${center.phone}`
+                  : "#"
+              }
+              className="home-primary-action"
+              onClick={(event) => {
+
+                if (
+                  !center.phone
+                ) {
+
+                  event.preventDefault();
+
+                }
+
+              }}
+            >
+
+              {getText(
+                language,
+                "Call center",
+                "केंद्र को कॉल करें",
+                "కేంద్రానికి కాల్ చేయండి"
+              )}
+
+            </a>
+
+          </div>
+
+        </section>
+
+
+
+        {/* =================================================
+            CHECKLIST
+        ================================================= */}
+
+        <section className="home-arrival-check-card">
+
+          <div className="home-section-heading">
+
+            <div>
+
+              <span className="card-eyebrow">
+
+                {getText(
+                  language,
+                  "BEFORE YOU ARRIVE",
+                  "पहुंचने से पहले",
+                  "మీరు చేరుకునే ముందు"
+                )}
+
+              </span>
+
+
+              <h2>
+
+                {getText(
+                  language,
+                  "Keep these things ready",
+                  "इन चीजों को तैयार रखें",
+                  "ఈ విషయాలను సిద్ధంగా ఉంచుకోండి"
+                )}
+
+              </h2>
+
+            </div>
+
+
+            <ShieldCheck
+              size={21}
+            />
+
+          </div>
+
+
+          <div className="home-arrival-check-grid">
+
+            <ArrivalCheck
+              text={getText(
+                language,
+                "Booking token",
+                "बुकिंग टोकन",
+                "బుకింగ్ టోకెన్"
+              )}
+            />
+
+
+            <ArrivalCheck
+              text={getText(
+                language,
+                "Your produce",
+                "आपकी उपज",
+                "మీ పంట"
+              )}
+            />
+
+
+            <ArrivalCheck
+              text={getText(
+                language,
+                "Registered mobile",
+                "पंजीकृत मोबाइल",
+                "రిజిస్టర్డ్ మొబైల్"
+              )}
+            />
+
+
+            <ArrivalCheck
+              text={getText(
+                language,
+                "Assigned time window",
+                "निर्धारित समय",
+                "కేటాయించిన సమయం"
+              )}
+            />
+
+          </div>
+
+        </section>
+
+
+
+        {/* =================================================
+            SMS
+        ================================================= */}
+
+        <section className="home-sms-card">
+
+          <div className="home-sms-icon">
+
+            <MessageSquareText
+              size={23}
+            />
+
+          </div>
+
+
+          <div>
+
+            <span>
+
+              {getText(
+                language,
+                "STATUS NOTIFICATIONS",
+                "स्थिति सूचनाएं",
+                "స్థితి నోటిఫికేషన్‌లు"
+              )}
+
+            </span>
+
+
+            <h3>
+
+              {
+                activeBooking?.status ===
+                  "PAYMENT_SENT"
+                  ? getText(
+                      language,
+                      "Your payment confirmation is available.",
+                      "आपके भुगतान की पुष्टि उपलब्ध है।",
+                      "మీ చెల్లింపు నిర్ధారణ అందుబాటులో ఉంది."
+                    )
+                  : getText(
+                      language,
+                      "Stay informed about your procurement progress.",
+                      "अपनी खरीद की प्रगति के बारे में अपडेट रहें।",
+                      "మీ కొనుగోలు పురోగతిని తెలుసుకోండి."
+                    )
+              }
+
+            </h3>
+
+
+            <p>
+
+              {getText(
+                language,
+                "Booking, procurement and payment updates can be sent to your registered mobile number.",
+                "बुकिंग, खरीद और भुगतान अपडेट आपके पंजीकृत मोबाइल नंबर पर भेजे जा सकते हैं।",
+                "బుకింగ్, కొనుగోలు మరియు చెల్లింపు అప్‌డేట్‌లు మీ రిజిస్టర్డ్ మొబైల్ నంబర్‌కు పంపవచ్చు."
+              )}
+
+            </p>
+
+          </div>
+
+        </section>
+
+
+
+        {/* =================================================
+            RECENT BOOKINGS
+        ================================================= */}
+
+        <section className="home-dashboard-section">
+
+          <div className="home-section-heading">
+
+            <div>
+
+              <span className="card-eyebrow">
+
+                {getText(
+                  language,
+                  "RECENT ACTIVITY",
+                  "हाल की गतिविधि",
+                  "ఇటీవలి కార్యకలాపాలు"
+                )}
+
+              </span>
+
+
+              <h2>
+
+                {getText(
+                  language,
+                  "Recent bookings",
+                  "हाल की बुकिंग",
+                  "ఇటీవలి బుకింగ్‌లు"
+                )}
+
+              </h2>
+
+            </div>
+
+
+            <Link
+              to="/farmer/history"
+              className="home-inline-link"
+            >
+
+              {getText(
+                language,
+                "View all",
+                "सभी देखें",
+                "అన్నీ చూడండి"
+              )}
+
+              <ArrowRight
+                size={14}
+              />
+
+            </Link>
+
+          </div>
+
+
+          <div className="home-recent-list">
+
+            {
+              recentBookings.length ===
+                0 ? (
+
+                <div className="home-summary-empty">
+
+                  <CalendarDays
+                    size={20}
+                  />
+
+
+                  <span>
+
+                    {getText(
+                      language,
+                      "Your bookings will appear here.",
+                      "आपकी बुकिंग यहां दिखाई देगी।",
+                      "మీ బుకింగ్‌లు ఇక్కడ కనిపిస్తాయి."
+                    )}
+
+                  </span>
+
+                </div>
+
+              ) : (
+
+                recentBookings.map(
+                  (
+                    booking
+                  ) => (
+
+                    <Link
+                      key={
+                        booking.id
+                      }
+                      to={
+                        `/farmer/token?booking=${encodeURIComponent(
+                          booking.id
+                        )}`
+                      }
+                      className="home-recent-row"
+                    >
+
+                      <div className="home-recent-token">
+
+                        #
+                        {
+                          booking.token ||
+                          booking.id
+                        }
+
+                      </div>
+
+
+                      <div className="home-recent-main">
+
+                        <strong>
+
+                          {
+                            getCropName(
+                              booking.crop,
+                              language,
+                              t
+                            )
+                          }
+
+                        </strong>
+
+
+                        <span>
+
+                          {
+                            Number(
+                              booking.actual_quantity ??
+                              booking.estimated_quantity ??
+                              0
+                            ).toLocaleString()
+                          }
+
+                          {" kg"}
+
+                          {" · "}
+
+                          {
+                            formatDate(
+                              booking.date,
+                              language
+                            )
+                          }
+
+                        </span>
+
+                      </div>
+
+
+                      <StatusBadge
+                        status={
+                          booking.status
+                        }
+                      />
+
+
+                      <ChevronRight
+                        size={15}
+                      />
+
+                    </Link>
+
+                  )
+                )
+
+              )
+            }
+
+          </div>
+
+        </section>
+
+
+
+        {/* =================================================
+            FOOTER
+        ================================================= */}
+
+        <div className="home-support-row">
+
+          <span>
+
+            {getText(
+              language,
+              "Live data from KrishiSetu",
+              "KrishiSetu का लाइव डेटा",
+              "KrishiSetu లైవ్ డేటా"
+            )}
+
+          </span>
+
+
+          <div>
+
+            <Link
+              to="/farmer/history"
+            >
+
+              {getText(
+                language,
+                "History",
+                "इतिहास",
+                "చరిత్ర"
+              )}
+
+            </Link>
+
+
+            <Link
+              to="/farmer/payments"
+            >
+
+              {getText(
+                language,
+                "Payments",
+                "भुगतान",
+                "చెల్లింపులు"
+              )}
+
+            </Link>
+
+
+            <Link
+              to="/farmer/help"
+            >
+
+              {getText(
+                language,
+                "Help & FAQ",
+                "सहायता और FAQ",
+                "సహాయం & FAQ"
+              )}
+
+              <ArrowRight
+                size={15}
+              />
+
+            </Link>
+
+          </div>
+
+        </div>
+
+      </main>
+
+    </div>
+
+  );
+}
+
+
+/* =========================================================
+   SMALL COMPONENTS
+========================================================= */
+
+function MonthlyStat({
+  label,
+  value,
+  tone,
+}) {
+
+  return (
+
+    <div
+      className={
+        `home-month-stat ${tone}`
+      }
+    >
+
+      <span>
+        {label}
+      </span>
+
+
+      <strong>
+        {value}
+      </strong>
+
+    </div>
+
+  );
+
+}
+
+
+function ArrivalCheck({
+  text,
+}) {
+
+  return (
+
+    <div className="home-arrival-check">
+
+      <div>
+
+        <Check
+          size={13}
+        />
+
+      </div>
+
+
+      <span>
+        {text}
+      </span>
+
+    </div>
+
+  );
+
+}
+
+
+function ProgressStage({
+  icon,
+  title,
+  active,
+  complete,
+}) {
+
+  return (
+
+    <div
+      className={
+        `farmer-progress-stage ${
+          active
+            ? "active"
+            : ""
+        } ${
+          complete
+            ? "complete"
+            : ""
+        }`
+      }
+    >
+
+      <div className="farmer-progress-icon">
+
+        {
+          complete
+            ? (
+              <CheckCircle2
+                size={18}
+              />
+            )
+            : icon
+        }
+
+      </div>
+
+
+      <span>
+        {title}
+      </span>
+
+    </div>
+
+  );
+
+}
+
+
+function ProgressLine({
+  active,
+}) {
+
+  return (
+
+    <div
+      className={
+        `farmer-progress-line ${
+          active
+            ? "active"
+            : ""
+        }`
+      }
+    />
+
+  );
+
+}
+
+
+function UserRoundIcon() {
+
+  return (
+
+    <svg
+      width="30"
+      height="30"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+
+      <circle
+        cx="12"
+        cy="8"
+        r="4"
+      />
+
+
+      <path
+        d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"
+      />
+
+    </svg>
+
+  );
+
+}
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function getText(
+  language,
+  english,
+  hindi,
+  telugu
+) {
+
+  if (
+    language ===
+    "hi"
+  ) {
+
+    return hindi;
+
+  }
+
+
+  if (
+    language ===
+    "te"
+  ) {
+
+    return telugu;
+
+  }
+
+
+  return english;
+
+}
+
+
+function getCropName(
+  crop,
+  language,
+  t
+) {
+
+  if (
+    !crop
+  ) {
+
+    return getText(
+      language,
+      "Produce",
+      "उपज",
+      "పంట"
+    );
+
+  }
+
+
+  const key =
+    `crops.${crop}`;
+
+
+  if (
+    t
+  ) {
+
+    const translated =
+      t(
+        key
+      );
+
+
+    if (
+      translated &&
+      translated !==
+        key
+    ) {
+
+      return translated;
+
+    }
+
+  }
+
+
+  const names = {
+
+    wheat:
+      getText(
+        language,
+        "Wheat",
+        "गेहूं",
+        "గోధుమ"
+      ),
+
+    paddy:
+      getText(
+        language,
+        "Paddy",
+        "धान",
+        "వరి"
+      ),
+
+    maize:
+      getText(
+        language,
+        "Maize",
+        "मक्का",
+        "మొక్కజొన్న"
+      ),
+
+    cotton:
+      getText(
+        language,
+        "Cotton",
+        "कपास",
+        "పత్తి"
+      ),
+
+  };
+
+
+  return (
+    names[
+      crop
+    ] ||
+    crop
+  );
+
+}
+
+
+function formatStatus(
+  status
+) {
+
+  return String(
+    status ||
+    "CONFIRMED"
+  )
+    .replaceAll(
+      "_",
+      " "
+    )
+    .replace(
+      /\b\w/g,
+      (
+        letter
+      ) =>
+        letter.toUpperCase()
+    );
+
+}
+
+
+function getStatusMessage(
+  status,
+  language
+) {
+
+  const messages = {
+
+    CONFIRMED:
+      getText(
+        language,
+        "Your booking is confirmed. Please arrive during your assigned window.",
+        "आपकी बुकिंग की पुष्टि हो गई है। निर्धारित समय पर पहुंचें।",
+        "మీ బుకింగ్ నిర్ధారించబడింది. కేటాయించిన సమయంలో రండి."
+      ),
+
+    ARRIVED:
+      getText(
+        language,
+        "Your arrival has been recorded at the procurement center.",
+        "केंद्र पर आपके पहुंचने की जानकारी दर्ज कर ली गई है।",
+        "కేంద్రంలో మీ రాక నమోదు చేయబడింది."
+      ),
+
+    LATE:
+      getText(
+        language,
+        "Your booking has been marked late. Please contact the center if needed.",
+        "आपकी बुकिंग को देर से आने के रूप में दर्ज किया गया है।",
+        "మీ బుకింగ్ ఆలస్యంగా వచ్చినట్లు నమోదు చేయబడింది."
+      ),
+
+    WEIGHING:
+      getText(
+        language,
+        "Your produce is currently being weighed.",
+        "आपकी उपज का अभी वजन किया जा रहा है।",
+        "మీ పంట ప్రస్తుతం తూకం వేయబడుతోంది."
+      ),
+
+    PROCURED:
+      getText(
+        language,
+        "Your produce has been accepted and procurement is complete.",
+        "आपकी उपज स्वीकार कर ली गई है और खरीद पूरी हो गई है।",
+        "మీ పంట స్వీకరించబడింది మరియు కొనుగోలు పూర్తైంది."
+      ),
+
+    PAYMENT_PENDING:
+      getText(
+        language,
+        "Your procurement is complete and payment is being processed.",
+        "आपकी खरीद पूरी हो गई है और भुगतान प्रक्रिया में है।",
+        "మీ కొనుగోలు పూర్తైంది మరియు చెల్లింపు ప్రాసెస్ అవుతోంది."
+      ),
+
+    PAYMENT_SENT:
+      getText(
+        language,
+        "Your procurement is complete and payment has been sent successfully.",
+        "आपकी खरीद पूरी हो गई है और भुगतान सफलतापूर्वक भेज दिया गया है।",
+        "మీ కొనుగోలు పూర్తైంది మరియు చెల్లింపు విజయవంతంగా పంపబడింది."
+      ),
+
+  };
+
+
+  return (
+    messages[
+      status
+    ] ||
+    messages.CONFIRMED
+  );
+
+}
+
+
+function getStatusIndex(
+  status
+) {
+
+  const order = [
+    "CONFIRMED",
+    "ARRIVED",
+    "LATE",
+    "WEIGHING",
+    "PROCURED",
+    "PAYMENT_PENDING",
+    "PAYMENT_SENT",
+  ];
+
+
+  const index =
+    order.indexOf(
+      status
+    );
+
+
+  if (
+    status ===
+    "LATE"
+  ) {
+
+    return 1;
+
+  }
+
+
+  return index >=
+    0
+    ? index
+    : 0;
+
+}
+
+
+function formatDate(
+  value,
+  language
+) {
+
+  if (
+    !value
+  ) {
+
+    return "—";
+
+  }
+
+
+  const date =
+    new Date(
+      `${value}T00:00:00`
+    );
+
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+
+    return value;
+
+  }
+
+
+  const locale =
+    language ===
+      "hi"
+      ? "hi-IN"
+      : language ===
+          "te"
+        ? "te-IN"
+        : "en-IN";
+
+
+  return date.toLocaleDateString(
+    locale,
+    {
+      day:
+        "numeric",
+
+      month:
+        "short",
+
+      year:
+        "numeric",
+
+    }
+  );
+
+}
+
+
+function formatCurrentMonth(
+  language
+) {
+
+  const locale =
+    language ===
+      "hi"
+      ? "hi-IN"
+      : language ===
+          "te"
+        ? "te-IN"
+        : "en-IN";
+
+
+  return new Date().toLocaleDateString(
+    locale,
+    {
+      month:
+        "long",
+
+      year:
+        "numeric",
+
+    }
+  );
+
+}
+
+
+function formatTime(
+  start,
+  end
+) {
+
+  if (
+    !start
+  ) {
+
+    return "—";
+
+  }
+
+
+  function convert(
+    value
+  ) {
+
+    const raw =
+      String(
+        value
+      )
+        .trim()
+        .toUpperCase();
+
+
+    const match =
+      raw.match(
+        /^(\d{1,2}):(\d{2})\s*(AM|PM)?$/
+      );
+
+
+    if (
+      !match
+    ) {
+
+      return value;
+
+    }
+
+
+    let hour =
+      Number(
+        match[1]
+      );
+
+
+    const minute =
+      match[2];
+
+
+    const period =
+      match[3];
+
+
+    if (
+      period ===
+      "AM" &&
+      hour ===
+      12
+    ) {
+
+      hour = 0;
+
+    }
+
+
+    if (
+      period ===
+      "PM" &&
+      hour !==
+      12
+    ) {
+
+      hour +=
+        12;
+
+    }
+
+
+    const suffix =
+      hour >=
+      12
+        ? "PM"
+        : "AM";
+
+
+    const displayHour =
+      hour %
+        12 ||
+      12;
+
+
+    return (
+      `${displayHour}:${minute} ${suffix}`
+    );
+
+  }
+
+
+  return end
+    ? `${convert(start)} – ${convert(end)}`
+    : convert(start);
+
+}
+
+
+function getCenterDisplay(
+  centerId
+) {
+
+  const centers = {
+
+    main: {
+
+      name:
+        "Main Procurement Center",
+
+      address:
+        "Main Road, Serilingampally",
+
+      openingTime:
+        "08:00 AM",
+
+      closingTime:
+        "05:00 PM",
+
+      workingDays:
+        "Monday – Saturday",
+
+      capacity:
+        20,
+
+      phone:
+        "+91 98765 43210",
+
+      mapUrl:
+        "https://www.google.com/maps/search/?api=1&query=Main+Road+Serilingampally",
+
+    },
+
+    north: {
+
+      name:
+        "North Procurement Center",
+
+      address:
+        "North Market Yard, Rajendranagar",
+
+      openingTime:
+        "08:00 AM",
+
+      closingTime:
+        "05:00 PM",
+
+      workingDays:
+        "Monday – Saturday",
+
+      capacity:
+        15,
+
+      phone:
+        "+91 98765 43310",
+
+      mapUrl:
+        "https://www.google.com/maps/search/?api=1&query=North+Market+Yard+Rajendranagar",
+
+    },
+
+    east: {
+
+      name:
+        "East Procurement Center",
+
+      address:
+        "East Collection Point, Mangalagiri",
+
+      openingTime:
+        "09:00 AM",
+
+      closingTime:
+        "04:00 PM",
+
+      workingDays:
+        "Monday – Saturday",
+
+      capacity:
+        12,
+
+      phone:
+        "+91 98765 43410",
+
+      mapUrl:
+        "https://www.google.com/maps/search/?api=1&query=East+Collection+Point+Mangalagiri",
+
+    },
+
+  };
+
+
+  return (
+    centers[
+      centerId
+    ] ||
+    centers.main
+  );
+
+}
+
+
+export default FarmerHome;
