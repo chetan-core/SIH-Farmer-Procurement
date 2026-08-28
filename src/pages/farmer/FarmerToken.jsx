@@ -37,7 +37,7 @@ import {
 
 
 const API_URL =
-  "http://localhost:5000/api";
+  import.meta.env.VITE_API_URL;
 
 
 const STATUS_ORDER = [
