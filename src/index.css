@@ -51480,3 +51480,5285 @@ body:has(.farmer-book-page) #root {
   }
 
 }
+/* =========================================================
+   KRISHISETU - VISUAL POLISH LAYER
+   Add at the END of src/index.css
+========================================================= */
+
+
+/* =========================================================
+   GLOBAL
+========================================================= */
+
+:root {
+  --ks-radius-xl: 22px;
+  --ks-radius-lg: 17px;
+  --ks-radius-md: 13px;
+  --ks-radius-sm: 9px;
+
+  --ks-space-1: 6px;
+  --ks-space-2: 10px;
+  --ks-space-3: 14px;
+  --ks-space-4: 18px;
+  --ks-space-5: 24px;
+  --ks-space-6: 32px;
+  --ks-space-7: 42px;
+
+  --ks-shadow-soft:
+    0 10px 35px rgba(35, 73, 92, .06);
+
+  --ks-shadow-hover:
+    0 16px 42px rgba(35, 73, 92, .10);
+
+  --ks-border:
+    #e2eaec;
+
+  --ks-text:
+    #294f61;
+
+  --ks-text-soft:
+    #70868f;
+
+  --ks-text-muted:
+    #96a5aa;
+}
+
+
+* {
+  box-sizing: border-box;
+}
+
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+
+button,
+a {
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    background-color .18s ease,
+    border-color .18s ease,
+    color .18s ease,
+    opacity .18s ease;
+}
+
+
+/* =========================================================
+   PAGE TYPOGRAPHY
+========================================================= */
+
+.page-eyebrow,
+.admin-page-eyebrow {
+  letter-spacing: .12em;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+
+.farmer-home-container > section h1,
+.farmer-home-container > section h2,
+.token-container > section h1,
+.token-container > section h2,
+.admin-dashboard-page h2,
+.admin-queue-page h2,
+.admin-payment-issues-page h2 {
+  letter-spacing: -.035em;
+}
+
+
+.farmer-home-container > section h1 {
+  font-size: clamp(
+    34px,
+    4vw,
+    58px
+  );
+  line-height: 1.02;
+}
+
+
+.farmer-home-container > section h2,
+.token-container > section h2 {
+  font-size: clamp(
+    26px,
+    3vw,
+    40px
+  );
+  line-height: 1.05;
+}
+
+
+/* =========================================================
+   FARMER HOME
+========================================================= */
+
+.farmer-home-page {
+  min-height: 100vh;
+}
+
+
+.farmer-welcome {
+  gap: var(--ks-space-6);
+  margin-bottom: 30px;
+}
+
+
+.farmer-welcome > div:first-child {
+  min-width: 0;
+}
+
+
+.farmer-welcome h1 {
+  max-width: 820px;
+  margin-top: 10px;
+}
+
+
+.farmer-welcome p {
+  max-width: 720px;
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+
+.farmer-profile {
+  min-height: 62px;
+  padding: 8px 12px 8px 8px;
+  border: 1px solid var(--ks-border);
+  border-radius: 16px;
+  background: rgba(255,255,255,.9);
+  box-shadow: var(--ks-shadow-soft);
+}
+
+
+.farmer-avatar {
+  width: 46px;
+  height: 46px;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+
+/* =========================================================
+   PRIMARY BOOKING CARD
+========================================================= */
+
+.next-booking-card {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 22px;
+  padding: 28px;
+  border-radius: var(--ks-radius-xl);
+  border: 1px solid var(--ks-border);
+  background: #fff;
+  box-shadow: var(--ks-shadow-soft);
+}
+
+
+.next-booking-card::after {
+  content: "";
+  position: absolute;
+  right: -100px;
+  top: -100px;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle,
+      rgba(82, 151, 113, .08),
+      transparent 68%
+    );
+  pointer-events: none;
+}
+
+
+.booking-card-top {
+  position: relative;
+  z-index: 1;
+}
+
+
+.card-eyebrow {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .12em;
+}
+
+
+.home-token {
+  font-size: clamp(
+    36px,
+    5vw,
+    62px
+  );
+  line-height: .95;
+  letter-spacing: -.05em;
+  font-weight: 900;
+}
+
+
+.booking-token-row {
+  gap: 12px;
+  margin-top: 10px;
+}
+
+
+.booking-status-message {
+  margin-top: 24px;
+  padding: 16px 18px;
+  border-radius: 14px;
+}
+
+
+.booking-status-message strong {
+  font-size: 18px;
+}
+
+
+.booking-status-message span {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+
+/* =========================================================
+   DETAILS
+========================================================= */
+
+.booking-main-details {
+  gap: 12px;
+  margin-top: 18px;
+}
+
+
+.home-detail {
+  min-height: 86px;
+  padding: 15px;
+  border: 1px solid #e7edef;
+  border-radius: 14px;
+  background: #fbfcfc;
+}
+
+
+.home-detail-icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 11px;
+}
+
+
+.home-detail span {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+
+
+.home-detail strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--ks-text);
+  font-size: 15px;
+}
+
+
+.home-detail small {
+  display: block;
+  margin-top: 3px;
+  color: var(--ks-text-muted);
+  font-size: 9px;
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.booking-action-row,
+.token-bottom-actions,
+.admin-payment-issues-actions {
+  gap: 10px;
+}
+
+
+.home-primary-action,
+.token-primary-action {
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: 11px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+
+.home-secondary-action,
+.token-secondary-action {
+  min-height: 46px;
+  padding: 0 16px;
+  border-radius: 11px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+
+.home-primary-action:hover,
+.token-primary-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(35, 73, 92, .10);
+}
+
+
+/* =========================================================
+   FEATURE CARDS
+========================================================= */
+
+.farmer-home-grid {
+  gap: 14px;
+  margin-top: 24px;
+}
+
+
+.home-feature-card {
+  min-height: 205px;
+  padding: 23px;
+  border-radius: var(--ks-radius-lg);
+  box-shadow: var(--ks-shadow-soft);
+}
+
+
+.home-feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--ks-shadow-hover);
+}
+
+
+.feature-icon {
+  width: 47px;
+  height: 47px;
+  border-radius: 13px;
+}
+
+
+.home-feature-card h2 {
+  margin-top: 28px;
+  color: var(--ks-text);
+  font-size: 22px;
+  line-height: 1.05;
+  letter-spacing: -.025em;
+}
+
+
+.home-feature-card p {
+  margin-top: 9px;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   PROCUREMENT JOURNEY
+========================================================= */
+
+.farmer-progress-card {
+  margin-top: 24px;
+  padding: 26px;
+  border: 1px solid var(--ks-border);
+  border-radius: var(--ks-radius-xl);
+  background: #fff;
+  box-shadow: var(--ks-shadow-soft);
+}
+
+
+.farmer-progress-heading h2 {
+  margin-top: 7px;
+  font-size: clamp(
+    26px,
+    3vw,
+    38px
+  );
+  letter-spacing: -.035em;
+}
+
+
+.farmer-progress-track {
+  margin-top: 30px;
+}
+
+
+.farmer-progress-stage span {
+  margin-top: 8px;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+
+.farmer-progress-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+}
+
+
+.farmer-progress-line {
+  height: 3px;
+}
+
+
+/* =========================================================
+   SMS / SUPPORT
+========================================================= */
+
+.home-sms-card {
+  gap: 17px;
+  margin-top: 24px;
+  padding: 22px;
+  border-radius: var(--ks-radius-lg);
+  box-shadow: var(--ks-shadow-soft);
+}
+
+
+.home-sms-icon {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  border-radius: 13px;
+}
+
+
+.home-sms-card h3 {
+  margin-top: 6px;
+  color: var(--ks-text);
+  font-size: 20px;
+  letter-spacing: -.025em;
+}
+
+
+.home-sms-card p {
+  margin-top: 7px;
+  font-size: 10px;
+  line-height: 1.65;
+}
+
+
+/* =========================================================
+   HISTORY
+========================================================= */
+
+.home-history-section {
+  margin-top: 30px;
+}
+
+
+.home-history-item {
+  min-height: 68px;
+  padding: 12px 14px;
+  border-radius: 12px;
+}
+
+
+.home-history-item:hover {
+  background: #f8fbfb;
+  transform: translateX(3px);
+}
+
+
+.home-history-item strong {
+  font-size: 13px;
+}
+
+
+.home-history-item span {
+  font-size: 8px;
+}
+
+
+/* =========================================================
+   FARMER TOKEN PAGE
+========================================================= */
+
+.token-hero-card,
+.token-status-card,
+.token-details-card {
+  padding: 28px;
+  border-radius: var(--ks-radius-xl);
+  box-shadow: var(--ks-shadow-soft);
+}
+
+
+.token-number {
+  margin-top: 8px;
+  font-size: clamp(
+    42px,
+    6vw,
+    72px
+  );
+  line-height: .9;
+  letter-spacing: -.055em;
+  font-weight: 900;
+}
+
+
+.token-status-row {
+  margin-top: 16px;
+  gap: 9px;
+}
+
+
+.token-status-row strong {
+  font-size: 16px;
+}
+
+
+.token-status-row > span:last-child {
+  font-size: 10px;
+}
+
+
+.token-arrival-grid {
+  gap: 12px;
+  margin-top: 24px;
+}
+
+
+.token-arrival-card {
+  min-height: 94px;
+  padding: 16px;
+  border-radius: 14px;
+}
+
+
+.token-arrival-icon {
+  width: 45px;
+  height: 45px;
+  flex: 0 0 45px;
+  border-radius: 12px;
+}
+
+
+.token-arrival-card span {
+  font-size: 8px;
+  font-weight: 800;
+}
+
+
+.token-arrival-card strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 14px;
+}
+
+
+/* =========================================================
+   TOKEN TIMELINE
+========================================================= */
+
+.token-status-timeline {
+  margin-top: 25px;
+}
+
+
+.token-timeline-item {
+  padding: 5px 0;
+}
+
+
+.token-timeline-marker {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+}
+
+
+.token-timeline-title-row strong {
+  font-size: 13px;
+}
+
+
+.token-timeline-content p {
+  max-width: 620px;
+  margin-top: 4px;
+  font-size: 9px;
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   TOKEN DETAILS
+========================================================= */
+
+.token-details-grid {
+  gap: 12px;
+  margin-top: 22px;
+}
+
+
+.token-detail-item {
+  min-height: 86px;
+  padding: 15px;
+  border-radius: 13px;
+}
+
+
+.token-detail-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+}
+
+
+.token-detail-item span {
+  font-size: 8px;
+}
+
+
+.token-detail-item strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 13px;
+}
+
+
+/* =========================================================
+   ADMIN DASHBOARD
+========================================================= */
+
+.admin-dashboard-hero {
+  margin-bottom: 25px;
+}
+
+
+.admin-dashboard-hero h2 {
+  font-size: clamp(
+    32px,
+    4vw,
+    50px
+  );
+  line-height: .98;
+}
+
+
+.admin-dashboard-hero p {
+  max-width: 760px;
+  margin-top: 10px;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+
+.admin-dashboard-kpi-grid {
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+
+.admin-dashboard-kpi {
+  min-height: 108px;
+  padding: 18px;
+  border-radius: 15px;
+  box-shadow: var(--ks-shadow-soft);
+}
+
+
+.admin-dashboard-kpi-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+}
+
+
+.admin-dashboard-kpi strong {
+  font-size: 27px;
+}
+
+
+.admin-dashboard-kpi span {
+  margin-top: 4px;
+  font-size: 8px;
+}
+
+
+/* =========================================================
+   ADMIN PANELS
+========================================================= */
+
+.admin-dashboard-panel,
+.admin-dashboard-alerts-panel,
+.admin-dashboard-recent-panel {
+  border-radius: 16px;
+  box-shadow: var(--ks-shadow-soft);
+}
+
+
+.admin-dashboard-panel-header {
+  padding-bottom: 14px;
+}
+
+
+.admin-dashboard-panel-header h3 {
+  margin-top: 5px;
+  font-size: 20px;
+  letter-spacing: -.02em;
+}
+
+
+.admin-dashboard-panel-link {
+  font-size: 8px;
+  font-weight: 900;
+}
+
+
+/* =========================================================
+   PAYMENT ISSUES
+========================================================= */
+
+.admin-dashboard-payment-issues-card {
+  min-height: 112px;
+  padding: 20px;
+  margin-bottom: 18px;
+  border-radius: 16px;
+  box-shadow: var(--ks-shadow-soft);
+}
+
+
+.admin-dashboard-payment-issues-content h3 {
+  margin-top: 5px;
+  font-size: 21px;
+  letter-spacing: -.025em;
+}
+
+
+.admin-dashboard-payment-issues-content p {
+  margin-top: 6px;
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+
+.admin-dashboard-payment-issues-count strong {
+  font-size: 30px;
+}
+
+
+/* =========================================================
+   ADMIN QUEUE
+========================================================= */
+
+.admin-queue-hero h2 {
+  font-size: clamp(
+    32px,
+    4vw,
+    49px
+  );
+  line-height: .98;
+}
+
+
+.admin-full-table-head,
+.admin-full-table-row {
+  min-height: 72px;
+}
+
+
+.admin-full-table-row {
+  transition:
+    background-color .18s ease,
+    transform .18s ease;
+}
+
+
+.admin-full-table-row:hover {
+  background: #fbfdfd;
+}
+
+
+.admin-row-view-button,
+.admin-row-action-button {
+  min-height: 34px;
+  border-radius: 8px;
+  font-size: 8px;
+}
+
+
+/* =========================================================
+   ADMIN PAYMENT ISSUES PAGE
+========================================================= */
+
+.admin-payment-issues-hero h2 {
+  font-size: clamp(
+    32px,
+    4vw,
+    50px
+  );
+  line-height: .98;
+}
+
+
+.admin-payment-issues-list-card {
+  border-radius: 16px;
+  box-shadow: var(--ks-shadow-soft);
+}
+
+
+.admin-payment-issue-row {
+  padding: 18px;
+  transition:
+    background-color .18s ease;
+}
+
+
+.admin-payment-issue-row:hover {
+  background: #fbfdfd;
+}
+
+
+.admin-payment-issue-title strong {
+  font-size: 13px;
+}
+
+
+.admin-payment-issue-main p {
+  font-size: 10px;
+}
+
+
+/* =========================================================
+   BUTTON / CARD MICRO INTERACTIONS
+========================================================= */
+
+.home-feature-card,
+.next-booking-card,
+.token-hero-card,
+.token-status-card,
+.token-details-card,
+.home-sms-card,
+.farmer-progress-card,
+.admin-dashboard-panel,
+.admin-dashboard-alerts-panel,
+.admin-dashboard-kpi,
+.admin-payment-issues-list-card {
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease;
+}
+
+
+.home-feature-card:hover,
+.admin-dashboard-kpi:hover {
+  transform: translateY(-2px);
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .farmer-welcome {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .farmer-profile {
+    width: 100%;
+  }
+
+  .booking-main-details {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-dashboard-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+}
+
+
+@media (max-width: 600px) {
+
+  .farmer-home-container > section h1 {
+    font-size: 34px;
+  }
+
+  .farmer-home-container > section h2,
+  .token-container > section h2 {
+    font-size: 27px;
+  }
+
+  .next-booking-card,
+  .token-hero-card,
+  .token-status-card,
+  .token-details-card,
+  .farmer-progress-card {
+    padding: 20px;
+    border-radius: 17px;
+  }
+
+  .home-token {
+    font-size: 46px;
+  }
+
+  .token-number {
+    font-size: 52px;
+  }
+
+  .booking-action-row {
+    flex-direction: column;
+  }
+
+  .home-primary-action,
+  .home-secondary-action {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .farmer-home-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-dashboard-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-dashboard-payment-issues-card {
+    grid-template-columns: 42px 1fr;
+  }
+
+  .admin-dashboard-payment-issues-count,
+  .admin-dashboard-payment-issues-button {
+    grid-column: 2;
+  }
+
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+}
+
+
+/* =========================================================
+   KRISHISETU — CIVIC / GOVERNMENT PORTAL UI
+   Replace the previous visual-polish block with this.
+========================================================= */
+
+
+/* =========================================================
+   DESIGN TOKENS
+========================================================= */
+
+:root {
+
+  --ks-navy: #173f5f;
+  --ks-blue: #216b91;
+  --ks-blue-dark: #15506f;
+  --ks-sky: #eaf5fa;
+
+  --ks-green: #287a4d;
+  --ks-green-dark: #1d633d;
+  --ks-green-soft: #e9f6ee;
+
+  --ks-saffron: #d88726;
+  --ks-saffron-soft: #fff3df;
+
+  --ks-red: #bd554c;
+  --ks-red-soft: #fff0ee;
+
+  --ks-purple: #6b5aa8;
+  --ks-purple-soft: #f1eefb;
+
+  --ks-teal: #237f7b;
+  --ks-teal-soft: #e8f7f6;
+
+  --ks-gold: #a77824;
+  --ks-gold-soft: #fff5dc;
+
+  --ks-bg: #f3f7f7;
+  --ks-bg-deep: #eaf1f2;
+
+  --ks-surface: #ffffff;
+  --ks-surface-soft: #f9fbfb;
+
+  --ks-border: #dce7e9;
+  --ks-border-strong: #c8d9dd;
+
+  --ks-text: #254b5d;
+  --ks-text-2: #52707c;
+  --ks-text-3: #83979f;
+  --ks-text-4: #a1afb4;
+
+  --ks-shadow-1:
+    0 2px 7px rgba(24, 59, 75, .035);
+
+  --ks-shadow-2:
+    0 10px 28px rgba(24, 59, 75, .065);
+
+  --ks-shadow-3:
+    0 18px 46px rgba(24, 59, 75, .09);
+
+  --ks-radius-xl: 24px;
+  --ks-radius-lg: 18px;
+  --ks-radius-md: 13px;
+  --ks-radius-sm: 9px;
+
+  --ks-ease:
+    cubic-bezier(.2,.7,.2,1);
+}
+
+
+/* =========================================================
+   GLOBAL
+========================================================= */
+
+html {
+  scroll-behavior: smooth;
+}
+
+
+body {
+  background:
+    linear-gradient(
+      180deg,
+      #eef5f6 0%,
+      #f7faf9 38%,
+      #f4f8f7 100%
+    );
+}
+
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(33, 107, 145, .18);
+  outline-offset: 2px;
+}
+
+
+button,
+a {
+  transition:
+    transform .22s var(--ks-ease),
+    box-shadow .22s var(--ks-ease),
+    border-color .22s var(--ks-ease),
+    background-color .22s var(--ks-ease),
+    color .22s var(--ks-ease),
+    opacity .22s var(--ks-ease);
+}
+
+
+/* =========================================================
+   PAGE BACKGROUND / CONTAINERS
+========================================================= */
+
+.farmer-home-page,
+.farmer-token-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      circle at 10% 0%,
+      rgba(65, 147, 100, .08),
+      transparent 26%
+    ),
+    radial-gradient(
+      circle at 100% 8%,
+      rgba(33, 107, 145, .08),
+      transparent 25%
+    );
+}
+
+
+.admin-dashboard-page,
+.admin-queue-page,
+.admin-payment-issues-page {
+  position: relative;
+}
+
+
+.farmer-home-container,
+.token-container {
+  position: relative;
+}
+
+
+/* =========================================================
+   CIVIC TOP STRIPE
+========================================================= */
+
+.farmer-home-page::before,
+.farmer-token-page::before,
+.admin-dashboard-page::before,
+.admin-queue-page::before,
+.admin-payment-issues-page::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 4px;
+  background:
+    linear-gradient(
+      90deg,
+      #d98220 0 33.33%,
+      #f7f7f7 33.33% 66.66%,
+      #2f8653 66.66% 100%
+    );
+  pointer-events: none;
+}
+
+
+/* =========================================================
+   TYPOGRAPHY
+========================================================= */
+
+.page-eyebrow,
+.admin-page-eyebrow,
+.card-eyebrow,
+.token-card-label {
+  color: var(--ks-blue);
+  letter-spacing: .13em;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+
+.farmer-welcome h1 {
+  color: var(--ks-navy);
+  font-size: clamp(
+    38px,
+    4.6vw,
+    62px
+  );
+  line-height: .98;
+  letter-spacing: -.045em;
+}
+
+
+.farmer-welcome p {
+  color: var(--ks-text-2);
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+
+.next-booking-card h2,
+.token-section-heading h2,
+.farmer-progress-heading h2,
+.token-details-card h2 {
+  color: var(--ks-navy);
+  letter-spacing: -.035em;
+}
+
+
+.admin-dashboard-hero h2,
+.admin-queue-hero h2,
+.admin-payment-issues-hero h2 {
+  color: var(--ks-navy);
+  font-size: clamp(
+    36px,
+    4.2vw,
+    54px
+  );
+  line-height: .96;
+  letter-spacing: -.045em;
+}
+
+
+.admin-dashboard-hero p,
+.admin-queue-hero p,
+.admin-payment-issues-hero p {
+  color: var(--ks-text-2);
+  font-size: 12px;
+  line-height: 1.75;
+}
+
+
+/* =========================================================
+   PROFILE
+========================================================= */
+
+.farmer-profile {
+  border: 1px solid var(--ks-border);
+  border-radius: 17px;
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff,
+      #f8fbfb
+    );
+  box-shadow: var(--ks-shadow-1);
+}
+
+
+.farmer-profile strong {
+  color: var(--ks-navy);
+  font-size: 13px;
+}
+
+
+.farmer-profile span {
+  color: var(--ks-text-3);
+  font-size: 8px;
+}
+
+
+.farmer-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 13px;
+  color: #fff;
+  background:
+    linear-gradient(
+      135deg,
+      var(--ks-blue),
+      var(--ks-green)
+    );
+  font-size: 14px;
+  font-weight: 900;
+  box-shadow:
+    0 7px 18px rgba(33, 107, 145, .16);
+}
+
+
+/* =========================================================
+   REFRESH BUTTON
+========================================================= */
+
+.farmer-refresh-button,
+.token-refresh-button,
+.admin-dashboard-refresh,
+.admin-queue-refresh-button,
+.admin-payment-issues-refresh {
+  border: 1px solid var(--ks-border);
+  border-radius: 10px;
+  color: var(--ks-blue-dark);
+  background: #fff;
+  font-weight: 800;
+}
+
+
+.farmer-refresh-button:hover,
+.token-refresh-button:hover,
+.admin-dashboard-refresh:hover,
+.admin-queue-refresh-button:hover,
+.admin-payment-issues-refresh:hover {
+  border-color: #b8cfd6;
+  background: #f7fbfc;
+  box-shadow: var(--ks-shadow-1);
+}
+
+
+/* =========================================================
+   MAIN BOOKING CARD
+========================================================= */
+
+.next-booking-card,
+.token-hero-card,
+.token-status-card,
+.token-details-card,
+.farmer-progress-card,
+.home-sms-card {
+  border: 1px solid var(--ks-border);
+  border-radius: var(--ks-radius-xl);
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff,
+      #fbfdfd
+    );
+  box-shadow: var(--ks-shadow-2);
+}
+
+
+.next-booking-card {
+  padding: 30px;
+}
+
+
+.next-booking-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  border-radius: 24px 0 0 24px;
+  background:
+    linear-gradient(
+      180deg,
+      var(--ks-saffron),
+      var(--ks-green)
+    );
+}
+
+
+/* =========================================================
+   TOKEN / LARGE NUMBERS
+========================================================= */
+
+.home-token {
+  color: var(--ks-navy);
+  font-size: clamp(
+    42px,
+    6vw,
+    68px
+  );
+  line-height: .9;
+  letter-spacing: -.06em;
+  font-weight: 950;
+}
+
+
+.token-number {
+  color: var(--ks-navy);
+  font-size: clamp(
+    48px,
+    7vw,
+    78px
+  );
+  line-height: .88;
+  letter-spacing: -.065em;
+  font-weight: 950;
+}
+
+
+/* =========================================================
+   STATUS MESSAGE
+========================================================= */
+
+.booking-status-message,
+.token-current-message {
+  border: 1px solid #dbe9df;
+  border-radius: 15px;
+  background:
+    linear-gradient(
+      135deg,
+      #f3fbf5,
+      #fbfdfb
+    );
+}
+
+
+.booking-status-message strong,
+.token-current-message strong {
+  color: var(--ks-green-dark);
+  font-size: 18px;
+}
+
+
+.booking-status-message span,
+.token-current-message p {
+  color: var(--ks-text-2);
+  line-height: 1.6;
+}
+
+
+/* =========================================================
+   DETAIL CARDS
+========================================================= */
+
+.home-detail,
+.token-arrival-card,
+.token-detail-item {
+  border: 1px solid #e1eaec;
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff,
+      #f8fbfb
+    );
+  border-radius: 14px;
+  box-shadow:
+    0 2px 8px rgba(24, 59, 75, .025);
+}
+
+
+.home-detail:hover,
+.token-arrival-card:hover,
+.token-detail-item:hover {
+  transform: translateY(-2px);
+  border-color: #cbdde1;
+  box-shadow: var(--ks-shadow-1);
+}
+
+
+.home-detail-icon,
+.token-arrival-icon,
+.token-detail-icon {
+  border-radius: 12px;
+}
+
+
+/* =========================================================
+   COLOURFUL ICON SYSTEM
+========================================================= */
+
+.home-detail:nth-child(1) .home-detail-icon,
+.token-arrival-card:nth-child(1) .token-arrival-icon {
+  color: var(--ks-blue);
+  background: var(--ks-sky);
+}
+
+
+.home-detail:nth-child(2) .home-detail-icon,
+.token-arrival-card:nth-child(2) .token-arrival-icon {
+  color: var(--ks-saffron);
+  background: var(--ks-saffron-soft);
+}
+
+
+.home-detail:nth-child(3) .home-detail-icon,
+.token-arrival-card:nth-child(3) .token-arrival-icon {
+  color: var(--ks-green);
+  background: var(--ks-green-soft);
+}
+
+
+.token-detail-item:nth-child(1) .token-detail-icon {
+  color: var(--ks-green);
+  background: var(--ks-green-soft);
+}
+
+
+.token-detail-item:nth-child(2) .token-detail-icon {
+  color: var(--ks-purple);
+  background: var(--ks-purple-soft);
+}
+
+
+.token-detail-item:nth-child(3) .token-detail-icon {
+  color: var(--ks-blue);
+  background: var(--ks-sky);
+}
+
+
+.token-detail-item:nth-child(4) .token-detail-icon {
+  color: var(--ks-saffron);
+  background: var(--ks-saffron-soft);
+}
+
+
+.token-detail-item:nth-child(5) .token-detail-icon {
+  color: var(--ks-green-dark);
+  background: var(--ks-green-soft);
+}
+
+
+.token-detail-item:nth-child(6) .token-detail-icon {
+  color: var(--ks-teal);
+  background: var(--ks-teal-soft);
+}
+
+
+/* =========================================================
+   PRIMARY ACTIONS
+========================================================= */
+
+.home-primary-action,
+.token-primary-action {
+  min-height: 50px;
+  padding: 0 20px;
+  border: 1px solid var(--ks-blue-dark);
+  border-radius: 11px;
+  color: #fff;
+  background:
+    linear-gradient(
+      135deg,
+      var(--ks-blue),
+      var(--ks-blue-dark)
+    );
+  box-shadow:
+    0 7px 18px rgba(33, 107, 145, .15);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+
+.home-primary-action:hover,
+.token-primary-action:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 27px rgba(33, 107, 145, .19);
+}
+
+
+.home-secondary-action,
+.token-secondary-action {
+  min-height: 50px;
+  padding: 0 19px;
+  border: 1px solid var(--ks-border-strong);
+  border-radius: 11px;
+  color: var(--ks-text);
+  background: #fff;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+
+.home-secondary-action:hover,
+.token-secondary-action:hover {
+  border-color: #aec8d0;
+  background: #f8fbfc;
+}
+
+
+/* =========================================================
+   FEATURE CARDS
+========================================================= */
+
+.home-feature-card {
+  position: relative;
+  min-height: 215px;
+  padding: 25px;
+  overflow: hidden;
+  border: 1px solid var(--ks-border);
+  border-radius: var(--ks-radius-lg);
+  background: #fff;
+  box-shadow: var(--ks-shadow-1);
+}
+
+
+.home-feature-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 4px;
+}
+
+
+.home-feature-card:nth-child(1)::before {
+  background: var(--ks-green);
+}
+
+
+.home-feature-card:nth-child(2)::before {
+  background: var(--ks-blue);
+}
+
+
+.home-feature-card:nth-child(3)::before {
+  background: var(--ks-saffron);
+}
+
+
+.home-feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--ks-shadow-3);
+}
+
+
+.home-feature-card h2 {
+  color: var(--ks-navy);
+  font-size: 23px;
+  line-height: 1.05;
+  letter-spacing: -.03em;
+}
+
+
+.home-feature-card p {
+  color: var(--ks-text-2);
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+
+.feature-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+}
+
+
+.booking-feature .feature-icon {
+  color: var(--ks-green);
+  background: var(--ks-green-soft);
+}
+
+
+.status-feature .feature-icon {
+  color: var(--ks-blue);
+  background: var(--ks-sky);
+}
+
+
+.help-feature .feature-icon {
+  color: var(--ks-saffron);
+  background: var(--ks-saffron-soft);
+}
+
+
+/* =========================================================
+   JOURNEY / PROGRESS
+========================================================= */
+
+.farmer-progress-card {
+  padding: 28px;
+}
+
+
+.farmer-current-stage {
+  padding: 8px 11px;
+  border: 1px solid #cbe2d2;
+  border-radius: 999px;
+  color: var(--ks-green-dark);
+  background: var(--ks-green-soft);
+  font-size: 8px;
+  font-weight: 900;
+}
+
+
+.farmer-progress-stage span {
+  color: var(--ks-text-2);
+  font-size: 9px;
+  font-weight: 900;
+}
+
+
+.farmer-progress-icon {
+  width: 50px;
+  height: 50px;
+  border: 1px solid var(--ks-border);
+  color: var(--ks-text-3);
+  background: #fff;
+  box-shadow: var(--ks-shadow-1);
+}
+
+
+.farmer-progress-stage.active .farmer-progress-icon {
+  border-color: #bfd8e0;
+  color: var(--ks-blue);
+  background: var(--ks-sky);
+}
+
+
+.farmer-progress-stage.complete .farmer-progress-icon {
+  border-color: #c4dfcd;
+  color: var(--ks-green);
+  background: var(--ks-green-soft);
+}
+
+
+.farmer-progress-line {
+  height: 4px;
+  border-radius: 999px;
+  background: #dce7e9;
+}
+
+
+.farmer-progress-line.active {
+  background:
+    linear-gradient(
+      90deg,
+      var(--ks-blue),
+      var(--ks-green)
+    );
+}
+
+
+/* =========================================================
+   SMS CARD
+========================================================= */
+
+.home-sms-card {
+  padding: 22px;
+  border-color: #cfdee3;
+  background:
+    linear-gradient(
+      135deg,
+      #f5fafc,
+      #ffffff
+    );
+}
+
+
+.home-sms-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  color: var(--ks-blue);
+  background: var(--ks-sky);
+}
+
+
+.home-sms-card h3 {
+  color: var(--ks-navy);
+  font-size: 21px;
+  letter-spacing: -.025em;
+}
+
+
+.home-sms-card p {
+  color: var(--ks-text-2);
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+
+/* =========================================================
+   HISTORY
+========================================================= */
+
+.home-history-section {
+  margin-top: 30px;
+}
+
+
+.home-history-list {
+  overflow: hidden;
+  border: 1px solid var(--ks-border);
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: var(--ks-shadow-1);
+}
+
+
+.home-history-item {
+  min-height: 70px;
+  border-bottom: 1px solid #edf2f3;
+}
+
+
+.home-history-item:last-child {
+  border-bottom: 0;
+}
+
+
+.home-history-item:hover {
+  background: #f7fbfb;
+}
+
+
+/* =========================================================
+   TOKEN TIMELINE
+========================================================= */
+
+.token-status-card {
+  padding: 30px;
+}
+
+
+.token-progress-bar {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e3ecee;
+}
+
+
+.token-progress-bar > div {
+  min-width: 3px;
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      90deg,
+      var(--ks-blue),
+      var(--ks-green)
+    );
+}
+
+
+.token-timeline-marker {
+  width: 44px;
+  height: 44px;
+  border: 2px solid #dbe7ea;
+  color: var(--ks-text-3);
+  background: #fff;
+}
+
+
+.token-timeline-item.active
+.token-timeline-marker {
+  border-color: #b8d4df;
+  color: var(--ks-blue);
+  background: var(--ks-sky);
+  box-shadow:
+    0 0 0 6px rgba(33, 107, 145, .06);
+}
+
+
+.token-timeline-item.complete
+.token-timeline-marker {
+  border-color: #bddcc7;
+  color: var(--ks-green);
+  background: var(--ks-green-soft);
+}
+
+
+.token-timeline-title-row strong {
+  color: var(--ks-navy);
+  font-size: 14px;
+}
+
+
+.token-timeline-content p {
+  color: var(--ks-text-2);
+  font-size: 10px;
+  line-height: 1.65;
+}
+
+
+.token-now-pill {
+  padding: 5px 8px;
+  border-radius: 999px;
+  color: var(--ks-blue-dark);
+  background: var(--ks-sky);
+  font-size: 6px;
+  font-weight: 900;
+}
+
+
+/* =========================================================
+   TOKEN SIDE CARDS
+========================================================= */
+
+.token-side-card,
+.token-visual-card {
+  border: 1px solid var(--ks-border);
+  border-radius: var(--ks-radius-lg);
+  box-shadow: var(--ks-shadow-1);
+}
+
+
+.token-visual-card {
+  overflow: hidden;
+  background:
+    linear-gradient(
+      145deg,
+      var(--ks-navy),
+      var(--ks-blue-dark)
+    );
+  color: #fff;
+}
+
+
+.token-visual-number {
+  font-size: clamp(
+    42px,
+    5vw,
+    58px
+  );
+  font-weight: 950;
+  letter-spacing: -.06em;
+}
+
+
+.token-visual-top span,
+.token-visual-label {
+  opacity: .85;
+  font-weight: 900;
+}
+
+
+.token-visual-decoration span {
+  background: rgba(255,255,255,.55);
+}
+
+
+.token-side-card {
+  background: #fff;
+}
+
+
+.token-side-icon.green {
+  color: var(--ks-green);
+  background: var(--ks-green-soft);
+}
+
+
+.token-side-icon.blue {
+  color: var(--ks-blue);
+  background: var(--ks-sky);
+}
+
+
+.token-side-icon.gold {
+  color: var(--ks-saffron);
+  background: var(--ks-saffron-soft);
+}
+
+
+/* =========================================================
+   ADMIN DASHBOARD
+========================================================= */
+
+.admin-dashboard-kpi-grid {
+  gap: 13px;
+}
+
+
+.admin-dashboard-kpi {
+  min-height: 116px;
+  padding: 20px;
+  border: 1px solid var(--ks-border);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: var(--ks-shadow-1);
+}
+
+
+.admin-dashboard-kpi:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--ks-shadow-2);
+}
+
+
+.admin-dashboard-kpi-icon {
+  width: 45px;
+  height: 45px;
+  border-radius: 12px;
+}
+
+
+.admin-dashboard-kpi strong {
+  color: var(--ks-navy);
+  font-size: 29px;
+  letter-spacing: -.03em;
+}
+
+
+.admin-dashboard-kpi span {
+  color: var(--ks-text-3);
+  font-size: 8px;
+  font-weight: 900;
+}
+
+
+/* KPI palette */
+
+.admin-dashboard-kpi.blue
+.admin-dashboard-kpi-icon {
+  color: var(--ks-blue);
+  background: var(--ks-sky);
+}
+
+
+.admin-dashboard-kpi.purple
+.admin-dashboard-kpi-icon {
+  color: var(--ks-purple);
+  background: var(--ks-purple-soft);
+}
+
+
+.admin-dashboard-kpi.gold
+.admin-dashboard-kpi-icon {
+  color: var(--ks-gold);
+  background: var(--ks-gold-soft);
+}
+
+
+.admin-dashboard-kpi.green
+.admin-dashboard-kpi-icon {
+  color: var(--ks-green);
+  background: var(--ks-green-soft);
+}
+
+
+.admin-dashboard-kpi.orange
+.admin-dashboard-kpi-icon {
+  color: var(--ks-saffron);
+  background: var(--ks-saffron-soft);
+}
+
+
+.admin-dashboard-kpi.teal
+.admin-dashboard-kpi-icon {
+  color: var(--ks-teal);
+  background: var(--ks-teal-soft);
+}
+
+
+/* =========================================================
+   ADMIN PANELS
+========================================================= */
+
+.admin-dashboard-panel,
+.admin-dashboard-alerts-panel,
+.admin-dashboard-recent-panel,
+.admin-payment-issues-list-card {
+  border: 1px solid var(--ks-border);
+  border-radius: var(--ks-radius-lg);
+  background: #fff;
+  box-shadow: var(--ks-shadow-1);
+}
+
+
+.admin-dashboard-panel-header {
+  padding: 17px 18px 14px;
+  border-bottom: 1px solid #edf2f3;
+}
+
+
+.admin-dashboard-panel-header h3,
+.admin-payment-issues-list-header h3 {
+  color: var(--ks-navy);
+  font-size: 20px;
+  letter-spacing: -.025em;
+}
+
+
+.admin-dashboard-panel-link {
+  color: var(--ks-blue);
+  font-weight: 900;
+}
+
+
+/* =========================================================
+   ALERTS
+========================================================= */
+
+.admin-dashboard-alert-row {
+  min-height: 62px;
+  border-bottom: 1px solid #edf2f3;
+}
+
+
+.admin-dashboard-alert-row:hover {
+  background: #f8fbfb;
+}
+
+
+.admin-dashboard-alert-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+}
+
+
+.admin-dashboard-alert-row.orange
+.admin-dashboard-alert-icon {
+  color: var(--ks-saffron);
+  background: var(--ks-saffron-soft);
+}
+
+
+.admin-dashboard-alert-row.gold
+.admin-dashboard-alert-icon {
+  color: var(--ks-gold);
+  background: var(--ks-gold-soft);
+}
+
+
+.admin-dashboard-alert-row.red
+.admin-dashboard-alert-icon {
+  color: var(--ks-red);
+  background: var(--ks-red-soft);
+}
+
+
+.admin-dashboard-alert-row.purple
+.admin-dashboard-alert-icon {
+  color: var(--ks-purple);
+  background: var(--ks-purple-soft);
+}
+
+
+/* =========================================================
+   PAYMENT ISSUES FEATURE
+========================================================= */
+
+.admin-dashboard-payment-issues-card {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 118px;
+  margin-bottom: 18px;
+  padding: 20px;
+  border-color: #ead9be;
+  background:
+    linear-gradient(
+      135deg,
+      #fff9f0,
+      #ffffff
+    );
+}
+
+
+.admin-dashboard-payment-issues-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: var(--ks-saffron);
+}
+
+
+.admin-dashboard-payment-issues-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 13px;
+  color: var(--ks-saffron);
+  background: var(--ks-saffron-soft);
+}
+
+
+.admin-dashboard-payment-issues-content h3 {
+  color: var(--ks-navy);
+  font-size: 21px;
+}
+
+
+.admin-dashboard-payment-issues-content p {
+  color: var(--ks-text-2);
+  font-size: 9px;
+  line-height: 1.6;
+}
+
+
+.admin-dashboard-payment-issues-count strong {
+  color: #a86925;
+  font-size: 31px;
+}
+
+
+.admin-dashboard-payment-issues-count span {
+  color: #9a866d;
+  font-size: 7px;
+  font-weight: 900;
+}
+
+
+.admin-dashboard-payment-issues-button {
+  min-height: 40px;
+  padding: 0 13px;
+  border: 1px solid #dec7a4;
+  border-radius: 9px;
+  color: #8d632c;
+  background: #fff8ec;
+  font-size: 8px;
+  font-weight: 900;
+}
+
+
+.admin-dashboard-payment-issues-button:hover {
+  background: #fff0d7;
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   ADMIN QUEUE
+========================================================= */
+
+.admin-queue-filter-panel {
+  border: 1px solid var(--ks-border);
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: var(--ks-shadow-1);
+}
+
+
+.admin-queue-search {
+  border-color: #d8e4e7;
+  background: #f9fbfb;
+}
+
+
+.admin-full-queue-table {
+  overflow: hidden;
+  border: 1px solid var(--ks-border);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: var(--ks-shadow-1);
+}
+
+
+.admin-full-table-head {
+  color: #67818b;
+  background: #f2f7f8;
+  border-bottom: 1px solid var(--ks-border);
+  font-size: 8px;
+  font-weight: 900;
+}
+
+
+.admin-full-table-row {
+  min-height: 77px;
+  border-bottom: 1px solid #edf2f3;
+}
+
+
+.admin-full-table-row:hover {
+  background: #f8fbfb;
+}
+
+
+/* =========================================================
+   STATUS PILLS
+========================================================= */
+
+.admin-status-pill,
+.admin-dashboard-status {
+  border-radius: 999px;
+  font-weight: 900;
+}
+
+
+.admin-status-pill.blue,
+.admin-dashboard-status.blue {
+  color: var(--ks-blue-dark);
+  background: var(--ks-sky);
+}
+
+
+.admin-status-pill.green,
+.admin-dashboard-status.green {
+  color: var(--ks-green-dark);
+  background: var(--ks-green-soft);
+}
+
+
+.admin-status-pill.orange,
+.admin-dashboard-status.orange {
+  color: #a76420;
+  background: var(--ks-saffron-soft);
+}
+
+
+.admin-status-pill.purple,
+.admin-dashboard-status.purple {
+  color: #625094;
+  background: var(--ks-purple-soft);
+}
+
+
+.admin-status-pill.gold,
+.admin-dashboard-status.gold {
+  color: #946c21;
+  background: var(--ks-gold-soft);
+}
+
+
+/* =========================================================
+   ADMIN PAYMENT ISSUES
+========================================================= */
+
+.admin-payment-issues-filter {
+  border: 1px solid var(--ks-border);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: var(--ks-shadow-1);
+}
+
+
+.admin-payment-issues-search {
+  border-color: #d8e4e7;
+  background: #f9fbfb;
+}
+
+
+.admin-payment-issue-row {
+  border-bottom: 1px solid #edf2f3;
+}
+
+
+.admin-payment-issue-row:hover {
+  background: #f8fbfb;
+}
+
+
+.admin-payment-issue-icon.open {
+  color: var(--ks-saffron);
+  background: var(--ks-saffron-soft);
+}
+
+
+.admin-payment-issue-icon.resolved {
+  color: var(--ks-green);
+  background: var(--ks-green-soft);
+}
+
+
+.admin-payment-issue-status.open {
+  color: #9e6724;
+  background: var(--ks-saffron-soft);
+}
+
+
+.admin-payment-issue-status.resolved {
+  color: var(--ks-green-dark);
+  background: var(--ks-green-soft);
+}
+
+
+/* =========================================================
+   EMPTY STATES
+========================================================= */
+
+.empty-state-card,
+.admin-dashboard-empty,
+.admin-queue-empty,
+.admin-payment-issues-state,
+.token-error-card,
+.token-loading-card {
+  border: 1px solid var(--ks-border);
+  border-radius: var(--ks-radius-xl);
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff,
+      #f8fbfb
+    );
+  box-shadow: var(--ks-shadow-1);
+}
+
+
+.empty-state-icon,
+.token-error-icon,
+.token-loading-icon {
+  width: 62px;
+  height: 62px;
+  border-radius: 17px;
+  color: var(--ks-blue);
+  background: var(--ks-sky);
+}
+
+
+/* =========================================================
+   FOOTERS / SUPPORT LINKS
+========================================================= */
+
+.home-support-row {
+  color: var(--ks-text-3);
+  font-size: 8px;
+}
+
+
+.home-support-row a {
+  color: var(--ks-blue);
+  font-weight: 900;
+}
+
+
+/* =========================================================
+   SMOOTH HOVER SYSTEM
+========================================================= */
+
+.next-booking-card,
+.token-hero-card,
+.token-status-card,
+.token-details-card,
+.farmer-progress-card,
+.home-sms-card,
+.admin-dashboard-panel,
+.admin-dashboard-kpi,
+.admin-dashboard-alerts-panel,
+.admin-dashboard-payment-issues-card,
+.admin-payment-issues-list-card {
+  transition:
+    box-shadow .25s var(--ks-ease),
+    transform .25s var(--ks-ease),
+    border-color .25s var(--ks-ease);
+}
+
+
+.next-booking-card:hover,
+.token-hero-card:hover,
+.token-status-card:hover,
+.token-details-card:hover,
+.farmer-progress-card:hover {
+  box-shadow: var(--ks-shadow-3);
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .farmer-welcome {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+
+  .farmer-profile {
+    width: 100%;
+  }
+
+
+  .booking-main-details {
+    grid-template-columns: 1fr;
+  }
+
+
+  .admin-dashboard-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+
+  .admin-dashboard-payment-issues-card {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+
+  .admin-dashboard-payment-issues-count,
+  .admin-dashboard-payment-issues-button {
+    grid-column: 2;
+  }
+
+}
+
+
+@media (max-width: 650px) {
+
+  .farmer-welcome h1 {
+    font-size: 36px;
+  }
+
+
+  .admin-dashboard-hero h2,
+  .admin-queue-hero h2,
+  .admin-payment-issues-hero h2 {
+    font-size: 36px;
+  }
+
+
+  .next-booking-card,
+  .token-hero-card,
+  .token-status-card,
+  .token-details-card,
+  .farmer-progress-card {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+
+  .home-token {
+    font-size: 47px;
+  }
+
+
+  .token-number {
+    font-size: 54px;
+  }
+
+
+  .booking-action-row,
+  .token-bottom-actions {
+    flex-direction: column;
+  }
+
+
+  .home-primary-action,
+  .home-secondary-action,
+  .token-primary-action,
+  .token-secondary-action {
+    width: 100%;
+    justify-content: center;
+  }
+
+
+  .farmer-home-grid {
+    grid-template-columns: 1fr;
+  }
+
+
+  .admin-dashboard-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+
+  .admin-dashboard-payment-issues-card {
+    grid-template-columns: 1fr;
+  }
+
+
+  .admin-dashboard-payment-issues-icon {
+    width: 48px;
+  }
+
+
+  .admin-dashboard-payment-issues-count,
+  .admin-dashboard-payment-issues-button {
+    grid-column: auto;
+  }
+
+
+  .admin-dashboard-payment-issues-button {
+    width: 100%;
+  }
+
+
+  .admin-full-table-head {
+    font-size: 7px;
+  }
+
+}
+
+
+@media (max-width: 450px) {
+
+  .farmer-welcome h1,
+  .admin-dashboard-hero h2,
+  .admin-queue-hero h2,
+  .admin-payment-issues-hero h2 {
+    font-size: 32px;
+  }
+
+
+  .home-token {
+    font-size: 42px;
+  }
+
+
+  .token-number {
+    font-size: 48px;
+  }
+
+
+  .home-feature-card {
+    min-height: 180px;
+  }
+
+
+  .home-feature-card h2 {
+    font-size: 20px;
+  }
+
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  html {
+    scroll-behavior: auto;
+  }
+
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+
+}
+
+
+/* =========================================================
+   KRISHISETU — FINAL UI SYSTEM
+   Strong hierarchy + colourful text + clear navigation
+   + complete dark mode
+========================================================= */
+
+
+/* =========================================================
+   1. LIGHT THEME
+========================================================= */
+
+:root {
+
+  --ks-bg: #f2f7f8;
+  --ks-bg-2: #e8f1f3;
+
+  --ks-surface: #ffffff;
+  --ks-surface-2: #f8fbfb;
+  --ks-surface-3: #eef5f6;
+
+  --ks-primary: #165d80;
+  --ks-primary-dark: #0d4662;
+  --ks-primary-light: #e6f3f8;
+
+  --ks-green: #217a49;
+  --ks-green-light: #e8f6ed;
+
+  --ks-orange: #c87820;
+  --ks-orange-light: #fff1de;
+
+  --ks-red: #b94f47;
+  --ks-red-light: #fff0ee;
+
+  --ks-purple: #66529b;
+  --ks-purple-light: #f0edfa;
+
+  --ks-teal: #177a76;
+  --ks-teal-light: #e7f7f5;
+
+  --ks-gold: #98701f;
+  --ks-gold-light: #fff5dc;
+
+  --ks-heading: #153f57;
+  --ks-text: #365d6c;
+  --ks-text-soft: #6b858e;
+  --ks-text-muted: #91a2a8;
+
+  --ks-border: #d9e5e8;
+  --ks-border-strong: #bfd1d6;
+
+  --ks-shadow-small:
+    0 3px 12px rgba(20, 57, 73, .05);
+
+  --ks-shadow-medium:
+    0 10px 28px rgba(20, 57, 73, .08);
+
+  --ks-shadow-large:
+    0 20px 55px rgba(20, 57, 73, .11);
+
+  --ks-radius-sm: 9px;
+  --ks-radius-md: 14px;
+  --ks-radius-lg: 18px;
+  --ks-radius-xl: 24px;
+}
+
+
+/* =========================================================
+   2. REAL PAGE BACKGROUND
+========================================================= */
+
+html,
+body,
+#root {
+
+  min-height: 100%;
+
+}
+
+
+body {
+
+  margin: 0;
+
+  color: var(--ks-text);
+
+  background:
+    radial-gradient(
+      circle at 0% 0%,
+      rgba(33, 122, 73, .08),
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(22, 93, 128, .10),
+      transparent 26%
+    ),
+    linear-gradient(
+      180deg,
+      var(--ks-bg),
+      #f8fbfa
+    );
+
+}
+
+
+.farmer-home-page,
+.farmer-token-page,
+.admin-dashboard-page,
+.admin-queue-page,
+.admin-payment-issues-page {
+
+  min-height: 100vh;
+
+  background: transparent;
+
+}
+
+
+/* =========================================================
+   3. GOVERNMENT-STYLE TOP STRIPE
+========================================================= */
+
+.farmer-home-page::before,
+.farmer-token-page::before,
+.admin-dashboard-page::before,
+.admin-queue-page::before,
+.admin-payment-issues-page::before {
+
+  content: "";
+
+  position: fixed;
+
+  top: 0;
+  left: 0;
+  right: 0;
+
+  z-index: 1000;
+
+  height: 4px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #d47a20 0 33.33%,
+      #f8faf9 33.33% 66.66%,
+      #318552 66.66% 100%
+    );
+
+}
+
+
+/* =========================================================
+   4. HEADINGS
+========================================================= */
+
+.farmer-welcome h1,
+.admin-dashboard-hero h2,
+.admin-queue-hero h2,
+.admin-payment-issues-hero h2 {
+
+  margin-bottom: 10px;
+
+  color: var(--ks-heading);
+
+  font-weight: 950;
+
+  letter-spacing: -.045em;
+
+  text-wrap: balance;
+
+}
+
+
+.farmer-welcome h1 {
+
+  font-size: clamp(
+    38px,
+    5vw,
+    64px
+  );
+
+  line-height: .96;
+
+}
+
+
+.admin-dashboard-hero h2,
+.admin-queue-hero h2,
+.admin-payment-issues-hero h2 {
+
+  font-size: clamp(
+    38px,
+    4.7vw,
+    58px
+  );
+
+  line-height: .94;
+
+}
+
+
+.farmer-welcome h1::first-line,
+.admin-dashboard-hero h2::first-line,
+.admin-queue-hero h2::first-line {
+
+  color: var(--ks-primary);
+
+}
+
+
+.farmer-welcome p,
+.admin-dashboard-hero p,
+.admin-queue-hero p {
+
+  color: var(--ks-text-soft);
+
+  font-size: 13px;
+
+  line-height: 1.75;
+
+}
+
+
+/* =========================================================
+   5. EYEBROWS — STRONG COLOUR
+========================================================= */
+
+.page-eyebrow,
+.admin-page-eyebrow,
+.card-eyebrow,
+.token-card-label {
+
+  display: inline-block;
+
+  color: var(--ks-orange);
+
+  font-size: 10px;
+
+  font-weight: 950;
+
+  letter-spacing: .15em;
+
+}
+
+
+.page-eyebrow::before,
+.admin-page-eyebrow::before {
+
+  content: "";
+
+  display: inline-block;
+
+  width: 7px;
+  height: 7px;
+
+  margin-right: 7px;
+
+  border-radius: 50%;
+
+  background: currentColor;
+
+  vertical-align: middle;
+
+}
+
+
+/* =========================================================
+   6. PROFILE / USER AREA
+========================================================= */
+
+.farmer-profile {
+
+  border:
+    1px solid var(--ks-border);
+
+  border-radius:
+    var(--ks-radius-lg);
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--ks-surface),
+      var(--ks-surface-2)
+    );
+
+  box-shadow:
+    var(--ks-shadow-small);
+
+}
+
+
+.farmer-profile strong {
+
+  color: var(--ks-heading);
+
+  font-size: 14px;
+
+}
+
+
+.farmer-profile span {
+
+  color: var(--ks-text-soft);
+
+}
+
+
+/* =========================================================
+   7. MAIN PRIORITY CARD
+========================================================= */
+
+.next-booking-card {
+
+  position: relative;
+
+  overflow: hidden;
+
+  padding: 30px;
+
+  border:
+    1px solid var(--ks-border);
+
+  border-radius:
+    var(--ks-radius-xl);
+
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #f7fbfa
+    );
+
+  box-shadow:
+    var(--ks-shadow-medium);
+
+}
+
+
+.next-booking-card::before {
+
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  top: 0;
+  bottom: 0;
+
+  width: 6px;
+
+  background:
+    linear-gradient(
+      180deg,
+      var(--ks-orange),
+      var(--ks-green)
+    );
+
+}
+
+
+.next-booking-card::after {
+
+  content: "";
+
+  position: absolute;
+
+  width: 250px;
+  height: 250px;
+
+  right: -120px;
+  top: -120px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(33, 122, 73, .11),
+      transparent 68%
+    );
+
+  pointer-events: none;
+
+}
+
+
+/* =========================================================
+   8. TOKEN NUMBER
+========================================================= */
+
+.home-token,
+.token-number {
+
+  color: var(--ks-primary-dark);
+
+  font-weight: 950;
+
+  letter-spacing: -.065em;
+
+  text-shadow:
+    0 2px 0 rgba(255,255,255,.7);
+
+}
+
+
+.home-token {
+
+  font-size: clamp(
+    46px,
+    6vw,
+    72px
+  );
+
+}
+
+
+.token-number {
+
+  font-size: clamp(
+    52px,
+    7vw,
+    82px
+  );
+
+}
+
+
+/* =========================================================
+   9. STATUS MESSAGE
+========================================================= */
+
+.booking-status-message {
+
+  border:
+    1px solid #cfe4d5;
+
+  border-radius:
+    var(--ks-radius-md);
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--ks-green-light),
+      #ffffff
+    );
+
+}
+
+
+.booking-status-message strong {
+
+  color: var(--ks-green-dark, #1d663e);
+
+  font-size: 18px;
+
+}
+
+
+.booking-status-message span {
+
+  color: var(--ks-text);
+
+}
+
+
+/* =========================================================
+   10. DETAIL CARDS
+========================================================= */
+
+.home-detail,
+.token-arrival-card,
+.token-detail-item {
+
+  border:
+    1px solid var(--ks-border);
+
+  border-radius:
+    var(--ks-radius-md);
+
+  background:
+    var(--ks-surface);
+
+  box-shadow:
+    var(--ks-shadow-small);
+
+}
+
+
+.home-detail:hover,
+.token-arrival-card:hover,
+.token-detail-item:hover {
+
+  transform:
+    translateY(-3px);
+
+  border-color:
+    var(--ks-border-strong);
+
+  box-shadow:
+    var(--ks-shadow-medium);
+
+}
+
+
+/* =========================================================
+   11. COLOURFUL DETAIL ICONS
+========================================================= */
+
+.home-detail:nth-child(1) .home-detail-icon,
+.token-arrival-card:nth-child(1) .token-arrival-icon {
+
+  color: var(--ks-primary);
+
+  background: var(--ks-primary-light);
+
+}
+
+
+.home-detail:nth-child(2) .home-detail-icon,
+.token-arrival-card:nth-child(2) .token-arrival-icon {
+
+  color: var(--ks-orange);
+
+  background: var(--ks-orange-light);
+
+}
+
+
+.home-detail:nth-child(3) .home-detail-icon,
+.token-arrival-card:nth-child(3) .token-arrival-icon {
+
+  color: var(--ks-green);
+
+  background: var(--ks-green-light);
+
+}
+
+
+/* =========================================================
+   12. BIG PRIMARY BUTTONS
+========================================================= */
+
+.home-primary-action,
+.token-primary-action {
+
+  min-height: 52px;
+
+  padding:
+    0 22px;
+
+  border:
+    1px solid var(--ks-primary-dark);
+
+  border-radius:
+    12px;
+
+  color:
+    #ffffff;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--ks-primary),
+      var(--ks-primary-dark)
+    );
+
+  box-shadow:
+    0 8px 22px rgba(22, 93, 128, .18);
+
+  font-size:
+    11px;
+
+  font-weight:
+    950;
+
+}
+
+
+.home-primary-action:hover,
+.token-primary-action:hover {
+
+  transform:
+    translateY(-3px);
+
+  box-shadow:
+    0 14px 30px rgba(22, 93, 128, .23);
+
+}
+
+
+/* =========================================================
+   13. SECONDARY BUTTON
+========================================================= */
+
+.home-secondary-action,
+.token-secondary-action {
+
+  min-height: 52px;
+
+  padding:
+    0 20px;
+
+  border:
+    1px solid var(--ks-border-strong);
+
+  border-radius:
+    12px;
+
+  color:
+    var(--ks-primary-dark);
+
+  background:
+    var(--ks-surface);
+
+  font-size:
+    10px;
+
+  font-weight:
+    900;
+
+}
+
+
+.home-secondary-action:hover,
+.token-secondary-action:hover {
+
+  color:
+    var(--ks-primary);
+
+  border-color:
+    var(--ks-primary);
+
+  background:
+    var(--ks-primary-light);
+
+}
+
+
+/* =========================================================
+   14. FEATURE CARDS — MAKE DESTINATIONS OBVIOUS
+========================================================= */
+
+.farmer-home-grid {
+
+  gap: 16px;
+
+}
+
+
+.home-feature-card {
+
+  position: relative;
+
+  min-height: 225px;
+
+  padding: 26px;
+
+  overflow: hidden;
+
+  border:
+    1px solid var(--ks-border);
+
+  border-radius:
+    var(--ks-radius-lg);
+
+  background:
+    var(--ks-surface);
+
+  box-shadow:
+    var(--ks-shadow-small);
+
+}
+
+
+.home-feature-card::before {
+
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  right: 0;
+  top: 0;
+
+  height: 5px;
+
+}
+
+
+.home-feature-card:nth-child(1)::before {
+
+  background: var(--ks-green);
+
+}
+
+
+.home-feature-card:nth-child(2)::before {
+
+  background: var(--ks-primary);
+
+}
+
+
+.home-feature-card:nth-child(3)::before {
+
+  background: var(--ks-orange);
+
+}
+
+
+.home-feature-card:hover {
+
+  transform:
+    translateY(-6px);
+
+  box-shadow:
+    var(--ks-shadow-large);
+
+}
+
+
+/* BIG CLICKABLE TITLE */
+
+.home-feature-card h2 {
+
+  margin-top: 30px;
+
+  color:
+    var(--ks-heading);
+
+  font-size:
+    24px;
+
+  line-height:
+    1.04;
+
+  letter-spacing:
+    -.035em;
+
+}
+
+
+/* MAKE DESTINATION WORDS COLOURFUL */
+
+.booking-feature h2 {
+
+  color:
+    var(--ks-green);
+
+}
+
+
+.status-feature h2 {
+
+  color:
+    var(--ks-primary);
+
+}
+
+
+.help-feature h2 {
+
+  color:
+    var(--ks-orange);
+
+}
+
+
+.home-feature-card p {
+
+  color:
+    var(--ks-text-soft);
+
+  font-size:
+    11px;
+
+  line-height:
+    1.7;
+
+}
+
+
+/* CLICK / OPEN HINT */
+
+.home-feature-card::after {
+
+  content:
+    "OPEN";
+
+  position:
+    absolute;
+
+  right:
+    22px;
+
+  bottom:
+    20px;
+
+  padding:
+    6px 9px;
+
+  border-radius:
+    999px;
+
+  font-size:
+    7px;
+
+  font-weight:
+    950;
+
+  letter-spacing:
+    .08em;
+
+  opacity:
+    .78;
+
+}
+
+
+.booking-feature::after {
+
+  color:
+    var(--ks-green);
+
+  background:
+    var(--ks-green-light);
+
+}
+
+
+.status-feature::after {
+
+  color:
+    var(--ks-primary);
+
+  background:
+    var(--ks-primary-light);
+
+}
+
+
+.help-feature::after {
+
+  color:
+    var(--ks-orange);
+
+  background:
+    var(--ks-orange-light);
+
+}
+
+
+/* =========================================================
+   15. JOURNEY
+========================================================= */
+
+.farmer-progress-card {
+
+  padding:
+    28px;
+
+  border:
+    1px solid var(--ks-border);
+
+  border-radius:
+    var(--ks-radius-xl);
+
+  background:
+    var(--ks-surface);
+
+  box-shadow:
+    var(--ks-shadow-medium);
+
+}
+
+
+.farmer-progress-heading h2 {
+
+  color:
+    var(--ks-primary);
+
+  font-size:
+    clamp(
+      27px,
+      3vw,
+      40px
+    );
+
+}
+
+
+.farmer-progress-icon {
+
+  width:
+    50px;
+
+  height:
+    50px;
+
+  border:
+    1px solid var(--ks-border);
+
+  background:
+    var(--ks-surface-2);
+
+}
+
+
+.farmer-progress-stage.active
+.farmer-progress-icon {
+
+  color:
+    var(--ks-primary);
+
+  border-color:
+    #b9d6e1;
+
+  background:
+    var(--ks-primary-light);
+
+}
+
+
+.farmer-progress-stage.complete
+.farmer-progress-icon {
+
+  color:
+    var(--ks-green);
+
+  border-color:
+    #c1dfcb;
+
+  background:
+    var(--ks-green-light);
+
+}
+
+
+.farmer-progress-line {
+
+  height:
+    4px;
+
+  border-radius:
+    999px;
+
+  background:
+    #dbe6e8;
+
+}
+
+
+.farmer-progress-line.active {
+
+  background:
+    linear-gradient(
+      90deg,
+      var(--ks-primary),
+      var(--ks-green)
+    );
+
+}
+
+
+/* =========================================================
+   16. SMS / NOTIFICATION
+========================================================= */
+
+.home-sms-card {
+
+  padding:
+    23px;
+
+  border:
+    1px solid #cddfe5;
+
+  border-radius:
+    var(--ks-radius-lg);
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--ks-primary-light),
+      var(--ks-surface)
+    );
+
+  box-shadow:
+    var(--ks-shadow-small);
+
+}
+
+
+.home-sms-card h3 {
+
+  color:
+    var(--ks-primary-dark);
+
+  font-size:
+    21px;
+
+}
+
+
+.home-sms-card p {
+
+  color:
+    var(--ks-text);
+
+  line-height:
+    1.7;
+
+}
+
+
+/* =========================================================
+   17. HISTORY
+========================================================= */
+
+.home-history-list {
+
+  overflow:
+    hidden;
+
+  border:
+    1px solid var(--ks-border);
+
+  border-radius:
+    var(--ks-radius-md);
+
+  background:
+    var(--ks-surface);
+
+  box-shadow:
+    var(--ks-shadow-small);
+
+}
+
+
+.home-history-item {
+
+  min-height:
+    72px;
+
+  border-bottom:
+    1px solid var(--ks-border);
+
+}
+
+
+.home-history-item:hover {
+
+  background:
+    var(--ks-surface-3);
+
+}
+
+
+/* =========================================================
+   18. TOKEN STATUS
+========================================================= */
+
+.token-status-card,
+.token-details-card {
+
+  padding:
+    30px;
+
+  border:
+    1px solid var(--ks-border);
+
+  border-radius:
+    var(--ks-radius-xl);
+
+  background:
+    var(--ks-surface);
+
+  box-shadow:
+    var(--ks-shadow-medium);
+
+}
+
+
+.token-section-heading h2 {
+
+  color:
+    var(--ks-primary);
+
+  font-size:
+    clamp(
+      28px,
+      3vw,
+      41px
+    );
+
+}
+
+
+/* =========================================================
+   19. ADMIN KPI — BIG NUMBERS
+========================================================= */
+
+.admin-dashboard-kpi {
+
+  min-height:
+    120px;
+
+  padding:
+    20px;
+
+  border:
+    1px solid var(--ks-border);
+
+  border-radius:
+    16px;
+
+  background:
+    var(--ks-surface);
+
+  box-shadow:
+    var(--ks-shadow-small);
+
+}
+
+
+.admin-dashboard-kpi:hover {
+
+  transform:
+    translateY(-4px);
+
+  box-shadow:
+    var(--ks-shadow-medium);
+
+}
+
+
+.admin-dashboard-kpi strong {
+
+  color:
+    var(--ks-heading);
+
+  font-size:
+    31px;
+
+  font-weight:
+    950;
+
+}
+
+
+.admin-dashboard-kpi span {
+
+  color:
+    var(--ks-text-soft);
+
+  font-size:
+    8px;
+
+  font-weight:
+    900;
+
+}
+
+
+/* =========================================================
+   20. ADMIN PANEL HEADINGS
+========================================================= */
+
+.admin-dashboard-panel-header h3 {
+
+  color:
+    var(--ks-primary);
+
+  font-size:
+    21px;
+
+  font-weight:
+    900;
+
+  letter-spacing:
+    -.025em;
+
+}
+
+
+/* =========================================================
+   21. ADMIN QUICK ACTIONS
+========================================================= */
+
+.admin-dashboard-quick-action {
+
+  position:
+    relative;
+
+  min-height:
+    72px;
+
+  padding:
+    14px 16px;
+
+  border:
+    1px solid var(--ks-border);
+
+  border-radius:
+    13px;
+
+  background:
+    var(--ks-surface);
+
+}
+
+
+.admin-dashboard-quick-action:hover {
+
+  transform:
+    translateX(4px);
+
+  border-color:
+    var(--ks-primary);
+
+  background:
+    var(--ks-primary-light);
+
+}
+
+
+.admin-dashboard-quick-action strong {
+
+  color:
+    var(--ks-heading);
+
+  font-size:
+    13px;
+
+}
+
+
+.admin-dashboard-quick-action span {
+
+  color:
+    var(--ks-text-soft);
+
+  font-size:
+    9px;
+
+}
+
+
+/* =========================================================
+   22. ADMIN QUEUE ACTION BUTTONS
+========================================================= */
+
+.admin-row-action-button {
+
+  min-height:
+    36px;
+
+  padding:
+    0 12px;
+
+  border-radius:
+    9px;
+
+  font-size:
+    8px;
+
+  font-weight:
+    950;
+
+}
+
+
+.admin-row-action-button.green {
+
+  color:
+    var(--ks-green);
+
+  background:
+    var(--ks-green-light);
+
+}
+
+
+.admin-row-action-button.purple {
+
+  color:
+    var(--ks-purple);
+
+  background:
+    var(--ks-purple-light);
+
+}
+
+
+.admin-row-action-button.gold {
+
+  color:
+    var(--ks-gold);
+
+  background:
+    var(--ks-gold-light);
+
+}
+
+
+.admin-row-action-button.teal {
+
+  color:
+    var(--ks-teal);
+
+  background:
+    var(--ks-teal-light);
+
+}
+
+
+/* =========================================================
+   23. PAYMENT ISSUES
+========================================================= */
+
+.admin-dashboard-payment-issues-card {
+
+  border:
+    1px solid #ead7b8;
+
+  border-radius:
+    var(--ks-radius-lg);
+
+  background:
+    linear-gradient(
+      135deg,
+      #fff9ef,
+      var(--ks-surface)
+    );
+
+  box-shadow:
+    var(--ks-shadow-small);
+
+}
+
+
+.admin-dashboard-payment-issues-content h3 {
+
+  color:
+    #9a6224;
+
+  font-size:
+    21px;
+
+}
+
+
+.admin-dashboard-payment-issues-content p {
+
+  color:
+    #7d766c;
+
+  font-size:
+    10px;
+
+}
+
+
+/* =========================================================
+   24. CLEAR NAVIGATION LINKS
+========================================================= */
+
+.admin-dashboard-panel-link,
+.token-help-link,
+.home-support-row a {
+
+  color:
+    var(--ks-primary);
+
+  font-weight:
+    950;
+
+}
+
+
+.admin-dashboard-panel-link:hover,
+.token-help-link:hover,
+.home-support-row a:hover {
+
+  color:
+    var(--ks-green);
+
+  text-decoration:
+    underline;
+
+  text-underline-offset:
+    4px;
+
+}
+
+
+/* =========================================================
+   25. EMPTY / ERROR STATES
+========================================================= */
+
+.empty-state-card,
+.token-error-card,
+.token-loading-card,
+.admin-dashboard-empty,
+.admin-queue-empty {
+
+  border:
+    1px solid var(--ks-border);
+
+  border-radius:
+    var(--ks-radius-xl);
+
+  background:
+    var(--ks-surface);
+
+  box-shadow:
+    var(--ks-shadow-small);
+
+}
+
+
+.empty-state-card h1,
+.token-error-card h1,
+.token-loading-card h1 {
+
+  color:
+    var(--ks-primary);
+
+}
+
+
+/* =========================================================
+   26. COMPLETE DARK MODE
+   Handles common theme implementations.
+========================================================= */
+
+html.dark,
+body.dark,
+html.dark-mode,
+body.dark-mode,
+html[data-theme="dark"],
+body[data-theme="dark"],
+#root.dark,
+.dark {
+
+  --ks-bg: #0d171c;
+  --ks-bg-2: #132229;
+
+  --ks-surface: #14242b;
+  --ks-surface-2: #182b33;
+  --ks-surface-3: #1d333c;
+
+  --ks-heading: #edf7f8;
+  --ks-text: #d2e2e5;
+  --ks-text-soft: #a7bdc3;
+  --ks-text-muted: #7f989f;
+
+  --ks-border: #294047;
+  --ks-border-strong: #39545c;
+
+  --ks-primary: #65b5d8;
+  --ks-primary-dark: #8bc9e2;
+  --ks-primary-light: #163441;
+
+  --ks-green: #65c48a;
+  --ks-green-light: #173a29;
+
+  --ks-orange: #efad60;
+  --ks-orange-light: #3a2a1b;
+
+  --ks-red: #ed857d;
+  --ks-red-light: #3a211f;
+
+  --ks-purple: #a895df;
+  --ks-purple-light: #2b2542;
+
+  --ks-teal: #6acbc4;
+  --ks-teal-light: #193937;
+
+  --ks-gold: #d6b25c;
+  --ks-gold-light: #382f1b;
+
+  --ks-shadow-small:
+    0 4px 15px rgba(0,0,0,.20);
+
+  --ks-shadow-medium:
+    0 12px 32px rgba(0,0,0,.27);
+
+  --ks-shadow-large:
+    0 22px 58px rgba(0,0,0,.34);
+
+}
+
+
+/* Force the ACTUAL surfaces dark */
+
+html.dark body,
+body.dark,
+html.dark-mode body,
+body.dark-mode,
+html[data-theme="dark"] body,
+body[data-theme="dark"],
+#root.dark,
+.dark {
+
+  color:
+    var(--ks-text);
+
+  background:
+    radial-gradient(
+      circle at 0% 0%,
+      rgba(65, 196, 132, .07),
+      transparent 25%
+    ),
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(89, 173, 215, .08),
+      transparent 27%
+    ),
+    linear-gradient(
+      180deg,
+      #0d171c,
+      #101d23
+    );
+
+}
+
+
+/* Main page surfaces */
+
+html.dark .next-booking-card,
+html.dark .home-feature-card,
+html.dark .farmer-profile,
+html.dark .farmer-progress-card,
+html.dark .home-sms-card,
+html.dark .token-status-card,
+html.dark .token-details-card,
+html.dark .token-side-card,
+html.dark .admin-dashboard-panel,
+html.dark .admin-dashboard-kpi,
+html.dark .admin-dashboard-alerts-panel,
+html.dark .admin-dashboard-recent-panel,
+html.dark .admin-dashboard-quick-action,
+html.dark .admin-dashboard-payment-issues-card,
+html.dark .admin-full-queue-table,
+html.dark .admin-queue-filter-panel,
+html.dark .empty-state-card,
+html.dark .token-error-card,
+html.dark .token-loading-card {
+
+  color:
+    var(--ks-text) !important;
+
+  background:
+    var(--ks-surface) !important;
+
+  border-color:
+    var(--ks-border) !important;
+
+  box-shadow:
+    var(--ks-shadow-small);
+
+}
+
+
+/* Detail cards */
+
+html.dark .home-detail,
+html.dark .token-arrival-card,
+html.dark .token-detail-item {
+
+  color:
+    var(--ks-text) !important;
+
+  background:
+    var(--ks-surface-2) !important;
+
+  border-color:
+    var(--ks-border) !important;
+
+}
+
+
+/* Text */
+
+html.dark .farmer-welcome h1,
+html.dark .admin-dashboard-hero h2,
+html.dark .admin-queue-hero h2,
+html.dark .admin-payment-issues-hero h2,
+html.dark .home-feature-card h2,
+html.dark .admin-dashboard-panel-header h3,
+html.dark .admin-dashboard-kpi strong,
+html.dark .home-detail strong,
+html.dark .token-arrival-card strong,
+html.dark .token-detail-item strong,
+html.dark .token-section-heading h2,
+html.dark .farmer-progress-heading h2 {
+
+  color:
+    var(--ks-heading) !important;
+
+}
+
+
+html.dark .farmer-welcome p,
+html.dark .admin-dashboard-hero p,
+html.dark .admin-queue-hero p,
+html.dark .home-feature-card p,
+html.dark .home-detail span,
+html.dark .home-detail small,
+html.dark .token-arrival-card span,
+html.dark .token-detail-item span,
+html.dark .admin-dashboard-kpi span {
+
+  color:
+    var(--ks-text-soft) !important;
+
+}
+
+
+/* Big numbers */
+
+html.dark .home-token,
+html.dark .token-number {
+
+  color:
+    var(--ks-primary-dark) !important;
+
+  text-shadow:
+    none;
+
+}
+
+
+/* Status / green surfaces */
+
+html.dark .booking-status-message,
+html.dark .token-current-message {
+
+  background:
+    linear-gradient(
+      135deg,
+      #173429,
+      var(--ks-surface)
+    ) !important;
+
+  border-color:
+    #315844 !important;
+
+}
+
+
+/* Search / inputs */
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+
+  color:
+    var(--ks-text) !important;
+
+  background:
+    #122128 !important;
+
+  border-color:
+    var(--ks-border) !important;
+
+}
+
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+
+  color:
+    var(--ks-text-muted) !important;
+
+}
+
+
+/* Table header */
+
+html.dark .admin-full-table-head {
+
+  color:
+    var(--ks-text-soft) !important;
+
+  background:
+    #182b33 !important;
+
+  border-color:
+    var(--ks-border) !important;
+
+}
+
+
+html.dark .admin-full-table-row {
+
+  background:
+    var(--ks-surface) !important;
+
+  border-color:
+    #22383f !important;
+
+}
+
+
+html.dark .admin-full-table-row:hover {
+
+  background:
+    #1b3038 !important;
+
+}
+
+
+/* Secondary buttons */
+
+html.dark .home-secondary-action,
+html.dark .token-secondary-action,
+html.dark .farmer-refresh-button,
+html.dark .token-refresh-button,
+html.dark .admin-dashboard-refresh,
+html.dark .admin-queue-refresh-button {
+
+  color:
+    var(--ks-primary-dark) !important;
+
+  background:
+    var(--ks-surface-2) !important;
+
+  border-color:
+    var(--ks-border-strong) !important;
+
+}
+
+
+/* SMS */
+
+html.dark .home-sms-card {
+
+  background:
+    linear-gradient(
+      135deg,
+      #15323f,
+      var(--ks-surface)
+    ) !important;
+
+}
+
+
+/* Payment issue */
+
+html.dark .admin-dashboard-payment-issues-card {
+
+  background:
+    linear-gradient(
+      135deg,
+      #332919,
+      var(--ks-surface)
+    ) !important;
+
+  border-color:
+    #5c482b !important;
+
+}
+
+
+/* Keep feature destination colours visible */
+
+html.dark .booking-feature h2 {
+
+  color:
+    var(--ks-green) !important;
+
+}
+
+
+html.dark .status-feature h2 {
+
+  color:
+    var(--ks-primary-dark) !important;
+
+}
+
+
+html.dark .help-feature h2 {
+
+  color:
+    var(--ks-orange) !important;
+
+}
+
+
+/* =========================================================
+   27. MOBILE
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .farmer-welcome {
+
+    flex-direction:
+      column;
+
+    align-items:
+      stretch;
+
+  }
+
+
+  .admin-dashboard-kpi-grid {
+
+    grid-template-columns:
+      repeat(2, 1fr);
+
+  }
+
+}
+
+
+@media (max-width: 650px) {
+
+  .farmer-welcome h1,
+  .admin-dashboard-hero h2,
+  .admin-queue-hero h2,
+  .admin-payment-issues-hero h2 {
+
+    font-size:
+      34px;
+
+  }
+
+
+  .next-booking-card,
+  .token-status-card,
+  .token-details-card,
+  .farmer-progress-card {
+
+    padding:
+      20px;
+
+    border-radius:
+      18px;
+
+  }
+
+
+  .home-token {
+
+    font-size:
+      46px;
+
+  }
+
+
+  .token-number {
+
+    font-size:
+      52px;
+
+  }
+
+
+  .booking-action-row,
+  .token-bottom-actions {
+
+    flex-direction:
+      column;
+
+  }
+
+
+  .home-primary-action,
+  .home-secondary-action,
+  .token-primary-action,
+  .token-secondary-action {
+
+    width:
+      100%;
+
+    justify-content:
+      center;
+
+  }
+
+
+  .farmer-home-grid {
+
+    grid-template-columns:
+      1fr;
+
+  }
+
+
+  .admin-dashboard-kpi-grid {
+
+    grid-template-columns:
+      1fr;
+
+  }
+
+
+  .admin-dashboard-payment-issues-card {
+
+    grid-template-columns:
+      1fr;
+
+  }
+
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+
+  html {
+
+    scroll-behavior:
+      auto;
+
+  }
+
+
+  *,
+  *::before,
+  *::after {
+
+    animation:
+      none !important;
+
+    transition:
+      none !important;
+
+  }
+
+}
+
+
+/* =========================================================
+   KRISHISETU — FINAL DARK MODE + READABILITY PASS
+========================================================= */
+
+
+/* =========================================================
+   GLOBAL READABILITY
+========================================================= */
+
+.page-eyebrow,
+.admin-page-eyebrow,
+.card-eyebrow,
+.token-card-label {
+  font-size: 12px !important;
+  letter-spacing: .11em;
+}
+
+
+.home-feature-card p,
+.home-sms-card p,
+.home-detail span,
+.home-detail small,
+.token-arrival-card span,
+.token-detail-item span,
+.token-timeline-content p,
+.admin-dashboard-kpi span,
+.admin-dashboard-alert-row span,
+.admin-dashboard-quick-action span,
+.admin-dashboard-hero p,
+.admin-queue-hero p,
+.admin-payment-issues-hero p,
+.home-support-row,
+.token-side-label {
+  font-size: 12px !important;
+  line-height: 1.65 !important;
+}
+
+
+.home-detail strong,
+.token-arrival-card strong,
+.token-detail-item strong,
+.admin-dashboard-quick-action strong {
+  font-size: 15px !important;
+}
+
+
+.booking-status-message span,
+.token-current-message p {
+  font-size: 12px !important;
+}
+
+
+.home-feature-card h2 {
+  font-size: 25px !important;
+}
+
+
+.admin-dashboard-panel-header h3,
+.admin-payment-issues-list-header h3 {
+  font-size: 22px !important;
+}
+
+
+.admin-dashboard-panel-link,
+.token-help-link {
+  font-size: 11px !important;
+}
+
+
+.home-history-item strong {
+  font-size: 14px !important;
+}
+
+
+.home-history-item span {
+  font-size: 11px !important;
+}
+
+
+/* =========================================================
+   BUTTON READABILITY
+========================================================= */
+
+.home-primary-action,
+.home-secondary-action,
+.token-primary-action,
+.token-secondary-action,
+.admin-dashboard-refresh,
+.admin-queue-refresh-button,
+.admin-row-view-button,
+.admin-row-action-button,
+.admin-dashboard-panel-link {
+  font-size: 12px !important;
+}
+
+
+/* =========================================================
+   DARK THEME VARIABLES
+========================================================= */
+
+html.dark,
+body.dark,
+html.dark-mode,
+body.dark-mode,
+html[data-theme="dark"],
+body[data-theme="dark"],
+#root.dark,
+.dark {
+
+  --ks-bg: #071318;
+  --ks-bg-2: #0c1b21;
+
+  --ks-surface: #10242c;
+  --ks-surface-2: #142b34;
+  --ks-surface-3: #19353e;
+
+  --ks-heading: #f0f8f8;
+  --ks-text: #d8e7e9;
+  --ks-text-soft: #aec3c8;
+  --ks-text-muted: #83999f;
+
+  --ks-border: #29464f;
+  --ks-border-strong: #3b5c66;
+
+  --ks-primary: #6dc0df;
+  --ks-primary-dark: #8bd0e8;
+  --ks-primary-light: #163744;
+
+  --ks-green: #6fd091;
+  --ks-green-light: #15392a;
+
+  --ks-orange: #f0b56a;
+  --ks-orange-light: #3b2b1c;
+
+  --ks-red: #ee8c84;
+  --ks-red-light: #3b211f;
+
+  --ks-purple: #ad9be7;
+  --ks-purple-light: #2c2544;
+
+  --ks-teal: #72cec8;
+  --ks-teal-light: #183b39;
+
+  --ks-gold: #d9b75e;
+  --ks-gold-light: #392f1a;
+}
+
+
+/* =========================================================
+   DARK PAGE BACKGROUND
+========================================================= */
+
+html.dark body,
+body.dark,
+html.dark-mode body,
+body.dark-mode,
+html[data-theme="dark"] body,
+body[data-theme="dark"],
+#root.dark,
+.dark {
+
+  color: var(--ks-text);
+
+  background:
+    radial-gradient(
+      circle at 15% 0%,
+      rgba(77, 176, 130, .09),
+      transparent 26%
+    ),
+    radial-gradient(
+      circle at 90% 5%,
+      rgba(65, 156, 201, .10),
+      transparent 28%
+    ),
+    linear-gradient(
+      180deg,
+      #071318 0%,
+      #0a171d 42%,
+      #0d1b21 100%
+    ) !important;
+
+}
+
+
+/* =========================================================
+   DARK — ALL MAJOR WHITE SURFACES
+========================================================= */
+
+html.dark .farmer-profile,
+html.dark .next-booking-card,
+html.dark .home-feature-card,
+html.dark .farmer-progress-card,
+html.dark .home-sms-card,
+html.dark .home-history-list,
+html.dark .token-hero-card,
+html.dark .token-status-card,
+html.dark .token-details-card,
+html.dark .token-side-card,
+html.dark .admin-dashboard-panel,
+html.dark .admin-dashboard-kpi,
+html.dark .admin-dashboard-alerts-panel,
+html.dark .admin-dashboard-recent-panel,
+html.dark .admin-dashboard-quick-action,
+html.dark .admin-dashboard-payment-issues-card,
+html.dark .admin-full-queue-table,
+html.dark .admin-queue-filter-panel,
+html.dark .admin-payment-issues-list-card,
+html.dark .admin-payment-issues-filter,
+html.dark .empty-state-card,
+html.dark .token-error-card,
+html.dark .token-loading-card,
+html.dark .admin-dashboard-empty,
+html.dark .admin-queue-empty {
+
+  color: var(--ks-text) !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      var(--ks-surface),
+      var(--ks-surface-2)
+    ) !important;
+
+  border-color:
+    var(--ks-border) !important;
+
+  box-shadow:
+    0 8px 28px rgba(0,0,0,.22) !important;
+
+}
+
+
+/* =========================================================
+   DARK — INNER SUMMARY / DETAIL CARDS
+========================================================= */
+
+html.dark .home-detail,
+html.dark .token-arrival-card,
+html.dark .token-detail-item,
+html.dark .admin-dashboard-center-row,
+html.dark .home-history-item {
+
+  color: var(--ks-text) !important;
+
+  background:
+    var(--ks-surface-2) !important;
+
+  border-color:
+    var(--ks-border) !important;
+
+}
+
+
+html.dark .home-detail:hover,
+html.dark .token-arrival-card:hover,
+html.dark .token-detail-item:hover,
+html.dark .admin-dashboard-quick-action:hover,
+html.dark .home-history-item:hover {
+
+  background:
+    var(--ks-surface-3) !important;
+
+}
+
+
+/* =========================================================
+   DARK — HEADINGS
+========================================================= */
+
+html.dark .farmer-welcome h1,
+html.dark .admin-dashboard-hero h2,
+html.dark .admin-queue-hero h2,
+html.dark .admin-payment-issues-hero h2,
+html.dark .home-feature-card h2,
+html.dark .farmer-progress-heading h2,
+html.dark .token-section-heading h2,
+html.dark .admin-dashboard-panel-header h3,
+html.dark .admin-dashboard-kpi strong,
+html.dark .home-detail strong,
+html.dark .token-arrival-card strong,
+html.dark .token-detail-item strong,
+html.dark .token-current-message strong {
+
+  color:
+    var(--ks-heading) !important;
+
+}
+
+
+/* =========================================================
+   DARK — SECONDARY TEXT
+========================================================= */
+
+html.dark .farmer-welcome p,
+html.dark .admin-dashboard-hero p,
+html.dark .admin-queue-hero p,
+html.dark .home-feature-card p,
+html.dark .home-sms-card p,
+html.dark .home-detail span,
+html.dark .home-detail small,
+html.dark .token-arrival-card span,
+html.dark .token-detail-item span,
+html.dark .token-timeline-content p,
+html.dark .admin-dashboard-kpi span,
+html.dark .admin-dashboard-quick-action span,
+html.dark .home-support-row {
+
+  color:
+    var(--ks-text-soft) !important;
+
+}
+
+
+/* =========================================================
+   DARK — COLOURFUL LARGE NUMBERS
+========================================================= */
+
+html.dark .home-token,
+html.dark .token-number {
+
+  color:
+    var(--ks-primary-dark) !important;
+
+}
+
+
+/* =========================================================
+   DARK — FEATURE TITLE COLOURS
+========================================================= */
+
+html.dark .booking-feature h2 {
+  color: var(--ks-green) !important;
+}
+
+
+html.dark .status-feature h2 {
+  color: var(--ks-primary-dark) !important;
+}
+
+
+html.dark .help-feature h2 {
+  color: var(--ks-orange) !important;
+}
+
+
+/* =========================================================
+   DARK — STATUS MESSAGE
+========================================================= */
+
+html.dark .booking-status-message,
+html.dark .token-current-message {
+
+  border-color:
+    #315b44 !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #15372a,
+      #10242c
+    ) !important;
+
+}
+
+
+html.dark .booking-status-message strong,
+html.dark .token-current-message strong {
+
+  color:
+    var(--ks-green) !important;
+
+}
+
+
+/* =========================================================
+   DARK — SMS CARD
+========================================================= */
+
+html.dark .home-sms-card {
+
+  border-color:
+    #315360 !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #12313d,
+      #10242c
+    ) !important;
+
+}
+
+
+/* =========================================================
+   DARK — PAYMENT ISSUE
+========================================================= */
+
+html.dark .admin-dashboard-payment-issues-card {
+
+  border-color:
+    #5c482b !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #332817,
+      #18252a
+    ) !important;
+
+}
+
+
+html.dark .admin-dashboard-payment-issues-content h3 {
+
+  color:
+    #f0c078 !important;
+
+}
+
+
+/* =========================================================
+   DARK — INPUTS
+========================================================= */
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+
+  color:
+    var(--ks-text) !important;
+
+  background:
+    #0d2027 !important;
+
+  border-color:
+    var(--ks-border) !important;
+
+}
+
+
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus {
+
+  border-color:
+    var(--ks-primary) !important;
+
+  box-shadow:
+    0 0 0 3px rgba(109, 192, 223, .10);
+
+}
+
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+
+  color:
+    var(--ks-text-muted) !important;
+
+}
+
+
+/* =========================================================
+   DARK — TABLE
+========================================================= */
+
+html.dark .admin-full-table-head {
+
+  color:
+    var(--ks-text-soft) !important;
+
+  background:
+    #162d35 !important;
+
+  border-color:
+    var(--ks-border) !important;
+
+}
+
+
+html.dark .admin-full-table-row {
+
+  color:
+    var(--ks-text) !important;
+
+  background:
+    var(--ks-surface) !important;
+
+  border-color:
+    #243c44 !important;
+
+}
+
+
+html.dark .admin-full-table-row:hover {
+
+  background:
+    #19323b !important;
+
+}
+
+
+/* =========================================================
+   DARK — BUTTONS
+========================================================= */
+
+html.dark .home-secondary-action,
+html.dark .token-secondary-action,
+html.dark .farmer-refresh-button,
+html.dark .token-refresh-button,
+html.dark .admin-dashboard-refresh,
+html.dark .admin-queue-refresh-button {
+
+  color:
+    var(--ks-primary-dark) !important;
+
+  background:
+    #142b34 !important;
+
+  border-color:
+    var(--ks-border-strong) !important;
+
+}
+
+
+html.dark .home-secondary-action:hover,
+html.dark .token-secondary-action:hover,
+html.dark .farmer-refresh-button:hover,
+html.dark .token-refresh-button:hover {
+
+  background:
+    #19353e !important;
+
+}
+
+
+/* =========================================================
+   DARK — PRIMARY ACTION
+========================================================= */
+
+html.dark .home-primary-action,
+html.dark .token-primary-action {
+
+  color:
+    #06141a !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #70c2df,
+      #68c995
+    ) !important;
+
+  border-color:
+    transparent !important;
+
+  box-shadow:
+    0 10px 26px rgba(0,0,0,.25);
+
+}
+
+
+html.dark .home-primary-action:hover,
+html.dark .token-primary-action:hover {
+
+  box-shadow:
+    0 15px 32px rgba(0,0,0,.32);
+
+}
+
+
+/* =========================================================
+   DARK — STATUS PILLS
+========================================================= */
+
+html.dark .admin-status-pill.blue,
+html.dark .admin-dashboard-status.blue {
+
+  color:
+    #93d8ef !important;
+
+  background:
+    #173a48 !important;
+
+}
+
+
+html.dark .admin-status-pill.green,
+html.dark .admin-dashboard-status.green {
+
+  color:
+    #88dda3 !important;
+
+  background:
+    #183b2a !important;
+
+}
+
+
+html.dark .admin-status-pill.orange,
+html.dark .admin-dashboard-status.orange {
+
+  color:
+    #f2bb73 !important;
+
+  background:
+    #3d2c1c !important;
+
+}
+
+
+html.dark .admin-status-pill.purple,
+html.dark .admin-dashboard-status.purple {
+
+  color:
+    #b9a8ed !important;
+
+  background:
+    #2c2542 !important;
+
+}
+
+
+html.dark .admin-status-pill.gold,
+html.dark .admin-dashboard-status.gold {
+
+  color:
+    #e2c571 !important;
+
+  background:
+    #392f1b !important;
+
+}
+
+
+/* =========================================================
+   DARK — PROGRESS
+========================================================= */
+
+html.dark .farmer-progress-line,
+html.dark .token-progress-bar {
+
+  background:
+    #20383f !important;
+
+}
+
+
+html.dark .farmer-progress-line.active,
+html.dark .token-progress-bar > div {
+
+  background:
+    linear-gradient(
+      90deg,
+      #66b7d8,
+      #68c78e
+    ) !important;
+
+}
+
+
+/* =========================================================
+   DARK — VISUAL TOKEN CARD
+========================================================= */
+
+html.dark .token-visual-card {
+
+  background:
+    linear-gradient(
+      145deg,
+      #0f3243,
+      #12392f
+    ) !important;
+
+}
+
+
+/* =========================================================
+   DARK — DRAWERS / OVERLAYS
+========================================================= */
+
+html.dark .admin-booking-drawer,
+html.dark .admin-booking-drawer > div {
+
+  color:
+    var(--ks-text);
+
+}
+
+
+html.dark .admin-booking-drawer {
+
+  background:
+    var(--ks-surface) !important;
+
+}
+
+
+/* =========================================================
+   28. MOBILE READABILITY
+========================================================= */
+
+@media (max-width: 650px) {
+
+  .page-eyebrow,
+  .admin-page-eyebrow,
+  .card-eyebrow,
+  .token-card-label {
+    font-size: 11px !important;
+  }
+
+
+  .home-detail span,
+  .home-detail small,
+  .token-arrival-card span,
+  .token-detail-item span,
+  .token-timeline-content p,
+  .home-feature-card p,
+  .home-sms-card p {
+    font-size: 11px !important;
+  }
+
+
+  .home-detail strong,
+  .token-arrival-card strong,
+  .token-detail-item strong {
+    font-size: 14px !important;
+  }
+
+
+  .home-feature-card h2 {
+    font-size: 22px !important;
+  }
+
+
+  .admin-dashboard-panel-header h3,
+  .admin-payment-issues-list-header h3 {
+    font-size: 20px !important;
+  }
+
+
+  .home-primary-action,
+  .home-secondary-action,
+  .token-primary-action,
+  .token-secondary-action {
+    font-size: 12px !important;
+  }
+
+}
