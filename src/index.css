@@ -56762,3 +56762,3406 @@ html.dark .admin-booking-drawer {
   }
 
 }
+
+/* =========================================================
+   KRISHISETU — FARMER BOOKING PAGE
+========================================================= */
+
+
+/* =========================================================
+   PAGE
+========================================================= */
+
+.farmer-book-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      circle at 5% 0%,
+      rgba(33, 122, 73, .08),
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 95% 0%,
+      rgba(22, 93, 128, .09),
+      transparent 25%
+    ),
+    linear-gradient(
+      180deg,
+      #f1f7f7 0%,
+      #f8fbfa 100%
+    );
+}
+
+
+.farmer-book-container {
+  width: min(
+    1180px,
+    calc(100% - 32px)
+  );
+
+  margin:
+    0 auto;
+
+  padding:
+    38px 0 70px;
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.farmer-book-hero {
+  display:
+    flex;
+
+  align-items:
+    flex-end;
+
+  justify-content:
+    space-between;
+
+  gap:
+    28px;
+
+  margin-bottom:
+    28px;
+}
+
+
+.farmer-book-hero h1 {
+  margin-top:
+    10px;
+
+  color:
+    var(--ks-primary-dark);
+
+  font-size:
+    clamp(
+      38px,
+      5vw,
+      64px
+    );
+
+  line-height:
+    .95;
+
+  letter-spacing:
+    -.055em;
+
+  font-weight:
+    950;
+
+  text-wrap:
+    balance;
+}
+
+
+.farmer-book-hero p {
+  max-width:
+    700px;
+
+  margin-top:
+    13px;
+
+  color:
+    var(--ks-text-soft);
+
+  font-size:
+    13px;
+
+  line-height:
+    1.75;
+}
+
+
+/* =========================================================
+   BOOKING STEP INDICATOR
+========================================================= */
+
+.farmer-book-steps {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    10px;
+
+  padding:
+    13px 16px;
+
+  margin-bottom:
+    20px;
+
+  border:
+    1px solid var(--ks-border);
+
+  border-radius:
+    15px;
+
+  background:
+    var(--ks-surface);
+
+  box-shadow:
+    var(--ks-shadow-small);
+
+  overflow-x:
+    auto;
+}
+
+
+.farmer-book-step {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+
+  min-width:
+    max-content;
+
+  color:
+    var(--ks-text-muted);
+
+  font-size:
+    10px;
+
+  font-weight:
+    900;
+}
+
+
+.farmer-book-step-number {
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  width:
+    30px;
+
+  height:
+    30px;
+
+  border-radius:
+    50%;
+
+  border:
+    1px solid var(--ks-border);
+
+  color:
+    var(--ks-text-muted);
+
+  background:
+    var(--ks-surface-2);
+
+  font-size:
+    10px;
+
+  font-weight:
+    950;
+}
+
+
+.farmer-book-step.active {
+  color:
+    var(--ks-primary);
+}
+
+
+.farmer-book-step.active
+.farmer-book-step-number {
+
+  color:
+    #ffffff;
+
+  border-color:
+    var(--ks-primary);
+
+  background:
+    var(--ks-primary);
+
+  box-shadow:
+    0 5px 14px rgba(22, 93, 128, .16);
+
+}
+
+
+.farmer-book-step.complete {
+  color:
+    var(--ks-green);
+}
+
+
+.farmer-book-step.complete
+.farmer-book-step-number {
+
+  color:
+    #ffffff;
+
+  border-color:
+    var(--ks-green);
+
+  background:
+    var(--ks-green);
+
+}
+
+
+.farmer-book-step-line {
+  flex:
+    1;
+
+  min-width:
+    18px;
+
+  height:
+    3px;
+
+  border-radius:
+    999px;
+
+  background:
+    var(--ks-border);
+}
+
+
+.farmer-book-step-line.active {
+  background:
+    linear-gradient(
+      90deg,
+      var(--ks-primary),
+      var(--ks-green)
+    );
+}
+
+
+/* =========================================================
+   MAIN FORM LAYOUT
+========================================================= */
+
+.farmer-book-layout {
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(0, 1.55fr)
+    minmax(290px, .75fr);
+
+  gap:
+    22px;
+
+  align-items:
+    start;
+}
+
+
+/* =========================================================
+   FORM CARD
+========================================================= */
+
+.farmer-book-card {
+  padding:
+    28px;
+
+  border:
+    1px solid var(--ks-border);
+
+  border-radius:
+    var(--ks-radius-xl);
+
+  background:
+    var(--ks-surface);
+
+  box-shadow:
+    var(--ks-shadow-medium);
+}
+
+
+.farmer-book-card-header {
+  padding-bottom:
+    20px;
+
+  margin-bottom:
+    22px;
+
+  border-bottom:
+    1px solid var(--ks-border);
+}
+
+
+.farmer-book-card-header h2 {
+  margin-top:
+    7px;
+
+  color:
+    var(--ks-primary);
+
+  font-size:
+    clamp(
+      27px,
+      3vw,
+      39px
+    );
+
+  line-height:
+    1;
+
+  letter-spacing:
+    -.04em;
+}
+
+
+.farmer-book-card-header p {
+  max-width:
+    680px;
+
+  margin-top:
+    8px;
+
+  color:
+    var(--ks-text-soft);
+
+  font-size:
+    12px;
+
+  line-height:
+    1.65;
+}
+
+
+/* =========================================================
+   FORM SECTIONS
+========================================================= */
+
+.farmer-book-section {
+  padding:
+    20px 0;
+
+  border-bottom:
+    1px solid var(--ks-border);
+}
+
+
+.farmer-book-section:last-child {
+  border-bottom:
+    0;
+
+  padding-bottom:
+    0;
+}
+
+
+.farmer-book-section-title {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    11px;
+
+  margin-bottom:
+    16px;
+}
+
+
+.farmer-book-section-icon {
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  width:
+    42px;
+
+  height:
+    42px;
+
+  border-radius:
+    12px;
+
+  color:
+    var(--ks-primary);
+
+  background:
+    var(--ks-primary-light);
+}
+
+
+.farmer-book-section-title h3 {
+  color:
+    var(--ks-heading);
+
+  font-size:
+    18px;
+
+  letter-spacing:
+    -.02em;
+}
+
+
+/* =========================================================
+   LABELS
+========================================================= */
+
+.farmer-book-card label {
+  display:
+    block;
+
+  margin-bottom:
+    8px;
+
+  color:
+    var(--ks-text);
+
+  font-size:
+    12px;
+
+  font-weight:
+    900;
+}
+
+
+/* =========================================================
+   INPUTS
+========================================================= */
+
+.farmer-book-card input,
+.farmer-book-card select,
+.farmer-book-card textarea {
+
+  min-height:
+    48px;
+
+  width:
+    100%;
+
+  padding:
+    0 14px;
+
+  border:
+    1px solid var(--ks-border-strong);
+
+  border-radius:
+    11px;
+
+  color:
+    var(--ks-heading);
+
+  background:
+    var(--ks-surface-2);
+
+  font-size:
+    13px;
+
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease,
+    background-color .2s ease;
+}
+
+
+.farmer-book-card textarea {
+  padding:
+    13px 14px;
+
+  min-height:
+    110px;
+}
+
+
+.farmer-book-card input:hover,
+.farmer-book-card select:hover,
+.farmer-book-card textarea:hover {
+  border-color:
+    #a9c3ca;
+}
+
+
+.farmer-book-card input:focus,
+.farmer-book-card select:focus,
+.farmer-book-card textarea:focus {
+
+  border-color:
+    var(--ks-primary);
+
+  background:
+    var(--ks-surface);
+
+  outline:
+    none;
+
+  box-shadow:
+    0 0 0 4px rgba(22, 93, 128, .09);
+}
+
+
+/* =========================================================
+   CROP SELECTION
+========================================================= */
+
+.farmer-book-crop-grid {
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(
+      4,
+      minmax(0, 1fr)
+    );
+
+  gap:
+    11px;
+}
+
+
+.farmer-book-crop-option {
+  position:
+    relative;
+
+  min-height:
+    96px;
+
+  padding:
+    14px;
+
+  border:
+    1px solid var(--ks-border);
+
+  border-radius:
+    14px;
+
+  background:
+    var(--ks-surface-2);
+
+  text-align:
+    left;
+
+  cursor:
+    pointer;
+}
+
+
+.farmer-book-crop-option:hover {
+
+  transform:
+    translateY(-2px);
+
+  border-color:
+    #b9d2d8;
+
+  box-shadow:
+    var(--ks-shadow-small);
+}
+
+
+.farmer-book-crop-option.active {
+
+  border-color:
+    var(--ks-green);
+
+  background:
+    var(--ks-green-light);
+
+  box-shadow:
+    0 0 0 3px rgba(33, 122, 73, .08);
+
+}
+
+
+.farmer-book-crop-option strong {
+
+  display:
+    block;
+
+  margin-top:
+    12px;
+
+  color:
+    var(--ks-heading);
+
+  font-size:
+    14px;
+}
+
+
+.farmer-book-crop-option.active strong {
+  color:
+    var(--ks-green);
+}
+
+
+/* =========================================================
+   QUANTITY
+========================================================= */
+
+.farmer-book-quantity-card {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto;
+
+  gap:
+    15px;
+
+  align-items:
+    end;
+
+}
+
+
+.farmer-book-quantity-unit {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  min-height:
+    48px;
+
+  padding:
+    0 18px;
+
+  border-radius:
+    11px;
+
+  color:
+    var(--ks-green);
+
+  background:
+    var(--ks-green-light);
+
+  font-size:
+    13px;
+
+  font-weight:
+    950;
+}
+
+
+/* =========================================================
+   CENTER CARDS
+========================================================= */
+
+.farmer-book-center-grid {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+  gap:
+    12px;
+}
+
+
+.farmer-book-center-option {
+
+  position:
+    relative;
+
+  display:
+    flex;
+
+  align-items:
+    flex-start;
+
+  gap:
+    12px;
+
+  padding:
+    16px;
+
+  border:
+    1px solid var(--ks-border);
+
+  border-radius:
+    14px;
+
+  background:
+    var(--ks-surface-2);
+
+  text-align:
+    left;
+
+  cursor:
+    pointer;
+}
+
+
+.farmer-book-center-option:hover {
+
+  transform:
+    translateY(-2px);
+
+  border-color:
+    #b9d2d8;
+
+}
+
+
+.farmer-book-center-option.active {
+
+  border-color:
+    var(--ks-primary);
+
+  background:
+    var(--ks-primary-light);
+
+  box-shadow:
+    0 0 0 3px rgba(22, 93, 128, .07);
+
+}
+
+
+.farmer-book-center-icon {
+
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  width:
+    42px;
+
+  height:
+    42px;
+
+  flex:
+    0 0 42px;
+
+  border-radius:
+    11px;
+
+  color:
+    var(--ks-primary);
+
+  background:
+    #dceff6;
+
+}
+
+
+.farmer-book-center-option strong {
+
+  color:
+    var(--ks-heading);
+
+  font-size:
+    14px;
+
+}
+
+
+.farmer-book-center-option span {
+
+  display:
+    block;
+
+  margin-top:
+    4px;
+
+  color:
+    var(--ks-text-soft);
+
+  font-size:
+    10px;
+
+  line-height:
+    1.5;
+}
+
+
+/* =========================================================
+   DATE / SLOT
+========================================================= */
+
+.farmer-book-date-grid {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+  gap:
+    12px;
+
+}
+
+
+.farmer-book-slot-grid {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+  gap:
+    10px;
+
+  margin-top:
+    12px;
+}
+
+
+.farmer-book-slot-option {
+
+  min-height:
+    62px;
+
+  padding:
+    12px;
+
+  border:
+    1px solid var(--ks-border);
+
+  border-radius:
+    12px;
+
+  color:
+    var(--ks-text);
+
+  background:
+    var(--ks-surface-2);
+
+  text-align:
+    left;
+
+  cursor:
+    pointer;
+}
+
+
+.farmer-book-slot-option:hover {
+
+  transform:
+    translateY(-2px);
+
+  border-color:
+    #b6d0d8;
+
+}
+
+
+.farmer-book-slot-option.active {
+
+  color:
+    var(--ks-primary-dark);
+
+  border-color:
+    var(--ks-primary);
+
+  background:
+    var(--ks-primary-light);
+
+}
+
+
+.farmer-book-slot-option strong {
+
+  display:
+    block;
+
+  font-size:
+    13px;
+}
+
+
+.farmer-book-slot-option span {
+
+  display:
+    block;
+
+  margin-top:
+    4px;
+
+  color:
+    var(--ks-text-soft);
+
+  font-size:
+    10px;
+}
+
+
+/* =========================================================
+   SIDEBAR SUMMARY
+========================================================= */
+
+.farmer-book-summary {
+
+  position:
+    sticky;
+
+  top:
+    90px;
+
+  padding:
+    23px;
+
+  border:
+    1px solid var(--ks-border);
+
+  border-radius:
+    var(--ks-radius-lg);
+
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #f6fbfa
+    );
+
+  box-shadow:
+    var(--ks-shadow-medium);
+
+}
+
+
+.farmer-book-summary-title {
+
+  color:
+    var(--ks-primary);
+
+  font-size:
+    12px;
+
+  font-weight:
+    950;
+
+  letter-spacing:
+    .12em;
+}
+
+
+.farmer-book-summary h2 {
+
+  margin-top:
+    8px;
+
+  color:
+    var(--ks-heading);
+
+  font-size:
+    28px;
+
+  line-height:
+    1.05;
+
+  letter-spacing:
+    -.035em;
+
+}
+
+
+.farmer-book-summary-list {
+
+  display:
+    grid;
+
+  gap:
+    10px;
+
+  margin-top:
+    20px;
+
+}
+
+
+.farmer-book-summary-item {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    38px minmax(0, 1fr);
+
+  gap:
+    10px;
+
+  padding:
+    12px;
+
+  border:
+    1px solid var(--ks-border);
+
+  border-radius:
+    12px;
+
+  background:
+    var(--ks-surface);
+
+}
+
+
+.farmer-book-summary-item-icon {
+
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  width:
+    38px;
+
+  height:
+    38px;
+
+  border-radius:
+    10px;
+
+  color:
+    var(--ks-blue);
+
+  background:
+    var(--ks-primary-light);
+
+}
+
+
+.farmer-book-summary-item:nth-child(2)
+.farmer-book-summary-item-icon {
+
+  color:
+    var(--ks-green);
+
+  background:
+    var(--ks-green-light);
+
+}
+
+
+.farmer-book-summary-item:nth-child(3)
+.farmer-book-summary-item-icon {
+
+  color:
+    var(--ks-orange);
+
+  background:
+    var(--ks-orange-light);
+
+}
+
+
+.farmer-book-summary-item span {
+
+  display:
+    block;
+
+  color:
+    var(--ks-text-muted);
+
+  font-size:
+    9px;
+
+  font-weight:
+    800;
+}
+
+
+.farmer-book-summary-item strong {
+
+  display:
+    block;
+
+  margin-top:
+    4px;
+
+  color:
+    var(--ks-heading);
+
+  font-size:
+    13px;
+
+}
+
+
+/* =========================================================
+   SUMMARY ACTION
+========================================================= */
+
+.farmer-book-submit {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    space-between;
+
+  gap:
+    12px;
+
+  width:
+    100%;
+
+  min-height:
+    54px;
+
+  margin-top:
+    20px;
+
+  padding:
+    0 18px;
+
+  border:
+    0;
+
+  border-radius:
+    12px;
+
+  color:
+    #ffffff;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--ks-green),
+      var(--ks-green-dark, #1b633b)
+    );
+
+  box-shadow:
+    0 9px 24px rgba(33, 122, 73, .17);
+
+  font-size:
+    12px;
+
+  font-weight:
+    950;
+
+  cursor:
+    pointer;
+
+}
+
+
+.farmer-book-submit:hover {
+
+  transform:
+    translateY(-2px);
+
+  box-shadow:
+    0 14px 30px rgba(33, 122, 73, .22);
+
+}
+
+
+.farmer-book-submit:disabled {
+
+  opacity:
+    .55;
+
+  cursor:
+    not-allowed;
+
+  transform:
+    none;
+
+}
+
+
+/* =========================================================
+   INFORMATION CARD
+========================================================= */
+
+.farmer-book-info {
+
+  display:
+    flex;
+
+  align-items:
+    flex-start;
+
+  gap:
+    11px;
+
+  margin-top:
+    13px;
+
+  padding:
+    13px;
+
+  border:
+    1px solid #cbdfe5;
+
+  border-radius:
+    12px;
+
+  background:
+    var(--ks-primary-light);
+
+}
+
+
+.farmer-book-info strong {
+
+  display:
+    block;
+
+  color:
+    var(--ks-primary-dark);
+
+  font-size:
+    12px;
+
+}
+
+
+.farmer-book-info span {
+
+  display:
+    block;
+
+  margin-top:
+    4px;
+
+  color:
+    var(--ks-text);
+
+  font-size:
+    10px;
+
+  line-height:
+    1.6;
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.farmer-book-error {
+
+  display:
+    flex;
+
+  align-items:
+    flex-start;
+
+  gap:
+    12px;
+
+  margin-bottom:
+    18px;
+
+  padding:
+    15px 17px;
+
+  border:
+    1px solid #ebc8c4;
+
+  border-radius:
+    13px;
+
+  color:
+    var(--ks-red);
+
+  background:
+    var(--ks-red-light);
+
+}
+
+
+.farmer-book-error strong {
+
+  display:
+    block;
+
+  font-size:
+    13px;
+
+}
+
+
+.farmer-book-error span {
+
+  display:
+    block;
+
+  margin-top:
+    4px;
+
+  color:
+    #7e5b58;
+
+  font-size:
+    11px;
+
+  line-height:
+    1.5;
+
+}
+
+
+/* =========================================================
+   DARK MODE
+========================================================= */
+
+html.dark .farmer-book-page,
+body.dark .farmer-book-page,
+html.dark-mode .farmer-book-page,
+body.dark-mode .farmer-book-page,
+html[data-theme="dark"] .farmer-book-page,
+body[data-theme="dark"] .farmer-book-page {
+
+  background:
+    radial-gradient(
+      circle at 5% 0%,
+      rgba(70, 177, 120, .08),
+      transparent 25%
+    ),
+    radial-gradient(
+      circle at 95% 0%,
+      rgba(74, 165, 207, .09),
+      transparent 27%
+    ),
+    linear-gradient(
+      180deg,
+      #071318,
+      #0d1b21
+    ) !important;
+
+}
+
+
+/* Main */
+
+html.dark .farmer-book-card,
+html.dark .farmer-book-summary,
+html.dark .farmer-book-steps,
+body.dark .farmer-book-card,
+body.dark .farmer-book-summary,
+body.dark .farmer-book-steps {
+
+  background:
+    var(--ks-surface) !important;
+
+  border-color:
+    var(--ks-border) !important;
+
+}
+
+
+/* Inputs */
+
+html.dark .farmer-book-card input,
+html.dark .farmer-book-card select,
+html.dark .farmer-book-card textarea {
+
+  color:
+    var(--ks-text) !important;
+
+  background:
+    #0d2027 !important;
+
+  border-color:
+    var(--ks-border-strong) !important;
+
+}
+
+
+html.dark .farmer-book-card input:focus,
+html.dark .farmer-book-card select:focus,
+html.dark .farmer-book-card textarea:focus {
+
+  background:
+    #10272f !important;
+
+  border-color:
+    var(--ks-primary) !important;
+
+}
+
+
+/* Crop and center */
+
+html.dark .farmer-book-crop-option,
+html.dark .farmer-book-center-option,
+html.dark .farmer-book-slot-option {
+
+  background:
+    var(--ks-surface-2) !important;
+
+  border-color:
+    var(--ks-border) !important;
+
+}
+
+
+html.dark .farmer-book-crop-option.active,
+html.dark .farmer-book-center-option.active,
+html.dark .farmer-book-slot-option.active {
+
+  background:
+    #153744 !important;
+
+}
+
+
+/* Summary */
+
+html.dark .farmer-book-summary-item {
+
+  background:
+    var(--ks-surface-2) !important;
+
+  border-color:
+    var(--ks-border) !important;
+
+}
+
+
+/* Info */
+
+html.dark .farmer-book-info {
+
+  background:
+    #13333f !important;
+
+  border-color:
+    #315363 !important;
+
+}
+
+
+/* Error */
+
+html.dark .farmer-book-error {
+
+  background:
+    #39221f !important;
+
+  border-color:
+    #5b3733 !important;
+
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 950px) {
+
+  .farmer-book-layout {
+
+    grid-template-columns:
+      1fr;
+
+  }
+
+
+  .farmer-book-summary {
+
+    position:
+      static;
+
+  }
+
+
+  .farmer-book-hero {
+
+    flex-direction:
+      column;
+
+    align-items:
+      flex-start;
+
+  }
+
+}
+
+
+@media (max-width: 700px) {
+
+  .farmer-book-container {
+
+    width:
+      min(
+        100% - 22px,
+        100%
+      );
+
+    padding-top:
+      28px;
+
+  }
+
+
+  .farmer-book-card,
+  .farmer-book-summary {
+
+    padding:
+      19px;
+
+    border-radius:
+      17px;
+
+  }
+
+
+  .farmer-book-hero h1 {
+
+    font-size:
+      36px;
+
+  }
+
+
+  .farmer-book-crop-grid {
+
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+
+  }
+
+
+  .farmer-book-center-grid,
+  .farmer-book-date-grid {
+
+    grid-template-columns:
+      1fr;
+
+  }
+
+
+  .farmer-book-slot-grid {
+
+    grid-template-columns:
+      1fr;
+
+  }
+
+
+  .farmer-book-quantity-card {
+
+    grid-template-columns:
+      1fr;
+
+  }
+
+
+  .farmer-book-quantity-unit {
+
+    justify-content:
+      flex-start;
+
+  }
+
+}
+
+
+@media (max-width: 450px) {
+
+  .farmer-book-hero h1 {
+
+    font-size:
+      32px;
+
+  }
+
+
+  .farmer-book-card-header h2 {
+
+    font-size:
+      28px;
+
+  }
+
+
+  .farmer-book-crop-grid {
+
+    grid-template-columns:
+      1fr;
+
+  }
+
+
+  .farmer-book-step {
+
+    font-size:
+      9px;
+
+  }
+
+}
+
+/* =========================================================
+   KRISHISETU — FARMER BOOKING
+   CLEAN CIVIC DESIGN / LARGE CONTROLS / HIGH CONTRAST
+========================================================= */
+
+
+/* =========================================================
+   PAGE
+========================================================= */
+
+.farmer-book-page {
+  min-height: 100vh;
+
+  background:
+    linear-gradient(
+      180deg,
+      #eef5f6 0%,
+      #f8fbfb 48%,
+      #f1f6f5 100%
+    );
+}
+
+
+.farmer-book-container {
+  width: min(
+    1180px,
+    calc(100% - 36px)
+  );
+
+  margin: 0 auto;
+
+  padding:
+    42px 0 80px;
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.farmer-book-hero {
+  margin-bottom:
+    26px;
+}
+
+
+.farmer-book-hero h1 {
+  margin:
+    9px 0 0;
+
+  max-width:
+    780px;
+
+  color:
+    #174c66;
+
+  font-size:
+    clamp(
+      40px,
+      5vw,
+      64px
+    );
+
+  line-height:
+    .96;
+
+  font-weight:
+    950;
+
+  letter-spacing:
+    -.055em;
+}
+
+
+.farmer-book-hero p {
+  max-width:
+    700px;
+
+  margin-top:
+    14px;
+
+  color:
+    #5e7780;
+
+  font-size:
+    14px;
+
+  line-height:
+    1.75;
+}
+
+
+/* =========================================================
+   STEP BAR
+========================================================= */
+
+.farmer-book-steps {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(
+      4,
+      1fr
+    );
+
+  gap:
+    0;
+
+  margin-bottom:
+    22px;
+
+  padding:
+    7px;
+
+  border:
+    1px solid #d6e3e6;
+
+  border-radius:
+    16px;
+
+  background:
+    #ffffff;
+
+  box-shadow:
+    0 4px 18px rgba(35, 73, 92, .05);
+
+}
+
+
+.farmer-book-step {
+
+  position:
+    relative;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  gap:
+    9px;
+
+  min-height:
+    51px;
+
+  padding:
+    0 10px;
+
+  color:
+    #879ba2;
+
+  font-size:
+    11px;
+
+  font-weight:
+    900;
+}
+
+
+.farmer-book-step-number {
+
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  width:
+    30px;
+
+  height:
+    30px;
+
+  border-radius:
+    50%;
+
+  color:
+    #879ba2;
+
+  background:
+    #edf3f4;
+
+  font-size:
+    10px;
+
+  font-weight:
+    950;
+}
+
+
+.farmer-book-step.active {
+
+  color:
+    #155d7d;
+
+  background:
+    #eaf5fa;
+
+  border-radius:
+    11px;
+
+}
+
+
+.farmer-book-step.active
+.farmer-book-step-number {
+
+  color:
+    #ffffff;
+
+  background:
+    #216f95;
+
+}
+
+
+.farmer-book-step.complete {
+
+  color:
+    #23764a;
+
+}
+
+
+.farmer-book-step.complete
+.farmer-book-step-number {
+
+  color:
+    #ffffff;
+
+  background:
+    #287c4f;
+
+}
+
+
+/* =========================================================
+   MAIN LAYOUT
+========================================================= */
+
+.farmer-book-layout {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(
+      0,
+      1fr
+    )
+    340px;
+
+  gap:
+    22px;
+
+  align-items:
+    start;
+
+}
+
+
+/* =========================================================
+   MAIN FORM
+========================================================= */
+
+.farmer-book-card {
+
+  overflow:
+    hidden;
+
+  border:
+    1px solid #d6e3e6;
+
+  border-radius:
+    22px;
+
+  background:
+    #ffffff;
+
+  box-shadow:
+    0 12px 34px rgba(28, 65, 81, .07);
+
+}
+
+
+.farmer-book-card-header {
+
+  padding:
+    27px 30px 23px;
+
+  border-bottom:
+    1px solid #e5edef;
+
+}
+
+
+.farmer-book-card-header h2 {
+
+  margin-top:
+    7px;
+
+  color:
+    #155c7d;
+
+  font-size:
+    30px;
+
+  line-height:
+    1;
+
+  font-weight:
+    950;
+
+  letter-spacing:
+    -.04em;
+
+}
+
+
+.farmer-book-card-header p {
+
+  max-width:
+    670px;
+
+  margin-top:
+    9px;
+
+  color:
+    #70868f;
+
+  font-size:
+    12px;
+
+  line-height:
+    1.7;
+
+}
+
+
+/* =========================================================
+   FORM SECTION
+========================================================= */
+
+.farmer-book-section {
+
+  padding:
+    27px 30px;
+
+  border-bottom:
+    1px solid #e7edef;
+
+}
+
+
+.farmer-book-section:last-child {
+
+  border-bottom:
+    0;
+
+}
+
+
+.farmer-book-section-title {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    12px;
+
+  margin-bottom:
+    18px;
+
+}
+
+
+.farmer-book-section-icon {
+
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  width:
+    43px;
+
+  height:
+    43px;
+
+  flex:
+    0 0 43px;
+
+  border-radius:
+    12px;
+
+  color:
+    #155c7d;
+
+  background:
+    #e7f4f9;
+
+}
+
+
+.farmer-book-section-title h3 {
+
+  color:
+    #234c5d;
+
+  font-size:
+    19px;
+
+  line-height:
+    1.1;
+
+  font-weight:
+    900;
+
+}
+
+
+/* =========================================================
+   FORM LABELS
+========================================================= */
+
+.farmer-book-card label {
+
+  margin-bottom:
+    8px;
+
+  color:
+    #496671;
+
+  font-size:
+    12px;
+
+  font-weight:
+    900;
+
+}
+
+
+/* =========================================================
+   INPUTS
+========================================================= */
+
+.farmer-book-card input,
+.farmer-book-card select,
+.farmer-book-card textarea {
+
+  width:
+    100%;
+
+  min-height:
+    52px;
+
+  padding:
+    0 15px;
+
+  border:
+    1px solid #cbdde1;
+
+  border-radius:
+    11px;
+
+  color:
+    #244c5c;
+
+  background:
+    #fbfdfd;
+
+  font-size:
+    14px;
+
+  outline:
+    none;
+
+}
+
+
+.farmer-book-card textarea {
+
+  min-height:
+    115px;
+
+  padding:
+    14px 15px;
+
+  resize:
+    vertical;
+
+}
+
+
+.farmer-book-card input:hover,
+.farmer-book-card select:hover,
+.farmer-book-card textarea:hover {
+
+  border-color:
+    #adc8d0;
+
+}
+
+
+.farmer-book-card input:focus,
+.farmer-book-card select:focus,
+.farmer-book-card textarea:focus {
+
+  border-color:
+    #28769a;
+
+  background:
+    #ffffff;
+
+  box-shadow:
+    0 0 0 4px rgba(40, 118, 154, .09);
+
+}
+
+
+/* =========================================================
+   CROP GRID
+========================================================= */
+
+.farmer-book-crop-grid {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(
+      4,
+      minmax(
+        0,
+        1fr
+      )
+    );
+
+  gap:
+    12px;
+
+}
+
+
+.farmer-book-crop-option {
+
+  min-height:
+    104px;
+
+  padding:
+    15px;
+
+  border:
+    1px solid #d7e4e7;
+
+  border-radius:
+    14px;
+
+  color:
+    #486a77;
+
+  background:
+    #fbfdfd;
+
+  text-align:
+    left;
+
+  cursor:
+    pointer;
+
+}
+
+
+.farmer-book-crop-option:hover {
+
+  transform:
+    translateY(-2px);
+
+  border-color:
+    #a8c4cc;
+
+  box-shadow:
+    0 8px 20px rgba(28, 65, 81, .07);
+
+}
+
+
+.farmer-book-crop-option.active {
+
+  border:
+    2px solid #2c7e50;
+
+  padding:
+    14px;
+
+  color:
+    #216b43;
+
+  background:
+    #edf8f1;
+
+}
+
+
+.farmer-book-crop-option strong {
+
+  display:
+    block;
+
+  margin-top:
+    13px;
+
+  font-size:
+    14px;
+
+  font-weight:
+    900;
+
+}
+
+
+/* =========================================================
+   QUANTITY
+========================================================= */
+
+.farmer-book-quantity-card {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(
+      0,
+      1fr
+    )
+    90px;
+
+  gap:
+    12px;
+
+}
+
+
+.farmer-book-quantity-unit {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  min-height:
+    52px;
+
+  border-radius:
+    11px;
+
+  color:
+    #23754a;
+
+  background:
+    #eaf6ee;
+
+  font-size:
+    14px;
+
+  font-weight:
+    950;
+
+}
+
+
+/* =========================================================
+   CENTERS
+========================================================= */
+
+.farmer-book-center-grid {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(
+        0,
+        1fr
+      )
+    );
+
+  gap:
+    12px;
+
+}
+
+
+.farmer-book-center-option {
+
+  display:
+    flex;
+
+  align-items:
+    flex-start;
+
+  gap:
+    13px;
+
+  min-height:
+    92px;
+
+  padding:
+    15px;
+
+  border:
+    1px solid #d7e4e7;
+
+  border-radius:
+    14px;
+
+  color:
+    #365c69;
+
+  background:
+    #fbfdfd;
+
+  text-align:
+    left;
+
+  cursor:
+    pointer;
+
+}
+
+
+.farmer-book-center-option:hover {
+
+  transform:
+    translateY(-2px);
+
+  border-color:
+    #9fc0ca;
+
+}
+
+
+.farmer-book-center-option.active {
+
+  border:
+    2px solid #23709a;
+
+  padding:
+    14px;
+
+  color:
+    #155d7d;
+
+  background:
+    #eaf5fa;
+
+}
+
+
+.farmer-book-center-icon {
+
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  width:
+    43px;
+
+  height:
+    43px;
+
+  flex:
+    0 0 43px;
+
+  border-radius:
+    11px;
+
+  color:
+    #216f95;
+
+  background:
+    #dff0f6;
+
+}
+
+
+.farmer-book-center-option strong {
+
+  color:
+    #254d5e;
+
+  font-size:
+    14px;
+
+  font-weight:
+    900;
+
+}
+
+
+.farmer-book-center-option span {
+
+  display:
+    block;
+
+  margin-top:
+    5px;
+
+  color:
+    #789098;
+
+  font-size:
+    11px;
+
+  line-height:
+    1.5;
+
+}
+
+
+/* =========================================================
+   DATE
+========================================================= */
+
+.farmer-book-date-grid {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(
+        0,
+        1fr
+      )
+    );
+
+  gap:
+    12px;
+
+}
+
+
+/* =========================================================
+   SLOTS
+========================================================= */
+
+.farmer-book-slot-grid {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(
+        0,
+        1fr
+      )
+    );
+
+  gap:
+    10px;
+
+  margin-top:
+    12px;
+
+}
+
+
+.farmer-book-slot-option {
+
+  min-height:
+    66px;
+
+  padding:
+    13px;
+
+  border:
+    1px solid #d7e4e7;
+
+  border-radius:
+    12px;
+
+  color:
+    #416572;
+
+  background:
+    #fbfdfd;
+
+  text-align:
+    left;
+
+  cursor:
+    pointer;
+
+}
+
+
+.farmer-book-slot-option:hover {
+
+  transform:
+    translateY(-2px);
+
+  border-color:
+    #a7c4cc;
+
+}
+
+
+.farmer-book-slot-option.active {
+
+  border:
+    2px solid #216f95;
+
+  padding:
+    12px;
+
+  color:
+    #155d7d;
+
+  background:
+    #e9f5fa;
+
+}
+
+
+.farmer-book-slot-option strong {
+
+  display:
+    block;
+
+  color:
+    inherit;
+
+  font-size:
+    13px;
+
+}
+
+
+.farmer-book-slot-option span {
+
+  display:
+    block;
+
+  margin-top:
+    4px;
+
+  color:
+    #7d949b;
+
+  font-size:
+    10px;
+
+}
+
+
+/* =========================================================
+   SUMMARY
+========================================================= */
+
+.farmer-book-summary {
+
+  position:
+    sticky;
+
+  top:
+    88px;
+
+  padding:
+    23px;
+
+  border:
+    1px solid #d5e2e5;
+
+  border-radius:
+    20px;
+
+  background:
+    #ffffff;
+
+  box-shadow:
+    0 12px 32px rgba(28, 65, 81, .07);
+
+}
+
+
+.farmer-book-summary-title {
+
+  color:
+    #d17721;
+
+  font-size:
+    11px;
+
+  font-weight:
+    950;
+
+  letter-spacing:
+    .13em;
+
+}
+
+
+.farmer-book-summary h2 {
+
+  margin-top:
+    8px;
+
+  color:
+    #174c66;
+
+  font-size:
+    28px;
+
+  line-height:
+    1.03;
+
+  font-weight:
+    950;
+
+  letter-spacing:
+    -.035em;
+
+}
+
+
+.farmer-book-summary-list {
+
+  display:
+    grid;
+
+  gap:
+    10px;
+
+  margin-top:
+    20px;
+
+}
+
+
+.farmer-book-summary-item {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    40px
+    minmax(
+      0,
+      1fr
+    );
+
+  gap:
+    11px;
+
+  padding:
+    12px;
+
+  border:
+    1px solid #e0eaec;
+
+  border-radius:
+    12px;
+
+  background:
+    #f9fbfb;
+
+}
+
+
+.farmer-book-summary-item-icon {
+
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  width:
+    40px;
+
+  height:
+    40px;
+
+  border-radius:
+    10px;
+
+  color:
+    #216f95;
+
+  background:
+    #e5f3f8;
+
+}
+
+
+.farmer-book-summary-item:nth-child(2)
+.farmer-book-summary-item-icon {
+
+  color:
+    #287a4d;
+
+  background:
+    #e8f6ed;
+
+}
+
+
+.farmer-book-summary-item:nth-child(3)
+.farmer-book-summary-item-icon {
+
+  color:
+    #c87820;
+
+  background:
+    #fff1df;
+
+}
+
+
+.farmer-book-summary-item span {
+
+  display:
+    block;
+
+  color:
+    #7d9299;
+
+  font-size:
+    10px;
+
+  font-weight:
+    800;
+
+}
+
+
+.farmer-book-summary-item strong {
+
+  display:
+    block;
+
+  margin-top:
+    4px;
+
+  color:
+    #294f61;
+
+  font-size:
+    14px;
+
+  font-weight:
+    900;
+
+}
+
+
+/* =========================================================
+   CONFIRM BOOKING BUTTON
+========================================================= */
+
+.farmer-book-submit {
+
+  width:
+    100%;
+
+  min-height:
+    56px;
+
+  margin-top:
+    18px;
+
+  padding:
+    0 18px;
+
+  border:
+    0;
+
+  border-radius:
+    12px;
+
+  color:
+    #ffffff;
+
+  background:
+    linear-gradient(
+      135deg,
+      #2a8051,
+      #1c633d
+    );
+
+  box-shadow:
+    0 10px 25px rgba(36, 119, 73, .18);
+
+  font-size:
+    13px;
+
+  font-weight:
+    950;
+
+  cursor:
+    pointer;
+
+}
+
+
+.farmer-book-submit:hover {
+
+  transform:
+    translateY(-2px);
+
+  box-shadow:
+    0 14px 32px rgba(36, 119, 73, .23);
+
+}
+
+
+/* =========================================================
+   INFO
+========================================================= */
+
+.farmer-book-info {
+
+  display:
+    flex;
+
+  align-items:
+    flex-start;
+
+  gap:
+    11px;
+
+  margin-top:
+    12px;
+
+  padding:
+    14px;
+
+  border:
+    1px solid #c9dde4;
+
+  border-radius:
+    12px;
+
+  color:
+    #21627d;
+
+  background:
+    #eaf5fa;
+
+}
+
+
+.farmer-book-info strong {
+
+  display:
+    block;
+
+  color:
+    #175770;
+
+  font-size:
+    12px;
+
+}
+
+
+.farmer-book-info span {
+
+  display:
+    block;
+
+  margin-top:
+    4px;
+
+  color:
+    #4e6e79;
+
+  font-size:
+    10px;
+
+  line-height:
+    1.6;
+
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.farmer-book-error {
+
+  padding:
+    15px;
+
+  border:
+    1px solid #e6c4c0;
+
+  border-radius:
+    13px;
+
+  color:
+    #a44740;
+
+  background:
+    #fff1ef;
+
+}
+
+
+/* =========================================================
+   DARK MODE — HIGH CONTRAST
+========================================================= */
+
+html.dark .farmer-book-page,
+body.dark .farmer-book-page,
+html.dark-mode .farmer-book-page,
+body.dark-mode .farmer-book-page,
+html[data-theme="dark"] .farmer-book-page,
+body[data-theme="dark"] .farmer-book-page {
+
+  color:
+    #e8f3f5;
+
+  background:
+    radial-gradient(
+      circle at 5% 0%,
+      rgba(50, 137, 92, .12),
+      transparent 26%
+    ),
+    radial-gradient(
+      circle at 95% 0%,
+      rgba(48, 128, 163, .13),
+      transparent 28%
+    ),
+    linear-gradient(
+      180deg,
+      #07151b,
+      #0b1b22
+    ) !important;
+
+}
+
+
+/* Main */
+
+html.dark .farmer-book-card,
+html.dark .farmer-book-summary,
+html.dark .farmer-book-steps {
+
+  color:
+    #dcebee !important;
+
+  background:
+    #11262e !important;
+
+  border-color:
+    #2b4851 !important;
+
+  box-shadow:
+    0 15px 38px rgba(0,0,0,.28) !important;
+
+}
+
+
+/* Header / sections */
+
+html.dark .farmer-book-card-header,
+html.dark .farmer-book-section {
+
+  border-color:
+    #29434b !important;
+
+}
+
+
+/* Headings */
+
+html.dark .farmer-book-hero h1,
+html.dark .farmer-book-card-header h2,
+html.dark .farmer-book-summary h2,
+html.dark .farmer-book-section-title h3,
+html.dark .farmer-book-summary-item strong,
+html.dark .farmer-book-center-option strong {
+
+  color:
+    #f1f8f9 !important;
+
+}
+
+
+/* Supporting text */
+
+html.dark .farmer-book-hero p,
+html.dark .farmer-book-card-header p,
+html.dark .farmer-book-summary-item span,
+html.dark .farmer-book-center-option span,
+html.dark .farmer-book-slot-option span {
+
+  color:
+    #afc4ca !important;
+
+}
+
+
+/* Inputs */
+
+html.dark .farmer-book-card input,
+html.dark .farmer-book-card select,
+html.dark .farmer-book-card textarea {
+
+  color:
+    #eaf4f6 !important;
+
+  background:
+    #0b1d24 !important;
+
+  border-color:
+    #3b5963 !important;
+
+}
+
+
+html.dark .farmer-book-card input:focus,
+html.dark .farmer-book-card select:focus,
+html.dark .farmer-book-card textarea:focus {
+
+  background:
+    #102731 !important;
+
+  border-color:
+    #70bfdf !important;
+
+}
+
+
+/* Steps */
+
+html.dark .farmer-book-steps {
+
+  background:
+    #11262e !important;
+
+}
+
+
+html.dark .farmer-book-step {
+
+  color:
+    #7f9aa2 !important;
+
+}
+
+
+html.dark .farmer-book-step.active {
+
+  color:
+    #8ed0e9 !important;
+
+  background:
+    #183b48 !important;
+
+}
+
+
+/* Crop */
+
+html.dark .farmer-book-crop-option,
+html.dark .farmer-book-center-option,
+html.dark .farmer-book-slot-option {
+
+  color:
+    #dcebee !important;
+
+  background:
+    #162d35 !important;
+
+  border-color:
+    #34515a !important;
+
+}
+
+
+html.dark .farmer-book-crop-option.active {
+
+  color:
+    #8be0a7 !important;
+
+  background:
+    #173a2b !important;
+
+  border-color:
+    #62be87 !important;
+
+}
+
+
+html.dark .farmer-book-center-option.active,
+html.dark .farmer-book-slot-option.active {
+
+  color:
+    #8ed0e9 !important;
+
+  background:
+    #163744 !important;
+
+  border-color:
+    #65b7d7 !important;
+
+}
+
+
+/* Summary items */
+
+html.dark .farmer-book-summary-item {
+
+  background:
+    #162d35 !important;
+
+  border-color:
+    #304b54 !important;
+
+}
+
+
+/* Info */
+
+html.dark .farmer-book-info {
+
+  color:
+    #b9e1ed !important;
+
+  background:
+    #143744 !important;
+
+  border-color:
+    #2e5d6d !important;
+
+}
+
+
+/* Error */
+
+html.dark .farmer-book-error {
+
+  color:
+    #ffaaa3 !important;
+
+  background:
+    #3b2220 !important;
+
+  border-color:
+    #65403c !important;
+
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 950px) {
+
+  .farmer-book-layout {
+
+    grid-template-columns:
+      1fr;
+
+  }
+
+
+  .farmer-book-summary {
+
+    position:
+      static;
+
+    order:
+      2;
+
+  }
+
+
+  .farmer-book-card {
+
+    order:
+      1;
+
+  }
+
+}
+
+
+@media (max-width: 700px) {
+
+  .farmer-book-container {
+
+    width:
+      calc(
+        100% - 20px
+      );
+
+    padding:
+      30px 0 50px;
+
+  }
+
+
+  .farmer-book-hero h1 {
+
+    font-size:
+      36px;
+
+  }
+
+
+  .farmer-book-steps {
+
+    grid-template-columns:
+      repeat(
+        2,
+        1fr
+      );
+
+  }
+
+
+  .farmer-book-card-header,
+  .farmer-book-section {
+
+    padding:
+      22px 19px;
+
+  }
+
+
+  .farmer-book-crop-grid {
+
+    grid-template-columns:
+      repeat(
+        2,
+        1fr
+      );
+
+  }
+
+
+  .farmer-book-center-grid,
+  .farmer-book-date-grid,
+  .farmer-book-slot-grid {
+
+    grid-template-columns:
+      1fr;
+
+  }
+
+
+  .farmer-book-quantity-card {
+
+    grid-template-columns:
+      1fr;
+
+  }
+
+
+  .farmer-book-summary {
+
+    padding:
+      19px;
+
+  }
+
+}
+
+
+@media (max-width: 450px) {
+
+  .farmer-book-hero h1 {
+
+    font-size:
+      32px;
+
+  }
+
+
+  .farmer-book-card-header h2 {
+
+    font-size:
+      27px;
+
+  }
+
+
+  .farmer-book-crop-grid {
+
+    grid-template-columns:
+      1fr;
+
+  }
+
+
+  .farmer-book-step {
+
+    min-height:
+      46px;
+
+    font-size:
+      10px;
+
+  }
+
+
+  .farmer-book-step-number {
+
+    width:
+      27px;
+
+    height:
+      27px;
+
+  }
+
+}
