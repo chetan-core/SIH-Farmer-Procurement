@@ -20,6 +20,7 @@ import {
   useState,
 } from "react";
 
+import Logo from "../../components/Logo";
 
 function AdminLogin() {
 
@@ -182,11 +183,9 @@ function AdminLogin() {
           className="admin-login-brand"
         >
 
-          <div className="admin-brand-mark">
-
-            KS
-
-          </div>
+          <Logo
+            size={58}
+          />
 
 
           <div>

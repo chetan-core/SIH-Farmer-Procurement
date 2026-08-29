@@ -18,6 +18,8 @@ import {
   useLocation,
 } from "react-router";
 
+import Logo from "../Logo";
+
 
 function AdminSidebar({
   open = false,
@@ -235,10 +237,9 @@ function AdminSidebar({
             }
           >
 
-            <div className="admin-sidebar-logo">
-              KS
-            </div>
-
+            <Logo
+              size={48}
+            />
 
             <div>
 
