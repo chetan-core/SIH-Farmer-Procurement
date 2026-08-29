@@ -60534,3 +60534,751 @@ html.dark .payment-issue-button {
     font-size: 19px !important;
   }
 }
+
+/* =========================================================
+   FARMER HISTORY — LARGE, CLEAR, COLOURFUL
+========================================================= */
+
+.farmer-history-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      circle at 7% 0%,
+      rgba(40,122,77,.08),
+      transparent 24%
+    ),
+    radial-gradient(
+      circle at 93% 0%,
+      rgba(33,107,145,.09),
+      transparent 26%
+    ),
+    linear-gradient(
+      180deg,
+      #eef6f5 0%,
+      #f8fbfa 100%
+    );
+}
+
+
+.farmer-history-container {
+  width: min(
+    1160px,
+    calc(100% - 30px)
+  );
+  margin: 0 auto;
+  padding: 42px 0 75px;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.farmer-history-header h1 {
+  margin-top: 9px;
+  color: #155b78;
+  font-size: clamp(
+    40px,
+    5vw,
+    64px
+  );
+  line-height: .95;
+  letter-spacing: -.055em;
+  font-weight: 950;
+}
+
+
+.farmer-history-header p {
+  max-width: 720px;
+  margin-top: 13px;
+  color: #607983;
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+
+/* =========================================================
+   SUMMARY CARDS
+========================================================= */
+
+.farmer-history-summary {
+  display: grid;
+  grid-template-columns:
+    repeat(4,minmax(0,1fr));
+  gap: 13px;
+  margin-top: 25px;
+}
+
+
+.farmer-history-summary-card {
+  min-height: 125px;
+  padding: 20px;
+  border: 1px solid #d7e4e7;
+  border-radius: 17px;
+  background: #fff;
+  box-shadow:
+    0 7px 22px rgba(25,60,75,.05);
+}
+
+
+.farmer-history-summary-card span {
+  display: block;
+  color: #738890;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+
+.farmer-history-summary-card strong {
+  display: block;
+  margin-top: 10px;
+  color: #174c66;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 950;
+}
+
+
+.farmer-history-summary-card:nth-child(1) strong {
+  color: #267b4d;
+}
+
+
+.farmer-history-summary-card:nth-child(2) strong {
+  color: #216b91;
+}
+
+
+.farmer-history-summary-card:nth-child(3) strong {
+  color: #c97921;
+}
+
+
+.farmer-history-summary-card:nth-child(4) strong {
+  color: #66529b;
+}
+
+
+/* =========================================================
+   FILTER / PERIOD BAR
+========================================================= */
+
+.farmer-history-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 22px;
+  padding: 16px 18px;
+  border: 1px solid #d7e4e7;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow:
+    0 5px 18px rgba(25,60,75,.04);
+}
+
+
+.farmer-history-toolbar-title {
+  color: #155c7b;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+
+.farmer-history-toolbar-subtitle {
+  margin-top: 3px;
+  color: #748990;
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   MAIN HISTORY CARD
+========================================================= */
+
+.farmer-history-card {
+  margin-top: 20px;
+  overflow: hidden;
+  border: 1px solid #d7e4e7;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow:
+    0 10px 30px rgba(25,60,75,.06);
+}
+
+
+.farmer-history-card-header {
+  padding: 22px 24px;
+  border-bottom: 1px solid #e5edef;
+}
+
+
+.farmer-history-card-header h2 {
+  margin-top: 6px;
+  color: #17607e;
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: -.035em;
+}
+
+
+/* =========================================================
+   HISTORY ROW
+========================================================= */
+
+.farmer-history-row {
+  display: grid;
+  grid-template-columns:
+    64px
+    minmax(170px,1.25fr)
+    minmax(130px,1fr)
+    minmax(120px,.8fr)
+    auto;
+  gap: 15px;
+  align-items: center;
+  min-height: 88px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #edf2f3;
+}
+
+
+.farmer-history-row:last-child {
+  border-bottom: 0;
+}
+
+
+.farmer-history-row:hover {
+  background: #f7fbfb;
+}
+
+
+/* =========================================================
+   TOKEN
+========================================================= */
+
+.farmer-history-token {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 13px;
+  color: #155d7d;
+  background: #e7f4f9;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+
+/* =========================================================
+   CROP / BOOKING
+========================================================= */
+
+.farmer-history-main strong {
+  color: #244d5d;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+
+.farmer-history-main span {
+  display: block;
+  margin-top: 4px;
+  color: #738991;
+  font-size: 11px;
+}
+
+
+.farmer-history-crop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #27764b;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+
+.farmer-history-date {
+  color: #5f7882;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+
+.farmer-history-quantity {
+  color: #155b78;
+  font-size: 17px;
+  font-weight: 950;
+}
+
+
+.farmer-history-quantity small {
+  color: #80949b;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   AMOUNT
+========================================================= */
+
+.farmer-history-amount {
+  color: #257847;
+  font-size: 19px;
+  font-weight: 950;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.farmer-history-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 29px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 950;
+}
+
+
+.farmer-history-status.success,
+.farmer-history-status.sent,
+.farmer-history-status.paid {
+  color: #216d45;
+  background: #e7f6ec;
+}
+
+
+.farmer-history-status.pending {
+  color: #9a6724;
+  background: #fff1dc;
+}
+
+
+.farmer-history-status.failed {
+  color: #a34d45;
+  background: #fff0ee;
+}
+
+
+/* =========================================================
+   VIEW BUTTON
+========================================================= */
+
+.farmer-history-view {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #cbdde2;
+  border-radius: 9px;
+  color: #216b91;
+  background: #f5fafb;
+  font-size: 10px;
+  font-weight: 950;
+}
+
+
+.farmer-history-view:hover {
+  transform: translateY(-1px);
+  border-color: #216b91;
+  background: #e8f4f8;
+}
+
+
+/* =========================================================
+   MONTHLY CHART / GRAPH
+========================================================= */
+
+.farmer-history-chart-card {
+  margin-top: 20px;
+  padding: 24px;
+  border: 1px solid #d7e4e7;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow:
+    0 9px 28px rgba(25,60,75,.05);
+}
+
+
+.farmer-history-chart-card h2 {
+  margin-top: 7px;
+  color: #155d7c;
+  font-size: 27px;
+  letter-spacing: -.035em;
+}
+
+
+.farmer-history-chart-card p {
+  margin-top: 7px;
+  color: #738991;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+
+/* generic chart containers */
+
+.farmer-history-chart,
+.history-chart,
+.history-graph {
+  width: 100%;
+  min-height: 280px;
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid #e1eaec;
+  border-radius: 15px;
+  background: #fbfdfd;
+}
+
+
+/* =========================================================
+   CROP BREAKDOWN
+========================================================= */
+
+.farmer-history-crop-breakdown {
+  display: grid;
+  grid-template-columns:
+    repeat(4,minmax(0,1fr));
+  gap: 11px;
+  margin-top: 18px;
+}
+
+
+.farmer-history-crop-card {
+  padding: 16px;
+  border: 1px solid #dce7e9;
+  border-radius: 13px;
+  background: #f9fbfb;
+}
+
+
+.farmer-history-crop-card:nth-child(1) {
+  border-top: 4px solid #287a4d;
+}
+
+
+.farmer-history-crop-card:nth-child(2) {
+  border-top: 4px solid #216b91;
+}
+
+
+.farmer-history-crop-card:nth-child(3) {
+  border-top: 4px solid #c87820;
+}
+
+
+.farmer-history-crop-card:nth-child(4) {
+  border-top: 4px solid #66529b;
+}
+
+
+.farmer-history-crop-card span {
+  color: #788e96;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+
+.farmer-history-crop-card strong {
+  display: block;
+  margin-top: 6px;
+  color: #244d5d;
+  font-size: 19px;
+  font-weight: 950;
+}
+
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.farmer-history-empty {
+  padding: 55px 25px;
+  text-align: center;
+}
+
+
+.farmer-history-empty h2 {
+  margin-top: 12px;
+  color: #1d5169;
+  font-size: 27px;
+}
+
+
+.farmer-history-empty p {
+  max-width: 480px;
+  margin: 8px auto 0;
+  color: #758b92;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+
+/* =========================================================
+   DARK MODE
+========================================================= */
+
+html.dark .farmer-history-page,
+body.dark .farmer-history-page,
+html.dark-mode .farmer-history-page,
+body.dark-mode .farmer-history-page,
+html[data-theme="dark"] .farmer-history-page,
+body[data-theme="dark"] .farmer-history-page {
+  background:
+    radial-gradient(
+      circle at 7% 0%,
+      rgba(52,155,102,.10),
+      transparent 25%
+    ),
+    radial-gradient(
+      circle at 93% 0%,
+      rgba(55,140,183,.12),
+      transparent 28%
+    ),
+    linear-gradient(
+      180deg,
+      #07151b,
+      #0c1c23
+    ) !important;
+}
+
+
+html.dark .farmer-history-summary-card,
+html.dark .farmer-history-toolbar,
+html.dark .farmer-history-card,
+html.dark .farmer-history-chart-card,
+html.dark .farmer-history-crop-card,
+body.dark .farmer-history-summary-card,
+body.dark .farmer-history-toolbar,
+body.dark .farmer-history-card,
+body.dark .farmer-history-chart-card,
+body.dark .farmer-history-crop-card {
+  color: #e6f0f2 !important;
+  background: #11262e !important;
+  border-color: #2a4750 !important;
+}
+
+
+html.dark .farmer-history-row {
+  background: #11262e !important;
+  border-color: #253e46 !important;
+}
+
+
+html.dark .farmer-history-row:hover {
+  background: #18323b !important;
+}
+
+
+html.dark .farmer-history-header h1,
+html.dark .farmer-history-card-header h2,
+html.dark .farmer-history-chart-card h2,
+html.dark .farmer-history-toolbar-title,
+html.dark .farmer-history-main strong,
+html.dark .farmer-history-quantity,
+html.dark .farmer-history-crop-card strong,
+html.dark .farmer-history-empty h2 {
+  color: #f0f7f8 !important;
+}
+
+
+html.dark .farmer-history-header p,
+html.dark .farmer-history-toolbar-subtitle,
+html.dark .farmer-history-main span,
+html.dark .farmer-history-date,
+html.dark .farmer-history-chart-card p,
+html.dark .farmer-history-crop-card span,
+html.dark .farmer-history-summary-card span {
+  color: #aec4c9 !important;
+}
+
+
+html.dark .farmer-history-summary-card:nth-child(1) strong {
+  color: #7bd79a !important;
+}
+
+
+html.dark .farmer-history-summary-card:nth-child(2) strong {
+  color: #7bc5e4 !important;
+}
+
+
+html.dark .farmer-history-summary-card:nth-child(3) strong {
+  color: #efb66c !important;
+}
+
+
+html.dark .farmer-history-summary-card:nth-child(4) strong {
+  color: #b19de9 !important;
+}
+
+
+html.dark .farmer-history-token {
+  color: #8ed0e9 !important;
+  background: #173744 !important;
+}
+
+
+html.dark .farmer-history-crop,
+html.dark .farmer-history-amount {
+  color: #79d99a !important;
+}
+
+
+html.dark .farmer-history-chart,
+html.dark .history-chart,
+html.dark .history-graph {
+  background: #0c2027 !important;
+  border-color: #2c4750 !important;
+}
+
+
+html.dark .farmer-history-view {
+  color: #8ed0e9 !important;
+  background: #14343f !important;
+  border-color: #345563 !important;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 950px) {
+
+  .farmer-history-summary {
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+  }
+
+
+  .farmer-history-grid {
+    grid-template-columns:
+      1fr;
+  }
+
+
+  .farmer-history-crop-breakdown {
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+  }
+
+
+  .farmer-history-row {
+    grid-template-columns:
+      52px
+      minmax(0,1fr)
+      auto;
+  }
+
+
+  .farmer-history-date,
+  .farmer-history-crop {
+    display: none;
+  }
+
+}
+
+
+@media (max-width: 600px) {
+
+  .farmer-history-container {
+    width:
+      calc(100% - 20px);
+
+    padding-top:
+      28px;
+  }
+
+
+  .farmer-history-header h1 {
+    font-size:
+      36px;
+  }
+
+
+  .farmer-history-summary {
+    grid-template-columns:
+      1fr 1fr;
+  }
+
+
+  .farmer-history-summary-card {
+    min-height:
+      110px;
+
+    padding:
+      16px;
+  }
+
+
+  .farmer-history-summary-card strong {
+    font-size:
+      25px;
+  }
+
+
+  .farmer-history-card-header,
+  .farmer-history-chart-card {
+    padding:
+      19px;
+  }
+
+
+  .farmer-history-row {
+    grid-template-columns:
+      46px
+      minmax(0,1fr);
+
+    gap:
+      11px;
+
+    padding:
+      13px;
+  }
+
+
+  .farmer-history-token {
+    width:
+      42px;
+
+    height:
+      42px;
+  }
+
+
+  .farmer-history-quantity,
+  .farmer-history-amount,
+  .farmer-history-status,
+  .farmer-history-view {
+    grid-column:
+      2;
+  }
+
+
+  .farmer-history-crop-breakdown {
+    grid-template-columns:
+      1fr;
+  }
+
+}
+
+
+@media (max-width: 430px) {
+
+  .farmer-history-summary {
+    grid-template-columns:
+      1fr;
+  }
+
+
+  .farmer-history-header h1 {
+    font-size:
+      32px;
+  }
+
+}
