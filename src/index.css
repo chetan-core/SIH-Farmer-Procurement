@@ -68878,4 +68878,1410 @@ html.dark .landing-footer-bottom {
 
   }
 
+  
+}
+
+/* =========================================================
+   FARMER LOGIN — FINAL STYLE
+========================================================= */
+
+.farmer-login-page {
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+
+  color: #345866;
+
+  background:
+    radial-gradient(
+      circle at 8% 5%,
+      rgba(29, 166, 91, .13),
+      transparent 25%
+    ),
+    radial-gradient(
+      circle at 94% 7%,
+      rgba(23, 142, 207, .14),
+      transparent 27%
+    ),
+    radial-gradient(
+      circle at 52% 90%,
+      rgba(243, 143, 29, .06),
+      transparent 30%
+    ),
+    linear-gradient(
+      180deg,
+      #edf8f5 0%,
+      #f8fcfb 52%,
+      #eef7f8 100%
+    );
+}
+
+
+/* =========================================================
+   LANGUAGE SELECTOR
+========================================================= */
+
+.farmer-login-language {
+  position: absolute;
+  top: 98px;
+  right: clamp(16px, 5vw, 70px);
+  z-index: 30;
+
+  display: flex;
+  align-items: center;
+  gap: 3px;
+
+  padding: 4px;
+
+  border: 1px solid #d2e3e7;
+  border-radius: 12px;
+
+  background: rgba(255,255,255,.92);
+
+  box-shadow:
+    0 8px 24px rgba(30,73,86,.08);
+
+  backdrop-filter: blur(14px);
+}
+
+
+.farmer-login-language > svg {
+  margin:
+    0 4px 0 6px;
+
+  color:
+    #1689bd;
+}
+
+
+.farmer-login-language button {
+  min-height:
+    35px;
+
+  padding:
+    0 10px;
+
+  border:
+    0;
+
+  border-radius:
+    8px;
+
+  color:
+    #738990;
+
+  background:
+    transparent;
+
+  font-size:
+    9px;
+
+  font-weight:
+    950;
+
+  cursor:
+    pointer;
+
+  transition:
+    .2s ease;
+}
+
+
+.farmer-login-language button:hover {
+  color:
+    #1479a7;
+
+  background:
+    #edf8fb;
+}
+
+
+.farmer-login-language button.active {
+  color:
+    #ffffff;
+
+  background:
+    linear-gradient(
+      135deg,
+      #168fca,
+      #126a99
+    );
+
+  box-shadow:
+    0 4px 11px rgba(22,143,202,.20);
+}
+
+
+/* =========================================================
+   MAIN CONTAINER
+========================================================= */
+
+.login-container {
+  width:
+    min(
+      1180px,
+      calc(100% - 30px)
+    );
+
+  margin:
+    0 auto;
+
+  padding:
+    35px 0 75px;
+}
+
+
+/* =========================================================
+   BACK LINK
+========================================================= */
+
+.login-back-row {
+  margin-top:
+    4px;
+}
+
+
+.back-link {
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  gap:
+    7px;
+
+  color:
+    #567580;
+
+  font-size:
+    11px;
+
+  font-weight:
+    850;
+
+  text-decoration:
+    none;
+}
+
+
+.back-link:hover {
+  color:
+    #1685b5;
+}
+
+
+/* =========================================================
+   TWO COLUMN LAYOUT
+========================================================= */
+
+.login-layout {
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(410px, .82fr);
+
+  gap:
+    clamp(40px, 6vw, 78px);
+
+  align-items:
+    center;
+
+  min-height:
+    625px;
+
+  padding-top:
+    27px;
+}
+
+
+/* =========================================================
+   LEFT INTRO
+========================================================= */
+
+.login-intro {
+  position:
+    relative;
+}
+
+
+.login-intro::before {
+  content:
+    "";
+
+  position:
+    absolute;
+
+  width:
+    250px;
+
+  height:
+    250px;
+
+  left:
+    -110px;
+
+  top:
+    -100px;
+
+  border-radius:
+    50%;
+
+  background:
+    rgba(28,157,90,.05);
+
+  filter:
+    blur(4px);
+
+  pointer-events:
+    none;
+}
+
+
+.page-eyebrow {
+  display:
+    inline-block;
+
+  color:
+    #df7c1d;
+
+  font-size:
+    10px;
+
+  font-weight:
+    950;
+
+  letter-spacing:
+    .16em;
+}
+
+
+.login-intro h1 {
+  position:
+    relative;
+
+  max-width:
+    690px;
+
+  margin-top:
+    13px;
+
+  color:
+    #123f57;
+
+  font-size:
+    clamp(
+      47px,
+      5.8vw,
+      76px
+    );
+
+  line-height:
+    .91;
+
+  letter-spacing:
+    -.062em;
+
+  font-weight:
+    950;
+}
+
+
+.login-intro h1 span {
+  display:
+    block;
+
+  margin-top:
+    8px;
+
+  color:
+    #198750;
+
+  text-shadow:
+    0 3px 0 rgba(25,135,80,.03);
+}
+
+
+.login-intro > p {
+  max-width:
+    635px;
+
+  margin-top:
+    22px;
+
+  color:
+    #587580;
+
+  font-size:
+    14px;
+
+  line-height:
+    1.82;
+}
+
+
+/* =========================================================
+   BENEFITS
+========================================================= */
+
+.login-feature-list {
+  display:
+    grid;
+
+  gap:
+    13px;
+
+  max-width:
+    630px;
+
+  margin-top:
+    30px;
+}
+
+
+.login-feature {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    14px;
+
+  padding:
+    13px 16px;
+
+  border:
+    1px solid #d7e7e9;
+
+  border-radius:
+    15px;
+
+  background:
+    rgba(255,255,255,.79);
+
+  box-shadow:
+    0 6px 20px rgba(28,70,84,.045);
+
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease;
+}
+
+
+.login-feature:hover {
+  transform:
+    translateX(4px);
+
+  box-shadow:
+    0 10px 27px rgba(28,70,84,.08);
+}
+
+
+.login-feature-icon {
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  width:
+    43px;
+
+  height:
+    43px;
+
+  flex:
+    0 0 43px;
+
+  border-radius:
+    12px;
+
+  color:
+    #18834f;
+
+  background:
+    #e4f7eb;
+}
+
+
+.login-feature strong {
+  display:
+    block;
+
+  color:
+    #295668;
+
+  font-size:
+    14px;
+
+  font-weight:
+    900;
+}
+
+
+.login-feature span {
+  display:
+    block;
+
+  margin-top:
+    3px;
+
+  color:
+    #748b93;
+
+  font-size:
+    11px;
+
+  line-height:
+    1.5;
+}
+
+
+/* =========================================================
+   LOGIN CARD
+========================================================= */
+
+.login-form-card {
+  position:
+    relative;
+
+  overflow:
+    hidden;
+
+  padding:
+    31px;
+
+  border:
+    1px solid #d3e4e7;
+
+  border-radius:
+    24px;
+
+  background:
+    rgba(255,255,255,.94);
+
+  box-shadow:
+    0 22px 60px rgba(29,73,86,.11);
+
+  backdrop-filter:
+    blur(18px);
+}
+
+
+.login-form-card::before {
+  content:
+    "";
+
+  position:
+    absolute;
+
+  left:
+    0;
+
+  right:
+    0;
+
+  top:
+    0;
+
+  height:
+    5px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #168fca,
+      #19a65e,
+      #f08b1e
+    );
+}
+
+
+/* =========================================================
+   FORM HEADING
+========================================================= */
+
+.login-form-heading {
+  display:
+    flex;
+
+  align-items:
+    flex-start;
+
+  gap:
+    14px;
+
+  margin-bottom:
+    27px;
+}
+
+
+.login-form-icon {
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  width:
+    55px;
+
+  height:
+    55px;
+
+  flex:
+    0 0 55px;
+
+  border-radius:
+    15px;
+
+  color:
+    #1688bb;
+
+  background:
+    #e5f5fb;
+}
+
+
+.login-form-heading .page-eyebrow {
+  font-size:
+    9px;
+}
+
+
+.login-form-heading h2 {
+  margin-top:
+    5px;
+
+  color:
+    #143f55;
+
+  font-size:
+    29px;
+
+  line-height:
+    1.05;
+
+  letter-spacing:
+    -.035em;
+
+  font-weight:
+    950;
+}
+
+
+.login-form-heading p {
+  margin-top:
+    6px;
+
+  color:
+    #748a92;
+
+  font-size:
+    11px;
+
+  line-height:
+    1.55;
+}
+
+
+/* =========================================================
+   INPUT
+========================================================= */
+
+.login-field label {
+  display:
+    block;
+
+  margin-bottom:
+    8px;
+
+  color:
+    #31596a;
+
+  font-size:
+    11px;
+
+  font-weight:
+    950;
+}
+
+
+.login-phone-input {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  min-height:
+    59px;
+
+  overflow:
+    hidden;
+
+  border:
+    1.5px solid #c7dce1;
+
+  border-radius:
+    13px;
+
+  background:
+    #fbfefe;
+
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease;
+}
+
+
+.login-phone-input:focus-within {
+  border-color:
+    #2290c1;
+
+  box-shadow:
+    0 0 0 4px rgba(34,144,193,.08);
+}
+
+
+.login-country {
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  width:
+    58px;
+
+  height:
+    59px;
+
+  flex:
+    0 0 58px;
+
+  border-right:
+    1px solid #dbe7ea;
+
+  color:
+    #557783;
+
+  font-size:
+    13px;
+
+  font-weight:
+    950;
+}
+
+
+.login-phone-input input {
+  flex:
+    1;
+
+  min-width:
+    0;
+
+  height:
+    57px;
+
+  padding:
+    0 12px;
+
+  border:
+    0;
+
+  outline:
+    none;
+
+  color:
+    #214e61;
+
+  background:
+    transparent;
+
+  font-size:
+    18px;
+
+  font-weight:
+    850;
+}
+
+
+.login-phone-input input::placeholder {
+  color:
+    #a7b8bd;
+}
+
+
+.login-phone-check {
+  margin:
+    0 15px 0 7px;
+
+  color:
+    #1b9a5c;
+}
+
+
+.login-field small {
+  display:
+    block;
+
+  margin-top:
+    8px;
+
+  color:
+    #7b9097;
+
+  font-size:
+    10px;
+
+  line-height:
+    1.5;
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.login-error {
+  margin-top:
+    15px;
+
+  padding:
+    12px 14px;
+
+  border:
+    1px solid #efc7c2;
+
+  border-radius:
+    11px;
+
+  color:
+    #a04740;
+
+  background:
+    #fff0ee;
+
+  font-size:
+    11px;
+
+  font-weight:
+    850;
+
+  line-height:
+    1.55;
+}
+
+
+/* =========================================================
+   CONTINUE BUTTON
+========================================================= */
+
+.login-form-card form > button {
+  min-height:
+    54px;
+
+  margin-top:
+    21px;
+
+  border-radius:
+    12px;
+
+  font-size:
+    12px;
+
+  font-weight:
+    950;
+}
+
+
+.login-form-card form > button:hover {
+  transform:
+    translateY(-2px);
+}
+
+
+/* =========================================================
+   DIVIDER
+========================================================= */
+
+.login-divider {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    11px;
+
+  margin:
+    26px 0 15px;
+
+  color:
+    #82939a;
+
+  font-size:
+    10px;
+}
+
+
+.login-divider::before,
+.login-divider::after {
+  content:
+    "";
+
+  flex:
+    1;
+
+  height:
+    1px;
+
+  background:
+    #dfe9eb;
+}
+
+
+/* =========================================================
+   REGISTER
+========================================================= */
+
+.login-register-link {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  gap:
+    8px;
+
+  min-height:
+    48px;
+
+  border:
+    1px solid #c9dfe5;
+
+  border-radius:
+    11px;
+
+  color:
+    #17749d;
+
+  background:
+    #f3fafc;
+
+  font-size:
+    11px;
+
+  font-weight:
+    950;
+
+  text-decoration:
+    none;
+
+  transition:
+    .2s ease;
+}
+
+
+.login-register-link:hover {
+  transform:
+    translateY(-2px);
+
+  border-color:
+    #17749d;
+
+  background:
+    #eaf7fb;
+}
+
+
+/* =========================================================
+   DARK MODE
+========================================================= */
+
+html.dark .farmer-login-page,
+body.dark .farmer-login-page,
+html.dark-mode .farmer-login-page,
+body.dark-mode .farmer-login-page,
+html[data-theme="dark"] .farmer-login-page,
+body[data-theme="dark"] .farmer-login-page {
+
+  color:
+    #dcebed;
+
+  background:
+    radial-gradient(
+      circle at 8% 5%,
+      rgba(34,160,99,.13),
+      transparent 27%
+    ),
+    radial-gradient(
+      circle at 94% 7%,
+      rgba(40,145,192,.14),
+      transparent 29%
+    ),
+    linear-gradient(
+      180deg,
+      #07161d 0%,
+      #0b1d24 54%,
+      #091a21 100%
+    ) !important;
+
+}
+
+
+html.dark .login-intro h1,
+html.dark .login-form-heading h2,
+html.dark .login-feature strong,
+html.dark .login-phone-input input,
+body.dark .login-intro h1,
+body.dark .login-form-heading h2,
+body.dark .login-feature strong,
+body.dark .login-phone-input input {
+
+  color:
+    #f1f8fa !important;
+
+}
+
+
+html.dark .login-intro h1 span {
+
+  color:
+    #70d89a;
+
+}
+
+
+html.dark .login-intro > p,
+html.dark .login-feature span,
+html.dark .login-form-heading p,
+html.dark .login-field small,
+html.dark .back-link,
+body.dark .login-intro > p,
+body.dark .login-feature span,
+body.dark .login-form-heading p,
+body.dark .login-field small,
+body.dark .back-link {
+
+  color:
+    #adc5cb !important;
+
+}
+
+
+html.dark .login-feature,
+html.dark .login-form-card {
+
+  background:
+    #11272f !important;
+
+  border-color:
+    #2a4650 !important;
+
+  box-shadow:
+    0 20px 55px rgba(0,0,0,.27);
+
+}
+
+
+html.dark .login-feature:hover {
+
+  background:
+    #16313a !important;
+
+}
+
+
+html.dark .login-feature-icon {
+
+  color:
+    #79d99b;
+
+  background:
+    #173b2c;
+
+}
+
+
+html.dark .login-form-icon {
+
+  color:
+    #78cce9;
+
+  background:
+    #173b48;
+
+}
+
+
+html.dark .login-phone-input {
+
+  border-color:
+    #35545e;
+
+  background:
+    #0b2028;
+
+}
+
+
+html.dark .login-phone-input:focus-within {
+
+  border-color:
+    #54b6dc;
+
+  box-shadow:
+    0 0 0 4px rgba(84,182,220,.09);
+
+}
+
+
+html.dark .login-country {
+
+  color:
+    #abc4ca;
+
+  border-color:
+    #29434c;
+
+}
+
+
+html.dark .login-phone-input input::placeholder {
+
+  color:
+    #607981;
+
+}
+
+
+html.dark .login-error {
+
+  color:
+    #ffaaa2;
+
+  background:
+    #321f1e;
+
+  border-color:
+    #653b36;
+
+}
+
+
+html.dark .login-divider {
+
+  color:
+    #819aa1;
+
+}
+
+
+html.dark .login-divider::before,
+html.dark .login-divider::after {
+
+  background:
+    #29434b;
+
+}
+
+
+html.dark .login-register-link {
+
+  color:
+    #89d4ed;
+
+  background:
+    #13323c;
+
+  border-color:
+    #355663;
+
+}
+
+
+html.dark .login-register-link:hover {
+
+  background:
+    #173b46;
+
+}
+
+
+html.dark .farmer-login-language {
+
+  background:
+    #10252d;
+
+  border-color:
+    #2a4650;
+
+  box-shadow:
+    0 10px 30px rgba(0,0,0,.30);
+
+}
+
+
+html.dark .farmer-login-language > svg {
+
+  color:
+    #7bcbe7;
+
+}
+
+
+html.dark .farmer-login-language button {
+
+  color:
+    #9eb8bf;
+
+}
+
+
+html.dark .farmer-login-language button:hover {
+
+  color:
+    #8cd4ef;
+
+  background:
+    #18353e;
+
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .login-layout {
+
+    grid-template-columns:
+      1fr;
+
+    gap:
+      40px;
+
+    min-height:
+      auto;
+
+    padding-top:
+      35px;
+
+  }
+
+
+  .login-intro {
+
+    max-width:
+      760px;
+
+  }
+
+
+  .farmer-login-language {
+
+    position:
+      relative;
+
+    top:
+      auto;
+
+    right:
+      auto;
+
+    width:
+      max-content;
+
+    margin:
+      12px 14px 0 auto;
+
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+  .login-container {
+
+    width:
+      calc(100% - 20px);
+
+    padding:
+      25px 0 55px;
+
+  }
+
+
+  .login-layout {
+
+    gap:
+      31px;
+
+    padding-top:
+      25px;
+
+  }
+
+
+  .login-intro h1 {
+
+    font-size:
+      40px;
+
+  }
+
+
+  .login-intro > p {
+
+    font-size:
+      13px;
+
+  }
+
+
+  .login-form-card {
+
+    padding:
+      21px;
+
+    border-radius:
+      19px;
+
+  }
+
+
+  .login-form-heading h2 {
+
+    font-size:
+      25px;
+
+  }
+
+
+  .login-form-heading {
+
+    margin-bottom:
+      23px;
+
+  }
+
+
+  .login-feature {
+
+    padding:
+      11px;
+
+  }
+
+
+  .login-feature strong {
+
+    font-size:
+      13px;
+
+  }
+
+
+  .login-feature span {
+
+    font-size:
+      10px;
+
+  }
+
+
+  .farmer-login-language {
+
+    margin:
+      10px 10px 0 auto;
+
+  }
+
+
+  .farmer-login-language button {
+
+    padding:
+      0 8px;
+
+  }
+
+}
+
+
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
+
+@media (max-width: 390px) {
+
+  .login-intro h1 {
+
+    font-size:
+      35px;
+
+  }
+
+
+  .login-form-card {
+
+    padding:
+      18px;
+
+  }
+
+
+  .login-form-heading h2 {
+
+    font-size:
+      23px;
+
+  }
+
+
+  .farmer-login-language > svg {
+
+    display:
+      none;
+
+  }
+
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .farmer-login-page *,
+  .farmer-login-page *::before,
+  .farmer-login-page *::after {
+
+    animation:
+      none !important;
+
+    transition:
+      none !important;
+
+  }
+
 }

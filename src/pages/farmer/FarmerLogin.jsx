@@ -1,3 +1,4 @@
+
 import {
   ArrowLeft,
   ArrowRight,
@@ -7,26 +8,21 @@ import {
   UserRound,
 } from "lucide-react";
 
-
 import {
   Link,
   useNavigate,
 } from "react-router";
 
-
 import {
   useState,
 } from "react";
 
-
 import Header from "../../components/Header";
 import Button from "../../components/Button";
-
 
 import {
   useLanguage,
 } from "../../translations/LanguageContext";
-
 
 import {
   setCurrentUser,
@@ -53,27 +49,21 @@ function FarmerLogin() {
     phone,
     setPhone,
   ] =
-    useState(
-      ""
-    );
+    useState("");
 
 
   const [
     error,
     setError,
   ] =
-    useState(
-      ""
-    );
+    useState("");
 
 
   const [
     loading,
     setLoading,
   ] =
-    useState(
-      false
-    );
+    useState(false);
 
 
   function handlePhoneChange(
@@ -100,6 +90,7 @@ function FarmerLogin() {
     setError(
       ""
     );
+
   }
 
 
@@ -115,16 +106,20 @@ function FarmerLogin() {
     ) {
 
       setError(
-        "Please enter a valid 10-digit mobile number."
+        t(
+          "auth.invalidPhone"
+        )
       );
 
       return;
+
     }
 
 
     setLoading(
       true
     );
+
 
     setError(
       ""
@@ -146,6 +141,7 @@ function FarmerLogin() {
         throw new Error(
           "Unable to connect to the server."
         );
+
       }
 
 
@@ -170,36 +166,36 @@ function FarmerLogin() {
             ).replace(
               /\D/g,
               ""
-            ) ===
-            phone
+            ) === phone
         );
 
 
-      if (!farmer) {
+      if (
+        !farmer
+      ) {
 
         throw new Error(
           "No farmer account was found for this mobile number."
         );
+
       }
 
 
-      /*
-       * Convert database field names into
-       * the format used by appStore.
-       */
-
       setCurrentUser({
+
         role:
           "farmer",
 
         farmerId:
           farmer.id,
+
       });
 
 
       navigate(
         "/farmer/home"
       );
+
 
     } catch (
       loginError
@@ -213,8 +209,11 @@ function FarmerLogin() {
 
       setError(
         loginError?.message ||
-        "Unable to login. Please try again."
+        t(
+          "common.error"
+        )
       );
+
 
     } finally {
 
@@ -223,6 +222,7 @@ function FarmerLogin() {
       );
 
     }
+
   }
 
 
@@ -245,7 +245,7 @@ function FarmerLogin() {
           >
 
             <ArrowLeft
-              size={16}
+              size={17}
             />
 
             {t(
@@ -257,37 +257,36 @@ function FarmerLogin() {
         </div>
 
 
-
         <section className="login-layout">
 
 
           <div className="login-intro">
 
-
             <span className="page-eyebrow">
-              FARMER PORTAL
+
+              {t(
+                "common.farmer"
+              )}
+
             </span>
 
 
             <h1>
 
-              Welcome to
-
-              <span>
-                KrishiSetu
-              </span>
+              {t(
+                "auth.welcome"
+              )}
 
             </h1>
 
 
             <p>
 
-              Login with your registered
-              mobile number to view bookings,
-              procurement status and payments.
+              {t(
+                "auth.loginDescription"
+              )}
 
             </p>
-
 
 
             <div className="login-feature-list">
@@ -298,7 +297,7 @@ function FarmerLogin() {
                 <div className="login-feature-icon">
 
                   <ShieldCheck
-                    size={18}
+                    size={19}
                   />
 
                 </div>
@@ -307,18 +306,25 @@ function FarmerLogin() {
                 <div>
 
                   <strong>
-                    Secure access
+
+                    {t(
+                      "auth.secureAccess"
+                    )}
+
                   </strong>
 
 
                   <span>
-                    Your farmer account stays protected.
+
+                    {t(
+                      "auth.secureAccessDescription"
+                    )}
+
                   </span>
 
                 </div>
 
               </div>
-
 
 
               <div className="login-feature">
@@ -326,7 +332,7 @@ function FarmerLogin() {
                 <div className="login-feature-icon">
 
                   <Check
-                    size={18}
+                    size={19}
                   />
 
                 </div>
@@ -335,12 +341,20 @@ function FarmerLogin() {
                 <div>
 
                   <strong>
-                    Live booking status
+
+                    {t(
+                      "auth.liveStatus"
+                    )}
+
                   </strong>
 
 
                   <span>
-                    Track your procurement journey.
+
+                    {t(
+                      "auth.liveStatusDescription"
+                    )}
+
                   </span>
 
                 </div>
@@ -348,13 +362,12 @@ function FarmerLogin() {
               </div>
 
 
-
               <div className="login-feature">
 
                 <div className="login-feature-icon">
 
                   <UserRound
-                    size={18}
+                    size={19}
                   />
 
                 </div>
@@ -363,12 +376,20 @@ function FarmerLogin() {
                 <div>
 
                   <strong>
-                    Farmer account
+
+                    {t(
+                      "auth.farmerAccount"
+                    )}
+
                   </strong>
 
 
                   <span>
-                    Your registered details are reused.
+
+                    {t(
+                      "auth.farmerAccountDescription"
+                    )}
+
                   </span>
 
                 </div>
@@ -381,7 +402,6 @@ function FarmerLogin() {
           </div>
 
 
-
           <div className="login-form-card">
 
 
@@ -390,7 +410,7 @@ function FarmerLogin() {
               <div className="login-form-icon">
 
                 <Phone
-                  size={21}
+                  size={22}
                 />
 
               </div>
@@ -399,24 +419,34 @@ function FarmerLogin() {
               <div>
 
                 <span className="page-eyebrow">
-                  MOBILE LOGIN
+
+                  {t(
+                    "auth.mobileLogin"
+                  )}
+
                 </span>
 
 
                 <h2>
-                  Login to your account
+
+                  {t(
+                    "auth.loginTitle"
+                  )}
+
                 </h2>
 
 
                 <p>
-                  Enter your registered
-                  mobile number.
+
+                  {t(
+                    "auth.enterRegisteredNumber"
+                  )}
+
                 </p>
 
               </div>
 
             </div>
-
 
 
             <form
@@ -425,18 +455,20 @@ function FarmerLogin() {
               }
             >
 
-
               <div className="login-field">
 
-                <label htmlFor="farmer-phone">
+                <label
+                  htmlFor="farmer-phone"
+                >
 
-                  Mobile Number
+                  {t(
+                    "auth.mobileNumber"
+                  )}
 
                 </label>
 
 
                 <div className="login-phone-input">
-
 
                   <span className="login-country">
 
@@ -453,17 +485,22 @@ function FarmerLogin() {
                     value={
                       phone
                     }
-                    placeholder="9876543210"
+                    placeholder={
+                      t(
+                        "auth.phonePlaceholder"
+                      )
+                    }
                     onChange={
                       handlePhoneChange
                     }
+                    autoComplete="tel"
                   />
 
 
                   {phone.length === 10 && (
 
                     <Check
-                      size={17}
+                      size={18}
                       className="login-phone-check"
                     />
 
@@ -473,11 +510,14 @@ function FarmerLogin() {
 
 
                 <small>
-                  Use the same number used during registration.
+
+                  {t(
+                    "auth.numberHint"
+                  )}
+
                 </small>
 
               </div>
-
 
 
               {error && (
@@ -491,7 +531,6 @@ function FarmerLogin() {
               )}
 
 
-
               <Button
                 fullWidth
                 type="submit"
@@ -500,11 +539,13 @@ function FarmerLogin() {
                 }
               >
 
-                {
-                  loading
-                    ? "Checking account..."
-                    : "Continue"
-                }
+                {loading
+                  ? t(
+                      "auth.checkingAccount"
+                    )
+                  : t(
+                      "common.continue"
+                    )}
 
 
                 {!loading && (
@@ -521,15 +562,17 @@ function FarmerLogin() {
             </form>
 
 
-
             <div className="login-divider">
 
               <span>
-                New to KrishiSetu?
+
+                {t(
+                  "auth.newToKrishiSetu"
+                )}
+
               </span>
 
             </div>
-
 
 
             <Link
@@ -537,7 +580,9 @@ function FarmerLogin() {
               className="login-register-link"
             >
 
-              Create Farmer Account
+              {t(
+                "auth.createFarmerAccount"
+              )}
 
               <ArrowRight
                 size={15}
@@ -549,7 +594,6 @@ function FarmerLogin() {
           </div>
 
         </section>
-
 
       </main>
 

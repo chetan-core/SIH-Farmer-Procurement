@@ -83,8 +83,10 @@ const en = {
       "Farmer Procurement Management System",
   },
 
-  auth: {
-  welcome: "Welcome to KrishiSetu",
+ 
+auth: {
+  welcome:
+    "Welcome to KrishiSetu",
 
   loginDescription:
     "Enter your registered mobile number to access your bookings, token and procurement status.",
@@ -121,7 +123,49 @@ const en = {
 
   invalidPhone:
     "Please enter a valid 10-digit mobile number.",
+
+  secureAccess:
+    "Secure access",
+
+  secureAccessDescription:
+    "Your farmer account stays protected.",
+
+  liveStatus:
+    "Live booking status",
+
+  liveStatusDescription:
+    "Track your procurement journey.",
+
+  farmerAccount:
+    "Farmer account",
+
+  farmerAccountDescription:
+    "Your registered details are reused.",
+
+  mobileLogin:
+    "MOBILE LOGIN",
+
+  loginTitle:
+    "Login to your account",
+
+  enterRegisteredNumber:
+    "Enter your registered mobile number.",
+
+  numberHint:
+    "Use the same number used during registration.",
+
+  checkingAccount:
+    "Checking account...",
+
+  newToKrishiSetu:
+    "New to KrishiSetu?",
+
+  createFarmerAccount:
+    "Create Farmer Account",
 },
+
+
+
 
   register: {
     eyebrow: "FARMER REGISTRATION",

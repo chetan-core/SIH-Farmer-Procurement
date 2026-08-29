@@ -83,8 +83,10 @@ const hi = {
       "किसान खरीद प्रबंधन प्रणाली",
   },
 
- auth: {
-  welcome: "KrishiSetu में आपका स्वागत है",
+
+auth: {
+  welcome:
+    "KrishiSetu में आपका स्वागत है",
 
   loginDescription:
     "अपनी बुकिंग, टोकन और खरीद की स्थिति देखने के लिए अपना पंजीकृत मोबाइल नंबर दर्ज करें।",
@@ -121,7 +123,47 @@ const hi = {
 
   invalidPhone:
     "कृपया सही 10 अंकों का मोबाइल नंबर दर्ज करें।",
+
+  secureAccess:
+    "सुरक्षित प्रवेश",
+
+  secureAccessDescription:
+    "आपका किसान खाता सुरक्षित रहता है।",
+
+  liveStatus:
+    "लाइव बुकिंग स्थिति",
+
+  liveStatusDescription:
+    "अपनी खरीद प्रक्रिया को ट्रैक करें।",
+
+  farmerAccount:
+    "किसान खाता",
+
+  farmerAccountDescription:
+    "आपकी पंजीकृत जानकारी दोबारा उपयोग की जाती है।",
+
+  mobileLogin:
+    "मोबाइल लॉगिन",
+
+  loginTitle:
+    "अपने खाते में लॉगिन करें",
+
+  enterRegisteredNumber:
+    "अपना पंजीकृत मोबाइल नंबर दर्ज करें।",
+
+  numberHint:
+    "पंजीकरण के समय उपयोग किया गया वही नंबर दर्ज करें।",
+
+  checkingAccount:
+    "खाता जांचा जा रहा है...",
+
+  newToKrishiSetu:
+    "KrishiSetu पर नए हैं?",
+
+  createFarmerAccount:
+    "किसान खाता बनाएं",
 },
+
 
   register: {
     eyebrow: "किसान पंजीकरण",
