@@ -165,6 +165,60 @@ auth: {
 },
 
 
+admin: {
+  operations:
+    "संचालन",
+
+  management:
+    "प्रबंधन",
+
+  system:
+    "सिस्टम",
+
+  dashboard:
+    "डैशबोर्ड",
+
+  liveQueue:
+    "लाइव कतार",
+
+  weighing:
+    "वजन",
+
+  procurement:
+    "खरीद",
+
+  payments:
+    "भुगतान",
+
+  farmers:
+    "किसान",
+
+  centers:
+    "केंद्र",
+
+  reports:
+    "रिपोर्ट",
+
+  activityLog:
+    "गतिविधि लॉग",
+
+  settings:
+    "सेटिंग्स",
+
+  activeCenter:
+    "सक्रिय केंद्र",
+
+  systemOnline:
+    "सिस्टम ऑनलाइन",
+
+  databaseConnected:
+    "डेटाबेस जुड़ा हुआ है",
+
+  logout:
+    "लॉगआउट",
+},
+
+
   register: {
     eyebrow: "किसान पंजीकरण",
 

@@ -28,6 +28,10 @@ import {
 
 import AdminLayout from "../../components/admin/AdminLayout";
 
+import {
+  useLanguage,
+} from "../../translations/LanguageContext";
+
 
 const API_URL =
   import.meta.env.VITE_API_URL;
@@ -84,17 +88,10 @@ function AdminDashboard() {
     useState("");
 
 
-  const [
-    language,
-    setLanguage,
-  ] =
-    useState(
-      () =>
-        localStorage.getItem(
-          "krishisetu-language"
-        ) ||
-        "en"
-    );
+  const {
+  language,
+} =
+  useLanguage();
 
 
   const text =
@@ -292,53 +289,28 @@ function AdminDashboard() {
 
   useEffect(() => {
 
-    loadDashboard();
+  loadDashboard();
 
 
-    const timer =
-      setInterval(
-        () =>
-          loadDashboard(),
-        10000
-      );
-
-
-    function handleLanguageChange() {
-
-      setLanguage(
-        localStorage.getItem(
-          "krishisetu-language"
-        ) ||
-        "en"
-      );
-
-    }
-
-
-    window.addEventListener(
-      "storage",
-      handleLanguageChange
+  const timer =
+    setInterval(
+      () =>
+        loadDashboard(),
+      10000
     );
 
 
-    return () => {
+  return () => {
 
-      clearInterval(
-        timer
-      );
+    clearInterval(
+      timer
+    );
 
+  };
 
-      window.removeEventListener(
-        "storage",
-        handleLanguageChange
-      );
-
-    };
-
-  }, [
-    loadDashboard,
-  ]);
-
+}, [
+  loadDashboard,
+]);
 
   const today =
     new Date();

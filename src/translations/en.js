@@ -164,6 +164,60 @@ auth: {
     "Create Farmer Account",
 },
 
+admin: {
+  operations:
+    "OPERATIONS",
+
+  management:
+    "MANAGEMENT",
+
+  system:
+    "SYSTEM",
+
+  dashboard:
+    "Dashboard",
+
+  liveQueue:
+    "Live Queue",
+
+  weighing:
+    "Weighing",
+
+  procurement:
+    "Procurement",
+
+  payments:
+    "Payments",
+
+  farmers:
+    "Farmers",
+
+  centers:
+    "Centers",
+
+  reports:
+    "Reports",
+
+  activityLog:
+    "Activity Log",
+
+  settings:
+    "Settings",
+
+  activeCenter:
+    "ACTIVE CENTER",
+
+  systemOnline:
+    "System Online",
+
+  databaseConnected:
+    "Database connected",
+
+  logout:
+    "Logout",
+},
+
+
 
 
 

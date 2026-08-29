@@ -20,6 +20,10 @@ import {
 
 import Logo from "../Logo";
 
+import {
+  useLanguage,
+} from "../../translations/LanguageContext";
+
 
 function AdminSidebar({
   open = false,
@@ -28,7 +32,10 @@ function AdminSidebar({
 
   const location =
     useLocation();
-
+  const {
+  t,
+} =
+  useLanguage();
 
   const navigation = [
 
@@ -40,7 +47,7 @@ function AdminSidebar({
 
         {
           label:
-            "Dashboard",
+            t("admin.dashboard"),
 
           path:
             "/admin/dashboard",
@@ -51,7 +58,7 @@ function AdminSidebar({
 
         {
           label:
-            "Live Queue",
+            t("admin.liveQueue"),
 
           path:
             "/admin/queue",
@@ -62,7 +69,7 @@ function AdminSidebar({
 
         {
           label:
-            "Weighing",
+            t("admin.weighing"),
 
           path:
             "/admin/weighing",
@@ -73,7 +80,7 @@ function AdminSidebar({
 
         {
           label:
-            "Procurement",
+            t("admin.procurement"),
 
           path:
             "/admin/procurement",
@@ -84,7 +91,7 @@ function AdminSidebar({
 
         {
           label:
-            "Payments",
+            t("admin.payments"),
 
           path:
             "/admin/payments",
@@ -105,7 +112,7 @@ function AdminSidebar({
 
         {
           label:
-            "Farmers",
+            t("admin.farmers"),
 
           path:
             "/admin/farmers",
@@ -116,7 +123,7 @@ function AdminSidebar({
 
         {
           label:
-            "Centers",
+            t("admin.centers"),
 
           path:
             "/admin/centers",
@@ -127,7 +134,7 @@ function AdminSidebar({
 
         {
           label:
-            "Reports",
+            t("admin.reports"),
 
           path:
             "/admin/reports",
@@ -148,7 +155,7 @@ function AdminSidebar({
 
         {
           label:
-            "Activity Log",
+            t("admin.activityLog"),
 
           path:
             "/admin/activity",
@@ -159,7 +166,7 @@ function AdminSidebar({
 
         {
           label:
-            "Settings",
+            t("admin.settings"),
 
           path:
             "/admin/settings",

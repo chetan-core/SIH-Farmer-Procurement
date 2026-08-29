@@ -121,7 +121,99 @@ const te = {
 
   invalidPhone:
     "దయచేసి సరైన 10 అంకెల మొబైల్ నంబర్ నమోదు చేయండి.",
+  secureAccess:
+  "సురక్షిత ప్రవేశం",
+
+secureAccessDescription:
+  "మీ రైతు ఖాతా సురక్షితంగా ఉంటుంది.",
+
+liveStatus:
+  "లైవ్ బుకింగ్ స్థితి",
+
+liveStatusDescription:
+  "మీ కొనుగోలు ప్రయాణాన్ని ట్రాక్ చేయండి.",
+
+farmerAccount:
+  "రైతు ఖాతా",
+
+farmerAccountDescription:
+  "మీ నమోదిత వివరాలు మళ్లీ ఉపయోగించబడతాయి.",
+
+mobileLogin:
+  "మొబైల్ లాగిన్",
+
+loginTitle:
+  "మీ ఖాతాలోకి లాగిన్ అవ్వండి",
+
+enterRegisteredNumber:
+  "మీ నమోదిత మొబైల్ నంబర్‌ను నమోదు చేయండి.",
+
+numberHint:
+  "నమోదు సమయంలో ఉపయోగించిన అదే నంబర్‌ను ఉపయోగించండి.",
+
+checkingAccount:
+  "ఖాతాను తనిఖీ చేస్తోంది...",
+
+newToKrishiSetu:
+  "KrishiSetuకి కొత్తవారా?",
+
+createFarmerAccount:
+  "రైతు ఖాతాను సృష్టించండి",
 },
+
+admin: {
+  operations:
+    "ఆపరేషన్స్",
+
+  management:
+    "నిర్వహణ",
+
+  system:
+    "సిస్టమ్",
+
+  dashboard:
+    "డ్యాష్‌బోర్డ్",
+
+  liveQueue:
+    "లైవ్ క్యూ",
+
+  weighing:
+    "తూకం",
+
+  procurement:
+    "కొనుగోలు",
+
+  payments:
+    "చెల్లింపులు",
+
+  farmers:
+    "రైతులు",
+
+  centers:
+    "కేంద్రాలు",
+
+  reports:
+    "నివేదికలు",
+
+  activityLog:
+    "కార్యకలాపాల లాగ్",
+
+  settings:
+    "సెట్టింగ్స్",
+
+  activeCenter:
+    "క్రియాశీల కేంద్రం",
+
+  systemOnline:
+    "సిస్టమ్ ఆన్‌లైన్‌లో ఉంది",
+
+  databaseConnected:
+    "డేటాబేస్ అనుసంధానించబడింది",
+
+  logout:
+    "లాగ్‌అవుట్",
+},
+
   register: {
     eyebrow: "రైతు నమోదు",
 

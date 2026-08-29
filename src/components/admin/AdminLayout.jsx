@@ -1,13 +1,14 @@
+
 import {
-  useEffect,
   useState,
 } from "react";
 
 import AdminSidebar from "./AdminSidebar";
 import AdminHeader from "./AdminHeader";
+
 import {
-  MessageCircleWarning,
-} from "lucide-react";
+  useLanguage,
+} from "../../translations/LanguageContext";
 
 
 function AdminLayout({
@@ -19,104 +20,22 @@ function AdminLayout({
   const [
     sidebarOpen,
     setSidebarOpen,
-  ] = useState(false);
+  ] =
+    useState(false);
 
 
   const [
     refreshing,
     setRefreshing,
-  ] = useState(false);
+  ] =
+    useState(false);
 
 
-  const [
+  const {
     language,
     setLanguage,
-  ] = useState(
-    () =>
-      localStorage.getItem(
-        "krishisetu-language"
-      ) || "en"
-  );
-
-
-  function changeLanguage(
-    value
-  ) {
-
-    setLanguage(
-      value
-    );
-
-
-    localStorage.setItem(
-      "krishisetu-language",
-      value
-    );
-
-
-    window.dispatchEvent(
-      new CustomEvent(
-        "krishisetu-language-change",
-        {
-          detail: {
-            language: value,
-          },
-        }
-      )
-    );
-
-    <Link
-  to="/admin/payment-issues"
-  className="admin-sidebar-link"
->
-  <MessageCircleWarning
-    size={18}
-  />
-
-  <span>
-    Payment Issues
-  </span>
-</Link>
-  }
-
-
-  useEffect(() => {
-
-    function handleLanguageChange(
-      event
-    ) {
-
-      const nextLanguage =
-        event?.detail?.language ||
-        localStorage.getItem(
-          "krishisetu-language"
-        ) ||
-        "en";
-
-
-      setLanguage(
-        nextLanguage
-      );
-
-    }
-
-
-    window.addEventListener(
-      "krishisetu-language-change",
-      handleLanguageChange
-    );
-
-
-    return () => {
-
-      window.removeEventListener(
-        "krishisetu-language-change",
-        handleLanguageChange
-      );
-
-    };
-
-  }, []);
+  } =
+    useLanguage();
 
 
   async function handleRefresh() {
@@ -140,13 +59,16 @@ function AdminLayout({
     );
 
 
-    setTimeout(() => {
+    setTimeout(
+      () => {
 
-      setRefreshing(
-        false
-      );
+        setRefreshing(
+          false
+        );
 
-    }, 500);
+      },
+      500
+    );
 
   }
 
@@ -172,6 +94,7 @@ function AdminLayout({
 
 
         <AdminHeader
+
           title={
             title ||
             "Operations Dashboard"
@@ -200,8 +123,9 @@ function AdminLayout({
           }
 
           onLanguageChange={
-            changeLanguage
+            setLanguage
           }
+
         />
 
 
@@ -217,6 +141,7 @@ function AdminLayout({
     </div>
 
   );
+
 }
 
 

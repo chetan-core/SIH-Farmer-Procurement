@@ -24,6 +24,8 @@ import {
 
 import AdminLayout from "../../components/admin/AdminLayout";
 
+import { useLanguage } from "../../translations/LanguageContext";
+
 
 const API_URL =
   import.meta.env.VITE_API_URL;
@@ -50,7 +52,9 @@ function AdminPaymentIssues() {
     setRefreshing,
   ] =
     useState(false);
-
+  const {
+  language,
+} = useLanguage();
 
   const [
     error,

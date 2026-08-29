@@ -17,6 +17,8 @@ import {
 
 import AdminLayout from "../../components/admin/AdminLayout";
 
+import { useLanguage } from "../../translations/LanguageContext";
+
 const API_URL =
   import.meta.env.VITE_API_URL;
 
@@ -43,15 +45,9 @@ function AdminProcurement() {
     setSearch,
   ] = useState("");
 
-  const [
-    language,
-    setLanguage,
-  ] = useState(
-    () =>
-      localStorage.getItem(
-        "krishisetu-language"
-      ) || "en"
-  );
+  const {
+  language,
+} = useLanguage();
 
   const [
     error,

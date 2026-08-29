@@ -30,6 +30,10 @@ import {
 
 import AdminLayout from "../../components/admin/AdminLayout";
 
+import {
+  useLanguage,
+} from "../../translations/LanguageContext";
+
 
 const API_URL =
   import.meta.env.VITE_API_URL;
@@ -72,15 +76,10 @@ function AdminQueue() {
   ] = useState("");
 
 
-  const [
-    language,
-    setLanguage,
-  ] = useState(
-    () =>
-      localStorage.getItem(
-        "krishisetu-language"
-      ) || "en"
-  );
+const {
+  language,
+} =
+  useLanguage();
 
 
   const [
@@ -227,78 +226,51 @@ function AdminQueue() {
     );
 
 
-  useEffect(() => {
+ useEffect(() => {
 
-    loadBookings();
-
-
-    function handleExternalRefresh() {
-
-      loadBookings(
-        true
-      );
-
-    }
+  loadBookings();
 
 
-    function handleLanguageChange(
-      event
-    ) {
+  function handleExternalRefresh() {
 
-      setLanguage(
-        event?.detail?.language ||
-        localStorage.getItem(
-          "krishisetu-language"
-        ) ||
-        "en"
-      );
+    loadBookings(
+      true
+    );
 
-    }
+  }
 
 
-    window.addEventListener(
+  window.addEventListener(
+    "krishisetu-admin-refresh",
+    handleExternalRefresh
+  );
+
+
+  const timer =
+    setInterval(
+      () =>
+        loadBookings(false),
+      5000
+    );
+
+
+  return () => {
+
+    clearInterval(
+      timer
+    );
+
+
+    window.removeEventListener(
       "krishisetu-admin-refresh",
       handleExternalRefresh
     );
 
+  };
 
-    window.addEventListener(
-      "krishisetu-language-change",
-      handleLanguageChange
-    );
-
-
-    const timer =
-      setInterval(
-        () =>
-          loadBookings(false),
-        5000
-      );
-
-
-    return () => {
-
-      clearInterval(
-        timer
-      );
-
-
-      window.removeEventListener(
-        "krishisetu-admin-refresh",
-        handleExternalRefresh
-      );
-
-
-      window.removeEventListener(
-        "krishisetu-language-change",
-        handleLanguageChange
-      );
-
-    };
-
-  }, [
-    loadBookings,
-  ]);
+}, [
+  loadBookings,
+]);
 
 
   const stats =
