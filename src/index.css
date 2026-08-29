@@ -70285,3 +70285,1613 @@ html.dark .farmer-login-language button:hover {
   }
 
 }
+
+/* =========================================================
+   FARMER REGISTER — DARK MODE FIX
+========================================================= */
+
+.farmer-register-page {
+  min-height: 100vh;
+
+  color: #365a68;
+
+  background:
+    radial-gradient(
+      circle at 5% 3%,
+      rgba(25,160,91,.10),
+      transparent 25%
+    ),
+    radial-gradient(
+      circle at 95% 5%,
+      rgba(25,139,207,.10),
+      transparent 27%
+    ),
+    linear-gradient(
+      180deg,
+      #edf7f5,
+      #f8fbfa 55%,
+      #eef7f6
+    );
+}
+
+
+/* =========================================================
+   MAIN CONTAINER
+========================================================= */
+
+.register-container {
+  width:
+    min(
+      1180px,
+      calc(100% - 30px)
+    );
+
+  margin:
+    0 auto;
+
+  padding:
+    34px 0 75px;
+}
+
+
+.register-layout {
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(0,.85fr)
+    minmax(470px,1.15fr);
+
+  gap:
+    55px;
+
+  align-items:
+    start;
+
+  padding-top:
+    25px;
+}
+
+
+/* =========================================================
+   INTRO
+========================================================= */
+
+.register-intro {
+  position:
+    sticky;
+
+  top:
+    115px;
+}
+
+
+.register-intro h1 {
+  max-width:
+    630px;
+
+  margin-top:
+    12px;
+
+  color:
+    #123f57;
+
+  font-size:
+    clamp(
+      43px,
+      5.5vw,
+      71px
+    );
+
+  line-height:
+    .93;
+
+  letter-spacing:
+    -.06em;
+
+  font-weight:
+    950;
+}
+
+
+.register-intro h1 span {
+  display:
+    block;
+
+  margin-top:
+    8px;
+
+  color:
+    #19864f;
+}
+
+
+.register-intro > p {
+  max-width:
+    600px;
+
+  margin-top:
+    20px;
+
+  color:
+    #607b84;
+
+  font-size:
+    13px;
+
+  line-height:
+    1.8;
+}
+
+
+/* =========================================================
+   BENEFITS
+========================================================= */
+
+.register-benefits {
+  display:
+    grid;
+
+  gap:
+    12px;
+
+  margin-top:
+    27px;
+}
+
+
+.register-benefit,
+.register-benefits > div {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    13px;
+
+  max-width:
+    590px;
+
+  padding:
+    13px 15px;
+
+  border:
+    1px solid #d7e6e8;
+
+  border-radius:
+    14px;
+
+  background:
+    rgba(255,255,255,.80);
+
+  box-shadow:
+    0 6px 19px rgba(28,70,84,.035);
+
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease;
+}
+
+
+.register-benefit:hover,
+.register-benefits > div:hover {
+  transform:
+    translateX(4px);
+
+  box-shadow:
+    0 11px 26px rgba(28,70,84,.075);
+}
+
+
+.register-benefit-icon {
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  width:
+    43px;
+
+  height:
+    43px;
+
+  flex:
+    0 0 43px;
+
+  border-radius:
+    12px;
+
+  color:
+    #198550;
+
+  background:
+    #e4f7eb;
+}
+
+
+.register-benefit strong {
+  display:
+    block;
+
+  color:
+    #285666;
+
+  font-size:
+    13px;
+
+  font-weight:
+    900;
+}
+
+
+.register-benefit span {
+  display:
+    block;
+
+  margin-top:
+    3px;
+
+  color:
+    #758c93;
+
+  font-size:
+    10px;
+
+  line-height:
+    1.5;
+}
+
+
+/* =========================================================
+   FORM CARD
+========================================================= */
+
+.register-form-card {
+  position:
+    relative;
+
+  overflow:
+    visible;
+
+  padding:
+    30px;
+
+  border:
+    1px solid #d2e3e6;
+
+  border-radius:
+    23px;
+
+  background:
+    rgba(255,255,255,.95);
+
+  box-shadow:
+    0 22px 56px rgba(28,72,86,.10);
+
+  backdrop-filter:
+    blur(16px);
+}
+
+
+.register-form-card::before {
+  content:
+    "";
+
+  position:
+    absolute;
+
+  left:
+    0;
+
+  right:
+    0;
+
+  top:
+    0;
+
+  height:
+    5px;
+
+  border-radius:
+    23px 23px 0 0;
+
+  background:
+    linear-gradient(
+      90deg,
+      #168bc7,
+      #1aa35c,
+      #f18b1c
+    );
+}
+
+
+/* =========================================================
+   FORM HEADING
+========================================================= */
+
+.register-form-heading {
+  display:
+    flex;
+
+  align-items:
+    flex-start;
+
+  gap:
+    14px;
+
+  margin-bottom:
+    27px;
+}
+
+
+.register-form-icon {
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  width:
+    55px;
+
+  height:
+    55px;
+
+  flex:
+    0 0 55px;
+
+  border-radius:
+    15px;
+
+  color:
+    #1687bb;
+
+  background:
+    #e4f4fa;
+}
+
+
+.register-form-heading h2 {
+  margin-top:
+    5px;
+
+  color:
+    #153f56;
+
+  font-size:
+    28px;
+
+  line-height:
+    1.05;
+
+  letter-spacing:
+    -.035em;
+
+  font-weight:
+    950;
+}
+
+
+.register-form-heading p {
+  margin-top:
+    6px;
+
+  color:
+    #758a92;
+
+  font-size:
+    11px;
+
+  line-height:
+    1.6;
+}
+
+
+/* =========================================================
+   SECTION
+========================================================= */
+
+.register-section {
+  padding-top:
+    21px;
+
+  border-top:
+    1px solid #e4edef;
+
+}
+
+
+.register-section + .register-section {
+  margin-top:
+    24px;
+}
+
+
+.register-section-label {
+  margin-bottom:
+    17px;
+
+  color:
+    #18814e;
+
+  font-size:
+    9px;
+
+  font-weight:
+    950;
+
+  letter-spacing:
+    .15em;
+}
+
+
+/* =========================================================
+   FIELDS
+========================================================= */
+
+.register-field {
+  margin-bottom:
+    17px;
+}
+
+
+.register-field label {
+  display:
+    block;
+
+  margin-bottom:
+    8px;
+
+  color:
+    #315969;
+
+  font-size:
+    11px;
+
+  font-weight:
+    900;
+}
+
+
+.register-input {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  min-height:
+    53px;
+
+  padding:
+    0 13px;
+
+  border:
+    1px solid #cadde2;
+
+  border-radius:
+    12px;
+
+  color:
+    #577a84;
+
+  background:
+    #fbfefe;
+
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease,
+    background .2s ease;
+}
+
+
+.register-input:focus-within {
+  border-color:
+    #168ac0;
+
+  background:
+    #ffffff;
+
+  box-shadow:
+    0 0 0 4px rgba(22,138,192,.08);
+}
+
+
+.register-input > svg {
+  flex:
+    0 0 auto;
+
+  color:
+    #6d909a;
+}
+
+
+.register-input input,
+.register-input select {
+  flex:
+    1;
+
+  min-width:
+    0;
+
+  height:
+    51px;
+
+  padding:
+    0 10px;
+
+  border:
+    0;
+
+  outline:
+    none;
+
+  color:
+    #284f60;
+
+  background:
+    transparent;
+
+  font-size:
+    13px;
+
+  font-weight:
+    750;
+}
+
+
+.register-input input::placeholder {
+  color:
+    #a0b3b8;
+}
+
+
+.register-hint {
+  display:
+    block;
+
+  margin-top:
+    6px;
+
+  color:
+    #80949b;
+
+  font-size:
+    9px;
+
+  line-height:
+    1.5;
+}
+
+
+.register-error {
+  display:
+    block;
+
+  margin-top:
+    6px;
+
+  color:
+    #b0473f;
+
+  font-size:
+    10px;
+
+  font-weight:
+    800;
+}
+
+
+.register-input-error {
+  border-color:
+    #e58b83;
+
+  background:
+    #fff8f7;
+}
+
+
+/* =========================================================
+   VERIFIED PHONE
+========================================================= */
+
+.verified-input {
+  background:
+    #eef9f2;
+
+  border-color:
+    #bfe1ca;
+}
+
+
+.verified-input > svg {
+  color:
+    #218651;
+}
+
+
+.verified-country {
+  padding:
+    0 7px 0 8px;
+
+  color:
+    #587a83;
+
+  font-size:
+    12px;
+
+  font-weight:
+    900;
+}
+
+
+.verified-mark {
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  gap:
+    4px;
+
+  padding:
+    5px 8px;
+
+  border-radius:
+    999px;
+
+  color:
+    #1d7b4a;
+
+  background:
+    #dff4e6;
+
+  font-size:
+    8px;
+
+  font-weight:
+    950;
+
+  white-space:
+    nowrap;
+}
+
+
+/* =========================================================
+   TWO COLUMN LOCATION
+========================================================= */
+
+.register-two-column {
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(2,minmax(0,1fr));
+
+  gap:
+    13px;
+}
+
+
+/* =========================================================
+   LOCATION SELECTS
+========================================================= */
+
+.register-select {
+  position:
+    relative;
+}
+
+
+.register-select-button,
+.register-location-button {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    space-between;
+
+  width:
+    100%;
+
+  min-height:
+    53px;
+
+  padding:
+    0 13px;
+
+  border:
+    1px solid #cadde2;
+
+  border-radius:
+    12px;
+
+  color:
+    #315b6a;
+
+  background:
+    #fbfefe;
+
+  font-size:
+    11px;
+
+  font-weight:
+    800;
+
+  cursor:
+    pointer;
+}
+
+
+.register-select-button:hover,
+.register-location-button:hover {
+  border-color:
+    #9fc6d2;
+
+  background:
+    #f7fcfd;
+}
+
+
+.register-select-menu,
+.register-location-menu {
+  position:
+    absolute;
+
+  left:
+    0;
+
+  right:
+    0;
+
+  top:
+    calc(100% + 6px);
+
+  z-index:
+    50;
+
+  max-height:
+    240px;
+
+  overflow-y:
+    auto;
+
+  padding:
+    6px;
+
+  border:
+    1px solid #d4e3e6;
+
+  border-radius:
+    12px;
+
+  background:
+    #ffffff;
+
+  box-shadow:
+    0 18px 35px rgba(24,64,77,.15);
+}
+
+
+.register-select-option,
+.register-location-option {
+  width:
+    100%;
+
+  padding:
+    10px 11px;
+
+  border:
+    0;
+
+  border-radius:
+    8px;
+
+  color:
+    #456774;
+
+  background:
+    transparent;
+
+  font-size:
+    10px;
+
+  font-weight:
+    750;
+
+  text-align:
+    left;
+
+  cursor:
+    pointer;
+}
+
+
+.register-select-option:hover,
+.register-location-option:hover {
+  color:
+    #176c91;
+
+  background:
+    #edf8fb;
+}
+
+
+.register-select-option.selected,
+.register-location-option.selected {
+  color:
+    #187b4c;
+
+  background:
+    #eaf7ef;
+
+  font-weight:
+    900;
+}
+
+
+/* =========================================================
+   CROP CARDS
+========================================================= */
+
+.register-crop-grid {
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(4,minmax(0,1fr));
+
+  gap:
+    9px;
+}
+
+
+.register-crop-card {
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  min-height:
+    92px;
+
+  padding:
+    10px;
+
+  border:
+    1px solid #d4e3e6;
+
+  border-radius:
+    13px;
+
+  color:
+    #58747e;
+
+  background:
+    #fbfdfd;
+
+  cursor:
+    pointer;
+}
+
+
+.register-crop-card:hover {
+  transform:
+    translateY(-2px);
+
+  border-color:
+    #a8ced8;
+
+  background:
+    #f2fafb;
+}
+
+
+.register-crop-card.selected {
+  border:
+    2px solid #1b9657;
+
+  color:
+    #177b4b;
+
+  background:
+    #ebf8ef;
+
+  box-shadow:
+    0 8px 18px rgba(27,150,87,.08);
+}
+
+
+.register-crop-card span {
+  margin-top:
+    6px;
+
+  font-size:
+    9px;
+
+  font-weight:
+    900;
+}
+
+
+/* =========================================================
+   QUANTITY
+========================================================= */
+
+.register-quantity-row {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  min-height:
+    53px;
+
+  overflow:
+    hidden;
+
+  border:
+    1px solid #cadde2;
+
+  border-radius:
+    12px;
+
+  background:
+    #fbfefe;
+}
+
+
+.register-quantity-row input {
+  flex:
+    1;
+
+  height:
+    51px;
+
+  padding:
+    0 13px;
+
+  border:
+    0;
+
+  outline:
+    none;
+
+  color:
+    #284f60;
+
+  background:
+    transparent;
+
+  font-size:
+    15px;
+
+  font-weight:
+    850;
+}
+
+
+.register-quantity-unit {
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  width:
+    58px;
+
+  height:
+    53px;
+
+  border-left:
+    1px solid #dce8ea;
+
+  color:
+    #718991;
+
+  background:
+    #f5f9fa;
+
+  font-size:
+    10px;
+
+  font-weight:
+    950;
+}
+
+
+/* =========================================================
+   LANGUAGE SECTION
+========================================================= */
+
+.register-language-options {
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(3,minmax(0,1fr));
+
+  gap:
+    9px;
+}
+
+
+.register-language-option {
+  min-height:
+    50px;
+
+  border:
+    1px solid #d3e2e5;
+
+  border-radius:
+    11px;
+
+  color:
+    #617b84;
+
+  background:
+    #fbfdfd;
+
+  font-size:
+    11px;
+
+  font-weight:
+    850;
+
+  cursor:
+    pointer;
+}
+
+
+.register-language-option:hover {
+  border-color:
+    #9fc8d4;
+
+  background:
+    #f1fafc;
+}
+
+
+.register-language-option.selected {
+  color:
+    #ffffff;
+
+  border-color:
+    #168d58;
+
+  background:
+    linear-gradient(
+      135deg,
+      #1b9d5d,
+      #0b7440
+    );
+
+  box-shadow:
+    0 7px 17px rgba(27,157,93,.16);
+}
+
+
+/* =========================================================
+   SUBMIT / FORM BUTTON
+========================================================= */
+
+.register-form-card button[type="submit"] {
+  min-height:
+    55px;
+
+  margin-top:
+    12px;
+
+  border-radius:
+    12px;
+
+  font-size:
+    12px;
+
+  font-weight:
+    950;
+}
+
+
+/* =========================================================
+   DARK MODE
+========================================================= */
+
+html.dark .farmer-register-page,
+body.dark .farmer-register-page,
+html.dark-mode .farmer-register-page,
+body.dark-mode .farmer-register-page,
+html[data-theme="dark"] .farmer-register-page,
+body[data-theme="dark"] .farmer-register-page {
+
+  color:
+    #dcebed;
+
+  background:
+    radial-gradient(
+      circle at 5% 2%,
+      rgba(38,160,99,.13),
+      transparent 27%
+    ),
+    radial-gradient(
+      circle at 95% 5%,
+      rgba(42,143,191,.14),
+      transparent 29%
+    ),
+    linear-gradient(
+      180deg,
+      #07161d,
+      #0b1d24 55%,
+      #091a21
+    ) !important;
+}
+
+
+/* dark intro */
+
+html.dark .register-intro h1,
+html.dark .register-form-heading h2,
+html.dark .register-feature strong,
+html.dark .register-field label,
+body.dark .register-intro h1,
+body.dark .register-form-heading h2,
+body.dark .register-feature strong,
+body.dark .register-field label {
+
+  color:
+    #f0f8fa !important;
+}
+
+
+html.dark .register-intro h1 span {
+  color:
+    #72d99a;
+}
+
+
+html.dark .register-intro > p,
+html.dark .register-benefit span,
+html.dark .register-form-heading p,
+html.dark .register-hint,
+html.dark .register-input input,
+html.dark .register-input select,
+body.dark .register-intro > p,
+body.dark .register-benefit span,
+body.dark .register-form-heading p,
+body.dark .register-hint,
+body.dark .register-input input,
+body.dark .register-input select {
+
+  color:
+    #aec5ca !important;
+}
+
+
+/* dark benefit cards */
+
+html.dark .register-benefit,
+html.dark .register-benefits > div {
+
+  background:
+    #11272f !important;
+
+  border-color:
+    #2a4650 !important;
+
+  box-shadow:
+    0 8px 22px rgba(0,0,0,.20);
+}
+
+
+html.dark .register-benefit-icon {
+
+  color:
+    #77d99a;
+
+  background:
+    #173b2c;
+}
+
+
+/* dark form card */
+
+html.dark .register-form-card {
+
+  background:
+    #11272f !important;
+
+  border-color:
+    #2a4650 !important;
+
+  box-shadow:
+    0 24px 60px rgba(0,0,0,.28);
+}
+
+
+/* dark section */
+
+html.dark .register-section {
+
+  border-color:
+    #29444d;
+}
+
+
+html.dark .register-section-label {
+
+  color:
+    #72d89a;
+}
+
+
+/* dark inputs */
+
+html.dark .register-input,
+html.dark .register-quantity-row,
+html.dark .register-select-button,
+html.dark .register-location-button {
+
+  color:
+    #d6e6e9;
+
+  background:
+    #0d2028;
+
+  border-color:
+    #35535d;
+}
+
+
+html.dark .register-input:focus-within {
+
+  background:
+    #102730;
+
+  border-color:
+    #55b7db;
+
+  box-shadow:
+    0 0 0 4px rgba(85,183,219,.08);
+}
+
+
+html.dark .register-input > svg {
+
+  color:
+    #87aab3;
+}
+
+
+html.dark .register-input input::placeholder,
+html.dark .register-quantity-row input::placeholder {
+
+  color:
+    #627b82;
+}
+
+
+html.dark .register-quantity-unit {
+
+  color:
+    #9db8be;
+
+  background:
+    #142b33;
+
+  border-color:
+    #29454e;
+}
+
+
+/* dark verified */
+
+html.dark .verified-input {
+
+  background:
+    #123126;
+
+  border-color:
+    #2c6549;
+}
+
+
+html.dark .verified-mark {
+
+  color:
+    #7cdf9f;
+
+  background:
+    #194333;
+}
+
+
+/* dark dropdowns */
+
+html.dark .register-select-menu,
+html.dark .register-location-menu {
+
+  background:
+    #10252d;
+
+  border-color:
+    #31505a;
+
+  box-shadow:
+    0 20px 40px rgba(0,0,0,.35);
+}
+
+
+html.dark .register-select-option,
+html.dark .register-location-option {
+
+  color:
+    #bad0d5;
+}
+
+
+html.dark .register-select-option:hover,
+html.dark .register-location-option:hover {
+
+  color:
+    #8ed4ed;
+
+  background:
+    #183640;
+}
+
+
+html.dark .register-select-option.selected,
+html.dark .register-location-option.selected {
+
+  color:
+    #7de0a0;
+
+  background:
+    #193f30;
+}
+
+
+/* dark crop cards */
+
+html.dark .register-crop-card {
+
+  color:
+    #abc3c9;
+
+  background:
+    #10252d;
+
+  border-color:
+    #2c4851;
+}
+
+
+html.dark .register-crop-card:hover {
+
+  background:
+    #15323b;
+
+  border-color:
+    #41626c;
+}
+
+
+html.dark .register-crop-card.selected {
+
+  color:
+    #7ce09e;
+
+  background:
+    #163d2e;
+
+  border-color:
+    #4ab97b;
+}
+
+
+/* dark language options */
+
+html.dark .register-language-option {
+
+  color:
+    #abc3c9;
+
+  background:
+    #0f242c;
+
+  border-color:
+    #2c4851;
+}
+
+
+html.dark .register-language-option:hover {
+
+  background:
+    #183640;
+
+  border-color:
+    #41626c;
+}
+
+
+/* dark error */
+
+html.dark .register-error {
+
+  color:
+    #ffaaa2;
+}
+
+
+html.dark .register-input-error {
+
+  background:
+    #2b1d1d;
+
+  border-color:
+    #693e39;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 950px) {
+
+  .register-layout {
+
+    grid-template-columns:
+      1fr;
+
+    gap:
+      35px;
+
+  }
+
+
+  .register-intro {
+
+    position:
+      static;
+
+  }
+
+
+  .register-intro h1 {
+
+    max-width:
+      760px;
+
+  }
+
+}
+
+
+@media (max-width: 650px) {
+
+  .register-container {
+
+    width:
+      calc(100% - 20px);
+
+    padding:
+      25px 0 55px;
+
+  }
+
+
+  .register-layout {
+
+    gap:
+      28px;
+
+  }
+
+
+  .register-intro h1 {
+
+    font-size:
+      39px;
+
+  }
+
+
+  .register-intro > p {
+
+    font-size:
+      13px;
+
+  }
+
+
+  .register-form-card {
+
+    padding:
+      20px;
+
+    border-radius:
+      19px;
+
+  }
+
+
+  .register-form-heading h2 {
+
+    font-size:
+      24px;
+
+  }
+
+
+  .register-two-column {
+
+    grid-template-columns:
+      1fr;
+
+  }
+
+
+  .register-crop-grid {
+
+    grid-template-columns:
+      repeat(2,minmax(0,1fr));
+
+  }
+
+
+  .register-language-options {
+
+    grid-template-columns:
+      1fr;
+
+  }
+
+}
+
+
+@media (max-width: 400px) {
+
+  .register-intro h1 {
+
+    font-size:
+      35px;
+
+  }
+
+
+  .register-form-card {
+
+    padding:
+      17px;
+
+  }
+
+
+  .verified-mark {
+
+    padding:
+      4px 6px;
+
+    font-size:
+      7px;
+
+  }
+
+}
