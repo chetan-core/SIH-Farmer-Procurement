@@ -75466,3 +75466,155 @@ html.dark .help-page-footer strong {
   }
 
 }
+/* =========================================================
+   CUSTOM KRISHISETU LOGO
+========================================================= */
+
+.krishisetu-logo-mark {
+  display: block;
+
+  width: var(--logo-size, 40px);
+  height: var(--logo-size, 40px);
+
+  flex: 0 0 auto;
+
+  border-radius: 50%;
+
+  object-fit: cover;
+  object-position: center;
+
+  overflow: hidden;
+
+  background: transparent;
+
+  /* removes tiny square-edge appearance */
+  clip-path: circle(50% at 50% 50%);
+}
+
+
+/* Keep logo + name aligned nicely */
+
+.krishisetu-logo {
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 11px;
+
+  min-width: 0;
+}
+
+
+.krishisetu-logo-with-name {
+  align-items: center;
+}
+
+
+.krishisetu-logo-wordmark {
+  display: flex;
+
+  flex-direction: column;
+
+  min-width: 0;
+
+  white-space: nowrap;
+}
+
+
+.krishisetu-logo-wordmark strong {
+  color: var(--text);
+
+  font-size: 18px;
+
+  line-height: 1;
+
+  font-weight: 950;
+}
+
+
+.krishisetu-logo-wordmark span {
+  margin-top: 4px;
+
+  color: var(--muted);
+
+  font-size: 8px;
+
+  line-height: 1;
+
+  font-weight: 800;
+}
+.krishisetu-logo-mark {
+  width: auto !important;
+  height: auto !important;
+
+  min-width: 58px;
+  min-height: 58px;
+
+  width: 58px !important;
+  height: 58px !important;
+
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
+
+  clip-path: circle(50% at 50% 50%);
+
+  transform: scale(1.08);
+  transform-origin: center;
+}
+
+.krishisetu-logo-with-name .krishisetu-logo-mark {
+  width: 68px !important;
+  height: 68px !important;
+}
+
+.krishisetu-logo-wordmark strong {
+  font-size: 20px;
+}
+
+.krishisetu-logo-wordmark span {
+  font-size: 9px;
+}
+
+
+/* Larger landing-page logo */
+
+.landing-hero-logo .krishisetu-logo-mark {
+  width: 112px !important;
+  height: 112px !important;
+}
+
+.landing-hero-logo .krishisetu-logo-wordmark strong {
+  font-size: 31px;
+}
+
+.landing-hero-logo .krishisetu-logo-wordmark span {
+  font-size: 11px;
+}
+
+
+/* Footer */
+
+.landing-footer-logo .krishisetu-logo-mark {
+  width: 52px !important;
+  height: 52px !important;
+}
+
+
+@media (max-width: 650px) {
+
+  .krishisetu-logo-with-name .krishisetu-logo-mark {
+    width: 58px !important;
+    height: 58px !important;
+  }
+
+  .landing-hero-logo .krishisetu-logo-mark {
+    width: 92px !important;
+    height: 92px !important;
+  }
+
+  .landing-hero-logo .krishisetu-logo-wordmark strong {
+    font-size: 26px;
+  }
+
+}
