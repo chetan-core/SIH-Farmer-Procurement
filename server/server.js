@@ -1857,31 +1857,199 @@ app.post(
         );
 
       if (
-        existingBooking
-      ) {
+  existingBooking
+) {
 
-        console.log(
-          "BOOKING ALREADY EXISTS:",
-          existingBooking.id
-        );
+  console.log(
+    "BOOKING ALREADY EXISTS:",
+    existingBooking.id
+  );
 
-        return res.json({
-          success:
-            true,
 
-          booking:
-            getBookingById(
-              id
-            ),
+  const existingFarmer =
+    db.prepare(`
+      SELECT *
+      FROM farmers
+      WHERE id = ?
+    `).get(
+      existingBooking.farmer_id
+    );
 
-          alreadyExists:
-            true,
 
-          smsStatus:
-            "NOT_SENT",
-        });
+  const existingNotification =
+    db.prepare(`
+      SELECT *
+      FROM notifications
+      WHERE booking_id = ?
+        AND type = 'BOOKING_CONFIRMED'
+      ORDER BY id DESC
+      LIMIT 1
+    `).get(
+      existingBooking.id
+    );
 
+
+  /*
+    SMS was already sent successfully.
+    Do not send it again.
+  */
+  if (
+    existingNotification?.status ===
+    "SENT"
+  ) {
+
+    console.log(
+      "BOOKING SMS ALREADY SENT:",
+      existingBooking.id
+    );
+
+
+    return res.json({
+
+      success:
+        true,
+
+      booking:
+        getBookingById(
+          id
+        ),
+
+      alreadyExists:
+        true,
+
+      smsStatus:
+        "SENT",
+
+      notificationId:
+        existingNotification.id,
+
+    });
+
+  }
+
+
+  const retrySettings =
+    getSettings();
+
+
+  const shouldRetrySms =
+    retrySettings.bookingConfirmationSms !==
+      false &&
+    retrySettings.smsEnabled ===
+      true &&
+    SMS_ENABLED ===
+      true &&
+    Boolean(
+      existingFarmer?.phone
+    );
+
+
+  /*
+    Booking exists but SMS was never sent
+    or previously failed.
+    Retry the SMS.
+  */
+  if (
+    shouldRetrySms
+  ) {
+
+    console.log(
+      "RETRYING BOOKING SMS:",
+      {
+        bookingId:
+          existingBooking.id,
+
+        phone:
+          existingFarmer.phone,
+
+        previousStatus:
+          existingNotification?.status ||
+          "NO_NOTIFICATION",
       }
+    );
+
+
+    const retryNotification =
+      await createNotification({
+
+        farmerId:
+          existingBooking.farmer_id,
+
+        bookingId:
+          existingBooking.id,
+
+        type:
+          "BOOKING_CONFIRMED",
+
+        title:
+          "Booking confirmed",
+
+        message:
+          `Your KrishiSetu booking ${existingBooking.token} is confirmed for ${existingBooking.date} from ${existingBooking.slot_start} to ${existingBooking.slot_end}.`,
+
+        sms:
+          true,
+
+        phone:
+          existingFarmer.phone,
+
+      });
+
+
+    console.log(
+      "BOOKING SMS RETRY RESULT:",
+      retryNotification
+    );
+
+
+    return res.json({
+
+      success:
+        true,
+
+      booking:
+        getBookingById(
+          id
+        ),
+
+      alreadyExists:
+        true,
+
+      smsStatus:
+        retryNotification.status,
+
+      notificationId:
+        retryNotification.id,
+
+    });
+
+  }
+
+
+  return res.json({
+
+    success:
+      true,
+
+    booking:
+      getBookingById(
+        id
+      ),
+
+    alreadyExists:
+      true,
+
+    smsStatus:
+      existingNotification?.status ||
+      "NOT_SENT",
+
+    notificationId:
+      existingNotification?.id ||
+      null,
+
+  });
+
+}
 
       let farmer =
         null;
