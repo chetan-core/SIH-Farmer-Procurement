@@ -4,6 +4,10 @@ import cors from "cors";
 import dotenv from "dotenv";
 import db from "./db.js";
 
+dotenv.config({
+  path: "./src/.env",
+});
+
 dotenv.config();
 
 const app = express();
@@ -12,6 +16,7 @@ const PORT = process.env.PORT || 5000;
 
 const SMS_ENABLED =
   process.env.SMS_ENABLED === "true";
+
 
 
 app.use(cors());
@@ -343,57 +348,159 @@ async function sendSms(
   number,
   message
 ) {
+
+  const accountSid =
+    process.env.TWILIO_ACCOUNT_SID;
+
   const apiKey =
-    process.env.FAST2SMS_API_KEY;
+    process.env.TWILIO_API_KEY;
+
+  const apiSecret =
+    process.env.TWILIO_API_SECRET;
+
+  const from =
+    process.env.TWILIO_PHONE_NUMBER;
+
 
   if (
     !SMS_ENABLED ||
-    !apiKey
+    !accountSid ||
+    !apiKey ||
+    !apiSecret ||
+    !from
   ) {
+
     return {
       sent: false,
       status: "NOT_SENT",
       reason:
-        "SMS disabled or API key missing.",
+        "SMS disabled or Twilio credentials missing.",
     };
+
   }
 
-  const response =
-    await fetch(
-      "https://www.fast2sms.com/dev/bulkV2",
+
+  const twilio =
+    (await import("twilio"))
+      .default;
+
+
+  const client =
+    twilio(
+      apiKey,
+      apiSecret,
       {
-        method: "POST",
-
-        headers: {
-          Authorization:
-            apiKey,
-
-          "Content-Type":
-            "application/json",
-        },
-
-        body: JSON.stringify({
-          route: "q",
-          message,
-          numbers: number,
-        }),
+        accountSid,
       }
     );
 
-  if (!response.ok) {
-    throw new Error(
-      `SMS request failed with status ${response.status}`
-    );
+
+  const cleanedNumber =
+    String(
+      number || ""
+    )
+      .replace(
+        /\D/g,
+        ""
+      );
+
+
+  let recipient =
+    cleanedNumber;
+
+
+  if (
+    cleanedNumber.length ===
+    10
+  ) {
+
+    recipient =
+      `+91${cleanedNumber}`;
+
+  } else if (
+    cleanedNumber.length ===
+      12 &&
+    cleanedNumber.startsWith("91")
+  ) {
+
+    recipient =
+      `+${cleanedNumber}`;
+
   }
 
-  const data =
-    await response.json();
+
+  let template =
+    "sms_event_notifications";
+
+
+  const lowerMessage =
+    String(
+      message || ""
+    ).toLowerCase();
+
+
+  if (
+    lowerMessage.includes(
+      "booking"
+    )
+  ) {
+
+    template =
+      "sms_order_confirmation";
+
+  } else if (
+    lowerMessage.includes(
+      "payment"
+    )
+  ) {
+
+    template =
+      "sms_account_alerts";
+
+  } else if (
+    lowerMessage.includes(
+      "arrived"
+    ) ||
+    lowerMessage.includes(
+      "weigh"
+    ) ||
+    lowerMessage.includes(
+      "procurement"
+    )
+  ) {
+
+    template =
+      "sms_delivery_updates";
+
+  }
+
+
+  const response =
+    await client.messages.create({
+      to:
+        recipient,
+
+      from,
+
+      body:
+        template,
+    });
+
 
   return {
     sent: true,
     status: "SENT",
-    data,
+    data: {
+      sid:
+        response.sid,
+
+      status:
+        response.status,
+
+      template,
+    },
   };
+
 }
 
 async function createNotification({
