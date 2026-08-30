@@ -1,3 +1,4 @@
+
 import {
   Routes,
   Route,
@@ -11,6 +12,9 @@ import FarmerHome from "./pages/farmer/FarmerHome";
 import FarmerBook from "./pages/farmer/FarmerBook";
 import FarmerToken from "./pages/farmer/FarmerToken";
 import FarmerHelp from "./pages/farmer/FarmerHelp";
+import FarmerHistory from "./pages/farmer/FarmerHistory";
+import FarmerPayments from "./pages/farmer/FarmerPayments";
+import FarmerSettings from "./pages/farmer/FarmerSettings";
 
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -23,18 +27,17 @@ import AdminCenters from "./pages/admin/AdminCenters";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminProcurement from "./pages/admin/AdminProcurement";
 import AdminActivityLog from "./pages/admin/AdminActivityLog";
-import FarmerHistory from "./pages/farmer/FarmerHistory";
-import FarmerPayments from "./pages/farmer/FarmerPayments";
 import AdminPaymentIssues from "./pages/admin/AdminPaymentIssues";
+
 import PageTransition from "./components/PageTransition";
-import FarmerSettings from "./pages/farmer/FarmerSettings";
+
+
 function App() {
 
   return (
 
     <Routes>
 
-      {/* Main portal */}
       <Route
         path="/"
         element={
@@ -48,151 +51,199 @@ function App() {
       ========================== */}
 
       <Route
-  path="/farmer/login"
-  element={
-    <PageTransition>
-      <FarmerLogin />
-    </PageTransition>
-  }
-/>
-      <Route
-        path="/farmer/register"
+        path="/farmer/login"
         element={
-          <FarmerRegister />
+          <PageTransition>
+            <FarmerLogin />
+          </PageTransition>
         }
       />
 
       <Route
-  path="/farmer/home"
-  element={
-    <PageTransition>
-      <FarmerHome />
-    </PageTransition>
-  }
-/>
+        path="/farmer/register"
+        element={
+          <PageTransition>
+            <FarmerRegister />
+          </PageTransition>
+        }
+      />
 
+      <Route
+        path="/farmer/home"
+        element={
+          <PageTransition>
+            <FarmerHome />
+          </PageTransition>
+        }
+      />
 
       <Route
         path="/farmer/book"
         element={
-          <FarmerBook />
+          <PageTransition>
+            <FarmerBook />
+          </PageTransition>
         }
       />
 
       <Route
         path="/farmer/token"
         element={
-          <FarmerToken />
+          <PageTransition>
+            <FarmerToken />
+          </PageTransition>
         }
       />
+
       <Route
-  path="/farmer/history"
-  element={<FarmerHistory />}
-/>
-<Route
-  path="/farmer/payments"
-  element={
-    <FarmerPayments />
-  }
-/>
-<Route
-  path="/farmer/settings"
-  element={
-    <FarmerSettings />
-  }
-/>
+        path="/farmer/history"
+        element={
+          <PageTransition>
+            <FarmerHistory />
+          </PageTransition>
+        }
+      />
+
+      <Route
+        path="/farmer/payments"
+        element={
+          <PageTransition>
+            <FarmerPayments />
+          </PageTransition>
+        }
+      />
+
+      <Route
+        path="/farmer/settings"
+        element={
+          <PageTransition>
+            <FarmerSettings />
+          </PageTransition>
+        }
+      />
 
       <Route
         path="/farmer/help"
         element={
-          <FarmerHelp />
+          <PageTransition>
+            <FarmerHelp />
+          </PageTransition>
         }
       />
 
 
       {/* =========================
-          ADMIN / OPERATIONS PORTAL
+          ADMIN PORTAL
       ========================== */}
 
       <Route
-  path="/admin/login"
-  element={
-    <PageTransition>
-      <AdminLogin />
-    </PageTransition>
-  }
-/>
+        path="/admin/login"
+        element={
+          <PageTransition>
+            <AdminLogin />
+          </PageTransition>
+        }
+      />
 
       <Route
-  path="/admin/dashboard"
-  element={
-    <PageTransition>
-      <AdminDashboard />
-    </PageTransition>
-  }
-/>
+        path="/admin/dashboard"
+        element={
+          <PageTransition>
+            <AdminDashboard />
+          </PageTransition>
+        }
+      />
 
       <Route
         path="/admin/queue"
         element={
-          <AdminQueue />
+          <PageTransition>
+            <AdminQueue />
+          </PageTransition>
         }
       />
 
       <Route
         path="/admin/weighing"
         element={
-          <AdminWeighing />
+          <PageTransition>
+            <AdminWeighing />
+          </PageTransition>
         }
       />
+
       <Route
-  path="/admin/procurement"
-  element={
-    <AdminProcurement />
-  }
-/>
-<Route
-  path="/admin/activity"
-  element={
-    <AdminActivityLog />
-  }
-/>
+        path="/admin/procurement"
+        element={
+          <PageTransition>
+            <AdminProcurement />
+          </PageTransition>
+        }
+      />
+
+      <Route
+        path="/admin/activity"
+        element={
+          <PageTransition>
+            <AdminActivityLog />
+          </PageTransition>
+        }
+      />
 
       <Route
         path="/admin/payments"
         element={
-          <AdminPayments />
+          <PageTransition>
+            <AdminPayments />
+          </PageTransition>
         }
       />
+
       <Route
-  path="/admin/payment-issues"
-  element={
-    <AdminPaymentIssues />
-  }
-/>
+        path="/admin/payment-issues"
+        element={
+          <PageTransition>
+            <AdminPaymentIssues />
+          </PageTransition>
+        }
+      />
 
       <Route
         path="/admin/reports"
         element={
-          <AdminReports />
+          <PageTransition>
+            <AdminReports />
+          </PageTransition>
         }
       />
+
       <Route
-  path="/admin/farmers"
-  element={<AdminFarmers />}
-/>
-<Route
-  path="/admin/centers"
-  element={
-    <AdminCenters />
-  }
-/>
-<Route
-  path="/admin/settings"
-  element={
-    <AdminSettings />
-  }
-/>
+        path="/admin/farmers"
+        element={
+          <PageTransition>
+            <AdminFarmers />
+          </PageTransition>
+        }
+      />
+
+      <Route
+        path="/admin/centers"
+        element={
+          <PageTransition>
+            <AdminCenters />
+          </PageTransition>
+        }
+      />
+
+      <Route
+        path="/admin/settings"
+        element={
+          <PageTransition>
+            <AdminSettings />
+          </PageTransition>
+        }
+      />
+
 
       {/* =========================
           FALLBACK
@@ -219,8 +270,7 @@ function App() {
             </h1>
 
             <p>
-              The page you are looking for
-              does not exist.
+              The page you are looking for does not exist.
             </p>
 
           </div>
@@ -228,7 +278,9 @@ function App() {
       />
 
     </Routes>
+
   );
+
 }
 
 

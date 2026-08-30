@@ -13,10 +13,8 @@ import {
   MapPin,
   MessageSquareText,
   RefreshCw,
-  Scale,
   Settings,
   ShieldCheck,
-  Smartphone,
   Wheat,
   X,
 } from "lucide-react";
@@ -45,8 +43,9 @@ import {
 } from "../../translations/LanguageContext";
 
 import {
-  getCurrentFarmer,
+  getState,
   logoutUser,
+  updateFarmer,
 } from "../../data/appStore";
 
 
@@ -77,13 +76,69 @@ function FarmerHome() {
     useLanguage();
 
 
-  const farmer =
-    getCurrentFarmer();
+  const initialState =
+    getState();
+
+
+  const currentFarmerId =
+    initialState?.currentUser?.farmerId ||
+    null;
+
+
+  const localFarmer =
+    currentFarmerId
+      ? (
+          initialState?.farmers?.find(
+            farmer =>
+              String(
+                farmer?.id
+              ) ===
+              String(
+                currentFarmerId
+              )
+          ) ||
+          null
+        )
+      : null;
+
+
+  const [
+    farmer,
+    setFarmer,
+  ] =
+    useState(
+      localFarmer
+    );
+
+
+  const [
+    farmerLoading,
+    setFarmerLoading,
+  ] =
+    useState(
+      Boolean(
+        currentFarmerId
+      )
+    );
+
+
+  const [
+    farmerError,
+    setFarmerError,
+  ] =
+    useState("");
 
 
   const [
     bookings,
     setBookings,
+  ] =
+    useState([]);
+
+
+  const [
+    centers,
+    setCenters,
   ] =
     useState([]);
 
@@ -135,6 +190,350 @@ function FarmerHome() {
     null;
 
 
+  /*
+   * ========================================================
+   * LOAD FARMER FROM DATABASE
+   * ========================================================
+   */
+
+  const loadFarmer =
+    useCallback(
+      async () => {
+
+        if (
+          !currentFarmerId
+        ) {
+
+          setFarmer(
+            null
+          );
+
+          setFarmerLoading(
+            false
+          );
+
+          setLoading(
+            false
+          );
+
+          return;
+
+        }
+
+
+        setFarmerLoading(
+          true
+        );
+
+
+        setFarmerError(
+          ""
+        );
+
+
+        try {
+
+          const response =
+            await fetch(
+              `${API_URL}/farmers/${encodeURIComponent(
+                currentFarmerId
+              )}`
+            );
+
+
+          let data =
+            null;
+
+
+          try {
+
+            data =
+              await response.json();
+
+          } catch {
+
+            data =
+              null;
+
+          }
+
+
+          if (
+            !response.ok ||
+            !data?.farmer
+          ) {
+
+            throw new Error(
+              data?.message ||
+              "Your farmer account could not be found."
+            );
+
+          }
+
+
+          const serverFarmer =
+            normalizeFarmer(
+              data.farmer
+            );
+
+
+          if (
+            !serverFarmer?.id
+          ) {
+
+            throw new Error(
+              "Invalid farmer account returned by the server."
+            );
+
+          }
+
+
+          if (
+            String(
+              serverFarmer.id
+            ) !==
+            String(
+              currentFarmerId
+            )
+          ) {
+
+            throw new Error(
+              "The logged-in farmer account could not be verified."
+            );
+
+          }
+
+
+          setFarmer(
+            serverFarmer
+          );
+
+
+          try {
+
+            updateFarmer(
+              serverFarmer.id,
+              serverFarmer
+            );
+
+          } catch (
+            syncError
+          ) {
+
+            console.warn(
+              "Farmer local sync warning:",
+              syncError
+            );
+
+          }
+
+        } catch (
+          farmerLoadError
+        ) {
+
+          console.error(
+            "Farmer account loading error:",
+            farmerLoadError
+          );
+
+
+          setFarmerError(
+            farmerLoadError?.message ||
+            "Unable to load your farmer account."
+          );
+
+        } finally {
+
+          setFarmerLoading(
+            false
+          );
+
+          setLoading(
+            false
+          );
+
+        }
+
+      },
+      [
+        currentFarmerId,
+      ]
+    );
+
+
+  useEffect(() => {
+
+    loadFarmer();
+
+  }, [
+    loadFarmer,
+  ]);
+
+
+  /*
+   * ========================================================
+   * LOAD PROCUREMENT CENTERS
+   * ========================================================
+   */
+
+  const loadCenters =
+    useCallback(
+      async () => {
+
+        try {
+
+          const response =
+            await fetch(
+              `${API_URL}/centers`
+            );
+
+
+          let data =
+            null;
+
+
+          try {
+
+            data =
+              await response.json();
+
+          } catch {
+
+            data =
+              null;
+
+          }
+
+
+          if (
+            !response.ok
+          ) {
+
+            throw new Error(
+              data?.message ||
+              "Unable to load procurement centers."
+            );
+
+          }
+
+
+          const serverCenters =
+            Array.isArray(
+              data?.centers
+            )
+              ? data.centers
+                  .map(
+                    center => {
+
+                      const capacity =
+                        Number(
+                          center?.capacityPerSlot ??
+                          center?.capacity_per_slot ??
+                          center?.capacity ??
+                          0
+                        );
+
+
+                      return {
+
+                        ...center,
+
+                        id:
+                          String(
+                            center?.id ||
+                            ""
+                          ),
+
+                        name:
+                          center?.name ||
+                          "Procurement Center",
+
+                        address:
+                          center?.address ||
+                          "",
+
+                        landmark:
+                          center?.landmark ||
+                          "",
+
+                        openingTime:
+                          center?.openingTime ||
+                          center?.opening_time ||
+                          "—",
+
+                        closingTime:
+                          center?.closingTime ||
+                          center?.closing_time ||
+                          "—",
+
+                        workingDays:
+                          center?.workingDays ||
+                          center?.working_days ||
+                          "—",
+
+                        capacity,
+
+                        capacityPerSlot:
+                          capacity,
+
+                        phone:
+                          center?.phone ||
+                          "",
+
+                        mapUrl:
+                          center?.mapUrl ||
+                          center?.map_url ||
+                          "",
+
+                        active:
+                          center?.active,
+
+                      };
+
+                    }
+                  )
+                  .filter(
+                    center =>
+                      center.id
+                  )
+              : [];
+
+
+          setCenters(
+            serverCenters
+          );
+
+        } catch (
+          centerError
+        ) {
+
+          console.error(
+            "FarmerHome center loading error:",
+            centerError
+          );
+
+        }
+
+      },
+      []
+    );
+
+
+  useEffect(() => {
+
+    loadCenters();
+
+  }, [
+    loadCenters,
+  ]);
+
+
+  /*
+   * ========================================================
+   * LOAD BOOKINGS
+   * ========================================================
+   */
+
   const loadBookings =
     useCallback(
       async (
@@ -145,16 +544,24 @@ function FarmerHome() {
           !farmerId
         ) {
 
-          setError(
-            getText(
-              language,
-              "Farmer account could not be loaded.",
-              "किसान खाता लोड नहीं हो सका।",
-              "రైతు ఖాతాను లోడ్ చేయలేకపోయాము."
-            )
+          setBookings(
+            []
           );
 
-          setLoading(false);
+          if (
+            !farmerLoading
+          ) {
+
+            setError(
+              getText(
+                language,
+                "Farmer account could not be loaded.",
+                "किसान खाता लोड नहीं हो सका।",
+                "రైతు ఖాతాను లోడ్ చేయలేకపోయాము."
+              )
+            );
+
+          }
 
           return;
 
@@ -165,7 +572,9 @@ function FarmerHome() {
           showRefresh
         ) {
 
-          setRefreshing(true);
+          setRefreshing(
+            true
+          );
 
         }
 
@@ -178,8 +587,21 @@ function FarmerHome() {
             );
 
 
-          const data =
-            await response.json();
+          let data =
+            null;
+
+
+          try {
+
+            data =
+              await response.json();
+
+          } catch {
+
+            data =
+              null;
+
+          }
 
 
           if (
@@ -204,9 +626,7 @@ function FarmerHome() {
 
           const farmerBookings =
             allBookings.filter(
-              (
-                booking
-              ) =>
+              booking =>
                 String(
                   booking?.farmer_id ??
                   ""
@@ -224,13 +644,12 @@ function FarmerHome() {
 
           setError("");
 
-
         } catch (
           loadError
         ) {
 
           console.error(
-            "FarmerHome loading error:",
+            "FarmerHome booking loading error:",
             loadError
           );
 
@@ -245,22 +664,32 @@ function FarmerHome() {
             )
           );
 
-
         } finally {
 
-          setLoading(false);
+          setLoading(
+            false
+          );
 
-          setRefreshing(false);
+          setRefreshing(
+            false
+          );
 
         }
 
       },
       [
         farmerId,
+        farmerLoading,
         language,
       ]
     );
 
+
+  /*
+   * ========================================================
+   * LOAD NOTIFICATIONS
+   * ========================================================
+   */
 
   const loadNotifications =
     useCallback(
@@ -271,6 +700,10 @@ function FarmerHome() {
         if (
           !farmerId
         ) {
+
+          setNotifications(
+            []
+          );
 
           return;
 
@@ -298,8 +731,21 @@ function FarmerHome() {
             );
 
 
-          const data =
-            await response.json();
+          let data =
+            null;
+
+
+          try {
+
+            data =
+              await response.json();
+
+          } catch {
+
+            data =
+              null;
+
+          }
 
 
           if (
@@ -321,7 +767,6 @@ function FarmerHome() {
               ? data.notifications
               : []
           );
-
 
         } catch (
           notificationError
@@ -353,11 +798,31 @@ function FarmerHome() {
     );
 
 
+  /*
+   * ========================================================
+   * DASHBOARD REFRESH
+   * ========================================================
+   */
+
   useEffect(() => {
+
+    if (
+      !farmerId ||
+      farmerLoading
+    ) {
+
+      return;
+
+    }
+
 
     loadBookings();
 
-    loadNotifications();
+    loadNotifications(
+      true
+    );
+
+    loadCenters();
 
 
     const timer =
@@ -369,6 +834,8 @@ function FarmerHome() {
           loadNotifications(
             true
           );
+
+          loadCenters();
 
         },
         5000
@@ -384,10 +851,19 @@ function FarmerHome() {
     };
 
   }, [
+    farmerId,
+    farmerLoading,
     loadBookings,
     loadNotifications,
+    loadCenters,
   ]);
 
+
+  /*
+   * ========================================================
+   * NOTIFICATIONS
+   * ========================================================
+   */
 
   async function markNotificationRead(
     id
@@ -407,11 +883,29 @@ function FarmerHome() {
         );
 
 
+      let data =
+        null;
+
+
+      try {
+
+        data =
+          await response.json();
+
+      } catch {
+
+        data =
+          null;
+
+      }
+
+
       if (
         !response.ok
       ) {
 
         throw new Error(
+          data?.message ||
           "Unable to mark notification as read."
         );
 
@@ -419,19 +913,21 @@ function FarmerHome() {
 
 
       setNotifications(
-        (
-          current
-        ) =>
+        current =>
           current.map(
-            (
-              notification
-            ) =>
-              notification.id ===
-              id
+            notification =>
+              String(
+                notification.id
+              ) ===
+              String(
+                id
+              )
                 ? {
                     ...notification,
+
                     read_at:
                       new Date().toISOString(),
+
                   }
                 : notification
           )
@@ -449,42 +945,76 @@ function FarmerHome() {
     }
 
   }
-    async function markAllNotificationsRead() {
 
-  const unread =
-    notifications.filter(
-      (notification) =>
-        !notification.read_at
-    );
 
-  if (
-    unread.length === 0
-  ) {
-    return;
+  async function markAllNotificationsRead() {
+
+    const unread =
+      notifications.filter(
+        notification =>
+          !notification.read_at
+      );
+
+
+    if (
+      unread.length ===
+      0
+    ) {
+
+      return;
+
+    }
+
+
+    try {
+
+      await Promise.all(
+        unread.map(
+          notification =>
+            fetch(
+              `${API_URL}/notifications/${encodeURIComponent(
+                notification.id
+              )}/read`,
+              {
+                method:
+                  "PATCH",
+              }
+            )
+        )
+      );
+
+
+      const timestamp =
+        new Date().toISOString();
+
+
+      setNotifications(
+        current =>
+          current.map(
+            notification => ({
+              ...notification,
+
+              read_at:
+                notification.read_at ||
+                timestamp,
+
+            })
+          )
+      );
+
+    } catch (
+      notificationError
+    ) {
+
+      console.error(
+        "Mark all notifications read error:",
+        notificationError
+      );
+
+    }
+
   }
 
-  await Promise.all(
-    unread.map(
-      (notification) =>
-        markNotificationRead(
-          notification.id
-        )
-    )
-  );
-
-  setNotifications(
-    (current) =>
-      current.map(
-        (notification) => ({
-          ...notification,
-          read_at:
-            notification.read_at ||
-            new Date().toISOString(),
-        })
-      )
-  );
-
-}
 
   function handleLogout() {
 
@@ -499,18 +1029,23 @@ function FarmerHome() {
     navigate(
       "/farmer/login",
       {
-        replace: true,
+        replace:
+          true,
       }
     );
 
   }
 
 
+  /*
+   * ========================================================
+   * COMPUTED DATA
+   * ========================================================
+   */
+
   const unreadNotificationCount =
     notifications.filter(
-      (
-        notification
-      ) =>
+      notification =>
         !notification.read_at
     ).length;
 
@@ -528,19 +1063,23 @@ function FarmerHome() {
   const firstName =
     farmerName
       .trim()
-      .split(/\s+/)[0] ||
+      .split(
+        /\s+/
+      )[0] ||
     farmerName;
 
 
   const initials =
     farmerName
       .trim()
-      .split(/\s+/)
-      .filter(Boolean)
+      .split(
+        /\s+/
+      )
+      .filter(
+        Boolean
+      )
       .map(
-        (
-          word
-        ) =>
+        word =>
           word[0]
       )
       .join("")
@@ -557,9 +1096,7 @@ function FarmerHome() {
 
         const rows =
           bookings.filter(
-            (
-              booking
-            ) =>
+            booking =>
               ACTIVE_STATUSES.includes(
                 booking.status
               )
@@ -582,17 +1119,31 @@ function FarmerHome() {
           (
             a,
             b
-          ) =>
-            String(
-              a.date ||
-              ""
-            ).localeCompare(
+          ) => {
+
+            const dateCompare =
               String(
-                b.date ||
+                a.date ||
                 ""
-              )
-            ) ||
-            String(
+              ).localeCompare(
+                String(
+                  b.date ||
+                  ""
+                )
+              );
+
+
+            if (
+              dateCompare !==
+              0
+            ) {
+
+              return dateCompare;
+
+            }
+
+
+            return String(
               a.slot_start ||
               ""
             ).localeCompare(
@@ -600,56 +1151,9 @@ function FarmerHome() {
                 b.slot_start ||
                 ""
               )
-            )
-        )[0];
+            );
 
-      },
-      [
-        bookings,
-      ]
-    );
-
-
-  const latestCompleted =
-    useMemo(
-      () => {
-
-        const rows =
-          bookings.filter(
-            (
-              booking
-            ) =>
-              booking.status ===
-              "PAYMENT_SENT"
-          );
-
-
-        if (
-          rows.length ===
-          0
-        ) {
-
-          return null;
-
-        }
-
-
-        return [
-          ...rows,
-        ].sort(
-          (
-            a,
-            b
-          ) =>
-            String(
-              b.date ||
-              ""
-            ).localeCompare(
-              String(
-                a.date ||
-                ""
-              )
-            )
+          }
         )[0];
 
       },
@@ -666,9 +1170,7 @@ function FarmerHome() {
           ...bookings,
         ]
           .filter(
-            (
-              booking
-            ) =>
+            booking =>
               ACTIVE_STATUSES.includes(
                 booking.status
               ) &&
@@ -679,17 +1181,31 @@ function FarmerHome() {
             (
               a,
               b
-            ) =>
-              String(
-                a.date ||
-                ""
-              ).localeCompare(
+            ) => {
+
+              const dateCompare =
                 String(
-                  b.date ||
+                  a.date ||
                   ""
-                )
-              ) ||
-              String(
+                ).localeCompare(
+                  String(
+                    b.date ||
+                    ""
+                  )
+                );
+
+
+              if (
+                dateCompare !==
+                0
+              ) {
+
+                return dateCompare;
+
+              }
+
+
+              return String(
                 a.slot_start ||
                 ""
               ).localeCompare(
@@ -697,7 +1213,9 @@ function FarmerHome() {
                   b.slot_start ||
                   ""
                 )
-              )
+              );
+
+            }
           )
           .slice(
             0,
@@ -717,13 +1235,12 @@ function FarmerHome() {
           ...bookings,
         ]
           .filter(
-            (
-              booking
-            ) =>
+            booking =>
               Number(
                 booking.payment_amount ||
                 0
-              ) > 0
+              ) >
+              0
           )
           .sort(
             (
@@ -801,9 +1318,7 @@ function FarmerHome() {
 
         const rows =
           bookings.filter(
-            (
-              booking
-            ) => {
+            booking => {
 
               if (
                 !booking.date
@@ -833,9 +1348,7 @@ function FarmerHome() {
 
         const completed =
           rows.filter(
-            (
-              booking
-            ) =>
+            booking =>
               [
                 "PROCURED",
                 "PAYMENT_PENDING",
@@ -882,9 +1395,7 @@ function FarmerHome() {
 
 
         completed.forEach(
-          (
-            booking
-          ) => {
+          booking => {
 
             const crop =
               booking.crop ||
@@ -967,31 +1478,149 @@ function FarmerHome() {
     );
 
 
+  /*
+   * ========================================================
+   * LIVE CENTER
+   * ========================================================
+   *
+   * Active booking center is preferred.
+   * Otherwise farmer's preferred center is used.
+   * No hardcoded center data is used anymore.
+   */
+
+  const selectedCenterId =
+    activeBooking?.center_id ||
+    farmer?.preferred_center_id ||
+    farmer?.preferredCenterId ||
+    null;
+
+
   const center =
-    getCenterDisplay(
-      activeBooking?.center_id ||
-      farmer?.preferred_center_id ||
-      farmer?.preferredCenterId ||
-      "main"
+    centers.find(
+      item =>
+        String(
+          item?.id
+        ) ===
+        String(
+          selectedCenterId
+        )
+    ) ||
+    centers[0] ||
+    {
+      id:
+        null,
+
+      name:
+        getText(
+          language,
+          "Procurement Center",
+          "खरीद केंद्र",
+          "కొనుగోలు కేంద్రం"
+        ),
+
+      address:
+        getText(
+          language,
+          "Center information unavailable.",
+          "केंद्र की जानकारी उपलब्ध नहीं है।",
+          "కేంద్ర సమాచారం అందుబాటులో లేదు."
+        ),
+
+      openingTime:
+        "—",
+
+      closingTime:
+        "—",
+
+      workingDays:
+        "—",
+
+      capacity:
+        0,
+
+      phone:
+        "",
+
+      mapUrl:
+        "",
+
+    };
+
+
+  /*
+   * ========================================================
+   * ACCOUNT / LOADING STATES
+   * ========================================================
+   */
+
+  if (
+    farmerLoading
+  ) {
+
+    return (
+
+      <div className="farmer-home-page">
+
+        <Header />
+
+
+        <main className="farmer-home-container">
+
+          <section className="empty-state-card">
+
+            <div className="empty-state-icon">
+
+              <RefreshCw
+                size={27}
+                className="loading-spin"
+              />
+
+            </div>
+
+
+            <span className="page-eyebrow">
+
+              FARMER PORTAL
+
+            </span>
+
+
+            <h1>
+
+              {
+                getText(
+                  language,
+                  "Loading your account",
+                  "आपका खाता लोड हो रहा है",
+                  "మీ ఖాతా లోడ్ అవుతోంది"
+                )
+              }
+
+            </h1>
+
+
+            <p>
+
+              {
+                getText(
+                  language,
+                  "Verifying your farmer account and latest procurement information.",
+                  "आपके किसान खाते और नवीनतम खरीद जानकारी की पुष्टि की जा रही है।",
+                  "మీ రైతు ఖాతా మరియు తాజా కొనుగోలు సమాచారాన్ని నిర్ధారిస్తున్నాము."
+                )
+              }
+
+            </p>
+
+          </section>
+
+        </main>
+
+      </div>
+
     );
 
-
-  const activeStatusIndex =
-    activeBooking
-      ? getStatusIndex(
-          activeBooking.status
-        )
-      : 0;
-
-
-  const progressPercent =
-    activeBooking
-      ? (
-          activeStatusIndex /
-          6
-        ) *
-        100
-      : 0;
+  }
 
 
   if (
@@ -1010,35 +1639,46 @@ function FarmerHome() {
           <section className="empty-state-card">
 
             <div className="empty-state-icon">
-              <UserRoundIcon />
+
+              <CircleHelp
+                size={30}
+              />
+
             </div>
 
 
             <span className="page-eyebrow">
+
               FARMER PORTAL
+
             </span>
 
 
             <h1>
 
-              {getText(
-                language,
-                "Farmer account not found",
-                "किसान खाता नहीं मिला",
-                "రైతు ఖాతా కనుగొనబడలేదు"
-              )}
+              {
+                farmerError ||
+                getText(
+                  language,
+                  "Farmer account not found",
+                  "किसान खाता नहीं मिला",
+                  "రైతు ఖాతా కనుగొనబడలేదు"
+                )
+              }
 
             </h1>
 
 
             <p>
 
-              {getText(
-                language,
-                "Please login again to continue using KrishiSetu.",
-                "KrishiSetu का उपयोग जारी रखने के लिए फिर लॉगिन करें।",
-                "KrishiSetu ఉపయోగించడానికి మళ్లీ లాగిన్ చేయండి."
-              )}
+              {
+                getText(
+                  language,
+                  "Please login again with your registered mobile number.",
+                  "कृपया अपने पंजीकृत मोबाइल नंबर से फिर लॉगिन करें।",
+                  "దయచేసి మీ రిజిస్టర్డ్ మొబైల్ నంబర్‌తో మళ్లీ లాగిన్ చేయండి."
+                )
+              }
 
             </p>
 
@@ -1048,12 +1688,15 @@ function FarmerHome() {
               className="home-primary-action"
             >
 
-              {getText(
-                language,
-                "Go to Login",
-                "लॉगिन पर जाएं",
-                "లాగిన్‌కు వెళ్లండి"
-              )}
+              {
+                getText(
+                  language,
+                  "Go to Login",
+                  "लॉगिन पर जाएं",
+                  "లాగిన్‌కు వెళ్లండి"
+                )
+              }
+
 
               <ArrowRight
                 size={18}
@@ -1098,30 +1741,36 @@ function FarmerHome() {
 
 
             <span className="page-eyebrow">
+
               FARMER PORTAL
+
             </span>
 
 
             <h1>
 
-              {getText(
-                language,
-                "Loading your dashboard",
-                "आपका डैशबोर्ड लोड हो रहा है",
-                "మీ డాష్‌బోర్డ్ లోడ్ అవుతోంది"
-              )}
+              {
+                getText(
+                  language,
+                  "Loading your dashboard",
+                  "आपका डैशबोर्ड लोड हो रहा है",
+                  "మీ డాష్‌బోర్డ్ లోడ్ అవుతోంది"
+                )
+              }
 
             </h1>
 
 
             <p>
 
-              {getText(
-                language,
-                "Fetching your latest procurement information.",
-                "आपकी नवीनतम खरीद जानकारी लाई जा रही है।",
-                "మీ తాజా కొనుగోలు సమాచారాన్ని తీసుకువస్తున్నాము."
-              )}
+              {
+                getText(
+                  language,
+                  "Fetching your latest procurement information.",
+                  "आपकी नवीनतम खरीद जानकारी लाई जा रही है।",
+                  "మీ తాజా కొనుగోలు సమాచారాన్ని తీసుకువస్తున్నాము."
+                )
+              }
 
             </p>
 
@@ -1163,24 +1812,32 @@ function FarmerHome() {
 
 
             <span className="page-eyebrow">
+
               CONNECTION
+
             </span>
 
 
             <h1>
 
-              {getText(
-                language,
-                "Could not load your bookings",
-                "आपकी बुकिंग लोड नहीं हो सकी",
-                "మీ బుకింగ్‌లను లోడ్ చేయలేకపోయాము"
-              )}
+              {
+                getText(
+                  language,
+                  "Could not load your bookings",
+                  "आपकी बुकिंग लोड नहीं हो सकी",
+                  "మీ బుకింగ్‌లను లోడ్ చేయలేకపోయాము"
+                )
+              }
 
             </h1>
 
 
             <p>
-              {error}
+
+              {
+                error
+              }
+
             </p>
 
 
@@ -1188,16 +1845,21 @@ function FarmerHome() {
               type="button"
               className="home-primary-action"
               onClick={() =>
-                loadBookings(true)
+                loadBookings(
+                  true
+                )
               }
             >
 
-              {getText(
-                language,
-                "Try Again",
-                "फिर कोशिश करें",
-                "మళ్లీ ప్రయత్నించండి"
-              )}
+              {
+                getText(
+                  language,
+                  "Try Again",
+                  "फिर कोशिश करें",
+                  "మళ్లీ ప్రయత్నించండి"
+                )
+              }
+
 
               <ArrowRight
                 size={18}
@@ -1236,22 +1898,28 @@ function FarmerHome() {
 
             <span className="page-eyebrow">
 
-              {t(
-                "home.farmerPortal"
-              )}
+              {
+                t(
+                  "home.farmerPortal"
+                )
+              }
 
             </span>
 
 
             <h1>
 
-              {t(
-                "home.greeting"
-              )}
+              {
+                t(
+                  "home.greeting"
+                )
+              }
 
               {" "}
 
-              {firstName}.
+              {
+                firstName
+              }.
 
             </h1>
 
@@ -1283,7 +1951,9 @@ function FarmerHome() {
 
             <div className="farmer-avatar">
 
-              {initials}
+              {
+                initials
+              }
 
             </div>
 
@@ -1291,15 +1961,21 @@ function FarmerHome() {
             <div>
 
               <strong>
-                {farmerName}
+
+                {
+                  farmerName
+                }
+
               </strong>
 
 
               <span>
 
-                {t(
-                  "home.registeredFarmer"
-                )}
+                {
+                  t(
+                    "home.registeredFarmer"
+                  )
+                }
 
               </span>
 
@@ -1332,7 +2008,8 @@ function FarmerHome() {
                         ? "open"
                         : ""
                     } ${
-                      unreadNotificationCount > 0
+                      unreadNotificationCount >
+                      0
                         ? "has-unread"
                         : ""
                     }`
@@ -1392,8 +2069,11 @@ function FarmerHome() {
                           <div>
 
                             <span className="page-eyebrow">
+
                               NOTIFICATIONS
+
                             </span>
+
 
                             <strong>
 
@@ -1407,25 +2087,36 @@ function FarmerHome() {
                               }
 
                             </strong>
-                              <button
-  type="button"
-  className="farmer-notification-mark-all"
-  onClick={markAllNotificationsRead}
-  disabled={
-    unreadNotificationCount === 0
-  }
->
-  <Check
-    size={14}
-  />
 
-  {getText(
-    language,
-    "Mark all as read",
-    "सभी को पढ़ा हुआ करें",
-    "అన్నింటినీ చదివినట్లు గుర్తించండి"
-  )}
-</button>
+
+                            <button
+                              type="button"
+                              className="farmer-notification-mark-all"
+                              onClick={
+                                markAllNotificationsRead
+                              }
+                              disabled={
+                                unreadNotificationCount ===
+                                0
+                              }
+                            >
+
+                              <Check
+                                size={14}
+                              />
+
+
+                              {
+                                getText(
+                                  language,
+                                  "Mark all as read",
+                                  "सभी को पढ़ा हुआ करें",
+                                  "అన్నింటినీ చదివినట్లు గుర్తించండి"
+                                )
+                              }
+
+                            </button>
+
                           </div>
 
 
@@ -1508,9 +2199,7 @@ function FarmerHome() {
                                   8
                                 )
                                 .map(
-                                  (
-                                    notification
-                                  ) => (
+                                  notification => (
 
                                     <button
                                       type="button"
@@ -1545,66 +2234,85 @@ function FarmerHome() {
                                       <div className="farmer-notification-content">
 
                                         <strong>
+
                                           {
                                             notification.title
                                           }
+
                                         </strong>
 
 
                                         <span>
+
                                           {
                                             notification.message
                                           }
+
                                         </span>
 
 
-                                        <small>
+                                        <small
+                                          className={
+                                            notification.channel ===
+                                              "SMS"
+                                              ? notification.status ===
+                                                "SENT"
+                                                ? "sms-sent"
+                                                : notification.status ===
+                                                  "FAILED"
+                                                  ? "sms-failed"
+                                                  : "sms-pending"
+                                              : ""
+                                          }
+                                        >
 
-  {
-    formatNotificationDate(
-      notification.created_at,
-      language
-    )
-  }
+                                          {
+                                            formatNotificationDate(
+                                              notification.created_at,
+                                              language
+                                            )
+                                          }
 
-  {" · "}
 
-  {
-    notification.channel ===
-    "SMS"
-      ? (
-        notification.status ===
-        "SENT"
-          ? getText(
-              language,
-              "SMS sent",
-              "SMS भेजा गया",
-              "SMS పంపబడింది"
-            )
-          : notification.status ===
-            "FAILED"
-            ? getText(
-                language,
-                "SMS failed",
-                "SMS विफल",
-                "SMS విఫలమైంది"
-              )
-            : getText(
-                language,
-                "SMS pending",
-                "SMS लंबित",
-                "SMS పెండింగ్‌లో ఉంది"
-              )
-      )
-      : getText(
-          language,
-          "In-app update",
-          "ऐप सूचना",
-          "యాప్ అప్‌డేట్"
-        )
-  }
+                                          {" · "}
 
-</small>
+
+                                          {
+                                            notification.channel ===
+                                            "SMS"
+                                              ? (
+                                                notification.status ===
+                                                "SENT"
+                                                  ? getText(
+                                                      language,
+                                                      "SMS sent",
+                                                      "SMS भेजा गया",
+                                                      "SMS పంపబడింది"
+                                                    )
+                                                  : notification.status ===
+                                                    "FAILED"
+                                                    ? getText(
+                                                        language,
+                                                        "SMS failed",
+                                                        "SMS विफल",
+                                                        "SMS విఫలమైంది"
+                                                      )
+                                                    : getText(
+                                                        language,
+                                                        "SMS pending",
+                                                        "SMS लंबित",
+                                                        "SMS పెండింగ్‌లో ఉంది"
+                                                      )
+                                              )
+                                              : getText(
+                                                  language,
+                                                  "In-app update",
+                                                  "ऐप सूचना",
+                                                  "యాప్ అప్‌డేట్"
+                                                )
+                                          }
+
+                                        </small>
 
                                       </div>
 
@@ -1635,9 +2343,13 @@ function FarmerHome() {
                 className="farmer-refresh-button"
                 onClick={() => {
 
-                  loadBookings(true);
+                  loadBookings(
+                    true
+                  );
 
                   loadNotifications();
+
+                  loadCenters();
 
                 }}
                 disabled={
@@ -1837,12 +2549,14 @@ function FarmerHome() {
 
                     <span>
 
-                      {getText(
-                        language,
-                        "Arrival window",
-                        "आने का समय",
-                        "రాక సమయం"
-                      )}
+                      {
+                        getText(
+                          language,
+                          "Arrival window",
+                          "आने का समय",
+                          "రాక సమయం"
+                        )
+                      }
 
                     </span>
 
@@ -1890,12 +2604,14 @@ function FarmerHome() {
 
                     <span>
 
-                      {getText(
-                        language,
-                        "Procurement center",
-                        "खरीद केंद्र",
-                        "కొనుగోలు కేంద్రం"
-                      )}
+                      {
+                        getText(
+                          language,
+                          "Procurement center",
+                          "खरीद केंद्र",
+                          "కొనుగోలు కేంద్రం"
+                        )
+                      }
 
                     </span>
 
@@ -1919,7 +2635,9 @@ function FarmerHome() {
                         )
                       }
 
+
                       {" · "}
+
 
                       {
                         Number(
@@ -1928,6 +2646,7 @@ function FarmerHome() {
                           0
                         ).toLocaleString()
                       }
+
 
                       {" kg"}
 
@@ -1950,12 +2669,14 @@ function FarmerHome() {
 
                       <span>
 
-                        {getText(
-                          language,
-                          "PAYMENT SENT",
-                          "भुगतान भेजा गया",
-                          "చెల్లింపు పంపబడింది"
-                        )}
+                        {
+                          getText(
+                            language,
+                            "PAYMENT SENT",
+                            "भुगतान भेजा गया",
+                            "చెల్లింపు పంపబడింది"
+                          )
+                        }
 
                       </span>
 
@@ -1985,12 +2706,14 @@ function FarmerHome() {
 
                       <span>
 
-                        {getText(
-                          language,
-                          "REFERENCE",
-                          "संदर्भ",
-                          "రిఫరెన్స్"
-                        )}
+                        {
+                          getText(
+                            language,
+                            "REFERENCE",
+                            "संदर्भ",
+                            "రిఫరెన్స్"
+                          )
+                        }
 
                       </span>
 
@@ -2053,12 +2776,14 @@ function FarmerHome() {
                   className="home-secondary-action"
                 >
 
-                  {getText(
-                    language,
-                    "Book another slot",
-                    "दूसरा स्लॉट बुक करें",
-                    "మరో స్లాట్ బుక్ చేయండి"
-                  )}
+                  {
+                    getText(
+                      language,
+                      "Book another slot",
+                      "दूसरा स्लॉट बुक करें",
+                      "మరో స్లాట్ బుక్ చేయండి"
+                    )
+                  }
 
                 </Link>
 
@@ -2081,36 +2806,42 @@ function FarmerHome() {
 
               <span className="page-eyebrow">
 
-                {getText(
-                  language,
-                  "READY TO START?",
-                  "शुरू करने के लिए तैयार?",
-                  "ప్రారంభించడానికి సిద్ధంగా ఉన్నారా?"
-                )}
+                {
+                  getText(
+                    language,
+                    "READY TO START?",
+                    "शुरू करने के लिए तैयार?",
+                    "ప్రారంభించడానికి సిద్ధంగా ఉన్నారా?"
+                  )
+                }
 
               </span>
 
 
               <h1>
 
-                {getText(
-                  language,
-                  "Book your next procurement slot",
-                  "अपना अगला खरीद स्लॉट बुक करें",
-                  "మీ తదుపరి కొనుగోలు స్లాట్ బుక్ చేయండి"
-                )}
+                {
+                  getText(
+                    language,
+                    "Book your next procurement slot",
+                    "अपना अगला खरीद स्लॉट बुक करें",
+                    "మీ తదుపరి కొనుగోలు స్లాట్ బుక్ చేయండి"
+                  )
+                }
 
               </h1>
 
 
               <p>
 
-                {getText(
-                  language,
-                  "Choose your crop, quantity, center and arrival window.",
-                  "फसल, मात्रा, केंद्र और आने का समय चुनें।",
-                  "పంట, పరిమాణం, కేంద్రం మరియు రాక సమయాన్ని ఎంచుకోండి."
-                )}
+                {
+                  getText(
+                    language,
+                    "Choose your crop, quantity, center and arrival window.",
+                    "फसल, मात्रा, केंद्र और आने का समय चुनें।",
+                    "పంట, పరిమాణం, కేంద్రం మరియు రాక సమయాన్ని ఎంచుకోండి."
+                  )
+                }
 
               </p>
 
@@ -2120,12 +2851,15 @@ function FarmerHome() {
                 className="home-primary-action"
               >
 
-                {getText(
-                  language,
-                  "Book a procurement slot",
-                  "खरीद स्लॉट बुक करें",
-                  "కొనుగోలు స్లాట్ బుక్ చేయండి"
-                )}
+                {
+                  getText(
+                    language,
+                    "Book a procurement slot",
+                    "खरीद स्लॉट बुक करें",
+                    "కొనుగోలు స్లాట్ బుక్ చేయండి"
+                  )
+                }
+
 
                 <ArrowRight
                   size={18}
@@ -2171,24 +2905,28 @@ function FarmerHome() {
 
             <h2>
 
-              {getText(
-                language,
-                "Book a procurement slot",
-                "खरीद स्लॉट बुक करें",
-                "కొనుగోలు స్లాట్ బుక్ చేయండి"
-              )}
+              {
+                getText(
+                  language,
+                  "Book a procurement slot",
+                  "खरीद स्लॉट बुक करें",
+                  "కొనుగోలు స్లాట్ బుక్ చేయండి"
+                )
+              }
 
             </h2>
 
 
             <p>
 
-              {getText(
-                language,
-                "Select your crop, quantity and convenient arrival window.",
-                "अपनी फसल, मात्रा और सुविधाजनक समय चुनें।",
-                "మీ పంట, పరిమాణం మరియు అనుకూలమైన రాక సమయాన్ని ఎంచుకోండి."
-              )}
+              {
+                getText(
+                  language,
+                  "Select your crop, quantity and convenient arrival window.",
+                  "अपनी फसल, मात्रा और सुविधाजनक समय चुनें।",
+                  "మీ పంట, పరిమాణం మరియు అనుకూలమైన రాక సమయాన్ని ఎంచుకోండి."
+                )
+              }
 
             </p>
 
@@ -2220,24 +2958,28 @@ function FarmerHome() {
 
             <h2>
 
-              {getText(
-                language,
-                "Procurement history",
-                "खरीद इतिहास",
-                "కొనుగోలు చరిత్ర"
-              )}
+              {
+                getText(
+                  language,
+                  "Procurement history",
+                  "खरीद इतिहास",
+                  "కొనుగోలు చరిత్ర"
+                )
+              }
 
             </h2>
 
 
             <p>
 
-              {getText(
-                language,
-                "See your previous crops, quantities and procurement records.",
-                "अपनी पिछली फसलें, मात्रा और खरीद रिकॉर्ड देखें।",
-                "మీ గత పంటలు, పరిమాణాలు మరియు కొనుగోలు రికార్డులను చూడండి."
-              )}
+              {
+                getText(
+                  language,
+                  "See your previous crops, quantities and procurement records.",
+                  "अपनी पिछली फसलें, मात्रा और खरीद रिकॉर्ड देखें।",
+                  "మీ గత పంటలు, పరిమాణాలు మరియు కొనుగోలు రికార్డులను చూడండి."
+                )
+              }
 
             </p>
 
@@ -2269,24 +3011,28 @@ function FarmerHome() {
 
             <h2>
 
-              {getText(
-                language,
-                "Payment history",
-                "भुगतान इतिहास",
-                "చెల్లింపు చరిత్ర"
-              )}
+              {
+                getText(
+                  language,
+                  "Payment history",
+                  "भुगतान इतिहास",
+                  "చెల్లింపు చరిత్ర"
+                )
+              }
 
             </h2>
 
 
             <p>
 
-              {getText(
-                language,
-                "View payment amounts, references and completed payments.",
-                "भुगतान राशि, संदर्भ और पूरे हुए भुगतान देखें।",
-                "చెల్లింపు మొత్తాలు, రిఫరెన్స్‌లు మరియు పూర్తైన చెల్లింపులను చూడండి."
-              )}
+              {
+                getText(
+                  language,
+                  "View payment amounts, references and completed payments.",
+                  "भुगतान राशि, संदर्भ और पूरे हुए भुगतान देखें।",
+                  "చెల్లింపు మొత్తాలు, రిఫరెన్స్‌లు మరియు పూర్తైన చెల్లింపులను చూడండి."
+                )
+              }
 
             </p>
 
@@ -2308,24 +3054,28 @@ function FarmerHome() {
 
               <span className="card-eyebrow">
 
-                {getText(
-                  language,
-                  "THIS MONTH",
-                  "इस महीने",
-                  "ఈ నెల"
-                )}
+                {
+                  getText(
+                    language,
+                    "THIS MONTH",
+                    "इस महीने",
+                    "ఈ నెల"
+                  )
+                }
 
               </span>
 
 
               <h2>
 
-                {getText(
-                  language,
-                  "Your procurement summary",
-                  "आपकी खरीद का सारांश",
-                  "మీ కొనుగోలు సారాంశం"
-                )}
+                {
+                  getText(
+                    language,
+                    "Your procurement summary",
+                    "आपकी खरीद का सारांश",
+                    "మీ కొనుగోలు సారాంశం"
+                  )
+                }
 
               </h2>
 
@@ -2353,12 +3103,14 @@ function FarmerHome() {
           <div className="home-month-stats">
 
             <MonthlyStat
-              label={getText(
-                language,
-                "Received",
-                "प्राप्त राशि",
-                "అందుకున్న మొత్తం"
-              )}
+              label={
+                getText(
+                  language,
+                  "Received",
+                  "प्राप्त राशि",
+                  "అందుకున్న మొత్తం"
+                )
+              }
               value={
                 `₹${monthSummary.earned.toLocaleString(
                   "en-IN",
@@ -2373,12 +3125,14 @@ function FarmerHome() {
 
 
             <MonthlyStat
-              label={getText(
-                language,
-                "Produce supplied",
-                "दी गई उपज",
-                "సరఫరా చేసిన పంట"
-              )}
+              label={
+                getText(
+                  language,
+                  "Produce supplied",
+                  "दी गई उपज",
+                  "సరఫరా చేసిన పంట"
+                )
+              }
               value={
                 `${monthSummary.quantity.toLocaleString()} kg`
               }
@@ -2387,12 +3141,14 @@ function FarmerHome() {
 
 
             <MonthlyStat
-              label={getText(
-                language,
-                "Completed",
-                "पूरी हुई खरीद",
-                "పూర్తైన కొనుగోళ్లు"
-              )}
+              label={
+                getText(
+                  language,
+                  "Completed",
+                  "पूरी हुई खरीद",
+                  "పూర్తైన కొనుగోళ్లు"
+                )
+              }
               value={
                 monthSummary.completed
               }
@@ -2417,12 +3173,14 @@ function FarmerHome() {
 
                   <span>
 
-                    {getText(
-                      language,
-                      "Your completed crop activity will appear here.",
-                      "पूरी हुई फसल गतिविधि यहां दिखाई देगी।",
-                      "మీ పూర్తైన పంట కార్యకలాపాలు ఇక్కడ కనిపిస్తాయి."
-                    )}
+                    {
+                      getText(
+                        language,
+                        "Your completed crop activity will appear here.",
+                        "पूरी हुई फसल गतिविधि यहां दिखाई देगी।",
+                        "మీ పూర్తైన పంట కార్యకలాపాలు ఇక్కడ కనిపిస్తాయి."
+                      )
+                    }
 
                   </span>
 
@@ -2431,9 +3189,7 @@ function FarmerHome() {
               ) : (
 
                 monthSummary.crops.map(
-                  (
-                    item
-                  ) => (
+                  item => (
 
                     <div
                       key={
@@ -2474,12 +3230,14 @@ function FarmerHome() {
 
                           {" "}
 
-                          {getText(
-                            language,
-                            "procurements",
-                            "खरीद",
-                            "కొనుగోళ్లు"
-                          )}
+                          {
+                            getText(
+                              language,
+                              "procurements",
+                              "खरीद",
+                              "కొనుగోళ్లు"
+                            )
+                          }
 
                         </span>
 
@@ -2532,12 +3290,15 @@ function FarmerHome() {
             className="home-inline-link"
           >
 
-            {getText(
-              language,
-              "View full procurement history",
-              "पूरी खरीद हिस्ट्री देखें",
-              "పూర్తి కొనుగోలు చరిత్రను చూడండి"
-            )}
+            {
+              getText(
+                language,
+                "View full procurement history",
+                "पूरी खरीद हिस्ट्री देखें",
+                "పూర్తి కొనుగోలు చరిత్రను చూడండి"
+              )
+            }
+
 
             <ArrowRight
               size={14}
@@ -2561,24 +3322,28 @@ function FarmerHome() {
 
               <span className="card-eyebrow">
 
-                {getText(
-                  language,
-                  "UPCOMING",
-                  "आगामी",
-                  "రాబోయేవి"
-                )}
+                {
+                  getText(
+                    language,
+                    "UPCOMING",
+                    "आगामी",
+                    "రాబోయేవి"
+                  )
+                }
 
               </span>
 
 
               <h2>
 
-                {getText(
-                  language,
-                  "Upcoming procurements",
-                  "आने वाली खरीद",
-                  "రాబోయే కొనుగోళ్లు"
-                )}
+                {
+                  getText(
+                    language,
+                    "Upcoming procurements",
+                    "आने वाली खरीद",
+                    "రాబోయే కొనుగోళ్లు"
+                  )
+                }
 
               </h2>
 
@@ -2590,12 +3355,15 @@ function FarmerHome() {
               className="home-inline-link"
             >
 
-              {getText(
-                language,
-                "Book more",
-                "और बुक करें",
-                "మరిన్ని బుక్ చేయండి"
-              )}
+              {
+                getText(
+                  language,
+                  "Book more",
+                  "और बुक करें",
+                  "మరిన్ని బుక్ చేయండి"
+                )
+              }
+
 
               <ArrowRight
                 size={14}
@@ -2619,24 +3387,28 @@ function FarmerHome() {
 
                 <strong>
 
-                  {getText(
-                    language,
-                    "No other upcoming bookings",
-                    "कोई अन्य आगामी बुकिंग नहीं",
-                    "ఇతర రాబోయే బుకింగ్‌లు లేవు"
-                  )}
+                  {
+                    getText(
+                      language,
+                      "No other upcoming bookings",
+                      "कोई अन्य आगामी बुकिंग नहीं",
+                      "ఇతర రాబోయే బుకింగ్‌లు లేవు"
+                    )
+                  }
 
                 </strong>
 
 
                 <span>
 
-                  {getText(
-                    language,
-                    "Book another slot whenever you need to bring produce to the center.",
-                    "जब भी जरूरत हो, केंद्र पर उपज लाने के लिए दूसरा स्लॉट बुक करें।",
-                    "కేంద్రానికి పంట తీసుకురావాల్సినప్పుడు మరొక స్లాట్ బుక్ చేయండి."
-                  )}
+                  {
+                    getText(
+                      language,
+                      "Book another slot whenever you need to bring produce to the center.",
+                      "जब भी जरूरत हो, केंद्र पर उपज लाने के लिए दूसरा स्लॉट बुक करें।",
+                      "కేంద్రానికి పంట తీసుకురావాల్సినప్పుడు మరొక స్లాట్ బుక్ చేయండి."
+                    )
+                  }
 
                 </span>
 
@@ -2648,9 +3420,7 @@ function FarmerHome() {
 
                 {
                   upcomingBookings.map(
-                    (
-                      item
-                    ) => (
+                    item => (
 
                       <Link
                         key={
@@ -2699,9 +3469,8 @@ function FarmerHome() {
                               ).toLocaleString()
                             }
 
-                            {" kg"}
+                            {" kg · "}
 
-                            {" · "}
 
                             {
                               formatDate(
@@ -2758,24 +3527,28 @@ function FarmerHome() {
 
               <span className="card-eyebrow">
 
-                {getText(
-                  language,
-                  "PAYMENTS",
-                  "भुगतान",
-                  "చెల్లింపులు"
-                )}
+                {
+                  getText(
+                    language,
+                    "PAYMENTS",
+                    "भुगतान",
+                    "చెల్లింపులు"
+                  )
+                }
 
               </span>
 
 
               <h2>
 
-                {getText(
-                  language,
-                  "Recent payments",
-                  "हाल के भुगतान",
-                  "ఇటీవలి చెల్లింపులు"
-                )}
+                {
+                  getText(
+                    language,
+                    "Recent payments",
+                    "हाल के भुगतान",
+                    "ఇటీవలి చెల్లింపులు"
+                  )
+                }
 
               </h2>
 
@@ -2797,12 +3570,14 @@ function FarmerHome() {
 
                 <span>
 
-                  {getText(
-                    language,
-                    "Your completed payments will appear here.",
-                    "आपके पूरे हुए भुगतान यहां दिखाई देंगे।",
-                    "మీ పూర్తైన చెల్లింపులు ఇక్కడ కనిపిస్తాయి."
-                  )}
+                  {
+                    getText(
+                      language,
+                      "Your completed payments will appear here.",
+                      "आपके पूरे हुए भुगतान यहां दिखाई देंगे।",
+                      "మీ పూర్తైన చెల్లింపులు ఇక్కడ కనిపిస్తాయి."
+                    )
+                  }
 
                 </span>
 
@@ -2814,9 +3589,7 @@ function FarmerHome() {
 
                 {
                   recentPayments.map(
-                    (
-                      item
-                    ) => (
+                    item => (
 
                       <Link
                         key={
@@ -2895,12 +3668,14 @@ function FarmerHome() {
 
                           <span>
 
-                            {getText(
-                              language,
-                              "Payment sent",
-                              "भुगतान भेजा गया",
-                              "చెల్లింపు పంపబడింది"
-                            )}
+                            {
+                              getText(
+                                language,
+                                "Payment sent",
+                                "भुगतान भेजा गया",
+                                "చెల్లింపు పంపబడింది"
+                              )
+                            }
 
                           </span>
 
@@ -2928,12 +3703,15 @@ function FarmerHome() {
             className="home-inline-link"
           >
 
-            {getText(
-              language,
-              "View all payments",
-              "सभी भुगतान देखें",
-              "అన్ని చెల్లింపులను చూడండి"
-            )}
+            {
+              getText(
+                language,
+                "View all payments",
+                "सभी भुगतान देखें",
+                "అన్ని చెల్లింపులను చూడండి"
+              )
+            }
+
 
             <ArrowRight
               size={14}
@@ -2966,12 +3744,14 @@ function FarmerHome() {
 
               <span className="card-eyebrow">
 
-                {getText(
-                  language,
-                  "YOUR PROCUREMENT CENTER",
-                  "आपका खरीद केंद्र",
-                  "మీ కొనుగోలు కేంద్రం"
-                )}
+                {
+                  getText(
+                    language,
+                    "YOUR PROCUREMENT CENTER",
+                    "आपका खरीद केंद्र",
+                    "మీ కొనుగోలు కేంద్రం"
+                  )
+                }
 
               </span>
 
@@ -3004,12 +3784,14 @@ function FarmerHome() {
 
               <span>
 
-                {getText(
-                  language,
-                  "Working hours",
-                  "कार्य समय",
-                  "పని సమయం"
-                )}
+                {
+                  getText(
+                    language,
+                    "Working hours",
+                    "कार्य समय",
+                    "పని సమయం"
+                  )
+                }
 
               </span>
 
@@ -3035,12 +3817,14 @@ function FarmerHome() {
 
               <span>
 
-                {getText(
-                  language,
-                  "Capacity",
-                  "क्षमता",
-                  "సామర్థ్యం"
-                )}
+                {
+                  getText(
+                    language,
+                    "Capacity",
+                    "क्षमता",
+                    "సామర్థ్యం"
+                  )
+                }
 
               </span>
 
@@ -3048,7 +3832,8 @@ function FarmerHome() {
               <strong>
 
                 {
-                  center.capacity
+                  center.capacity ||
+                  "—"
                 }
 
                 {" / slot"}
@@ -3062,12 +3847,14 @@ function FarmerHome() {
 
               <span>
 
-                {getText(
-                  language,
-                  "Working days",
-                  "कार्य दिवस",
-                  "పని రోజులు"
-                )}
+                {
+                  getText(
+                    language,
+                    "Working days",
+                    "कार्य दिवस",
+                    "పని రోజులు"
+                  )
+                }
 
               </span>
 
@@ -3093,29 +3880,34 @@ function FarmerHome() {
                 "#"
               }
               className="home-secondary-action"
-              onClick={(event) => {
+              onClick={
+                event => {
 
-                if (
-                  !center.mapUrl
-                ) {
+                  if (
+                    !center.mapUrl
+                  ) {
 
-                  event.preventDefault();
+                    event.preventDefault();
+
+                  }
 
                 }
-
-              }}
+              }
             >
 
               <MapPin
                 size={15}
               />
 
-              {getText(
-                language,
-                "Directions",
-                "दिशाएं",
-                "దిశలు"
-              )}
+
+              {
+                getText(
+                  language,
+                  "Directions",
+                  "दिशाएं",
+                  "దిశలు"
+                )
+              }
 
             </a>
 
@@ -3127,25 +3919,29 @@ function FarmerHome() {
                   : "#"
               }
               className="home-primary-action"
-              onClick={(event) => {
+              onClick={
+                event => {
 
-                if (
-                  !center.phone
-                ) {
+                  if (
+                    !center.phone
+                  ) {
 
-                  event.preventDefault();
+                    event.preventDefault();
+
+                  }
 
                 }
-
-              }}
+              }
             >
 
-              {getText(
-                language,
-                "Call center",
-                "केंद्र को कॉल करें",
-                "కేంద్రానికి కాల్ చేయండి"
-              )}
+              {
+                getText(
+                  language,
+                  "Call center",
+                  "केंद्र को कॉल करें",
+                  "కేంద్రానికి కాల్ చేయండి"
+                )
+              }
 
             </a>
 
@@ -3167,24 +3963,28 @@ function FarmerHome() {
 
               <span className="card-eyebrow">
 
-                {getText(
-                  language,
-                  "BEFORE YOU ARRIVE",
-                  "पहुंचने से पहले",
-                  "మీరు చేరుకునే ముందు"
-                )}
+                {
+                  getText(
+                    language,
+                    "BEFORE YOU ARRIVE",
+                    "पहुंचने से पहले",
+                    "మీరు చేరుకునే ముందు"
+                  )
+                }
 
               </span>
 
 
               <h2>
 
-                {getText(
-                  language,
-                  "Keep these things ready",
-                  "इन चीजों को तैयार रखें",
-                  "ఈ విషయాలను సిద్ధంగా ఉంచుకోండి"
-                )}
+                {
+                  getText(
+                    language,
+                    "Keep these things ready",
+                    "इन चीजों को तैयार रखें",
+                    "ఈ విషయాలను సిద్ధంగా ఉంచుకోండి"
+                  )
+                }
 
               </h2>
 
@@ -3201,42 +4001,50 @@ function FarmerHome() {
           <div className="home-arrival-check-grid">
 
             <ArrivalCheck
-              text={getText(
-                language,
-                "Booking token",
-                "बुकिंग टोकन",
-                "బుకింగ్ టోకెన్"
-              )}
+              text={
+                getText(
+                  language,
+                  "Booking token",
+                  "बुकिंग टोकन",
+                  "బుకింగ్ టోకెన్"
+                )
+              }
             />
 
 
             <ArrivalCheck
-              text={getText(
-                language,
-                "Your produce",
-                "आपकी उपज",
-                "మీ పంట"
-              )}
+              text={
+                getText(
+                  language,
+                  "Your produce",
+                  "आपकी उपज",
+                  "మీ పంట"
+                )
+              }
             />
 
 
             <ArrivalCheck
-              text={getText(
-                language,
-                "Registered mobile",
-                "पंजीकृत मोबाइल",
-                "రిజిస్టర్డ్ మొబైల్"
-              )}
+              text={
+                getText(
+                  language,
+                  "Registered mobile",
+                  "पंजीकृत मोबाइल",
+                  "రిజిస్టర్డ్ మొబైల్"
+                )
+              }
             />
 
 
             <ArrivalCheck
-              text={getText(
-                language,
-                "Assigned time window",
-                "निर्धारित समय",
-                "కేటాయించిన సమయం"
-              )}
+              text={
+                getText(
+                  language,
+                  "Assigned time window",
+                  "निर्धारित समय",
+                  "కేటాయించిన సమయం"
+                )
+              }
             />
 
           </div>
@@ -3264,12 +4072,14 @@ function FarmerHome() {
 
             <span>
 
-              {getText(
-                language,
-                "STATUS NOTIFICATIONS",
-                "स्थिति सूचनाएं",
-                "స్థితి నోటిఫికేషన్‌లు"
-              )}
+              {
+                getText(
+                  language,
+                  "STATUS NOTIFICATIONS",
+                  "स्थिति सूचनाएं",
+                  "స్థితి నోటిఫికేషన్‌లు"
+                )
+              }
 
             </span>
 
@@ -3298,12 +4108,14 @@ function FarmerHome() {
 
             <p>
 
-              {getText(
-                language,
-                "Booking, procurement and payment updates can be sent to your registered mobile number.",
-                "बुकिंग, खरीद और भुगतान अपडेट आपके पंजीकृत मोबाइल नंबर पर भेजे जा सकते हैं।",
-                "బుకింగ్, కొనుగోలు మరియు చెల్లింపు అప్‌డేట్‌లు మీ రిజిస్టర్డ్ మొబైల్ నంబర్‌కు పంపవచ్చు."
-              )}
+              {
+                getText(
+                  language,
+                  "Booking, procurement and payment updates can be sent to your registered mobile number.",
+                  "बुकिंग, खरीद और भुगतान अपडेट आपके पंजीकृत मोबाइल नंबर पर भेजे जा सकते हैं।",
+                  "బుకింగ్, కొనుగోలు మరియు చెల్లింపు అప్‌డేట్‌లు మీ రిజిస్టర్డ్ మొబైల్ నంబర్‌కు పంపవచ్చు."
+                )
+              }
 
             </p>
 
@@ -3325,24 +4137,28 @@ function FarmerHome() {
 
               <span className="card-eyebrow">
 
-                {getText(
-                  language,
-                  "RECENT ACTIVITY",
-                  "हाल की गतिविधि",
-                  "ఇటీవలి కార్యకలాపాలు"
-                )}
+                {
+                  getText(
+                    language,
+                    "RECENT ACTIVITY",
+                    "हाल की गतिविधि",
+                    "ఇటీవలి కార్యకలాపాలు"
+                  )
+                }
 
               </span>
 
 
               <h2>
 
-                {getText(
-                  language,
-                  "Recent bookings",
-                  "हाल की बुकिंग",
-                  "ఇటీవలి బుకింగ్‌లు"
-                )}
+                {
+                  getText(
+                    language,
+                    "Recent bookings",
+                    "हाल की बुकिंग",
+                    "ఇటీవలి బుకింగ్‌లు"
+                  )
+                }
 
               </h2>
 
@@ -3354,12 +4170,15 @@ function FarmerHome() {
               className="home-inline-link"
             >
 
-              {getText(
-                language,
-                "View all",
-                "सभी देखें",
-                "అన్నీ చూడండి"
-              )}
+              {
+                getText(
+                  language,
+                  "View all",
+                  "सभी देखें",
+                  "అన్నీ చూడండి"
+                )
+              }
+
 
               <ArrowRight
                 size={14}
@@ -3385,12 +4204,14 @@ function FarmerHome() {
 
                   <span>
 
-                    {getText(
-                      language,
-                      "Your bookings will appear here.",
-                      "आपकी बुकिंग यहां दिखाई देगी।",
-                      "మీ బుకింగ్‌లు ఇక్కడ కనిపిస్తాయి."
-                    )}
+                    {
+                      getText(
+                        language,
+                        "Your bookings will appear here.",
+                        "आपकी बुकिंग यहां दिखाई देगी।",
+                        "మీ బుకింగ్‌లు ఇక్కడ కనిపిస్తాయి."
+                      )
+                    }
 
                   </span>
 
@@ -3399,9 +4220,7 @@ function FarmerHome() {
               ) : (
 
                 recentBookings.map(
-                  (
-                    booking
-                  ) => (
+                  booking => (
 
                     <Link
                       key={
@@ -3451,9 +4270,8 @@ function FarmerHome() {
                             ).toLocaleString()
                           }
 
-                          {" kg"}
+                          {" kg · "}
 
-                          {" · "}
 
                           {
                             formatDate(
@@ -3500,12 +4318,14 @@ function FarmerHome() {
 
           <span>
 
-            {getText(
-              language,
-              "Live data from KrishiSetu",
-              "KrishiSetu का लाइव डेटा",
-              "KrishiSetu లైవ్ డేటా"
-            )}
+            {
+              getText(
+                language,
+                "Live data from KrishiSetu",
+                "KrishiSetu का लाइव डेटा",
+                "KrishiSetu లైవ్ డేటా"
+              )
+            }
 
           </span>
 
@@ -3516,12 +4336,14 @@ function FarmerHome() {
               to="/farmer/history"
             >
 
-              {getText(
-                language,
-                "History",
-                "इतिहास",
-                "చరిత్ర"
-              )}
+              {
+                getText(
+                  language,
+                  "History",
+                  "इतिहास",
+                  "చరిత్ర"
+                )
+              }
 
             </Link>
 
@@ -3530,12 +4352,14 @@ function FarmerHome() {
               to="/farmer/payments"
             >
 
-              {getText(
-                language,
-                "Payments",
-                "भुगतान",
-                "చెల్లింపులు"
-              )}
+              {
+                getText(
+                  language,
+                  "Payments",
+                  "भुगतान",
+                  "చెల్లింపులు"
+                )
+              }
 
             </Link>
 
@@ -3544,12 +4368,15 @@ function FarmerHome() {
               to="/farmer/help"
             >
 
-              {getText(
-                language,
-                "Help & FAQ",
-                "सहायता और FAQ",
-                "సహాయం & FAQ"
-              )}
+              {
+                getText(
+                  language,
+                  "Help & FAQ",
+                  "सहायता और FAQ",
+                  "సహాయం & FAQ"
+                )
+              }
+
 
               <ArrowRight
                 size={15}
@@ -3566,6 +4393,7 @@ function FarmerHome() {
     </div>
 
   );
+
 }
 
 
@@ -3588,12 +4416,20 @@ function MonthlyStat({
     >
 
       <span>
-        {label}
+
+        {
+          label
+        }
+
       </span>
 
 
       <strong>
-        {value}
+
+        {
+          value
+        }
+
       </strong>
 
     </div>
@@ -3621,113 +4457,14 @@ function ArrivalCheck({
 
 
       <span>
-        {text}
-      </span>
-
-    </div>
-
-  );
-
-}
-
-
-function ProgressStage({
-  icon,
-  title,
-  active,
-  complete,
-}) {
-
-  return (
-
-    <div
-      className={
-        `farmer-progress-stage ${
-          active
-            ? "active"
-            : ""
-        } ${
-          complete
-            ? "complete"
-            : ""
-        }`
-      }
-    >
-
-      <div className="farmer-progress-icon">
 
         {
-          complete
-            ? (
-              <CheckCircle2
-                size={18}
-              />
-            )
-            : icon
+          text
         }
 
-      </div>
-
-
-      <span>
-        {title}
       </span>
 
     </div>
-
-  );
-
-}
-
-
-function ProgressLine({
-  active,
-}) {
-
-  return (
-
-    <div
-      className={
-        `farmer-progress-line ${
-          active
-            ? "active"
-            : ""
-        }`
-      }
-    />
-
-  );
-
-}
-
-
-function UserRoundIcon() {
-
-  return (
-
-    <svg
-      width="30"
-      height="30"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-
-      <circle
-        cx="12"
-        cy="8"
-        r="4"
-      />
-
-
-      <path
-        d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"
-      />
-
-    </svg>
 
   );
 
@@ -3807,7 +4544,7 @@ function getCropName(
     if (
       translated &&
       translated !==
-        key
+      key
     ) {
 
       return translated;
@@ -3878,9 +4615,7 @@ function formatStatus(
     )
     .replace(
       /\b\w/g,
-      (
-        letter
-      ) =>
+      letter =>
         letter.toUpperCase()
     );
 
@@ -3959,45 +4694,6 @@ function getStatusMessage(
     ] ||
     messages.CONFIRMED
   );
-
-}
-
-
-function getStatusIndex(
-  status
-) {
-
-  const order = [
-    "CONFIRMED",
-    "ARRIVED",
-    "LATE",
-    "WEIGHING",
-    "PROCURED",
-    "PAYMENT_PENDING",
-    "PAYMENT_SENT",
-  ];
-
-
-  const index =
-    order.indexOf(
-      status
-    );
-
-
-  if (
-    status ===
-    "LATE"
-  ) {
-
-    return 1;
-
-  }
-
-
-  return index >=
-    0
-    ? index
-    : 0;
 
 }
 
@@ -4152,7 +4848,8 @@ function formatTime(
       12
     ) {
 
-      hour = 0;
+      hour =
+        0;
 
     }
 
@@ -4275,104 +4972,93 @@ function formatNotificationDate(
 }
 
 
-function getCenterDisplay(
-  centerId
+function normalizeFarmer(
+  farmer
 ) {
 
-  const centers = {
+  if (
+    !farmer
+  ) {
 
-    main: {
+    return null;
 
-      name:
-        "Main Procurement Center",
+  }
 
-      address:
-        "Main Road, Serilingampally",
 
-      openingTime:
-        "08:00 AM",
+  return {
 
-      closingTime:
-        "05:00 PM",
+    ...farmer,
 
-      workingDays:
-        "Monday – Saturday",
+    id:
+      String(
+        farmer.id ||
+        ""
+      ),
 
-      capacity:
-        20,
+    name:
+      farmer.name ||
+      "",
 
-      phone:
-        "+91 98765 43210",
+    phone:
+      normalisePhone(
+        farmer.phone
+      ),
 
-      mapUrl:
-        "https://www.google.com/maps/search/?api=1&query=Main+Road+Serilingampally",
+    stateId:
+      farmer.state_id ??
+      farmer.stateId ??
+      null,
 
-    },
+    districtId:
+      farmer.district_id ??
+      farmer.districtId ??
+      null,
 
-    north: {
+    mandalId:
+      farmer.mandal_id ??
+      farmer.mandalId ??
+      null,
 
-      name:
-        "North Procurement Center",
+    village:
+      farmer.village ||
+      "",
 
-      address:
-        "North Market Yard, Rajendranagar",
+    language:
+      farmer.language ||
+      "en",
 
-      openingTime:
-        "08:00 AM",
+    preferredCenterId:
+      farmer.preferred_center_id ??
+      farmer.preferredCenterId ??
+      null,
 
-      closingTime:
-        "05:00 PM",
+    primaryCrop:
+      farmer.primary_crop ??
+      farmer.primaryCrop ??
+      null,
 
-      workingDays:
-        "Monday – Saturday",
-
-      capacity:
-        15,
-
-      phone:
-        "+91 98765 43310",
-
-      mapUrl:
-        "https://www.google.com/maps/search/?api=1&query=North+Market+Yard+Rajendranagar",
-
-    },
-
-    east: {
-
-      name:
-        "East Procurement Center",
-
-      address:
-        "East Collection Point, Mangalagiri",
-
-      openingTime:
-        "09:00 AM",
-
-      closingTime:
-        "04:00 PM",
-
-      workingDays:
-        "Monday – Saturday",
-
-      capacity:
-        12,
-
-      phone:
-        "+91 98765 43410",
-
-      mapUrl:
-        "https://www.google.com/maps/search/?api=1&query=East+Collection+Point+Mangalagiri",
-
-    },
+    estimatedQuantity:
+      Number(
+        farmer.estimated_quantity ??
+        farmer.estimatedQuantity ??
+        0
+      ),
 
   };
 
+}
 
-  return (
-    centers[
-      centerId
-    ] ||
-    centers.main
+
+function normalisePhone(
+  value
+) {
+
+  return String(
+    value ||
+    ""
+  ).replace(
+    /\D/g,
+    ""
   );
 
 }

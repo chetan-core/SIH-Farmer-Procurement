@@ -25,7 +25,7 @@ import {
 } from "../../translations/LanguageContext";
 
 import {
-  setCurrentUser,
+  setCurrentFarmer,
 } from "../../data/appStore";
 
 
@@ -102,7 +102,8 @@ function FarmerLogin() {
 
 
     if (
-      phone.length !== 10
+      phone.length !==
+      10
     ) {
 
       setError(
@@ -130,8 +131,27 @@ function FarmerLogin() {
 
       const response =
         await fetch(
-          `${API_URL}/farmers`
+          `${API_URL}/farmers/by-phone/${encodeURIComponent(
+            phone
+          )}`
         );
+
+
+      let data =
+        null;
+
+
+      try {
+
+        data =
+          await response.json();
+
+      } catch {
+
+        data =
+          null;
+
+      }
 
 
       if (
@@ -139,61 +159,48 @@ function FarmerLogin() {
       ) {
 
         throw new Error(
-          "Unable to connect to the server."
+          data?.message ||
+          "Unable to find your farmer account."
         );
 
       }
-
-
-      const data =
-        await response.json();
-
-
-      const farmers =
-        Array.isArray(
-          data?.farmers
-        )
-          ? data.farmers
-          : [];
 
 
       const farmer =
-        farmers.find(
-          (item) =>
-            String(
-              item?.phone ||
-              ""
-            ).replace(
-              /\D/g,
-              ""
-            ) === phone
-        );
+        data?.farmer;
 
 
       if (
-        !farmer
+        !farmer?.id
       ) {
 
         throw new Error(
-          "No farmer account was found for this mobile number."
+          "Farmer account data is incomplete."
         );
 
       }
 
 
-      setCurrentUser({
+      /*
+        IMPORTANT:
 
-        role:
-          "farmer",
+        Store the actual farmer returned
+        by the database.
 
-        farmerId:
-          farmer.id,
-
-      });
+        This prevents the frontend from
+        generating/storing a different ID.
+      */
+      setCurrentFarmer(
+        farmer
+      );
 
 
       navigate(
-        "/farmer/home"
+        "/farmer/home",
+        {
+          replace:
+            true,
+        }
       );
 
 
@@ -227,6 +234,7 @@ function FarmerLogin() {
 
 
   return (
+
     <div className="farmer-login-page">
 
       <Header
@@ -497,7 +505,8 @@ function FarmerLogin() {
                   />
 
 
-                  {phone.length === 10 && (
+                  {phone.length ===
+                    10 && (
 
                     <Check
                       size={18}
@@ -598,7 +607,9 @@ function FarmerLogin() {
       </main>
 
     </div>
+
   );
+
 }
 
 

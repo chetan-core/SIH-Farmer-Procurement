@@ -1,3 +1,4 @@
+
 import {
   demoAdmin,
   demoBookings,
@@ -7,263 +8,1107 @@ import {
   demoFarmers,
   demoSmsNotifications,
 } from "./demoData";
+
 import {
   createPrototypeBooking,
 } from "./prototypeStore";
 
-const STORAGE_KEY = "krishisetu_prototype_state";
+
+const STORAGE_KEY =
+  "krishisetu_prototype_state";
+
 
 const initialState = {
+  /*
+   * Do not start a real farmer session as the demo farmer.
+   * The logged-in farmer is established by FarmerLogin.
+   */
   currentUser: {
-    role: "farmer",
-    farmerId: demoFarmer.id,
+    role: null,
+    farmerId: null,
+    phone: null,
   },
 
-  farmers: demoFarmers,
+  farmers:
+    Array.isArray(demoFarmers)
+      ? demoFarmers
+      : [],
 
-  centers: demoCenters,
+  centers:
+    Array.isArray(demoCenters)
+      ? demoCenters
+      : [],
 
-  crops: demoCrops,
+  crops:
+    Array.isArray(demoCrops)
+      ? demoCrops
+      : [],
 
-  bookings: demoBookings,
+  bookings:
+    Array.isArray(demoBookings)
+      ? demoBookings
+      : [],
 
-  smsNotifications: demoSmsNotifications,
+  smsNotifications:
+    Array.isArray(
+      demoSmsNotifications
+    )
+      ? demoSmsNotifications
+      : [],
 
-  admin: demoAdmin,
+  admin:
+    demoAdmin,
 };
 
-function cloneState(value) {
-  return JSON.parse(JSON.stringify(value));
+
+function cloneState(
+  value
+) {
+  return JSON.parse(
+    JSON.stringify(value)
+  );
 }
+
+
+function normalisePhone(
+  value
+) {
+  return String(
+    value || ""
+  ).replace(
+    /\D/g,
+    ""
+  );
+}
+
 
 function loadState() {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
 
-    if (!stored) {
-      return cloneState(initialState);
+  try {
+
+    const stored =
+      localStorage.getItem(
+        STORAGE_KEY
+      );
+
+
+    if (
+      !stored
+    ) {
+
+      return cloneState(
+        initialState
+      );
+
     }
 
-    const parsed = JSON.parse(stored);
 
-    return {
-      ...cloneState(initialState),
+    const parsed =
+      JSON.parse(
+        stored
+      );
+
+
+    const base =
+      cloneState(
+        initialState
+      );
+
+
+    const merged = {
+      ...base,
       ...parsed,
-    };
-  } catch (error) {
-    console.error("Could not load prototype state:", error);
 
-    return cloneState(initialState);
+      currentUser: {
+        ...base.currentUser,
+        ...(parsed?.currentUser || {}),
+      },
+
+      farmers:
+        Array.isArray(
+          parsed?.farmers
+        )
+          ? parsed.farmers
+          : base.farmers,
+
+      centers:
+        Array.isArray(
+          parsed?.centers
+        )
+          ? parsed.centers
+          : base.centers,
+
+      crops:
+        Array.isArray(
+          parsed?.crops
+        )
+          ? parsed.crops
+          : base.crops,
+
+      bookings:
+        Array.isArray(
+          parsed?.bookings
+        )
+          ? parsed.bookings
+          : base.bookings,
+
+      smsNotifications:
+        Array.isArray(
+          parsed?.smsNotifications
+        )
+          ? parsed.smsNotifications
+          : base.smsNotifications,
+    };
+
+
+    /*
+     * Never allow malformed localStorage data
+     * to create a fake logged-in farmer.
+     */
+    if (
+      !merged.currentUser?.farmerId
+    ) {
+
+      merged.currentUser = {
+        role: null,
+        farmerId: null,
+        phone: null,
+      };
+
+    }
+
+
+    return merged;
+
+  } catch (
+    error
+  ) {
+
+    console.error(
+      "Could not load prototype state:",
+      error
+    );
+
+
+    return cloneState(
+      initialState
+    );
+
   }
+
 }
 
-let state = loadState();
 
-const listeners = new Set();
+let state =
+  loadState();
+
+
+const listeners =
+  new Set();
+
 
 function saveState() {
+
   try {
+
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify(state)
+      JSON.stringify(
+        state
+      )
     );
-  } catch (error) {
-    console.error("Could not save prototype state:", error);
+
+  } catch (
+    error
+  ) {
+
+    console.error(
+      "Could not save prototype state:",
+      error
+    );
+
   }
+
 }
+
 
 function notify() {
-  listeners.forEach((listener) => {
-    listener(state);
-  });
+
+  listeners.forEach(
+    listener => {
+
+      try {
+
+        listener(
+          state
+        );
+
+      } catch (
+        error
+      ) {
+
+        console.error(
+          "Prototype state listener error:",
+          error
+        );
+
+      }
+
+    }
+  );
+
 }
 
-function updateState(updater) {
-  state = updater(state);
+
+function updateState(
+  updater
+) {
+
+  const nextState =
+    updater(
+      cloneState(
+        state
+      )
+    );
+
+
+  state =
+    nextState;
+
 
   saveState();
 
+
   notify();
 
+
   return state;
+
 }
+
+
+/* =========================================================
+   STATE
+========================================================= */
 
 export function getState() {
+
   return state;
+
 }
 
-export function subscribe(listener) {
-  listeners.add(listener);
+
+export function subscribe(
+  listener
+) {
+
+  listeners.add(
+    listener
+  );
+
 
   return () => {
-    listeners.delete(listener);
+
+    listeners.delete(
+      listener
+    );
+
   };
+
 }
 
+
 export function resetPrototypeState() {
-  state = cloneState(initialState);
+
+  state =
+    cloneState(
+      initialState
+    );
+
 
   saveState();
 
+
   notify();
 
+
   return state;
+
 }
 
-export function setCurrentUser(user) {
-  return updateState((currentState) => ({
-    ...currentState,
 
-    currentUser: {
-      ...currentState.currentUser,
-      ...user,
-    },
-  }));
+/* =========================================================
+   CURRENT USER
+========================================================= */
+
+export function setCurrentUser(
+  user
+) {
+
+  const incoming =
+    user || {};
+
+
+  const farmerId =
+    incoming.farmerId ??
+    state.currentUser?.farmerId ??
+    null;
+
+
+  const phone =
+    incoming.phone ??
+    state.currentUser?.phone ??
+    null;
+
+
+  return updateState(
+    currentState => ({
+      ...currentState,
+
+      currentUser: {
+        role:
+          incoming.role ??
+          currentState.currentUser?.role ??
+          null,
+
+        farmerId:
+          farmerId || null,
+
+        phone:
+          normalisePhone(
+            phone
+          ) || null,
+      },
+
+    })
+  );
+
 }
+
+
+export function setCurrentFarmer(
+  farmer
+) {
+
+  if (
+    !farmer ||
+    !farmer.id
+  ) {
+
+    return logoutUser();
+
+  }
+
+
+  const normalizedFarmer = {
+    ...farmer,
+
+    id:
+      String(
+        farmer.id
+      ),
+
+    phone:
+      normalisePhone(
+        farmer.phone
+      ),
+  };
+
+
+  return updateState(
+    currentState => {
+
+      const existingIndex =
+        currentState.farmers.findIndex(
+          item =>
+            String(
+              item?.id
+            ) ===
+            String(
+              normalizedFarmer.id
+            )
+        );
+
+
+      let farmers;
+
+
+      if (
+        existingIndex >=
+        0
+      ) {
+
+        farmers =
+          currentState.farmers.map(
+            (
+              item,
+              index
+            ) =>
+              index ===
+              existingIndex
+                ? {
+                    ...item,
+                    ...normalizedFarmer,
+                  }
+                : item
+          );
+
+      } else {
+
+        farmers = [
+          ...currentState.farmers,
+          normalizedFarmer,
+        ];
+
+      }
+
+
+      return {
+
+        ...currentState,
+
+        currentUser: {
+
+          role:
+            "farmer",
+
+          farmerId:
+            normalizedFarmer.id,
+
+          phone:
+            normalizedFarmer.phone ||
+            null,
+
+        },
+
+        farmers,
+
+      };
+
+    }
+  );
+
+}
+
+
 export function logoutUser() {
-  return updateState((currentState) => ({
-    ...currentState,
 
-    currentUser: {
-      role: null,
-      farmerId: null,
-    },
-  }));
+  return updateState(
+    currentState => ({
+
+      ...currentState,
+
+      currentUser: {
+
+        role:
+          null,
+
+        farmerId:
+          null,
+
+        phone:
+          null,
+
+      },
+
+    })
+  );
+
 }
+
+
+/* =========================================================
+   FARMERS
+========================================================= */
 
 export function getCurrentFarmer() {
-  const farmerId = state.currentUser?.farmerId;
+
+  const farmerId =
+    state.currentUser?.farmerId;
+
+
+  if (
+    !farmerId
+  ) {
+
+    return null;
+
+  }
+
 
   return (
     state.farmers.find(
-      (farmer) => farmer.id === farmerId
-    ) || state.farmers[0]
+      farmer =>
+        String(
+          farmer?.id
+        ) ===
+        String(
+          farmerId
+        )
+    ) ||
+    null
   );
+
 }
 
-export function getFarmerById(farmerId) {
+
+export function getFarmerById(
+  farmerId
+) {
+
+  if (
+    !farmerId
+  ) {
+
+    return undefined;
+
+  }
+
+
   return state.farmers.find(
-    (farmer) => farmer.id === farmerId
+    farmer =>
+      String(
+        farmer?.id
+      ) ===
+      String(
+        farmerId
+      )
   );
+
 }
 
-export function getCenterById(centerId) {
+
+export function getFarmerByPhone(
+  phone
+) {
+
+  const normalized =
+    normalisePhone(
+      phone
+    );
+
+
+  if (
+    !normalized
+  ) {
+
+    return undefined;
+
+  }
+
+
+  return state.farmers.find(
+    farmer =>
+      normalisePhone(
+        farmer?.phone
+      ) ===
+      normalized
+  );
+
+}
+
+
+export function updateFarmer(
+  farmerId,
+  updates
+) {
+
+  if (
+    !farmerId
+  ) {
+
+    return state;
+
+  }
+
+
+  return updateState(
+    currentState => {
+
+      const normalizedId =
+        String(
+          farmerId
+        );
+
+
+      const updatedFarmers =
+        currentState.farmers.map(
+          farmer =>
+            String(
+              farmer?.id
+            ) ===
+            normalizedId
+              ? {
+                  ...farmer,
+                  ...updates,
+
+                  phone:
+                    updates?.phone !==
+                    undefined
+                      ? normalisePhone(
+                          updates.phone
+                        )
+                      : farmer.phone,
+                }
+              : farmer
+        );
+
+
+      const isCurrentFarmer =
+        String(
+          currentState.currentUser?.farmerId ||
+          ""
+        ) ===
+        normalizedId;
+
+
+      const currentFarmer =
+        updatedFarmers.find(
+          farmer =>
+            String(
+              farmer?.id
+            ) ===
+            normalizedId
+        );
+
+
+      return {
+
+        ...currentState,
+
+        farmers:
+          updatedFarmers,
+
+        currentUser:
+          isCurrentFarmer &&
+          currentFarmer
+            ? {
+
+                ...currentState.currentUser,
+
+                role:
+                  "farmer",
+
+                farmerId:
+                  currentFarmer.id,
+
+                phone:
+                  normalisePhone(
+                    currentFarmer.phone
+                  ) ||
+                  null,
+
+              }
+            : currentState.currentUser,
+
+      };
+
+    }
+  );
+
+}
+
+
+export function addFarmer(
+  farmer
+) {
+
+  if (
+    !farmer ||
+    !farmer.id
+  ) {
+
+    return state;
+
+  }
+
+
+  const existing =
+    getFarmerById(
+      farmer.id
+    );
+
+
+  if (
+    existing
+  ) {
+
+    return updateFarmer(
+      existing.id,
+      farmer
+    );
+
+  }
+
+
+  return updateState(
+    currentState => ({
+
+      ...currentState,
+
+      farmers: [
+        ...currentState.farmers,
+
+        {
+          ...farmer,
+
+          id:
+            String(
+              farmer.id
+            ),
+
+          phone:
+            normalisePhone(
+              farmer.phone
+            ),
+
+        },
+      ],
+
+    })
+  );
+
+}
+
+
+export function syncCurrentFarmer(
+  farmer
+) {
+
+  if (
+    !farmer
+  ) {
+
+    return null;
+
+  }
+
+
+  setCurrentFarmer(
+    farmer
+  );
+
+
+  return getCurrentFarmer();
+
+}
+
+
+/* =========================================================
+   CENTERS / CROPS
+========================================================= */
+
+export function getCenterById(
+  centerId
+) {
+
+  if (
+    !centerId
+  ) {
+
+    return undefined;
+
+  }
+
+
   return state.centers.find(
-    (center) => center.id === centerId
+    center =>
+      String(
+        center?.id
+      ) ===
+      String(
+        centerId
+      )
   );
+
 }
 
-export function getCropById(cropId) {
+
+export function getCropById(
+  cropId
+) {
+
+  if (
+    !cropId
+  ) {
+
+    return undefined;
+
+  }
+
+
   return state.crops.find(
-    (crop) => crop.id === cropId
+    crop =>
+      String(
+        crop?.id
+      ) ===
+      String(
+        cropId
+      )
   );
+
 }
 
-export function getBookingById(bookingId) {
+
+/* =========================================================
+   BOOKINGS
+========================================================= */
+
+export function getBookingById(
+  bookingId
+) {
+
+  if (
+    !bookingId
+  ) {
+
+    return undefined;
+
+  }
+
+
   return state.bookings.find(
-    (booking) => booking.id === bookingId
+    booking =>
+      String(
+        booking?.id
+      ) ===
+      String(
+        bookingId
+      )
   );
+
 }
 
-export function getFarmerBookings(farmerId) {
+
+export function getFarmerBookings(
+  farmerId
+) {
+
+  if (
+    !farmerId
+  ) {
+
+    return [];
+
+  }
+
+
   return state.bookings.filter(
-    (booking) => booking.farmerId === farmerId
+    booking =>
+      String(
+        booking?.farmerId
+      ) ===
+      String(
+        farmerId
+      )
   );
+
 }
 
-export function getActiveFarmerBooking(farmerId) {
-  const bookings = getFarmerBookings(farmerId);
+
+export function getActiveFarmerBooking(
+  farmerId
+) {
+
+  const bookings =
+    getFarmerBookings(
+      farmerId
+    );
+
 
   const activeStatuses = [
+
     "CONFIRMED",
+
     "ARRIVED",
+
     "LATE",
+
     "WEIGHING",
+
     "PROCURED",
+
     "PAYMENT_PENDING",
+
   ];
 
-  return bookings.find((booking) =>
-    activeStatuses.includes(booking.status)
+
+  return bookings.find(
+    booking =>
+      activeStatuses.includes(
+        booking?.status
+      )
   );
+
 }
 
-export function updateFarmer(farmerId, updates) {
-  return updateState((currentState) => ({
-    ...currentState,
 
-    farmers: currentState.farmers.map((farmer) =>
-      farmer.id === farmerId
-        ? {
-            ...farmer,
-            ...updates,
-          }
-        : farmer
-    ),
-  }));
-}
+function generateBookingId(
+  existingBookings
+) {
 
-function generateBookingId(existingBookings) {
-  const highest = existingBookings.reduce(
-    (maximum, booking) => {
-      const match = booking.id?.match(/^B(\d+)$/);
-
-      if (!match) {
-        return maximum;
-      }
-
-      return Math.max(
+  const highest =
+    existingBookings.reduce(
+      (
         maximum,
-        Number(match[1])
-      );
-    },
-    0
+        booking
+      ) => {
+
+        const match =
+          String(
+            booking?.id ||
+            ""
+          ).match(
+            /^B(\d+)$/
+          );
+
+
+        if (
+          !match
+        ) {
+
+          return maximum;
+
+        }
+
+
+        return Math.max(
+          maximum,
+          Number(
+            match[1]
+          )
+        );
+
+      },
+      0
+    );
+
+
+  return `B${String(
+    highest + 1
+  ).padStart(
+    3,
+    "0"
+  )}`;
+
+}
+
+
+function generateToken(
+  existingBookings
+) {
+
+  const highest =
+    existingBookings.reduce(
+      (
+        maximum,
+        booking
+      ) => {
+
+        const number =
+          Number(
+            booking?.token
+          );
+
+
+        if (
+          Number.isNaN(
+            number
+          )
+        ) {
+
+          return maximum;
+
+        }
+
+
+        return Math.max(
+          maximum,
+          number
+        );
+
+      },
+      0
+    );
+
+
+  return String(
+    highest + 1
   );
 
-  return `B${String(highest + 1).padStart(3, "0")}`;
 }
 
-function generateToken(existingBookings) {
-  const highest = existingBookings.reduce(
-    (maximum, booking) => {
-      const number = Number(booking.token);
 
-      if (Number.isNaN(number)) {
-        return maximum;
-      }
+function generateEventId(
+  existingBookings
+) {
 
-      return Math.max(maximum, number);
-    },
-    0
+  let highest =
+    0;
+
+
+  existingBookings.forEach(
+    booking => {
+
+      (
+        booking?.statusEvents ||
+        []
+      ).forEach(
+        event => {
+
+          const match =
+            String(
+              event?.id ||
+              ""
+            ).match(
+              /^E(\d+)$/
+            );
+
+
+          if (
+            !match
+          ) {
+
+            return;
+
+          }
+
+
+          highest =
+            Math.max(
+              highest,
+              Number(
+                match[1]
+              )
+            );
+
+        }
+      );
+
+    }
   );
 
-  return String(highest + 1);
+
+  return `E${String(
+    highest + 1
+  ).padStart(
+    3,
+    "0"
+  )}`;
+
 }
 
-function generateEventId(existingBookings) {
-  let highest = 0;
-
-  existingBookings.forEach((booking) => {
-    booking.statusEvents?.forEach((event) => {
-      const match = event.id?.match(/^E(\d+)$/);
-
-      if (!match) {
-        return;
-      }
-
-      highest = Math.max(
-        highest,
-        Number(match[1])
-      );
-    });
-  });
-
-  return `E${String(highest + 1).padStart(3, "0")}`;
-}
 
 function getNow() {
+
   return new Date().toISOString();
+
 }
+
+
+/* =========================================================
+   STATUS EVENTS
+========================================================= */
 
 export function addStatusEvent(
   bookingId,
@@ -273,43 +1118,87 @@ export function addStatusEvent(
   note = "",
   changedFields = null
 ) {
-  return updateState((currentState) => {
-    const timestamp = getNow();
 
-    const event = {
-      id: generateEventId(
-        currentState.bookings
-      ),
-      bookingId,
-      status,
-      actorType,
-      actorId,
-      timestamp,
-      note,
-    };
+  return updateState(
+    currentState => {
 
-    if (changedFields) {
-      event.changedFields = changedFields;
+      const timestamp =
+        getNow();
+
+
+      const event = {
+
+        id:
+          generateEventId(
+            currentState.bookings
+          ),
+
+        bookingId:
+          String(
+            bookingId
+          ),
+
+        status,
+
+        actorType,
+
+        actorId,
+
+        timestamp,
+
+        note,
+
+      };
+
+
+      if (
+        changedFields
+      ) {
+
+        event.changedFields =
+          changedFields;
+
+      }
+
+
+      return {
+
+        ...currentState,
+
+        bookings:
+          currentState.bookings.map(
+            booking =>
+              String(
+                booking?.id
+              ) ===
+              String(
+                bookingId
+              )
+                ? {
+
+                    ...booking,
+
+                    statusEvents: [
+                      ...(booking.statusEvents ||
+                        []),
+                      event,
+                    ],
+
+                  }
+                : booking
+          ),
+
+      };
+
     }
+  );
 
-    return {
-      ...currentState,
-
-      bookings: currentState.bookings.map(
-        (booking) =>
-          booking.id === bookingId
-            ? {
-                ...booking,
-                statusEvents: [
-                  ...(booking.statusEvents || []),
-                  event,
-                ],
-              }
-            : booking
-      ),
-    };
-  });
 }
+
+
+/* =========================================================
+   PROTOTYPE BOOKING
+========================================================= */
 
 export function createBooking({
   farmerId,
@@ -320,16 +1209,42 @@ export function createBooking({
   slotStart,
   slotEnd,
 }) {
-  const timestamp = getNow();
+
+  const timestamp =
+    getNow();
+
+
+  const bookingId =
+    generateBookingId(
+      state.bookings
+    );
+
+
+  const token =
+    generateToken(
+      state.bookings
+    );
+
+
+  const eventId =
+    generateEventId(
+      state.bookings
+    );
+
 
   const booking = {
-    id: generateBookingId(state.bookings),
 
-    farmerId,
+    id:
+      bookingId,
+
+    farmerId:
+      String(
+        farmerId
+      ),
 
     centerId,
 
-    token: generateToken(state.bookings),
+    token,
 
     date,
 
@@ -339,60 +1254,105 @@ export function createBooking({
 
     crop,
 
-    estimatedQuantity: Number(quantity),
+    estimatedQuantity:
+      Number(
+        quantity
+      ),
 
-    actualQuantity: null,
+    actualQuantity:
+      null,
 
-    status: "CONFIRMED",
+    status:
+      "CONFIRMED",
 
     payment: {
-      amount: null,
-      status: "NOT_CREATED",
-      reference: null,
-      sentAt: null,
+
+      amount:
+        null,
+
+      status:
+        "NOT_CREATED",
+
+      reference:
+        null,
+
+      sentAt:
+        null,
+
     },
 
-    createdAt: timestamp,
+    createdAt:
+      timestamp,
 
     statusEvents: [
+
       {
-        id: generateEventId(state.bookings),
 
-        status: "CONFIRMED",
+        id:
+          eventId,
 
-        actorType: "SYSTEM",
+        bookingId:
+          bookingId,
 
-        actorId: "SYSTEM",
+        status:
+          "CONFIRMED",
+
+        actorType:
+          "SYSTEM",
+
+        actorId:
+          "SYSTEM",
 
         timestamp,
 
         note:
           "Booking confirmed and token assigned.",
+
       },
+
     ],
+
   };
 
-  updateState((currentState) => ({
-    ...currentState,
 
-    bookings: [
-      ...currentState.bookings,
-      booking,
-    ],
+  updateState(
+    currentState => ({
 
-    smsNotifications: [
-      ...currentState.smsNotifications,
+      ...currentState,
 
-      createDemoSmsNotification({
+      bookings: [
+
+        ...currentState.bookings,
+
         booking,
-        farmerId,
-        type: "BOOKING_CONFIRMED",
-      }),
-    ],
-  }));
+
+      ],
+
+      smsNotifications: [
+
+        ...currentState.smsNotifications,
+
+        createDemoSmsNotification({
+
+          booking,
+
+          farmerId,
+
+          type:
+            "BOOKING_CONFIRMED",
+
+        }),
+
+      ],
+
+    })
+  );
+
 
   return booking;
+
 }
+
 
 function createDemoSmsNotification({
   booking,
@@ -401,112 +1361,189 @@ function createDemoSmsNotification({
   amount = null,
   reference = null,
 }) {
-  const farmer = getFarmerById(farmerId);
 
-  const center = getCenterById(
-    booking.centerId
-  );
+  const farmer =
+    getFarmerById(
+      farmerId
+    );
 
-  let message = "";
 
-  if (type === "BOOKING_CONFIRMED") {
+  const center =
+    getCenterById(
+      booking?.centerId
+    );
+
+
+  let message =
+    "";
+
+
+  if (
+    type ===
+    "BOOKING_CONFIRMED"
+  ) {
+
     message =
       `KrishiSetu: Token #${booking.token} confirmed. ` +
       `Arrive ${booking.date}, ` +
       `${booking.slotStart}-${booking.slotEnd} ` +
       `at ${center?.name || "your procurement center"}.`;
+
   }
 
-  if (type === "LATE") {
+
+  if (
+    type ===
+    "LATE"
+  ) {
+
     message =
       `KrishiSetu: Token #${booking.token} is marked late. ` +
       `Please contact the procurement center for guidance.`;
+
   }
 
-  if (type === "PROCURED") {
+
+  if (
+    type ===
+    "PROCURED"
+  ) {
+
     message =
       `KrishiSetu: Token #${booking.token} procurement completed. ` +
       `Actual quantity: ${booking.actualQuantity} kg.`;
+
   }
 
-  if (type === "PAYMENT_SENT") {
+
+  if (
+    type ===
+    "PAYMENT_SENT"
+  ) {
+
     message =
       `KrishiSetu: Payment of Rs. ${amount} for ` +
       `Token #${booking.token} has been sent. ` +
       `Ref: ${reference}.`;
+
   }
 
+
   return {
-    id: `SMS-${Date.now()}-${Math.floor(
-      Math.random() * 1000
-    )}`,
 
-    bookingId: booking.id,
+    id:
+      `SMS-${Date.now()}-${Math.floor(
+        Math.random() * 1000
+      )}`,
 
-    farmerId,
+    bookingId:
+      booking?.id,
 
-    phone: farmer?.phone || "",
+    farmerId:
+      String(
+        farmerId
+      ),
 
-    templateType: type,
+    phone:
+      farmer?.phone ||
+      "",
 
-    status: "SENT",
+    templateType:
+      type,
+
+    status:
+      "SENT",
 
     message,
 
-    providerMessageId: `DEMO-${Date.now()}`,
+    providerMessageId:
+      `DEMO-${Date.now()}`,
 
-    attemptCount: 1,
+    attemptCount:
+      1,
 
-    lastAttemptAt: getNow(),
+    lastAttemptAt:
+      getNow(),
 
-    createdAt: getNow(),
+    createdAt:
+      getNow(),
+
   };
+
 }
 
-export function addFarmer(farmer) {
-  return updateState((currentState) => ({
-    ...currentState,
 
-    farmers: [
-      ...currentState.farmers,
-      farmer,
-    ],
-  }));
-}
+/* =========================================================
+   BOOKING HELPERS
+========================================================= */
 
 export function createBookingAndSetFarmer(
   bookingData
 ) {
-  const booking = createBooking(
-    bookingData
-  );
+
+  const booking =
+    createBooking(
+      bookingData
+    );
+
 
   setCurrentUser({
-    role: "farmer",
-    farmerId: bookingData.farmerId,
+
+    role:
+      "farmer",
+
+    farmerId:
+      bookingData.farmerId,
+
+    phone:
+      getFarmerById(
+        bookingData.farmerId
+      )?.phone ||
+      null,
+
   });
 
+
   return booking;
+
 }
+
 
 export function updateBooking(
   bookingId,
   updates
 ) {
-  return updateState((currentState) => ({
-    ...currentState,
 
-    bookings: currentState.bookings.map(
-      (booking) =>
-        booking.id === bookingId
-          ? {
-              ...booking,
-              ...updates,
-            }
-          : booking
-    ),
-  }));
+  return updateState(
+    currentState => ({
+
+      ...currentState,
+
+      bookings:
+        currentState.bookings.map(
+          booking =>
+            String(
+              booking?.id
+            ) ===
+            String(
+              bookingId
+            )
+              ? {
+                  ...booking,
+                  ...updates,
+                }
+              : booking
+        ),
+
+    })
+  );
+
 }
+
+
+/* =========================================================
+   BOOKING TRANSITIONS
+========================================================= */
 
 export function transitionBooking(
   bookingId,
@@ -518,451 +1555,786 @@ export function transitionBooking(
     changedFields = null,
   } = {}
 ) {
-  return updateState((currentState) => {
-    const booking = currentState.bookings.find(
-      (item) => item.id === bookingId
-    );
 
-    if (!booking) {
-      throw new Error(
-        "Booking not found."
-      );
+  return updateState(
+    currentState => {
+
+      const booking =
+        currentState.bookings.find(
+          item =>
+            String(
+              item?.id
+            ) ===
+            String(
+              bookingId
+            )
+        );
+
+
+      if (
+        !booking
+      ) {
+
+        throw new Error(
+          "Booking not found."
+        );
+
+      }
+
+
+      const timestamp =
+        getNow();
+
+
+      const event = {
+
+        id:
+          generateEventId(
+            currentState.bookings
+          ),
+
+        bookingId:
+          String(
+            bookingId
+          ),
+
+        status:
+          newStatus,
+
+        actorType,
+
+        actorId,
+
+        timestamp,
+
+        note,
+
+      };
+
+
+      if (
+        changedFields
+      ) {
+
+        event.changedFields =
+          changedFields;
+
+      }
+
+
+      return {
+
+        ...currentState,
+
+        bookings:
+          currentState.bookings.map(
+            item =>
+              String(
+                item?.id
+              ) ===
+              String(
+                bookingId
+              )
+                ? {
+
+                    ...item,
+
+                    status:
+                      newStatus,
+
+                    statusEvents: [
+
+                      ...(item.statusEvents ||
+                        []),
+
+                      event,
+
+                    ],
+
+                  }
+                : item
+          ),
+
+      };
+
     }
+  );
 
-    const timestamp = getNow();
-
-    const event = {
-      id: generateEventId(
-        currentState.bookings
-      ),
-
-      bookingId,
-
-      status: newStatus,
-
-      actorType,
-
-      actorId,
-
-      timestamp,
-
-      note,
-    };
-
-    if (changedFields) {
-      event.changedFields = changedFields;
-    }
-
-    return {
-      ...currentState,
-
-      bookings: currentState.bookings.map(
-        (item) =>
-          item.id === bookingId
-            ? {
-                ...item,
-
-                status: newStatus,
-
-                statusEvents: [
-                  ...(item.statusEvents || []),
-                  event,
-                ],
-              }
-            : item
-      ),
-    };
-  });
 }
 
-export function markArrived(bookingId) {
+
+export function markArrived(
+  bookingId
+) {
+
   return transitionBooking(
     bookingId,
     "ARRIVED",
     {
-      actorType: "ADMIN",
-      actorId: state.admin.id,
+
+      actorType:
+        "ADMIN",
+
+      actorId:
+        state.admin?.id ||
+        "A001",
+
       note:
         "Farmer arrived and token verified.",
+
     }
   );
+
 }
+
 
 export function markLate(
   bookingId,
-  note = "Arrival window missed."
+  note =
+    "Arrival window missed."
 ) {
-  const result = transitionBooking(
-    bookingId,
-    "LATE",
-    {
-      actorType: "ADMIN",
-      actorId: state.admin.id,
-      note,
-    }
-  );
 
-  const booking = getBookingById(
-    bookingId
-  );
+  const result =
+    transitionBooking(
+      bookingId,
+      "LATE",
+      {
 
-  if (booking) {
-    updateState((currentState) => ({
-      ...currentState,
+        actorType:
+          "ADMIN",
 
-      smsNotifications: [
-        ...currentState.smsNotifications,
-        createDemoSmsNotification({
-          booking,
-          farmerId: booking.farmerId,
-          type: "LATE",
-        }),
-      ],
-    }));
+        actorId:
+          state.admin?.id ||
+          "A001",
+
+        note,
+
+      }
+    );
+
+
+  const booking =
+    getBookingById(
+      bookingId
+    );
+
+
+  if (
+    booking
+  ) {
+
+    updateState(
+      currentState => ({
+
+        ...currentState,
+
+        smsNotifications: [
+
+          ...currentState.smsNotifications,
+
+          createDemoSmsNotification({
+
+            booking,
+
+            farmerId:
+              booking.farmerId,
+
+            type:
+              "LATE",
+
+          }),
+
+        ],
+
+      })
+    );
+
   }
 
+
   return result;
+
 }
 
-export function startWeighing(bookingId) {
+
+export function startWeighing(
+  bookingId
+) {
+
   return transitionBooking(
     bookingId,
     "WEIGHING",
     {
-      actorType: "ADMIN",
-      actorId: state.admin.id,
-      note: "Weighing started.",
+
+      actorType:
+        "ADMIN",
+
+      actorId:
+        state.admin?.id ||
+        "A001",
+
+      note:
+        "Weighing started.",
+
     }
   );
+
 }
+
 
 export function saveWeight(
   bookingId,
   actualQuantity,
   notes = ""
 ) {
-  if (Number(actualQuantity) < 0) {
+
+  if (
+    Number(
+      actualQuantity
+    ) < 0
+  ) {
+
     throw new Error(
       "Actual weight cannot be negative."
     );
+
   }
 
-  updateState((currentState) => {
-    const booking = currentState.bookings.find(
-      (item) => item.id === bookingId
-    );
 
-    if (!booking) {
-      throw new Error(
-        "Booking not found."
-      );
+  updateState(
+    currentState => {
+
+      const booking =
+        currentState.bookings.find(
+          item =>
+            String(
+              item?.id
+            ) ===
+            String(
+              bookingId
+            )
+        );
+
+
+      if (
+        !booking
+      ) {
+
+        throw new Error(
+          "Booking not found."
+        );
+
+      }
+
+
+      const timestamp =
+        getNow();
+
+
+      const event = {
+
+        id:
+          generateEventId(
+            currentState.bookings
+          ),
+
+        bookingId:
+          String(
+            bookingId
+          ),
+
+        status:
+          "WEIGHING",
+
+        actorType:
+          "ADMIN",
+
+        actorId:
+          currentState.admin?.id ||
+          "A001",
+
+        timestamp,
+
+        note:
+          notes ||
+          "Produce weight recorded.",
+
+        changedFields: {
+
+          actualQuantity:
+            Number(
+              actualQuantity
+            ),
+
+        },
+
+      };
+
+
+      return {
+
+        ...currentState,
+
+        bookings:
+          currentState.bookings.map(
+            item =>
+              String(
+                item?.id
+              ) ===
+              String(
+                bookingId
+              )
+                ? {
+
+                    ...item,
+
+                    status:
+                      "WEIGHING",
+
+                    actualQuantity:
+                      Number(
+                        actualQuantity
+                      ),
+
+                    statusEvents: [
+
+                      ...(item.statusEvents ||
+                        []),
+
+                      event,
+
+                    ],
+
+                  }
+                : item
+          ),
+
+      };
+
     }
+  );
 
-    const timestamp = getNow();
-
-    const event = {
-      id: generateEventId(
-        currentState.bookings
-      ),
-
-      bookingId,
-
-      status: "WEIGHING",
-
-      actorType: "ADMIN",
-
-      actorId: currentState.admin.id,
-
-      timestamp,
-
-      note:
-        notes ||
-        "Produce weight recorded.",
-
-      changedFields: {
-        actualQuantity: Number(
-          actualQuantity
-        ),
-      },
-    };
-
-    return {
-      ...currentState,
-
-      bookings: currentState.bookings.map(
-        (item) =>
-          item.id === bookingId
-            ? {
-                ...item,
-
-                status: "WEIGHING",
-
-                actualQuantity:
-                  Number(actualQuantity),
-
-                statusEvents: [
-                  ...(item.statusEvents || []),
-                  event,
-                ],
-              }
-            : item
-      ),
-    };
-  });
 
   return getBookingById(
     bookingId
   );
+
 }
+
 
 export function markProcured(
   bookingId,
   rate,
   adjustment = 0
 ) {
-  const numericRate = Number(rate);
+
+  const numericRate =
+    Number(
+      rate
+    );
+
 
   const numericAdjustment =
-    Number(adjustment) || 0;
+    Number(
+      adjustment
+    ) || 0;
 
-  if (numericRate < 0) {
+
+  if (
+    numericRate < 0
+  ) {
+
     throw new Error(
       "Rate cannot be negative."
     );
+
   }
 
-  const booking = getBookingById(
-    bookingId
-  );
 
-  if (!booking) {
+  const booking =
+    getBookingById(
+      bookingId
+    );
+
+
+  if (
+    !booking
+  ) {
+
     throw new Error(
       "Booking not found."
     );
+
   }
 
+
   if (
-    booking.status === "PROCURED" ||
-    booking.status === "PAYMENT_PENDING" ||
-    booking.status === "PAYMENT_SENT"
+    booking.status ===
+      "PROCURED" ||
+    booking.status ===
+      "PAYMENT_PENDING" ||
+    booking.status ===
+      "PAYMENT_SENT"
   ) {
+
     throw new Error(
       "This booking has already been finalized."
     );
+
   }
 
+
   if (
-    booking.actualQuantity === null ||
-    booking.actualQuantity === undefined
+    booking.actualQuantity ===
+      null ||
+    booking.actualQuantity ===
+      undefined
   ) {
+
     throw new Error(
       "Actual quantity must be recorded before procurement."
     );
+
   }
 
+
   const amount =
-    booking.actualQuantity * numericRate +
+    Number(
+      booking.actualQuantity
+    ) *
+      numericRate +
     numericAdjustment;
 
-  updateState((currentState) => {
-    const timestamp = getNow();
 
-    const event = {
-      id: generateEventId(
-        currentState.bookings
-      ),
+  updateState(
+    currentState => {
 
-      bookingId,
+      const timestamp =
+        getNow();
 
-      status: "PROCURED",
 
-      actorType: "ADMIN",
+      const event = {
 
-      actorId: currentState.admin.id,
+        id:
+          generateEventId(
+            currentState.bookings
+          ),
 
-      timestamp,
+        bookingId:
+          String(
+            bookingId
+          ),
 
-      note:
-        "Procurement completed.",
+        status:
+          "PROCURED",
 
-      changedFields: {
-        actualQuantity:
-          booking.actualQuantity,
+        actorType:
+          "ADMIN",
 
-        rate: numericRate,
+        actorId:
+          currentState.admin?.id ||
+          "A001",
 
-        adjustment: numericAdjustment,
+        timestamp,
 
-        payableAmount: amount,
-      },
-    };
+        note:
+          "Procurement completed.",
 
-    return {
-      ...currentState,
+        changedFields: {
 
-      bookings: currentState.bookings.map(
-        (item) =>
-          item.id === bookingId
-            ? {
-                ...item,
+          actualQuantity:
+            booking.actualQuantity,
 
-                status: "PROCURED",
+          rate:
+            numericRate,
 
-                payment: {
-                  ...item.payment,
+          adjustment:
+            numericAdjustment,
 
-                  amount,
+          payableAmount:
+            amount,
 
-                  status:
-                    "PAYMENT_PENDING",
-                },
+        },
 
-                statusEvents: [
-                  ...(item.statusEvents || []),
-                  event,
-                ],
-              }
-            : item
-      ),
+      };
 
-      smsNotifications: [
-        ...currentState.smsNotifications,
 
-        createDemoSmsNotification({
-          booking: {
-            ...booking,
+      return {
 
-            actualQuantity:
-              booking.actualQuantity,
-          },
+        ...currentState,
 
-          farmerId: booking.farmerId,
+        bookings:
+          currentState.bookings.map(
+            item =>
+              String(
+                item?.id
+              ) ===
+              String(
+                bookingId
+              )
+                ? {
 
-          type: "PROCURED",
-        }),
-      ],
-    };
-  });
+                    ...item,
+
+                    status:
+                      "PROCURED",
+
+                    payment: {
+
+                      ...item.payment,
+
+                      amount,
+
+                      status:
+                        "PAYMENT_PENDING",
+
+                    },
+
+                    statusEvents: [
+
+                      ...(item.statusEvents ||
+                        []),
+
+                      event,
+
+                    ],
+
+                  }
+                : item
+          ),
+
+        smsNotifications: [
+
+          ...currentState.smsNotifications,
+
+          createDemoSmsNotification({
+
+            booking: {
+
+              ...booking,
+
+              actualQuantity:
+                booking.actualQuantity,
+
+            },
+
+            farmerId:
+              booking.farmerId,
+
+            type:
+              "PROCURED",
+
+          }),
+
+        ],
+
+      };
+
+    }
+  );
+
 
   return getBookingById(
     bookingId
   );
+
 }
+
 
 export function markPaymentSent(
   bookingId,
   reference
 ) {
-  const booking = getBookingById(
-    bookingId
-  );
 
-  if (!booking) {
+  const booking =
+    getBookingById(
+      bookingId
+    );
+
+
+  if (
+    !booking
+  ) {
+
     throw new Error(
       "Booking not found."
     );
+
   }
 
+
   if (
-    booking.payment.status ===
+    booking.payment?.status ===
     "PAYMENT_SENT"
   ) {
+
     throw new Error(
       "Payment is already marked as sent."
     );
+
   }
 
-  if (!reference?.trim()) {
+
+  if (
+    !reference?.trim()
+  ) {
+
     throw new Error(
       "Payment reference is required."
     );
+
   }
 
+
   if (
-    booking.payment.status !==
+    booking.payment?.status !==
     "PAYMENT_PENDING"
   ) {
+
     throw new Error(
       "Payment is not ready to be marked as sent."
     );
+
   }
 
-  const timestamp = getNow();
 
-  updateState((currentState) => {
-    const event = {
-      id: generateEventId(
-        currentState.bookings
-      ),
+  const timestamp =
+    getNow();
 
-      bookingId,
 
-      status: "PAYMENT_SENT",
+  updateState(
+    currentState => {
 
-      actorType: "ADMIN",
+      const event = {
 
-      actorId: currentState.admin.id,
+        id:
+          generateEventId(
+            currentState.bookings
+          ),
 
-      timestamp,
+        bookingId:
+          String(
+            bookingId
+          ),
 
-      note:
-        "Payment marked as sent.",
+        status:
+          "PAYMENT_SENT",
 
-      changedFields: {
-        paymentReference:
-          reference.trim(),
-      },
-    };
+        actorType:
+          "ADMIN",
 
-    const updatedBooking = {
-      ...booking,
+        actorId:
+          currentState.admin?.id ||
+          "A001",
 
-      status: "PAYMENT_SENT",
+        timestamp,
 
-      payment: {
-        ...booking.payment,
+        note:
+          "Payment marked as sent.",
 
-        status: "PAYMENT_SENT",
+        changedFields: {
 
-        reference: reference.trim(),
+          paymentReference:
+            reference.trim(),
 
-        sentAt: timestamp,
-      },
+        },
 
-      statusEvents: [
-        ...(booking.statusEvents || []),
-        event,
-      ],
-    };
+      };
 
-    return {
-      ...currentState,
 
-      bookings: currentState.bookings.map(
-        (item) =>
-          item.id === bookingId
-            ? updatedBooking
-            : item
-      ),
+      const updatedBooking = {
 
-      smsNotifications: [
-        ...currentState.smsNotifications,
+        ...booking,
 
-        createDemoSmsNotification({
-          booking: updatedBooking,
-          farmerId:
-            updatedBooking.farmerId,
-          type: "PAYMENT_SENT",
-          amount:
-            updatedBooking.payment.amount,
+        status:
+          "PAYMENT_SENT",
+
+        payment: {
+
+          ...booking.payment,
+
+          status:
+            "PAYMENT_SENT",
+
           reference:
-            updatedBooking.payment.reference,
-        }),
-      ],
-    };
-  });
+            reference.trim(),
+
+          sentAt:
+            timestamp,
+
+        },
+
+        statusEvents: [
+
+          ...(booking.statusEvents ||
+            []),
+
+          event,
+
+        ],
+
+      };
+
+
+      return {
+
+        ...currentState,
+
+        bookings:
+          currentState.bookings.map(
+            item =>
+              String(
+                item?.id
+              ) ===
+              String(
+                bookingId
+              )
+                ? updatedBooking
+                : item
+          ),
+
+        smsNotifications: [
+
+          ...currentState.smsNotifications,
+
+          createDemoSmsNotification({
+
+            booking:
+              updatedBooking,
+
+            farmerId:
+              updatedBooking.farmerId,
+
+            type:
+              "PAYMENT_SENT",
+
+            amount:
+              updatedBooking.payment.amount,
+
+            reference:
+              updatedBooking.payment.reference,
+
+          }),
+
+        ],
+
+      };
+
+    }
+  );
+
 
   return getBookingById(
     bookingId
   );
+
 }
+
+
+/* =========================================================
+   LEGACY EXPORT
+========================================================= */
+
+export {
+  createPrototypeBooking,
+};

@@ -1,9 +1,9 @@
+
 import {
   useEffect,
   useMemo,
   useState,
 } from "react";
-
 
 import {
   ArrowLeft,
@@ -23,34 +23,23 @@ import {
   Wheat,
 } from "lucide-react";
 
-
 import {
   Link,
   useNavigate,
 } from "react-router";
 
-
 import Header from "../../components/Header";
 import Button from "../../components/Button";
 import CropIcon from "../../components/CropIcon";
-
 
 import {
   useLanguage,
 } from "../../translations/LanguageContext";
 
-
 import {
-  createBookingAndSetFarmer,
   getCurrentFarmer,
   getState,
 } from "../../data/appStore";
-
-
-import {
-  getCentersForVillage,
-} from "../../data/locationData";
-
 
 import {
   syncBookingToPrototype,
@@ -59,8 +48,6 @@ import {
 
 const API_URL =
   import.meta.env.VITE_API_URL;
-
-
 
 
 const languageCopy = {
@@ -776,65 +763,7 @@ const languageCopy = {
 
 
 function FarmerBook() {
-  const [
-    settings,
-    setSettings,
-  ] = useState({
-    slotDuration: 30,
-    advanceBookingDays: 7,
-  });
-  
 
-  useEffect(() => {
-
-  async function loadSettings() {
-
-    try {
-
-      const response =
-        await fetch(
-          "http://localhost:5000/api/settings"
-        );
-
-
-      const data =
-        await response.json();
-
-
-      if (
-        response.ok &&
-        data?.settings
-      ) {
-
-        setSettings(
-          data.settings
-        );
-
-      }
-
-    } catch (error) {
-
-      console.error(
-        "Failed to load settings:",
-        error
-      );
-
-    }
-
-  }
-
-
-  loadSettings();
-
-}, []);
-  const dates =
-  generateBookingDates(
-    Number(
-      settings?.advanceBookingDays ??
-      7
-    )
-  );
-  
   const navigate =
     useNavigate();
 
@@ -846,7 +775,6 @@ function FarmerBook() {
     useLanguage();
 
 
-
   const farmer =
     getCurrentFarmer();
 
@@ -856,57 +784,57 @@ function FarmerBook() {
 
 
   const copy =
-    languageCopy[language] ||
+    languageCopy[
+      language
+    ] ||
     languageCopy.en;
 
 
-  const crops =
-    appState.crops?.length
-      ? appState.crops
-      : [
-          {
-            id: "wheat",
-            name: "Wheat",
-          },
-          {
-            id: "paddy",
-            name: "Paddy",
-          },
-          {
-            id: "maize",
-            name: "Maize",
-          },
-          {
-            id: "cotton",
-            name: "Cotton",
-          },
-        ];
+  const [
+    settings,
+    setSettings,
+  ] =
+    useState({
+      slotDuration:
+        30,
+
+      advanceBookingDays:
+        7,
+
+      maxQuantity:
+        5000,
+
+      defaultCapacity:
+        20,
+    });
 
 
-  const centerOptions =
-    farmer?.village
-      ? getCentersForVillage(
-          farmer.village
-        )
-      : [];
+  const [
+    settingsLoading,
+    setSettingsLoading,
+  ] =
+    useState(true);
 
 
-  const fallbackCenter =
-    appState.centers?.find(
-      (center) =>
-        center.id ===
-        farmer?.preferredCenterId
-    ) ||
-    appState.centers?.[0] ||
-    null;
+  const [
+    settingsError,
+    setSettingsError,
+  ] =
+    useState("");
 
 
-  const availableCenters =
-    centerOptions.length
-      ? centerOptions
-      : fallbackCenter
-        ? [fallbackCenter]
-        : appState.centers || [];
+  const [
+    centers,
+    setCenters,
+  ] =
+    useState([]);
+
+
+  const [
+    centersLoading,
+    setCentersLoading,
+  ] =
+    useState(true);
 
 
   const [
@@ -914,9 +842,7 @@ function FarmerBook() {
     setCrop,
   ] =
     useState(
-      farmer?.primaryCrop ||
-      crops[0]?.id ||
-      "wheat"
+      ""
     );
 
 
@@ -925,11 +851,7 @@ function FarmerBook() {
     setQuantity,
   ] =
     useState(
-      farmer?.estimatedQuantity
-        ? String(
-            farmer.estimatedQuantity
-          )
-        : ""
+      ""
     );
 
 
@@ -938,45 +860,8 @@ function FarmerBook() {
     setCenterId,
   ] =
     useState(
-      farmer?.preferredCenterId ||
-      availableCenters[0]?.id ||
       ""
     );
-    const selectedCenter =
-  useMemo(
-    () =>
-      availableCenters.find(
-        (item) =>
-          item.id === centerId
-      ) ||
-      availableCenters[0] ||
-      null,
-    [
-      availableCenters,
-      centerId,
-    ]
-  );
-
-
-const availabilityTemplate =
-  generateTimeSlots(
-    selectedCenter?.openingTime ||
-      selectedCenter?.opening_time ||
-      "10:00",
-
-    selectedCenter?.closingTime ||
-      selectedCenter?.closing_time ||
-      "15:00",
-
-    Number(
-      settings?.slotDuration ||
-      30
-    ),
-
-    selectedCenter?.capacityPerSlot ||
-      selectedCenter?.capacity ||
-      20
-  );
 
 
   const [
@@ -984,7 +869,7 @@ const availabilityTemplate =
     setDate,
   ] =
     useState(
-      dates[0].id
+      ""
     );
 
 
@@ -992,60 +877,699 @@ const availabilityTemplate =
     openMenu,
     setOpenMenu,
   ] =
-    useState(null);
+    useState(
+      null
+    );
 
 
   const [
     available,
     setAvailable,
   ] =
-    useState(false);
+    useState(
+      false
+    );
 
 
   const [
     selectedSlot,
     setSelectedSlot,
   ] =
-    useState(null);
+    useState(
+      null
+    );
 
 
   const [
     bookings,
     setBookings,
   ] =
-    useState([]);
+    useState(
+      []
+    );
+
+
+  const [
+    loadingBookings,
+    setLoadingBookings,
+  ] =
+    useState(
+      true
+    );
 
 
   const [
     loadingAvailability,
     setLoadingAvailability,
   ] =
-    useState(false);
-  
+    useState(
+      false
+    );
+
 
   const [
     confirming,
     setConfirming,
   ] =
-    useState(false);
+    useState(
+      false
+    );
 
 
   const [
     error,
     setError,
   ] =
-    useState("");
+    useState(
+      ""
+    );
 
+
+  const [
+    centerSwitchMessage,
+    setCenterSwitchMessage,
+  ] =
+    useState(
+      ""
+    );
+
+
+  /*
+   * ========================================================
+   * CROPS
+   * ========================================================
+   */
+
+  const crops =
+    Array.isArray(
+      appState?.crops
+    ) &&
+    appState.crops.length > 0
+      ? appState.crops
+      : [
+          {
+            id:
+              "wheat",
+            name:
+              "Wheat",
+          },
+          {
+            id:
+              "paddy",
+            name:
+              "Paddy",
+          },
+          {
+            id:
+              "maize",
+            name:
+              "Maize",
+          },
+          {
+            id:
+              "cotton",
+            name:
+              "Cotton",
+          },
+        ];
+
+
+  /*
+   * ========================================================
+   * ACTIVE CENTERS
+   * ========================================================
+   *
+   * IMPORTANT:
+   * Farmers now use the database centers directly.
+   * No hardcoded locationData center list is used here.
+   */
+
+  const availableCenters =
+    useMemo(
+      () =>
+        centers.filter(
+          center =>
+            Number(
+              center?.active ??
+              1
+            ) === 1
+        ),
+      [
+        centers,
+      ]
+    );
+
+
+  /*
+   * ========================================================
+   * INITIAL FORM VALUES
+   * ========================================================
+   */
+
+  useEffect(() => {
+
+    if (
+      !crop &&
+      crops.length > 0
+    ) {
+
+      const preferredCrop =
+        farmer?.primaryCrop ||
+        farmer?.primary_crop;
+
+
+      const cropExists =
+        crops.some(
+          item =>
+            String(
+              item.id
+            ) ===
+            String(
+              preferredCrop
+            )
+        );
+
+
+      setCrop(
+        cropExists
+          ? preferredCrop
+          : crops[0].id
+      );
+
+    }
+
+  }, [
+    crops,
+    crop,
+    farmer?.primaryCrop,
+    farmer?.primary_crop,
+  ]);
+
+
+  useEffect(() => {
+
+    const farmerQuantity =
+      farmer?.estimatedQuantity ??
+      farmer?.estimated_quantity ??
+      "";
+
+
+    if (
+      quantity === "" &&
+      Number(
+        farmerQuantity
+      ) > 0
+    ) {
+
+      setQuantity(
+        String(
+          farmerQuantity
+        )
+      );
+
+    }
+
+  }, [
+    farmer?.estimatedQuantity,
+    farmer?.estimated_quantity,
+    quantity,
+  ]);
+
+
+  /*
+   * ========================================================
+   * LOAD CENTERS
+   * ========================================================
+   */
+
+  useEffect(() => {
+
+    let cancelled =
+      false;
+
+
+    async function loadCenters() {
+
+      setCentersLoading(
+        true
+      );
+
+
+      try {
+
+        const response =
+          await fetch(
+            `${API_URL}/centers`
+          );
+
+
+        let data =
+          null;
+
+
+        try {
+
+          data =
+            await response.json();
+
+        } catch {
+
+          data =
+            null;
+
+        }
+
+
+        if (
+          !response.ok
+        ) {
+
+          throw new Error(
+            data?.message ||
+            "Unable to load procurement centers."
+          );
+
+        }
+
+
+        const rows =
+          Array.isArray(
+            data?.centers
+          )
+            ? data.centers
+            : [];
+
+
+        const activeRows =
+          rows.filter(
+            center =>
+              Number(
+                center?.active ??
+                1
+              ) === 1
+          );
+
+
+        if (
+          !cancelled
+        ) {
+
+          setCenters(
+            activeRows
+          );
+
+        }
+
+      } catch (
+        centerError
+      ) {
+
+        console.error(
+          "FarmerBook center loading error:",
+          centerError
+        );
+
+
+        if (
+          !cancelled
+        ) {
+
+          setCenters(
+            []
+          );
+
+          setError(
+            centerError?.message ||
+            "Unable to load procurement centers."
+          );
+
+        }
+
+      } finally {
+
+        if (
+          !cancelled
+        ) {
+
+          setCentersLoading(
+            false
+          );
+
+        }
+
+      }
+
+    }
+
+
+    loadCenters();
+
+
+    return () => {
+
+      cancelled =
+        true;
+
+    };
+
+  }, []);
+
+
+  /*
+   * ========================================================
+   * SELECT VALID CENTER
+   * ========================================================
+   */
+
+  useEffect(() => {
+
+    if (
+      availableCenters.length ===
+      0
+    ) {
+
+      setCenterId(
+        ""
+      );
+
+      return;
+
+    }
+
+
+    const preferredCenter =
+      farmer?.preferredCenterId ||
+      farmer?.preferred_center_id ||
+      "";
+
+
+    const preferredExists =
+      availableCenters.some(
+        center =>
+          String(
+            center.id
+          ) ===
+          String(
+            preferredCenter
+          )
+      );
+
+
+    const currentExists =
+      availableCenters.some(
+        center =>
+          String(
+            center.id
+          ) ===
+          String(
+            centerId
+          )
+      );
+
+
+    if (
+      preferredExists &&
+      !currentExists
+    ) {
+
+      setCenterId(
+        preferredCenter
+      );
+
+      return;
+
+    }
+
+
+    if (
+      !currentExists
+    ) {
+
+      setCenterId(
+        availableCenters[0].id
+      );
+
+    }
+
+  }, [
+    availableCenters,
+    centerId,
+    farmer?.preferredCenterId,
+    farmer?.preferred_center_id,
+  ]);
+
+
+  /*
+   * ========================================================
+   * SELECTED CENTER
+   * ========================================================
+   */
+
+  const selectedCenter =
+    useMemo(
+      () =>
+        availableCenters.find(
+          center =>
+            String(
+              center.id
+            ) ===
+            String(
+              centerId
+            )
+        ) ||
+        availableCenters[0] ||
+        null,
+      [
+        availableCenters,
+        centerId,
+      ]
+    );
+
+
+  /*
+   * ========================================================
+   * SETTINGS
+   * ========================================================
+   */
+
+  useEffect(() => {
+
+    let cancelled =
+      false;
+
+
+    async function loadSettings() {
+
+      setSettingsLoading(
+        true
+      );
+
+
+      setSettingsError(
+        ""
+      );
+
+
+      try {
+
+        const response =
+          await fetch(
+            `${API_URL}/settings`
+          );
+
+
+        let data =
+          null;
+
+
+        try {
+
+          data =
+            await response.json();
+
+        } catch {
+
+          data =
+            null;
+
+        }
+
+
+        if (
+          !response.ok
+        ) {
+
+          throw new Error(
+            data?.message ||
+            "Unable to load booking settings."
+          );
+
+        }
+
+
+        if (
+          !cancelled &&
+          data?.settings
+        ) {
+
+          setSettings(
+            current => ({
+              ...current,
+              ...data.settings,
+            })
+          );
+
+        }
+
+      } catch (
+        settingsErrorValue
+      ) {
+
+        console.error(
+          "Booking settings error:",
+          settingsErrorValue
+        );
+
+
+        if (
+          !cancelled
+        ) {
+
+          setSettingsError(
+            settingsErrorValue?.message ||
+            "Unable to load booking settings."
+          );
+
+        }
+
+      } finally {
+
+        if (
+          !cancelled
+        ) {
+
+          setSettingsLoading(
+            false
+          );
+
+        }
+
+      }
+
+    }
+
+
+    loadSettings();
+
+
+    return () => {
+
+      cancelled =
+        true;
+
+    };
+
+  }, []);
+
+
+  /*
+   * ========================================================
+   * DATES
+   * ========================================================
+   */
+
+  const dates =
+    useMemo(
+      () =>
+        generateBookingDates(
+          Number(
+            settings?.advanceBookingDays ??
+            7
+          )
+        ),
+      [
+        settings?.advanceBookingDays,
+      ]
+    );
+
+
+  useEffect(() => {
+
+    if (
+      dates.length ===
+      0
+    ) {
+
+      setDate(
+        ""
+      );
+
+      return;
+
+    }
+
+
+    const valid =
+      dates.some(
+        item =>
+          item.id ===
+          date
+      );
+
+
+    if (
+      !valid
+    ) {
+
+      setDate(
+        dates[0].id
+      );
+
+    }
+
+  }, [
+    dates,
+    date,
+  ]);
+
+
+  const selectedDate =
+    useMemo(
+      () =>
+        dates.find(
+          item =>
+            item.id ===
+            date
+        ) ||
+        dates[0] ||
+        null,
+      [
+        dates,
+        date,
+      ]
+    );
+
+
+  /*
+   * ========================================================
+   * SELECTED CROP
+   * ========================================================
+   */
 
   const selectedCrop =
     useMemo(
       () =>
         crops.find(
-          (item) =>
-            item.id ===
-            crop
+          item =>
+            String(
+              item?.id
+            ) ===
+            String(
+              crop
+            )
         ) ||
-        crops[0],
+        crops[0] ||
+        null,
       [
         crops,
         crop,
@@ -1053,189 +1577,136 @@ const availabilityTemplate =
     );
 
 
+  /*
+   * ========================================================
+   * AVAILABILITY TEMPLATE
+   * ========================================================
+   */
 
-  const selectedDate =
-    useMemo(
-      () =>
-        dates.find(
-          (item) =>
-            item.id ===
-            date
-        ) ||
-        dates[0],
-      [date]
-    );
-
-
-  const selectedSlotRecord =
-    useMemo(
-      () =>
-        selectedSlot
-          ? availabilityTemplate.find(
-              (slot) =>
-                slot.id ===
-                selectedSlot.id
-            ) ||
-            selectedSlot
-          : null,
-      [
-        selectedSlot,
-      ]
-    );
-
-
-  const estimatedQuantity =
-    Number(
-      quantity || 0
-    );
-  useEffect(() => {
-
-  async function loadSettings() {
-
-    try {
-
-      const response =
-        await fetch(
-          "http://localhost:5000/api/settings"
-        );
-
-
-      const data =
-        await response.json();
-
-
-      if (
-        response.ok &&
-        data?.settings
-      ) {
-
-        setSettings(
-          data.settings
-        );
-
-      }
-
-    } catch (
-      error
-    ) {
-
-      console.error(
-        "Failed to load system settings:",
-        error
-      );
-
-    }
-
-  }
-
-
-  loadSettings();
-
-}, []);
-
-  useEffect(() => {
-
-    if (
-      !farmer?.id
-    ) {
-      return;
-    }
-
-
-    async function loadBookings() {
-
-      try {
-
-        const response =
-          await fetch(
-            `${API_URL}/bookings`
-          );
-
-
-        if (
-          !response.ok
-        ) {
-          return;
-        }
-
-
-        const data =
-          await response.json();
-
-
-        setBookings(
-          Array.isArray(
-            data?.bookings
-          )
-            ? data.bookings
-            : []
-        );
-
-      } catch (
-        loadError
-      ) {
-
-        console.error(
-          "Booking availability error:",
-          loadError
-        );
-
-      }
-
-    }
-
-
-    loadBookings();
-
-  }, [
-    farmer?.id,
-  ]);
-
-
-  const availability =
+  const availabilityTemplate =
     useMemo(
       () => {
 
         if (
           !selectedCenter
         ) {
+
           return [];
+
+        }
+
+
+        const openingTime =
+          selectedCenter.opening_time ||
+          selectedCenter.openingTime ||
+          "09:00";
+
+
+        const closingTime =
+          selectedCenter.closing_time ||
+          selectedCenter.closingTime ||
+          "17:00";
+
+
+        const duration =
+          Number(
+            settings?.slotDuration ||
+            30
+          );
+
+
+        const capacity =
+          getCenterCapacity(
+            selectedCenter,
+            settings
+          );
+
+
+        return generateTimeSlots(
+          openingTime,
+          closingTime,
+          duration,
+          capacity
+        );
+
+      },
+      [
+        selectedCenter,
+        settings,
+      ]
+    );
+
+
+  /*
+   * ========================================================
+   * QUANTITY
+   * ========================================================
+   */
+
+  const estimatedQuantity =
+    Number(
+      quantity ||
+      0
+    );
+
+
+  /*
+   * ========================================================
+   * AVAILABILITY
+   * ========================================================
+   */
+
+  const availability =
+    useMemo(
+      () => {
+
+        if (
+          !selectedCenter ||
+          !selectedDate
+        ) {
+
+          return [];
+
         }
 
 
         return availabilityTemplate.map(
-          (slot) => {
+          slot => {
 
             const booked =
-              bookings.filter(
-                (booking) =>
-                  String(
-                    booking.center_id
-                  ) ===
-                    String(
-                      selectedCenter.id
-                    ) &&
-                  booking.date ===
-                    selectedDate.date &&
-                  booking.slot_start ===
-                    slot.start &&
-                  booking.slot_end ===
-                    slot.end
-              ).length;
+              getBookedCount(
+                bookings,
+                selectedCenter.id,
+                selectedDate.date,
+                slot.start,
+                slot.end
+              );
 
 
             const capacity =
-              Number(
-                selectedCenter.capacityPerSlot ||
-                slot.capacity ||
-                20
+              Math.max(
+                getCenterCapacity(
+                  selectedCenter,
+                  settings
+                ),
+                Number(
+                  slot.capacity ||
+                  0
+                )
+              );
+
+
+            const safeBooked =
+              Math.min(
+                booked,
+                capacity
               );
 
 
             const remaining =
               Math.max(
                 capacity -
-                  booked,
+                safeBooked,
                 0
               );
 
@@ -1256,7 +1727,7 @@ const availabilityTemplate =
               remaining <=
               Math.ceil(
                 capacity *
-                  0.25
+                0.25
               )
             ) {
 
@@ -1267,7 +1738,7 @@ const availabilityTemplate =
               remaining <=
               Math.ceil(
                 capacity *
-                  0.5
+                0.5
               )
             ) {
 
@@ -1278,11 +1749,18 @@ const availabilityTemplate =
 
 
             return {
+
               ...slot,
+
               capacity,
-              booked,
+
+              booked:
+                safeBooked,
+
               remaining,
+
               loadClass,
+
             };
 
           }
@@ -1293,6 +1771,44 @@ const availabilityTemplate =
         bookings,
         selectedCenter,
         selectedDate,
+        availabilityTemplate,
+        settings,
+      ]
+    );
+
+
+  /*
+   * ========================================================
+   * SELECTED SLOT
+   * ========================================================
+   */
+
+  const selectedSlotRecord =
+    useMemo(
+      () => {
+
+        if (
+          !selectedSlot
+        ) {
+
+          return null;
+
+        }
+
+
+        return (
+          availability.find(
+            slot =>
+              slot.id ===
+              selectedSlot.id
+          ) ||
+          null
+        );
+
+      },
+      [
+        availability,
+        selectedSlot,
       ]
     );
 
@@ -1304,18 +1820,210 @@ const availabilityTemplate =
         slot
       ) =>
         total +
-        slot.remaining,
+        Number(
+          slot?.remaining ||
+          0
+        ),
       0
     );
 
+
+  /*
+   * ========================================================
+   * BOOKING LOAD
+   * ========================================================
+   */
+
+  useEffect(() => {
+
+    if (
+      !farmer?.id
+    ) {
+
+      setBookings(
+        []
+      );
+
+      setLoadingBookings(
+        false
+      );
+
+      return;
+
+    }
+
+
+    let cancelled =
+      false;
+
+
+    async function loadBookings() {
+
+      setLoadingBookings(
+        true
+      );
+
+
+      try {
+
+        const response =
+          await fetch(
+            `${API_URL}/bookings`
+          );
+
+
+        let data =
+          null;
+
+
+        try {
+
+          data =
+            await response.json();
+
+        } catch {
+
+          data =
+            null;
+
+        }
+
+
+        if (
+          !response.ok
+        ) {
+
+          throw new Error(
+            data?.message ||
+            "Unable to load bookings."
+          );
+
+        }
+
+
+        const rows =
+          Array.isArray(
+            data?.bookings
+          )
+            ? data.bookings
+            : [];
+
+
+        if (
+          !cancelled
+        ) {
+
+          setBookings(
+            rows
+          );
+
+        }
+
+      } catch (
+        loadError
+      ) {
+
+        console.error(
+          "FarmerBook booking load error:",
+          loadError
+        );
+
+
+        if (
+          !cancelled
+        ) {
+
+          setBookings(
+            []
+          );
+
+          setError(
+            loadError?.message ||
+            "Unable to load bookings."
+          );
+
+        }
+
+      } finally {
+
+        if (
+          !cancelled
+        ) {
+
+          setLoadingBookings(
+            false
+          );
+
+        }
+
+      }
+
+    }
+
+
+    loadBookings();
+
+
+    return () => {
+
+      cancelled =
+        true;
+
+    };
+
+  }, [
+    farmer?.id,
+  ]);
+
+
+  /*
+   * ========================================================
+   * RESET WHEN SELECTION CHANGES
+   * ========================================================
+   */
+
+  useEffect(() => {
+
+    setAvailable(
+      false
+    );
+
+    setSelectedSlot(
+      null
+    );
+
+    setCenterSwitchMessage(
+      ""
+    );
+
+  }, [
+    crop,
+    quantity,
+    centerId,
+    date,
+  ]);
+
+
+  /*
+   * ========================================================
+   * HELPERS
+   * ========================================================
+   */
 
   function tr(
     key,
     fallback
   ) {
 
-    return t(
-      key,
+    const translated =
+      t(
+        key,
+        fallback
+      );
+
+
+    return (
+      translated ||
       fallback
     );
 
@@ -1326,31 +2034,44 @@ const availabilityTemplate =
     cropId
   ) {
 
+    const key =
+      `crops.${cropId}`;
+
+
     const translated =
       tr(
-        `crops.${cropId}`,
+        key,
         ""
       );
 
 
     if (
-      translated
+      translated &&
+      translated !==
+      key
     ) {
+
       return translated;
+
     }
 
 
     const item =
       crops.find(
-        (cropItem) =>
-          cropItem.id ===
-          cropId
+        cropItem =>
+          String(
+            cropItem?.id
+          ) ===
+          String(
+            cropId
+          )
       );
 
 
     return (
       item?.name ||
-      cropId
+      cropId ||
+      "Produce"
     );
 
   }
@@ -1359,10 +2080,10 @@ const availabilityTemplate =
   function validate() {
 
     if (
-      !farmer
+      !farmer?.id
     ) {
 
-      return "Farmer account could not be loaded.";
+      return "Farmer account could not be loaded. Please login again.";
 
     }
 
@@ -1377,45 +2098,49 @@ const availabilityTemplate =
 
 
     if (
-      !quantity
+      !quantity ||
+      !Number.isFinite(
+        estimatedQuantity
+      )
     ) {
 
-      return (
-        tr(
-          "booking.quantityRequired",
-          "Enter the estimated quantity."
-        )
+      return tr(
+        "booking.quantityRequired",
+        "Enter the estimated quantity."
       );
 
     }
 
 
     if (
-      Number(quantity) <=
+      estimatedQuantity <=
       0
     ) {
 
-      return (
-        tr(
-          "booking.quantityPositive",
-          "Quantity must be greater than zero."
-        )
+      return tr(
+        "booking.quantityPositive",
+        "Quantity must be greater than zero."
       );
 
     }
 
 
+    const maximumQuantity =
+      Number(
+        settings?.maxQuantity ??
+        5000
+      );
+
+
     if (
-      Number(quantity) >
-      5000
+      estimatedQuantity >
+      maximumQuantity
     ) {
 
-      return (
-        tr(
-          "booking.quantityLimit",
-          "Quantity cannot exceed 5,000 kg."
-        )
-      );
+      return `${tr(
+        "booking.quantityLimit",
+        "Quantity cannot exceed"
+      )} ${maximumQuantity.toLocaleString()} kg.`;
 
     }
 
@@ -1424,12 +2149,19 @@ const availabilityTemplate =
       !selectedCenter
     ) {
 
-      return (
-        tr(
-          "location.noCenter",
-          "No procurement center is available."
-        )
+      return tr(
+        "location.noCenter",
+        "No procurement center is available."
       );
+
+    }
+
+
+    if (
+      !selectedDate
+    ) {
+
+      return "Please choose an arrival date.";
 
     }
 
@@ -1449,7 +2181,13 @@ const availabilityTemplate =
       null
     );
 
-    setError("");
+    setError(
+      ""
+    );
+
+    setCenterSwitchMessage(
+      ""
+    );
 
   }
 
@@ -1473,6 +2211,7 @@ const availabilityTemplate =
     setQuantity(
       value
     );
+
 
     resetAvailability();
 
@@ -1526,6 +2265,167 @@ const availabilityTemplate =
   }
 
 
+  async function refreshBookings() {
+
+    try {
+
+      const response =
+        await fetch(
+          `${API_URL}/bookings`
+        );
+
+
+      let data =
+        null;
+
+
+      try {
+
+        data =
+          await response.json();
+
+      } catch {
+
+        data =
+          null;
+
+      }
+
+
+      if (
+        !response.ok
+      ) {
+
+        throw new Error(
+          data?.message ||
+          "Unable to load bookings."
+        );
+
+      }
+
+
+      const rows =
+        Array.isArray(
+          data?.bookings
+        )
+          ? data.bookings
+          : [];
+
+
+      setBookings(
+        rows
+      );
+
+
+      return rows;
+
+    } catch (
+      loadError
+    ) {
+
+      console.error(
+        "Refresh bookings error:",
+        loadError
+      );
+
+
+      return Array.isArray(
+        bookings
+      )
+        ? bookings
+        : [];
+
+    }
+
+  }
+
+
+  function getFreeSlotForCenter(
+    center,
+    bookingRows
+  ) {
+
+    if (
+      !center ||
+      !selectedDate
+    ) {
+
+      return null;
+
+    }
+
+
+    const slots =
+      generateTimeSlots(
+        center.opening_time ||
+        center.openingTime ||
+        "09:00",
+
+        center.closing_time ||
+        center.closingTime ||
+        "17:00",
+
+        Number(
+          settings?.slotDuration ||
+          30
+        ),
+
+        getCenterCapacity(
+          center,
+          settings
+        )
+      );
+
+
+    for (
+      const slot of slots
+    ) {
+
+      const booked =
+        getBookedCount(
+          bookingRows,
+          center.id,
+          selectedDate.date,
+          slot.start,
+          slot.end
+        );
+
+
+      const capacity =
+        getCenterCapacity(
+          center,
+          settings
+        );
+
+
+      if (
+        booked <
+        capacity
+      ) {
+
+        return {
+          slot,
+          remaining:
+            Math.max(
+              capacity -
+              Math.min(
+                booked,
+                capacity
+              ),
+              0
+            ),
+        };
+
+      }
+
+    }
+
+
+    return null;
+
+  }
+
+
   async function handleCheckAvailability(
     event
   ) {
@@ -1554,8 +2454,13 @@ const availabilityTemplate =
       true
     );
 
-    setError("");
+    setError(
+      ""
+    );
 
+    setCenterSwitchMessage(
+      ""
+    );
 
     setSelectedSlot(
       null
@@ -1564,105 +2469,27 @@ const availabilityTemplate =
 
     try {
 
-      const response =
-        await fetch(
-          `${API_URL}/bookings`
-        );
-
-
-      if (
-        !response.ok
-      ) {
-
-        throw new Error(
-          "Unable to check availability."
-        );
-
-      }
-
-
-      const data =
-        await response.json();
-
-
       const latestBookings =
-        Array.isArray(
-          data?.bookings
-        )
-          ? data.bookings
-          : [];
+        await refreshBookings();
 
 
-      setBookings(
-        latestBookings
-      );
+      /*
+       * First try the farmer's selected center.
+       */
 
- console.log(
-  "CENTER TIME DEBUG",
-  {
-    selectedCenter,
-    openingTime:
-      selectedCenter?.openingTime,
-    opening_time:
-      selectedCenter?.opening_time,
-    closingTime:
-      selectedCenter?.closingTime,
-    closing_time:
-      selectedCenter?.closing_time,
-    slotDuration:
-      settings?.slotDuration,
-  }
-);
-      const free =
-        availabilityTemplate.some(
-          (slot) => {
-
-            const booked =
-              latestBookings.filter(
-                (booking) =>
-                  String(
-                    booking.center_id
-                  ) ===
-                    String(
-                      selectedCenter.id
-                    ) &&
-                  booking.date ===
-                    selectedDate.date &&
-                  booking.slot_start ===
-                    slot.start &&
-                  booking.slot_end ===
-                    slot.end
-              ).length;
-
-
-            const capacity =
-              Number(
-                selectedCenter.capacityPerSlot ||
-                slot.capacity ||
-                20
-              );
-
-
-            return (
-              capacity -
-                booked >
-              0
-            );
-
-          }
+      const selectedAvailability =
+        getFreeSlotForCenter(
+          selectedCenter,
+          latestBookings
         );
 
 
       if (
-        !free
+        selectedAvailability
       ) {
 
         setAvailable(
-          false
-        );
-
-        setError(
-          "No arrival windows are currently available for this date. Please choose another date."
+          true
         );
 
         return;
@@ -1670,8 +2497,91 @@ const availabilityTemplate =
       }
 
 
+      /*
+       * Selected center has no free slot.
+       * Search every other active center.
+       */
+
+      const alternatives =
+        availableCenters.filter(
+          center =>
+            String(
+              center.id
+            ) !==
+            String(
+              selectedCenter?.id
+            )
+        );
+
+
+      const alternative =
+        alternatives
+          .map(
+            center => ({
+              center,
+
+              availability:
+                getFreeSlotForCenter(
+                  center,
+                  latestBookings
+                ),
+
+            })
+          )
+          .find(
+            item =>
+              item.availability
+          );
+
+
+      if (
+        alternative
+      ) {
+
+        setCenterId(
+          alternative.center.id
+        );
+
+
+        setAvailable(
+          true
+        );
+
+
+        setSelectedSlot(
+          null
+        );
+
+
+        setCenterSwitchMessage(
+          language === "hi"
+            ? `चयनित केंद्र भर गया है। आपको ${alternative.center.name} पर उपलब्ध स्लॉट दिखाए जा रहे हैं।`
+            : language === "te"
+              ? `ఎంచుకున్న కేంద్రం నిండిపోయింది. ${alternative.center.name}లో అందుబాటులో ఉన్న స్లాట్‌లను చూపిస్తున్నాము.`
+              : `The selected center is full. We switched you to ${alternative.center.name}, where slots are available.`
+        );
+
+
+        return;
+
+      }
+
+
+      /*
+       * No active center has an opening.
+       */
+
       setAvailable(
-        true
+        false
+      );
+
+
+      setError(
+        language === "hi"
+          ? "इस तारीख के लिए किसी भी सक्रिय खरीद केंद्र में कोई समय उपलब्ध नहीं है। कृपया दूसरी तारीख चुनें।"
+          : language === "te"
+            ? "ఈ తేదీకి ఏ యాక్టివ్ కొనుగోలు కేంద్రంలోనూ సమయం అందుబాటులో లేదు. దయచేసి మరొక తేదీని ఎంచుకోండి."
+            : "No arrival windows are available at any active procurement center for this date. Please choose another date."
       );
 
     } catch (
@@ -1679,7 +2589,13 @@ const availabilityTemplate =
     ) {
 
       console.error(
+        "Check availability error:",
         availabilityError
+      );
+
+
+      setAvailable(
+        false
       );
 
 
@@ -1704,10 +2620,15 @@ const availabilityTemplate =
   ) {
 
     if (
-      slot.remaining <=
+      !slot ||
+      Number(
+        slot.remaining
+      ) <=
       0
     ) {
+
       return;
+
     }
 
 
@@ -1715,17 +2636,601 @@ const availabilityTemplate =
       slot
     );
 
-    setError("");
+
+    setError(
+      ""
+    );
 
   }
-    return (
+
+
+  async function handleConfirmBooking() {
+
+    if (
+      confirming
+    ) {
+
+      return;
+
+    }
+
+
+    if (
+      !selectedCenter
+    ) {
+
+      setError(
+        "Please select a procurement center."
+      );
+
+      return;
+
+    }
+
+
+    if (
+      !selectedDate
+    ) {
+
+      setError(
+        "Please choose an arrival date."
+      );
+
+      return;
+
+    }
+
+
+    if (
+      !selectedSlotRecord
+    ) {
+
+      setError(
+        tr(
+          "booking.selectWindowError",
+          "Choose an available arrival window."
+        )
+      );
+
+      return;
+
+    }
+
+
+    const validationError =
+      validate();
+
+
+    if (
+      validationError
+    ) {
+
+      setError(
+        validationError
+      );
+
+      return;
+
+    }
+
+
+    setConfirming(
+      true
+    );
+
+    setError(
+      ""
+    );
+
+
+    try {
+
+      /*
+       * Verify farmer.
+       */
+
+      const farmerResponse =
+        await fetch(
+          `${API_URL}/farmers/${encodeURIComponent(
+            farmer.id
+          )}`
+        );
+
+
+      let farmerData =
+        null;
+
+
+      try {
+
+        farmerData =
+          await farmerResponse.json();
+
+      } catch {
+
+        farmerData =
+          null;
+
+      }
+
+
+      if (
+        !farmerResponse.ok ||
+        !farmerData?.farmer
+      ) {
+
+        throw new Error(
+          farmerData?.message ||
+          "Your farmer account could not be verified. Please login again."
+        );
+
+      }
+
+
+      const serverFarmer =
+        normalizeFarmer(
+          farmerData.farmer
+        );
+
+
+      if (
+        !serverFarmer?.id
+      ) {
+
+        throw new Error(
+          "The server returned an invalid farmer account."
+        );
+
+      }
+
+
+      /*
+       * Refresh bookings one final time.
+       */
+
+      const latestBookings =
+        await refreshBookings();
+
+
+      const matchingBookings =
+        getBookedCount(
+          latestBookings,
+          selectedCenter.id,
+          selectedDate.date,
+          selectedSlotRecord.start,
+          selectedSlotRecord.end
+        );
+
+
+      const capacity =
+        getCenterCapacity(
+          selectedCenter,
+          settings
+        );
+
+
+      if (
+        matchingBookings >=
+        capacity
+      ) {
+
+        /*
+         * Current slot is full.
+         * Search another center automatically.
+         */
+
+        const alternative =
+          availableCenters
+            .filter(
+              center =>
+                String(
+                  center.id
+                ) !==
+                String(
+                  selectedCenter.id
+                )
+            )
+            .map(
+              center => ({
+                center,
+
+                availability:
+                  getFreeSlotForCenter(
+                    center,
+                    latestBookings
+                  ),
+
+              })
+            )
+            .find(
+              item =>
+                item.availability
+            );
+
+
+        setSelectedSlot(
+          null
+        );
+
+
+        if (
+          alternative
+        ) {
+
+          setCenterId(
+            alternative.center.id
+          );
+
+          setAvailable(
+            true
+          );
+
+
+          setCenterSwitchMessage(
+            language === "hi"
+              ? `यह स्लॉट अभी भर गया। आपको ${alternative.center.name} पर भेज दिया गया है।`
+              : language === "te"
+                ? `ఈ స్లాట్ ఇప్పుడే నిండిపోయింది. మిమ్మల్ని ${alternative.center.name}కు మార్చాము.`
+                : `This slot was just filled. We switched you to ${alternative.center.name}.`
+          );
+
+
+          return;
+
+        }
+
+
+        setAvailable(
+          false
+        );
+
+
+        throw new Error(
+          "This arrival window was just filled and no other active center has availability for this date."
+        );
+
+      }
+
+
+      /*
+       * Generate temporary client-side identifiers.
+       */
+
+      const bookingId =
+        `B${Date.now()}${Math.floor(
+          Math.random() *
+          1000
+        )}`;
+
+
+      const bookingToken =
+        String(
+          Date.now()
+        ).slice(
+          -6
+        );
+
+
+      const requestBody = {
+
+        id:
+          bookingId,
+
+        token:
+          bookingToken,
+
+        farmer: {
+
+          id:
+            serverFarmer.id,
+
+          name:
+            serverFarmer.name,
+
+          phone:
+            serverFarmer.phone,
+
+          stateId:
+            serverFarmer.stateId,
+
+          districtId:
+            serverFarmer.districtId,
+
+          mandalId:
+            serverFarmer.mandalId,
+
+          village:
+            serverFarmer.village,
+
+          language:
+            serverFarmer.language,
+
+          preferredCenterId:
+            serverFarmer.preferredCenterId,
+
+          primaryCrop:
+            serverFarmer.primaryCrop,
+
+          estimatedQuantity:
+            serverFarmer.estimatedQuantity,
+
+        },
+
+        centerId:
+          selectedCenter.id,
+
+        crop:
+          selectedCrop.id,
+
+        estimatedQuantity:
+          estimatedQuantity,
+
+        date:
+          selectedDate.date,
+
+        slotStart:
+          selectedSlotRecord.start,
+
+        slotEnd:
+          selectedSlotRecord.end,
+
+      };
+
+
+      const response =
+        await fetch(
+          `${API_URL}/bookings`,
+          {
+            method:
+              "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify(
+                requestBody
+              ),
+
+          }
+        );
+
+
+      let responseData =
+        null;
+
+
+      try {
+
+        responseData =
+          await response.json();
+
+      } catch {
+
+        responseData =
+          null;
+
+      }
+
+
+      if (
+        !response.ok
+      ) {
+
+        throw new Error(
+          responseData?.message ||
+          "Failed to save your booking."
+        );
+
+      }
+
+
+      const savedBooking =
+        responseData?.booking;
+
+
+      if (
+        !savedBooking?.id
+      ) {
+
+        throw new Error(
+          "Booking was accepted but the server did not return a valid booking record."
+        );
+
+      }
+
+
+      /*
+       * Synchronize local prototype state.
+       */
+
+      try {
+
+        syncBookingToPrototype(
+          {
+            id:
+              savedBooking.id,
+
+            farmerId:
+              serverFarmer.id,
+
+            centerId:
+              savedBooking.center_id ||
+              selectedCenter.id,
+
+            token:
+              String(
+                savedBooking.token ||
+                bookingToken
+              ),
+
+            date:
+              savedBooking.date ||
+              selectedDate.date,
+
+            slotStart:
+              savedBooking.slot_start ||
+              selectedSlotRecord.start,
+
+            slotEnd:
+              savedBooking.slot_end ||
+              selectedSlotRecord.end,
+
+            crop:
+              savedBooking.crop ||
+              selectedCrop.id,
+
+            estimatedQuantity:
+              Number(
+                savedBooking.estimated_quantity ??
+                estimatedQuantity
+              ),
+
+            actualQuantity:
+              savedBooking.actual_quantity ??
+              null,
+
+            status:
+              savedBooking.status ||
+              "CONFIRMED",
+
+            payment: {
+
+              amount:
+                Number(
+                  savedBooking.payment_amount ||
+                  0
+                ) ||
+                null,
+
+              status:
+                savedBooking.payment_status ||
+                "NOT_CREATED",
+
+              reference:
+                savedBooking.payment_reference ||
+                null,
+
+              sentAt:
+                savedBooking.payment_sms_sent_at ||
+                null,
+
+            },
+
+          },
+
+          serverFarmer,
+
+          selectedCenter,
+
+          selectedCrop
+        );
+
+      } catch (
+        bridgeError
+      ) {
+
+        console.warn(
+          "Prototype sync warning:",
+          bridgeError
+        );
+
+      }
+
+
+      /*
+       * Verify exact backend booking.
+       */
+
+      const verifyResponse =
+        await fetch(
+          `${API_URL}/bookings/${encodeURIComponent(
+            savedBooking.id
+          )}`
+        );
+
+
+      let verifyData =
+        null;
+
+
+      try {
+
+        verifyData =
+          await verifyResponse.json();
+
+      } catch {
+
+        verifyData =
+          null;
+
+      }
+
+
+      if (
+        !verifyResponse.ok ||
+        !verifyData?.booking?.id
+      ) {
+
+        throw new Error(
+          "Booking was created but could not be verified. Please refresh and check your bookings."
+        );
+
+      }
+
+
+      navigate(
+        `/farmer/token?booking=${encodeURIComponent(
+          verifyData.booking.id
+        )}`,
+        {
+          replace:
+            true,
+        }
+      );
+
+    } catch (
+      bookingError
+    ) {
+
+      console.error(
+        "Booking error:",
+        bookingError
+      );
+
+
+      setError(
+        bookingError?.message ||
+        "Unable to complete the booking."
+      );
+
+    } finally {
+
+      setConfirming(
+        false
+      );
+
+    }
+
+  }
+
+
+  /*
+   * ========================================================
+   * RENDER
+   * ========================================================
+   */
+
+  return (
+
     <div className="farmer-book-page">
 
       <Header />
 
 
       <main className="booking-container">
-
 
         <div className="booking-top-row">
 
@@ -1735,19 +3240,29 @@ const availabilityTemplate =
               to="/farmer/home"
               className="back-link"
             >
-              <ArrowLeft size={16} />
 
-              {tr(
-                "common.back",
-                "Back"
-              )}
+              <ArrowLeft
+                size={16}
+              />
+
+              {
+                tr(
+                  "common.back",
+                  "Back"
+                )
+              }
+
             </Link>
 
 
             <div className="booking-eyebrow-row">
 
               <span className="page-eyebrow">
-                {copy.bookingEyebrow}
+
+                {
+                  copy.bookingEyebrow
+                }
+
               </span>
 
 
@@ -1755,7 +3270,9 @@ const availabilityTemplate =
 
                 <span />
 
-                {copy.liveAvailability}
+                {
+                  copy.liveAvailability
+                }
 
               </span>
 
@@ -1763,20 +3280,22 @@ const availabilityTemplate =
 
 
             <h1>
-              {copy.title}
+              {
+                copy.title
+              }
             </h1>
 
 
             <p>
-              {copy.description}
+              {
+                copy.description
+              }
             </p>
 
           </div>
 
 
-
           <div className="booking-process-mini">
-
 
             <div className="mini-step active">
 
@@ -1784,14 +3303,16 @@ const availabilityTemplate =
                 1
               </span>
 
-              {tr(
-                "booking.details",
-                language === "hi"
-                  ? "विवरण"
-                  : language === "te"
-                    ? "వివరాలు"
-                    : "Details"
-              )}
+              {
+                tr(
+                  "booking.details",
+                  language === "hi"
+                    ? "विवरण"
+                    : language === "te"
+                      ? "వివరాలు"
+                      : "Details"
+                )
+              }
 
             </div>
 
@@ -1813,14 +3334,16 @@ const availabilityTemplate =
                 2
               </span>
 
-              {tr(
-                "booking.availability",
-                language === "hi"
-                  ? "उपलब्धता"
-                  : language === "te"
-                    ? "అందుబాటు"
-                    : "Availability"
-              )}
+              {
+                tr(
+                  "booking.availability",
+                  language === "hi"
+                    ? "उपलब्धता"
+                    : language === "te"
+                      ? "అందుబాటు"
+                      : "Availability"
+                )
+              }
 
             </div>
 
@@ -1842,14 +3365,16 @@ const availabilityTemplate =
                 3
               </span>
 
-              {tr(
-                "booking.confirm",
-                language === "hi"
-                  ? "पुष्टि"
-                  : language === "te"
-                    ? "నిర్ధారణ"
-                    : "Confirm"
-              )}
+              {
+                tr(
+                  "booking.confirm",
+                  language === "hi"
+                    ? "पुष्टि"
+                    : language === "te"
+                      ? "నిర్ధారణ"
+                      : "Confirm"
+                )
+              }
 
             </div>
 
@@ -1858,15 +3383,15 @@ const availabilityTemplate =
         </div>
 
 
-
         <section className="booking-info-bar">
-
 
           <div>
 
             <div className="booking-info-icon green">
 
-              <ShieldCheck size={19} />
+              <ShieldCheck
+                size={19}
+              />
 
             </div>
 
@@ -1874,24 +3399,29 @@ const availabilityTemplate =
             <div>
 
               <strong>
-                {copy.secureTitle}
+                {
+                  copy.secureTitle
+                }
               </strong>
 
               <span>
-                {copy.secureText}
+                {
+                  copy.secureText
+                }
               </span>
 
             </div>
 
           </div>
-
 
 
           <div>
 
             <div className="booking-info-icon blue">
 
-              <Clock3 size={19} />
+              <Clock3
+                size={19}
+              />
 
             </div>
 
@@ -1899,11 +3429,15 @@ const availabilityTemplate =
             <div>
 
               <strong>
-                {copy.reserveTitle}
+                {
+                  copy.reserveTitle
+                }
               </strong>
 
               <span>
-                {copy.reserveText}
+                {
+                  copy.reserveText
+                }
               </span>
 
             </div>
@@ -1911,12 +3445,13 @@ const availabilityTemplate =
           </div>
 
 
-
           <div>
 
             <div className="booking-info-icon gold">
 
-              <CheckCircle2 size={19} />
+              <CheckCircle2
+                size={19}
+              />
 
             </div>
 
@@ -1924,11 +3459,15 @@ const availabilityTemplate =
             <div>
 
               <strong>
-                {copy.tokenTitle}
+                {
+                  copy.tokenTitle
+                }
               </strong>
 
               <span>
-                {copy.tokenText}
+                {
+                  copy.tokenText
+                }
               </span>
 
             </div>
@@ -1938,16 +3477,9 @@ const availabilityTemplate =
         </section>
 
 
-
         <section className="booking-layout">
 
-
           <div className="booking-form-column">
-
-
-            {/* =================================================
-                PRODUCE
-            ================================================== */}
 
             <section className="booking-panel">
 
@@ -1960,7 +3492,9 @@ const availabilityTemplate =
 
                 <div className="panel-icon green">
 
-                  <Wheat size={21} />
+                  <Wheat
+                    size={21}
+                  />
 
                 </div>
 
@@ -1968,17 +3502,23 @@ const availabilityTemplate =
                 <div>
 
                   <span className="panel-step-label">
-                    {copy.stepOne}
+                    {
+                      copy.stepOne
+                    }
                   </span>
 
 
                   <h2>
-                    {copy.produceTitle}
+                    {
+                      copy.produceTitle
+                    }
                   </h2>
 
 
                   <p>
-                    {copy.produceDescription}
+                    {
+                      copy.produceDescription
+                    }
                   </p>
 
                 </div>
@@ -1986,37 +3526,33 @@ const availabilityTemplate =
               </div>
 
 
-
               <div className="form-grid">
-
 
                 <div className="booking-form-field">
 
                   <label>
-                    {copy.crop}
+                    {
+                      copy.crop
+                    }
                   </label>
 
 
                   <div className="custom-select">
 
-
                     <button
                       type="button"
                       className="select-control"
-                      onClick={() => {
-
+                      onClick={() =>
                         setOpenMenu(
                           openMenu ===
                             "crop"
                             ? null
                             : "crop"
-                        );
-
-                      }}
+                        )
+                      }
                     >
 
                       <div className="select-main">
-
 
                         <div
                           className={
@@ -2042,14 +3578,9 @@ const availabilityTemplate =
 
                           <strong>
                             {
-                              tr(
-                                `crops.${
-                                  selectedCrop?.id ||
-                                  "wheat"
-                                }`,
-                                selectedCrop?.name ||
+                              cropLabel(
                                 selectedCrop?.id ||
-                                "Wheat"
+                                "wheat"
                               )
                             }
                           </strong>
@@ -2066,107 +3597,121 @@ const availabilityTemplate =
                       </div>
 
 
-                      <ChevronDown size={17} />
+                      <ChevronDown
+                        size={17}
+                      />
 
                     </button>
 
 
-
-                    {openMenu ===
+                    {
+                      openMenu ===
                       "crop" && (
 
-                      <div className="select-menu">
+                        <div className="select-menu">
 
-                        {crops.map(
-                          (item) => (
+                          {
+                            crops.map(
+                              item => (
 
-                            <button
-                              key={
-                                item.id
-                              }
-                              type="button"
-                              className={
-                                crop ===
-                                item.id
-                                  ? "select-option selected"
-                                  : "select-option"
-                              }
-                              onClick={() =>
-                                handleCropSelect(
-                                  item.id
-                                )
-                              }
-                            >
-
-                              <div
-                                className={
-                                  `crop-visual crop-${
-                                    item.id
-                                  } crop-visual-small`
-                                }
-                              >
-
-                                <CropIcon
-                                  crop={
+                                <button
+                                  key={
                                     item.id
                                   }
-                                  size={20}
-                                />
-
-                              </div>
-
-
-                              <div>
-
-                                <strong>
-                                  {
-                                    tr(
-                                      `crops.${item.id}`,
-                                      item.name ||
+                                  type="button"
+                                  className={
+                                    String(
+                                      crop
+                                    ) ===
+                                    String(
+                                      item.id
+                                    )
+                                      ? "select-option selected"
+                                      : "select-option"
+                                  }
+                                  onClick={() =>
+                                    handleCropSelect(
                                       item.id
                                     )
                                   }
-                                </strong>
+                                >
+
+                                  <div
+                                    className={
+                                      `crop-visual crop-${
+                                        item.id
+                                      } crop-visual-small`
+                                    }
+                                  >
+
+                                    <CropIcon
+                                      crop={
+                                        item.id
+                                      }
+                                      size={20}
+                                    />
+
+                                  </div>
 
 
-                                <span>
+                                  <div>
+
+                                    <strong>
+                                      {
+                                        cropLabel(
+                                          item.id
+                                        )
+                                      }
+                                    </strong>
+
+
+                                    <span>
+                                      {
+                                        copy.agriculturalProduce
+                                      }
+                                    </span>
+
+                                  </div>
+
+
                                   {
-                                    copy.agriculturalProduce
+                                    String(
+                                      crop
+                                    ) ===
+                                    String(
+                                      item.id
+                                    ) && (
+
+                                      <Check
+                                        size={16}
+                                      />
+
+                                    )
                                   }
-                                </span>
 
-                              </div>
+                                </button>
 
+                              )
+                            )
+                          }
 
-                              {crop ===
-                                item.id && (
+                        </div>
 
-                                <Check
-                                  size={16}
-                                />
-
-                              )}
-
-                            </button>
-
-                          )
-                        )}
-
-                      </div>
-
-                    )}
+                      )
+                    }
 
                   </div>
 
                 </div>
 
 
-
                 <div className="booking-form-field">
 
                   <label htmlFor="booking-quantity">
 
-                    {copy.quantity}
+                    {
+                      copy.quantity
+                    }
 
                   </label>
 
@@ -2178,7 +3723,7 @@ const availabilityTemplate =
                         (
                           !quantity ||
                           estimatedQuantity <=
-                            0
+                          0
                         )
                           ? "booking-input-error"
                           : ""
@@ -2213,7 +3758,9 @@ const availabilityTemplate =
 
 
                   <span className="field-help">
-                    {copy.quantityHelp}
+                    {
+                      copy.quantityHelp
+                    }
                   </span>
 
                 </div>
@@ -2221,27 +3768,27 @@ const availabilityTemplate =
               </div>
 
 
-
               <div className="booking-tip-card">
 
                 <div>
-                  <Info size={16} />
+
+                  <Info
+                    size={16}
+                  />
+
                 </div>
 
 
                 <p>
-                  {copy.quantityTip}
+                  {
+                    copy.quantityTip
+                  }
                 </p>
 
               </div>
 
             </section>
 
-
-
-            {/* =================================================
-                CENTER + DATE
-            ================================================== */}
 
             <section className="booking-panel">
 
@@ -2254,7 +3801,9 @@ const availabilityTemplate =
 
                 <div className="panel-icon blue">
 
-                  <MapPin size={21} />
+                  <MapPin
+                    size={21}
+                  />
 
                 </div>
 
@@ -2262,17 +3811,25 @@ const availabilityTemplate =
                 <div>
 
                   <span className="panel-step-label">
-                    {copy.stepTwo}
+
+                    {
+                      copy.stepTwo
+                    }
+
                   </span>
 
 
                   <h2>
-                    {copy.whereTitle}
+                    {
+                      copy.whereTitle
+                    }
                   </h2>
 
 
                   <p>
-                    {copy.whereDescription}
+                    {
+                      copy.whereDescription
+                    }
                   </p>
 
                 </div>
@@ -2280,37 +3837,40 @@ const availabilityTemplate =
               </div>
 
 
-
               <div className="booking-form-field">
 
                 <label>
-                  {copy.center}
+                  {
+                    copy.center
+                  }
                 </label>
 
 
                 <div className="custom-select">
 
-
                   <button
                     type="button"
                     className="select-control"
-                    onClick={() => {
-
+                    disabled={
+                      centersLoading
+                    }
+                    onClick={() =>
                       setOpenMenu(
                         openMenu ===
                           "center"
                           ? null
                           : "center"
-                      );
-
-                    }}
+                      )
+                    }
                   >
 
                     <div className="select-main">
 
                       <div className="center-select-icon large">
 
-                        <MapPin size={18} />
+                        <MapPin
+                          size={18}
+                        />
 
                       </div>
 
@@ -2320,8 +3880,10 @@ const availabilityTemplate =
                         <strong>
 
                           {
-                            selectedCenter?.name ||
-                            copy.selectCenter
+                            centersLoading
+                              ? "Loading centers..."
+                              : selectedCenter?.name ||
+                                copy.selectCenter
                           }
 
                         </strong>
@@ -2341,217 +3903,294 @@ const availabilityTemplate =
                     </div>
 
 
-                    <ChevronDown size={17} />
+                    <ChevronDown
+                      size={17}
+                    />
 
                   </button>
 
 
-
-                  {openMenu ===
+                  {
+                    openMenu ===
                     "center" && (
 
-                    <div className="select-menu center-menu">
+                      <div className="select-menu center-menu">
 
+                        {
+                          centersLoading ? (
 
-                      {availableCenters.length ===
-                      0 ? (
+                            <div className="booking-menu-empty">
 
-                        <div className="booking-menu-empty">
-
-                          {
-                            tr(
-                              "location.noCenter",
-                              "No procurement center available."
-                            )
-                          }
-
-                        </div>
-
-                      ) : (
-
-                        availableCenters.map(
-                          (center) => (
-
-                            <button
-                              key={
-                                center.id
-                              }
-                              type="button"
-                              className={
-                                centerId ===
-                                center.id
-                                  ? "center-option selected"
-                                  : "center-option"
-                              }
-                              onClick={() =>
-                                handleCenterSelect(
-                                  center.id
+                              {
+                                tr(
+                                  "location.loadingCenters",
+                                  "Loading procurement centers..."
                                 )
                               }
-                            >
 
-                              <div className="center-option-icon">
+                            </div>
 
-                                <MapPin
-                                  size={17}
-                                />
+                          ) : availableCenters.length ===
+                            0 ? (
 
-                              </div>
+                            <div className="booking-menu-empty">
 
+                              {
+                                tr(
+                                  "location.noCenter",
+                                  "No active procurement center available."
+                                )
+                              }
 
-                              <div>
+                            </div>
 
-                                <strong>
-                                  {
-                                    center.name
+                          ) : (
+
+                            availableCenters.map(
+                              center => (
+
+                                <button
+                                  key={
+                                    center.id
                                   }
-                                </strong>
-
-
-                                <span>
-                                  {
-                                    center.address
+                                  type="button"
+                                  className={
+                                    String(
+                                      centerId
+                                    ) ===
+                                    String(
+                                      center.id
+                                    )
+                                      ? "center-option selected"
+                                      : "center-option"
                                   }
-                                </span>
+                                  onClick={() =>
+                                    handleCenterSelect(
+                                      center.id
+                                    )
+                                  }
+                                >
+
+                                  <div className="center-option-icon">
+
+                                    <MapPin
+                                      size={17}
+                                    />
+
+                                  </div>
 
 
-                                {center.landmark && (
+                                  <div>
 
-                                  <small>
+                                    <strong>
+                                      {
+                                        center.name
+                                      }
+                                    </strong>
+
+
+                                    <span>
+                                      {
+                                        center.address ||
+                                        [
+                                          center.village,
+                                          center.mandal_id,
+                                          center.district_id,
+                                          center.state_id,
+                                        ]
+                                          .filter(Boolean)
+                                          .join(", ")
+                                      }
+                                    </span>
+
 
                                     {
-                                      copy.near
+                                      center.landmark && (
+
+                                        <small>
+
+                                          {
+                                            copy.near
+                                          }
+
+                                          {" "}
+
+                                          {
+                                            center.landmark
+                                          }
+
+                                        </small>
+
+                                      )
                                     }
-                                    {" "}
-                                    {
-                                      center.landmark
-                                    }
 
-                                  </small>
-
-                                )}
-
-                              </div>
+                                  </div>
 
 
-                              {centerId ===
-                                center.id && (
+                                  {
+                                    String(
+                                      centerId
+                                    ) ===
+                                    String(
+                                      center.id
+                                    ) && (
 
-                                <Check
-                                  size={16}
-                                />
+                                      <Check
+                                        size={16}
+                                      />
 
-                              )}
+                                    )
+                                  }
 
-                            </button>
+                                </button>
+
+                              )
+                            )
 
                           )
-                        )
+                        }
 
-                      )}
+                      </div>
 
-                    </div>
-
-                  )}
+                    )
+                  }
 
                 </div>
 
 
-                {selectedCenter && (
+                {
+                  selectedCenter && (
 
-                  <div className="center-detail-card">
+                    <div className="center-detail-card">
+
+                      <div className="center-detail-top">
+
+                        <div className="center-detail-icon">
+
+                          <MapPin
+                            size={17}
+                          />
+
+                        </div>
 
 
-                    <div className="center-detail-top">
+                        <div>
 
-                      <div className="center-detail-icon">
+                          <strong>
+                            {
+                              selectedCenter.name
+                            }
+                          </strong>
 
-                        <MapPin size={17} />
+
+                          <span>
+                            {
+                              selectedCenter.address ||
+                              [
+                                selectedCenter.village,
+                                selectedCenter.mandal_id,
+                                selectedCenter.district_id,
+                                selectedCenter.state_id,
+                              ]
+                                .filter(Boolean)
+                                .join(", ") ||
+                              copy.chooseCenter
+                            }
+                          </span>
+
+                        </div>
 
                       </div>
 
 
-                      <div>
-
-                        <strong>
-                          {
-                            selectedCenter.name
-                          }
-                        </strong>
-
+                      <div className="center-detail-meta">
 
                         <span>
+
+                          <Clock3
+                            size={13}
+                          />
+
                           {
-                            selectedCenter.address
+                            formatTime(
+                              selectedCenter.opening_time ||
+                              selectedCenter.openingTime ||
+                              "09:00"
+                            )
                           }
+
+                          {" – "}
+
+                          {
+                            formatTime(
+                              selectedCenter.closing_time ||
+                              selectedCenter.closingTime ||
+                              "17:00"
+                            )
+                          }
+
                         </span>
 
-                      </div>
-
-                    </div>
-
-
-
-                    <div className="center-detail-meta">
-
-                      <span>
-
-                        <Clock3 size={13} />
-
-                        {copy.openWindows}
-
-                      </span>
-
-
-                      <span>
-
-                        <Leaf size={13} />
-
-                        {copy.produceIntake}
-
-                      </span>
-
-
-                      {selectedCenter.capacityPerSlot && (
 
                         <span>
 
-                          <Scale size={13} />
+                          <Leaf
+                            size={13}
+                          />
 
                           {
-                            selectedCenter.capacityPerSlot
+                            copy.produceIntake
                           }
+
+                        </span>
+
+
+                        <span>
+
+                          <Scale
+                            size={13}
+                          />
+
+                          {
+                            getCenterCapacity(
+                              selectedCenter,
+                              settings
+                            )
+                          }
+
                           {" "}
+
                           {
                             copy.bookingsSlot
                           }
 
                         </span>
 
-                      )}
+                      </div>
 
                     </div>
 
-                  </div>
-
-                )}
+                  )
+                }
 
               </div>
 
 
-
               <div className="booking-form-field booking-date-field">
-
 
                 <div className="field-heading-row">
 
                   <label>
-                    {copy.preferredDate}
+                    {
+                      copy.preferredDate
+                    }
                   </label>
 
 
                   <span>
-                    {copy.chooseDate}
+                    {
+                      copy.chooseDate
+                    }
                   </span>
 
                 </div>
@@ -2559,70 +4198,69 @@ const availabilityTemplate =
 
                 <div className="date-options">
 
+                  {
+                    dates.map(
+                      item => (
 
-                  {dates.map(
-                    (item) => (
-
-                      <button
-                        key={
-                          item.id
-                        }
-                        type="button"
-                        className={
-                          date ===
-                          item.id
-                            ? "date-option selected"
-                            : "date-option"
-                        }
-                        onClick={() =>
-                          handleDateSelect(
+                        <button
+                          key={
                             item.id
-                          )
-                        }
-                      >
+                          }
+                          type="button"
+                          className={
+                            date ===
+                            item.id
+                              ? "date-option selected"
+                              : "date-option"
+                          }
+                          onClick={() =>
+                            handleDateSelect(
+                              item.id
+                            )
+                          }
+                        >
 
-                        <span className="date-weekday">
+                          <span className="date-weekday">
+                            {
+                              item.label
+                            }
+                          </span>
+
+
+                          <strong>
+                            {
+                              item.day
+                            }
+                          </strong>
+
+
+                          <small>
+                            {
+                              item.month
+                            }
+                          </small>
+
 
                           {
-                            item.label
+                            date ===
+                            item.id && (
+
+                              <div className="date-check">
+
+                                <Check
+                                  size={13}
+                                />
+
+                              </div>
+
+                            )
                           }
 
-                        </span>
+                        </button>
 
-
-                        <strong>
-
-                          {
-                            item.day
-                          }
-
-                        </strong>
-
-
-                        <small>
-
-                          {
-                            item.month
-                          }
-
-                        </small>
-
-
-                        {date ===
-                          item.id && (
-
-                          <div className="date-check">
-
-                            <Check size={13} />
-
-                          </div>
-
-                        )}
-
-                      </button>
-
+                      )
                     )
-                  )}
+                  }
 
                 </div>
 
@@ -2631,13 +4269,7 @@ const availabilityTemplate =
             </section>
 
 
-
-            {/* =================================================
-                CHECK AVAILABILITY
-            ================================================== */}
-
             <section className="booking-check-card">
-
 
               <div className="booking-check-icon">
 
@@ -2651,19 +4283,23 @@ const availabilityTemplate =
               <div className="booking-check-copy">
 
                 <span>
-                  {copy.readyCheck}
+                  {
+                    copy.readyCheck
+                  }
                 </span>
 
 
                 <h3>
-                  {copy.findWindow}
+                  {
+                    copy.findWindow
+                  }
                 </h3>
 
 
                 <p>
-
-                  {copy.checkText}
-
+                  {
+                    copy.checkText
+                  }
                 </p>
 
               </div>
@@ -2677,41 +4313,53 @@ const availabilityTemplate =
                     handleCheckAvailability
                   }
                   disabled={
-                    loadingAvailability
+                    loadingAvailability ||
+                    loadingBookings ||
+                    settingsLoading ||
+                    centersLoading ||
+                    !selectedCenter
                   }
                 >
 
-                  {loadingAvailability ? (
+                  {
+                    loadingAvailability ||
+                    loadingBookings ||
+                    settingsLoading ||
+                    centersLoading ? (
 
-                    <>
+                      <>
 
-                      <LoaderCircle
-                        size={18}
-                        className="loading-spin"
-                      />
+                        <LoaderCircle
+                          size={18}
+                          className="loading-spin"
+                        />
 
-                      {copy.checking}
+                        {
+                          copy.checking
+                        }
 
-                    </>
+                      </>
 
-                  ) : (
+                    ) : (
 
-                    <>
+                      <>
 
-                      {
-                        tr(
-                          "booking.checkAvailability",
-                          "Check Available Windows"
-                        )
-                      }
+                        {
+                          tr(
+                            "booking.checkAvailability",
+                            "Check Available Windows"
+                          )
+                        }
 
-                      <ArrowRight
-                        size={18}
-                      />
 
-                    </>
+                        <ArrowRight
+                          size={18}
+                        />
 
-                  )}
+                      </>
+
+                    )
+                  }
 
                 </Button>
 
@@ -2720,48 +4368,93 @@ const availabilityTemplate =
             </section>
 
 
+            {
+              centerSwitchMessage && (
 
-            {error && !available && (
+                <div className="booking-error prominent">
 
-              <div className="booking-error prominent">
+                  <CheckCircle2
+                    size={17}
+                  />
 
-                <Info
-                  size={17}
-                />
 
-                <span>
-                  {error}
-                </span>
+                  <span>
+                    {
+                      centerSwitchMessage
+                    }
+                  </span>
 
-              </div>
+                </div>
 
-            )}
+              )
+            }
+
+
+            {
+              error && (
+
+                <div className="booking-error prominent">
+
+                  <Info
+                    size={17}
+                  />
+
+
+                  <span>
+                    {
+                      error
+                    }
+                  </span>
+
+                </div>
+
+              )
+            }
+
+
+            {
+              settingsError && (
+
+                <div className="booking-error prominent">
+
+                  <Info
+                    size={17}
+                  />
+
+
+                  <span>
+                    {
+                      settingsError
+                    }
+                  </span>
+
+                </div>
+
+              )
+            }
 
           </div>
 
 
-
-          {/* ===================================================
-              BOOKING SUMMARY
-          ==================================================== */}
-
           <aside className="booking-summary-column">
 
-
             <div className="booking-summary-card">
-
 
               <div className="summary-header">
 
                 <div>
 
                   <span>
-                    {copy.yourBooking}
+                    {
+                      copy.yourBooking
+                    }
                   </span>
 
 
                   <h2>
-                    {copy.review}
+                    {
+                      copy.review
+                    }
                   </h2>
 
                 </div>
@@ -2778,9 +4471,7 @@ const availabilityTemplate =
               </div>
 
 
-
               <div className="summary-crop">
-
 
                 <div
                   className={
@@ -2805,33 +4496,30 @@ const availabilityTemplate =
                 <div>
 
                   <span>
-                    {copy.crop}
+                    {
+                      copy.crop
+                    }
                   </span>
 
 
                   <strong>
-
                     {
-                      tr(
-                        `crops.${
-                          selectedCrop?.id ||
-                          "wheat"
-                        }`,
-                        selectedCrop?.name ||
-                        "Wheat"
+                      cropLabel(
+                        selectedCrop?.id ||
+                        "wheat"
                       )
                     }
-
                   </strong>
 
 
                   <small>
 
-                    {estimatedQuantity > 0
-
-                      ? `${estimatedQuantity.toLocaleString()} kg ${copy.estimated}`
-
-                      : copy.notEntered}
+                    {
+                      estimatedQuantity >
+                      0
+                        ? `${estimatedQuantity.toLocaleString()} kg ${copy.estimated}`
+                        : copy.notEntered
+                    }
 
                   </small>
 
@@ -2840,9 +4528,7 @@ const availabilityTemplate =
               </div>
 
 
-
               <div className="summary-list">
-
 
                 <SummaryRow
                   icon={
@@ -2850,7 +4536,9 @@ const availabilityTemplate =
                       size={15}
                     />
                   }
-                  label={copy.center}
+                  label={
+                    copy.center
+                  }
                   value={
                     selectedCenter?.name ||
                     copy.selectCenter
@@ -2907,9 +4595,12 @@ const availabilityTemplate =
                       size={15}
                     />
                   }
-                  label={copy.quantity}
+                  label={
+                    copy.quantity
+                  }
                   value={
-                    estimatedQuantity > 0
+                    estimatedQuantity >
+                    0
                       ? `${estimatedQuantity.toLocaleString()} kg`
                       : copy.notEntered
                   }
@@ -2918,26 +4609,28 @@ const availabilityTemplate =
               </div>
 
 
-
               <div className="summary-total-row">
 
                 <span>
-                  {copy.bookingStatus}
+                  {
+                    copy.bookingStatus
+                  }
                 </span>
 
 
                 <strong>
 
-                  {selectedSlotRecord
-                    ? copy.readyConfirm
-                    : available
-                      ? copy.chooseArrival
-                      : copy.detailsProgress}
+                  {
+                    selectedSlotRecord
+                      ? copy.readyConfirm
+                      : available
+                        ? copy.chooseArrival
+                        : copy.detailsProgress
+                  }
 
                 </strong>
 
               </div>
-
 
 
               <div className="summary-security">
@@ -2947,13 +4640,14 @@ const availabilityTemplate =
                 />
 
                 <span>
-                  {copy.finalSecurity}
+                  {
+                    copy.finalSecurity
+                  }
                 </span>
 
               </div>
 
             </div>
-
 
 
             <div className="booking-help-card">
@@ -2970,12 +4664,16 @@ const availabilityTemplate =
               <div>
 
                 <strong>
-                  {copy.needHelp}
+                  {
+                    copy.needHelp
+                  }
                 </strong>
 
 
                 <p>
-                  {copy.helpText}
+                  {
+                    copy.helpText
+                  }
                 </p>
 
 
@@ -2983,7 +4681,10 @@ const availabilityTemplate =
                   to="/farmer/help"
                 >
 
-                  {copy.bookingHelp}
+                  {
+                    copy.bookingHelp
+                  }
+
 
                   <ArrowRight
                     size={14}
@@ -2997,433 +4698,671 @@ const availabilityTemplate =
 
           </aside>
 
-
         </section>
-                {available && (
-
-          <section className="booking-availability-section">
 
 
-            <div className="availability-section-top">
+        {
+          available && (
+
+            <section className="booking-availability-section">
+
+              <div className="availability-section-top">
+
+                <div>
+
+                  <div className="availability-title-row">
+
+                    <span className="page-eyebrow">
+
+                      {
+                        tr(
+                          "booking.availableWindows",
+                          copy.availableWindows
+                        )
+                      }
+
+                    </span>
 
 
-              <div>
+                    <span className="availability-found-pill">
 
-                <div className="availability-title-row">
-
-                  <span className="page-eyebrow">
-                    {tr(
-                      "booking.availableWindows",
-                      copy.availableWindows
-                    )}
-                  </span>
+                      <CheckCircle2
+                        size={14}
+                      />
 
 
-                  <span className="availability-found-pill">
+                      {
+                        copy.windowsAvailable
+                      }
 
-                    <CheckCircle2
-                      size={14}
-                    />
+                    </span>
 
-                    {copy.windowsAvailable}
+                  </div>
 
-                  </span>
+
+                  <h2>
+                    {
+                      copy.chooseArrivalWindow
+                    }
+                  </h2>
+
+
+                  <p>
+                    {
+                      copy.availabilityText
+                    }
+                  </p>
 
                 </div>
 
 
-                <h2>
-                  {copy.chooseArrivalWindow}
-                </h2>
+                <div className="availability-date-card">
+
+                  <CalendarDays
+                    size={19}
+                  />
+
+
+                  <div>
+
+                    <span>
+                      {
+                        copy.selectedDate
+                      }
+                    </span>
+
+
+                    <strong>
+
+                      {
+                        selectedDate?.label
+                      }
+
+                      {", "}
+
+                      {
+                        selectedDate?.day
+                      }
+
+                      {" "}
+
+                      {
+                        selectedDate?.month
+                      }
+
+                    </strong>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              <div className="availability-overview">
+
+                <div className="availability-overview-item">
+
+                  <div className="availability-overview-icon blue">
+
+                    <Clock3
+                      size={18}
+                    />
+
+                  </div>
+
+
+                  <div>
+
+                    <span>
+                      {
+                        copy.availableWindows
+                      }
+                    </span>
+
+
+                    <strong>
+
+                      {
+                        availability.filter(
+                          slot =>
+                            slot.remaining >
+                            0
+                        ).length
+                      }
+
+                    </strong>
+
+                  </div>
+
+                </div>
+
+
+                <div className="availability-overview-item">
+
+                  <div className="availability-overview-icon green">
+
+                    <CheckCircle2
+                      size={18}
+                    />
+
+                  </div>
+
+
+                  <div>
+
+                    <span>
+                      {
+                        copy.openCapacity
+                      }
+                    </span>
+
+
+                    <strong>
+                      {
+                        totalRemaining
+                      }
+                    </strong>
+
+
+                    <small>
+                      {
+                        copy.placesRemaining
+                      }
+                    </small>
+
+                  </div>
+
+                </div>
+
+
+                <div className="availability-overview-item">
+
+                  <div className="availability-overview-icon gold">
+
+                    <MapPin
+                      size={18}
+                    />
+
+                  </div>
+
+
+                  <div>
+
+                    <span>
+                      {
+                        copy.center
+                      }
+                    </span>
+
+
+                    <strong>
+
+                      {
+                        selectedCenter?.name ||
+                        "-"
+                      }
+
+                    </strong>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              <div className="slot-instruction">
+
+                <div className="slot-instruction-icon">
+
+                  <Info
+                    size={16}
+                  />
+
+                </div>
 
 
                 <p>
-                  {copy.availabilityText}
+
+                  {
+                    language ===
+                    "hi"
+                      ? "हर समय स्लॉट में सीमित बुकिंग उपलब्ध हैं। अपनी यात्रा के अनुसार सबसे उपयुक्त समय चुनें।"
+                      : language ===
+                        "te"
+                        ? "ప్రతి సమయ స్లాట్‌లో పరిమిత బుకింగ్‌లు ఉంటాయి. మీ ప్రయాణానికి అనుకూలమైన సమయాన్ని ఎంచుకోండి."
+                        : "Each window has a limited number of bookings. Select the slot that best fits your travel time."
+                  }
+
                 </p>
 
               </div>
 
 
+              <div className="slot-grid">
 
-              <div className="availability-date-card">
+                {
+                  availability.map(
+                    slot => {
 
-                <CalendarDays
-                  size={19}
-                />
+                      const isSelected =
+                        selectedSlot?.id ===
+                        slot.id;
 
 
-                <div>
+                      const isFull =
+                        slot.remaining <=
+                        0;
 
-                  <span>
-                    {copy.selectedDate}
-                  </span>
 
+                      let availabilityLabel =
+                        copy.goodAvailability;
 
-                  <strong>
 
-                    {
-                      selectedDate.label
-                    }
-                    {", "}
-                    {
-                      selectedDate.day
-                    }
-                    {" "}
-                    {
-                      selectedDate.month
-                    }
-
-                  </strong>
-
-                </div>
-
-              </div>
-
-            </div>
-
-
-
-            <div className="availability-overview">
-
-
-              <div className="availability-overview-item">
-
-                <div className="availability-overview-icon blue">
-
-                  <Clock3
-                    size={18}
-                  />
-
-                </div>
-
-
-                <div>
-
-                  <span>
-                    {copy.availableWindows}
-                  </span>
-
-
-                  <strong>
-
-                    {
-                      availability.filter(
-                        (slot) =>
-                          slot.remaining >
-                          0
-                      ).length
-                    }
-
-                  </strong>
-
-                </div>
-
-              </div>
-
-
-
-              <div className="availability-overview-item">
-
-                <div className="availability-overview-icon green">
-
-                  <CheckCircle2
-                    size={18}
-                  />
-
-                </div>
-
-
-                <div>
-
-                  <span>
-                    {copy.openCapacity}
-                  </span>
-
-
-                  <strong>
-                    {
-                      totalRemaining
-                    }
-                  </strong>
-
-
-                  <small>
-                    {copy.placesRemaining}
-                  </small>
-
-                </div>
-
-              </div>
-
-
-
-              <div className="availability-overview-item">
-
-                <div className="availability-overview-icon gold">
-
-                  <MapPin
-                    size={18}
-                  />
-
-                </div>
-
-
-                <div>
-
-                  <span>
-                    {copy.center}
-                  </span>
-
-
-                  <strong>
-                    {
-                      selectedCenter?.name ||
-                      "-"
-                    }
-                  </strong>
-
-                </div>
-
-              </div>
-
-            </div>
-
-
-
-            <div className="slot-instruction">
-
-              <div className="slot-instruction-icon">
-
-                <Info
-                  size={16}
-                />
-
-              </div>
-
-
-              <p>
-
-                {language === "hi"
-                  ? "हर समय स्लॉट में सीमित बुकिंग उपलब्ध हैं। अपनी यात्रा के अनुसार सबसे उपयुक्त समय चुनें।"
-                  : language === "te"
-                    ? "ప్రతి సమయ స్లాట్‌లో పరిమిత బుకింగ్‌లు ఉంటాయి. మీ ప్రయాణానికి అనుకూలమైన సమయాన్ని ఎంచుకోండి."
-                    : "Each window has a limited number of bookings. Select the slot that best fits your travel time."}
-
-              </p>
-
-            </div>
-
-
-
-            <div className="slot-grid">
-
-
-              {availability.map(
-                (slot) => {
-
-                  const isSelected =
-                    selectedSlot?.id ===
-                    slot.id;
-
-
-                  const isFull =
-                    slot.remaining <=
-                    0;
-
-
-                  let availabilityLabel =
-                    copy.goodAvailability;
-
-
-                  if (
-                    isFull
-                  ) {
-
-                    availabilityLabel =
-                      copy.full;
-
-                  } else if (
-                    slot.loadClass ===
-                    "busy"
-                  ) {
-
-                    availabilityLabel =
-                      copy.nearlyFull;
-
-                  } else if (
-                    slot.loadClass ===
-                    "limited"
-                  ) {
-
-                    availabilityLabel =
-                      copy.limitedAvailability;
-
-                  }
-
-
-                  return (
-
-                    <button
-                      key={
-                        slot.id
-                      }
-                      type="button"
-                      disabled={
+                      if (
                         isFull
+                      ) {
+
+                        availabilityLabel =
+                          copy.full;
+
+                      } else if (
+                        slot.loadClass ===
+                        "busy"
+                      ) {
+
+                        availabilityLabel =
+                          copy.nearlyFull;
+
+                      } else if (
+                        slot.loadClass ===
+                        "limited"
+                      ) {
+
+                        availabilityLabel =
+                          copy.limitedAvailability;
+
                       }
-                      className={
-                        `slot-card ${
-                          isSelected
-                            ? "selected"
-                            : ""
-                        } ${
-                          isFull
-                            ? "slot-full"
-                            : ""
-                        } ${
-                          slot.loadClass
-                        }`
-                      }
-                      onClick={() =>
-                        handleSelectSlot(
-                          slot
-                        )
-                      }
-                    >
 
 
-                      <div className="slot-card-header">
+                      return (
+
+                        <button
+                          key={
+                            slot.id
+                          }
+                          type="button"
+                          disabled={
+                            isFull
+                          }
+                          className={
+                            `slot-card ${
+                              isSelected
+                                ? "selected"
+                                : ""
+                            } ${
+                              isFull
+                                ? "slot-full"
+                                : ""
+                            } ${
+                              slot.loadClass
+                            }`
+                          }
+                          onClick={() =>
+                            handleSelectSlot(
+                              slot
+                            )
+                          }
+                        >
+
+                          <div className="slot-card-header">
+
+                            <div className="slot-card-clock">
+
+                              <Clock3
+                                size={19}
+                              />
+
+                            </div>
 
 
-                        <div className="slot-card-clock">
+                            {
+                              isSelected && (
 
-                          <Clock3
-                            size={19}
-                          />
+                                <div className="slot-card-selected">
 
-                        </div>
+                                  <Check
+                                    size={14}
+                                  />
+
+                                </div>
+
+                              )
+                            }
+
+                          </div>
 
 
-                        {isSelected && (
+                          <div className="slot-card-time">
 
-                          <div className="slot-card-selected">
+                            <strong>
+                              {
+                                slot.display
+                              }
+                            </strong>
 
-                            <Check
-                              size={14}
+                          </div>
+
+
+                          <div className="slot-capacity-label">
+
+                            <span
+                              className={
+                                isFull
+                                  ? "slot-full-label"
+                                  : slot.loadClass ===
+                                    "busy"
+                                    ? "slot-busy-label"
+                                    : slot.loadClass ===
+                                      "limited"
+                                      ? "slot-limited-label"
+                                      : "slot-normal-label"
+                              }
+                            >
+
+                              {
+                                availabilityLabel
+                              }
+
+                            </span>
+
+                          </div>
+
+
+                          <div className="slot-capacity-bar">
+
+                            <div
+                              style={{
+                                width:
+                                  `${Math.min(
+                                    100,
+                                    (
+                                      Math.min(
+                                        slot.booked,
+                                        slot.capacity
+                                      ) /
+                                      Math.max(
+                                        slot.capacity,
+                                        1
+                                      )
+                                    ) *
+                                    100
+                                  )}%`,
+                              }}
                             />
 
                           </div>
 
-                        )}
 
-                      </div>
+                          <div className="slot-card-footer">
 
+                            <span>
 
+                              {
+                                isFull
+                                  ? copy.noPlaces
+                                  : `${Math.max(
+                                      0,
+                                      Math.min(
+                                        slot.remaining,
+                                        slot.capacity
+                                      )
+                                    )} ${copy.placesRemaining}`
+                              }
 
-                      <div className="slot-card-time">
-
-                        <strong>
-                          {
-                            slot.display
-                          }
-                        </strong>
-
-                      </div>
-
-
-
-                      <div className="slot-capacity-label">
-
-                        <span
-                          className={
-                            isFull
-                              ? "slot-full-label"
-                              : slot.loadClass ===
-                                "busy"
-                                ? "slot-busy-label"
-                                : slot.loadClass ===
-                                  "limited"
-                                  ? "slot-limited-label"
-                                  : "slot-normal-label"
-                          }
-                        >
-
-                          {
-                            availabilityLabel
-                          }
-
-                        </span>
-
-                      </div>
+                            </span>
 
 
+                            {
+                              !isFull && (
 
-                      <div className="slot-capacity-bar">
+                                <ArrowRight
+                                  size={16}
+                                />
 
-                        <div
-                          style={{
-                            width:
-                              `${
-                                Math.min(
-                                  (
-                                    slot.booked /
-                                    Math.max(
-                                      slot.capacity,
-                                      1
-                                    )
-                                  ) *
-                                  100,
-                                  100
-                                )
-                              }%`,
-                          }}
-                        />
+                              )
+                            }
 
-                      </div>
+                          </div>
+
+                        </button>
+
+                      );
+
+                    }
+                  )
+                }
+
+              </div>
 
 
+              {
+                selectedSlotRecord && (
 
-                      <div className="slot-card-footer">
+                  <div className="selected-slot-banner">
 
-                        <span>
+                    <div className="selected-slot-check">
 
-                          {isFull
-                            ? copy.noPlaces
-                            : `${slot.remaining} ${copy.placesRemaining}`}
+                      <Check
+                        size={18}
+                      />
 
-                        </span>
+                    </div>
 
 
-                        {!isFull && (
+                    <div>
 
-                          <ArrowRight
-                            size={16}
-                          />
+                      <span>
+                        {
+                          copy.selectedWindow
+                        }
+                      </span>
 
-                        )}
 
-                      </div>
+                      <strong>
+                        {
+                          selectedSlotRecord.display
+                        }
+                      </strong>
+
+                    </div>
+
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelectedSlot(
+                          null
+                        )
+                      }
+                    >
+
+                      {
+                        copy.change
+                      }
 
                     </button>
 
-                  );
+                  </div>
 
-                }
-              )}
+                )
+              }
 
-            </div>
+            </section>
 
-
-
-            {selectedSlotRecord && (
-
-              <div className="selected-slot-banner">
+          )
+        }
 
 
-                <div className="selected-slot-check">
+        {
+          available &&
+          selectedSlotRecord && (
 
-                  <Check
-                    size={18}
+            <section className="booking-confirm-section">
+
+              <div className="confirm-section-heading">
+
+                <div>
+
+                  <span className="page-eyebrow">
+                    {
+                      copy.finalStep
+                    }
+                  </span>
+
+
+                  <h2>
+                    {
+                      copy.checkEverything
+                    }
+                  </h2>
+
+
+                  <p>
+                    {
+                      copy.finalText
+                    }
+                  </p>
+
+                </div>
+
+
+                <span className="confirm-ready-pill">
+
+                  <CheckCircle2
+                    size={15}
+                  />
+
+
+                  {
+                    copy.readyConfirm
+                  }
+
+                </span>
+
+              </div>
+
+
+              <div className="confirm-review-grid">
+
+                <ConfirmCard
+                  icon={
+                    <Wheat
+                      size={21}
+                    />
+                  }
+                  tone="green"
+                  title={
+                    copy.crop
+                  }
+                  value={
+                    cropLabel(
+                      selectedCrop?.id
+                    )
+                  }
+                  detail={
+                    estimatedQuantity >
+                    0
+                      ? `${estimatedQuantity.toLocaleString()} kg`
+                      : copy.notEntered
+                  }
+                />
+
+
+                <ConfirmCard
+                  icon={
+                    <MapPin
+                      size={21}
+                    />
+                  }
+                  tone="blue"
+                  title={
+                    copy.center
+                  }
+                  value={
+                    selectedCenter?.name ||
+                    "-"
+                  }
+                  detail={
+                    selectedCenter?.address ||
+                    ""
+                  }
+                />
+
+
+                <ConfirmCard
+                  icon={
+                    <CalendarDays
+                      size={21}
+                    />
+                  }
+                  tone="gold"
+                  title={
+                    tr(
+                      "booking.date",
+                      language === "hi"
+                        ? "तारीख"
+                        : language === "te"
+                          ? "తేదీ"
+                          : "Date"
+                    )
+                  }
+                  value={
+                    selectedDate?.label ||
+                    "-"
+                  }
+                  detail={
+                    selectedDate
+                      ? `${selectedDate.day} ${selectedDate.month}`
+                      : ""
+                  }
+                />
+
+
+                <ConfirmCard
+                  icon={
+                    <Clock3
+                      size={21}
+                    />
+                  }
+                  tone="orange"
+                  title={
+                    copy.selectedWindow
+                  }
+                  value={
+                    selectedSlotRecord.display
+                  }
+                  detail={
+                    `${Math.max(
+                      0,
+                      Math.min(
+                        selectedSlotRecord.remaining,
+                        selectedSlotRecord.capacity
+                      )
+                    )} ${copy.placesRemaining}`
+                  }
+                />
+
+              </div>
+
+
+              <div className="confirm-notice">
+
+                <div className="confirm-notice-icon">
+
+                  <ShieldCheck
+                    size={20}
                   />
 
                 </div>
@@ -3431,626 +5370,115 @@ const availabilityTemplate =
 
                 <div>
 
-                  <span>
-                    {copy.selectedWindow}
-                  </span>
-
-
                   <strong>
-
                     {
-                      selectedSlotRecord.display
+                      copy.whatHappens
                     }
-
                   </strong>
+
+
+                  <p>
+                    {
+                      copy.afterText
+                    }
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              {
+                error && (
+
+                  <div className="booking-error prominent">
+
+                    <Info
+                      size={17}
+                    />
+
+                    <span>
+                      {
+                        error
+                      }
+                    </span>
+
+                  </div>
+
+                )
+              }
+
+
+              <div className="confirm-bottom">
+
+                <div className="confirm-arrival-reminder">
+
+                  <Clock3
+                    size={17}
+                  />
+
+                  <span>
+                    {
+                      copy.arriveText
+                    }
+                  </span>
 
                 </div>
 
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSelectedSlot(
-                      null
-                    )
+                <Button
+                  onClick={
+                    handleConfirmBooking
+                  }
+                  disabled={
+                    confirming
                   }
                 >
 
-                  {copy.change}
+                  {
+                    confirming ? (
 
-                </button>
+                      <>
 
-              </div>
+                        <LoaderCircle
+                          size={18}
+                          className="loading-spin"
+                        />
 
-            )}
+                        {
+                          copy.saving
+                        }
 
-          </section>
+                      </>
 
-        )}
+                    ) : (
 
+                      <>
 
+                        {
+                          copy.confirm
+                        }
 
-        {available &&
-          selectedSlotRecord && (
+                        <ArrowRight
+                          size={18}
+                        />
 
-          <section className="booking-confirm-section">
+                      </>
 
-
-            <div className="confirm-section-heading">
-
-
-              <div>
-
-                <span className="page-eyebrow">
-
-                  {copy.finalStep}
-
-                </span>
-
-
-                <h2>
-
-                  {copy.checkEverything}
-
-                </h2>
-
-
-                <p>
-
-                  {copy.finalText}
-
-                </p>
-
-              </div>
-
-
-              <span className="confirm-ready-pill">
-
-                <CheckCircle2
-                  size={15}
-                />
-
-                {copy.readyConfirm}
-
-              </span>
-
-            </div>
-
-
-
-            <div className="confirm-review-grid">
-
-
-              <ConfirmCard
-                icon={
-                  <Wheat
-                    size={21}
-                  />
-                }
-                tone="green"
-                title={
-                  copy.produce
-                    ? copy.produce
-                    : copy.crop
-                }
-                value={
-                  tr(
-                    `crops.${
-                      selectedCrop?.id
-                    }`,
-                    selectedCrop?.name ||
-                    selectedCrop?.id ||
-                    "Wheat"
-                  )
-                }
-                detail={
-                  estimatedQuantity > 0
-                    ? `${estimatedQuantity.toLocaleString()} kg`
-                    : copy.notEntered
-                }
-              />
-
-
-              <ConfirmCard
-                icon={
-                  <MapPin
-                    size={21}
-                  />
-                }
-                tone="blue"
-                title={
-                  copy.center
-                }
-                value={
-                  selectedCenter?.name ||
-                  "-"
-                }
-                detail={
-                  selectedCenter?.address ||
-                  ""
-                }
-              />
-
-
-              <ConfirmCard
-                icon={
-                  <CalendarDays
-                    size={21}
-                  />
-                }
-                tone="gold"
-                title={
-                  tr(
-                    "booking.date",
-                    language === "hi"
-                      ? "तारीख"
-                      : language === "te"
-                        ? "తేదీ"
-                        : "Date"
-                  )
-                }
-                value={
-                  selectedDate.label
-                }
-                detail={
-                  `${selectedDate.day} ${selectedDate.month}`
-                }
-              />
-
-
-              <ConfirmCard
-                icon={
-                  <Clock3
-                    size={21}
-                  />
-                }
-                tone="orange"
-                title={
-                  copy.selectedWindow
-                }
-                value={
-                  selectedSlotRecord.display
-                }
-                detail={
-                  `${selectedSlotRecord.remaining} ${copy.placesRemaining}`
-                }
-              />
-
-            </div>
-
-
-
-            <div className="confirm-notice">
-
-
-              <div className="confirm-notice-icon">
-
-                <ShieldCheck
-                  size={20}
-                />
-
-              </div>
-
-
-              <div>
-
-                <strong>
-                  {copy.whatHappens}
-                </strong>
-
-
-                <p>
-                  {copy.afterText}
-                </p>
-
-              </div>
-
-            </div>
-
-
-
-            {error && (
-
-              <div className="booking-error prominent">
-
-                <Info
-                  size={17}
-                />
-
-                <span>
-                  {error}
-                </span>
-
-              </div>
-
-            )}
-
-
-
-            <div className="confirm-bottom">
-
-
-              <div className="confirm-arrival-reminder">
-
-                <Clock3
-                  size={17}
-                />
-
-
-                <span>
-                  {copy.arriveText}
-                </span>
-
-              </div>
-
-
-              <Button
-                onClick={
-                  async () => {
-
-                    if (
-                      confirming
-                    ) {
-                      return;
-                    }
-
-
-                    if (
-                      !selectedSlotRecord
-                    ) {
-
-                      setError(
-                        tr(
-                          "booking.selectWindowError",
-                          "Choose an available arrival window."
-                        )
-                      );
-
-                      return;
-
-                    }
-
-
-                    const validationError =
-                      validate();
-
-
-                    if (
-                      validationError
-                    ) {
-
-                      setError(
-                        validationError
-                      );
-
-                      return;
-
-                    }
-
-
-                    setConfirming(
-                      true
-                    );
-
-                    setError("");
-
-
-                    try {
-
-                      /*
-                       * Create the local booking first.
-                       */
-
-                      const booking =
-                        createBookingAndSetFarmer(
-                          {
-                            farmerId:
-                              farmer.id,
-
-                            centerId:
-                              selectedCenter.id,
-
-                            crop:
-                              selectedCrop.id,
-
-                            quantity:
-                              Number(
-                                quantity
-                              ),
-
-                            date:
-                              selectedDate.date,
-
-                            slotStart:
-                              selectedSlotRecord.start,
-
-                            slotEnd:
-                              selectedSlotRecord.end,
-                          }
-                        );
-
-
-                      if (
-                        !booking?.id ||
-                        !booking?.token
-                      ) {
-
-                        throw new Error(
-                          "Could not generate the booking token."
-                        );
-
-                      }
-
-
-                      /*
-                       * Save the exact same booking
-                       * to the SQLite backend.
-                       */
-
-                      const response =
-                        await fetch(
-                          `${API_URL}/bookings`,
-                          {
-                            method:
-                              "POST",
-
-                            headers: {
-                              "Content-Type":
-                                "application/json",
-                            },
-
-                            body:
-                              JSON.stringify(
-                                {
-                                  id:
-                                    booking.id,
-
-                                  token:
-                                    booking.token,
-
-                                  farmer: {
-                                    id:
-                                      farmer.id,
-
-                                    name:
-                                      farmer.name,
-
-                                    phone:
-                                      farmer.phone,
-
-                                    stateId:
-                                      farmer.stateId,
-
-                                    districtId:
-                                      farmer.districtId,
-
-                                    mandalId:
-                                      farmer.mandalId,
-
-                                    village:
-                                      farmer.village,
-
-                                    language:
-                                      farmer.language,
-
-                                    preferredCenterId:
-                                      farmer.preferredCenterId,
-
-                                    primaryCrop:
-                                      farmer.primaryCrop,
-
-                                    estimatedQuantity:
-                                      farmer.estimatedQuantity,
-                                  },
-
-                                  centerId:
-                                    selectedCenter.id,
-
-                                  crop:
-                                    selectedCrop.id,
-
-                                  estimatedQuantity:
-                                    Number(
-                                      quantity
-                                    ),
-
-                                  date:
-                                    selectedDate.date,
-
-                                  slotStart:
-                                    selectedSlotRecord.start,
-
-                                  slotEnd:
-                                    selectedSlotRecord.end,
-                                }
-                              ),
-                          }
-                        );
-
-
-                      let responseData =
-                        null;
-
-
-                      try {
-
-                        responseData =
-                          await response.json();
-
-                      } catch {
-
-                        responseData =
-                          null;
-
-                      }
-
-
-                      if (
-                        !response.ok
-                      ) {
-
-                        throw new Error(
-                          responseData?.message ||
-                          "Failed to save your booking."
-                        );
-
-                      }
-
-
-                      /*
-                       * Keep the current prototype admin
-                       * store synchronized.
-                       */
-
-                      try {
-
-                        syncBookingToPrototype(
-                          {
-                            ...booking,
-
-                            estimatedQuantity:
-                              Number(
-                                quantity
-                              ),
-                          },
-
-                          farmer,
-
-                          selectedCenter,
-
-                          selectedCrop
-                        );
-
-                      } catch (
-                        bridgeError
-                      ) {
-
-                        console.warn(
-                          "Prototype sync warning:",
-                          bridgeError
-                        );
-
-                      }
-
-
-                      /*
-                       * Verify the exact booking by ID
-                       * before opening the token page.
-                       */
-
-                      const verifyResponse =
-                        await fetch(
-                          `${API_URL}/bookings/${encodeURIComponent(
-                            booking.id
-                          )}`
-                        );
-
-
-                      let verifyData =
-                        null;
-
-
-                      try {
-
-                        verifyData =
-                          await verifyResponse.json();
-
-                      } catch {
-
-                        verifyData =
-                          null;
-
-                      }
-
-
-                      if (
-                        !verifyResponse.ok ||
-                        !verifyData?.booking
-                      ) {
-
-                        throw new Error(
-                          "Booking was created but could not be verified."
-                        );
-
-                      }
-
-
-                      navigate(
-                        `/farmer/token?booking=${encodeURIComponent(
-                          booking.id
-                        )}`
-                      );
-
-
-                    } catch (
-                      bookingError
-                    ) {
-
-                      console.error(
-                        "Booking error:",
-                        bookingError
-                      );
-
-
-                      setError(
-                        bookingError?.message ||
-                        "Unable to complete the booking."
-                      );
-
-                    } finally {
-
-                      setConfirming(
-                        false
-                      );
-
-                    }
-
+                    )
                   }
-                }
-                disabled={
-                  confirming
-                }
-              >
 
-                {confirming ? (
+                </Button>
 
-                  <>
+              </div>
 
-                    <LoaderCircle
-                      size={18}
-                      className="loading-spin"
-                    />
+            </section>
 
-                    {copy.saving}
-
-                  </>
-
-                ) : (
-
-                  <>
-
-                    {copy.confirm}
-
-                    <ArrowRight
-                      size={18}
-                    />
-
-                  </>
-
-                )}
-
-              </Button>
-
-            </div>
-
-          </section>
-
-        )}
-
+          )
+        }
 
 
         <section className="booking-bottom-information">
-
 
           <div className="booking-bottom-card green">
 
@@ -4066,18 +5494,21 @@ const availabilityTemplate =
             <div>
 
               <strong>
-                {copy.traceable}
+                {
+                  copy.traceable
+                }
               </strong>
 
 
               <span>
-                {copy.traceableText}
+                {
+                  copy.traceableText
+                }
               </span>
 
             </div>
 
           </div>
-
 
 
           <div className="booking-bottom-card blue">
@@ -4094,18 +5525,21 @@ const availabilityTemplate =
             <div>
 
               <strong>
-                {copy.arriveDuring}
+                {
+                  copy.arriveDuring
+                }
               </strong>
 
 
               <span>
-                {copy.arriveDuringText}
+                {
+                  copy.arriveDuringText
+                }
               </span>
 
             </div>
 
           </div>
-
 
 
           <Link
@@ -4125,12 +5559,16 @@ const availabilityTemplate =
             <div>
 
               <strong>
-                {copy.assistance}
+                {
+                  copy.assistance
+                }
               </strong>
 
 
               <span>
-                {copy.assistanceText}
+                {
+                  copy.assistanceText
+                }
               </span>
 
             </div>
@@ -4144,12 +5582,10 @@ const availabilityTemplate =
 
         </section>
 
-
       </main>
 
 
       <footer className="booking-page-footer">
-
 
         <div>
 
@@ -4159,11 +5595,17 @@ const availabilityTemplate =
 
 
           <span>
-            {language === "hi"
-              ? "स्मार्ट कृषि खरीद"
-              : language === "te"
-                ? "స్మార్ట్ వ్యవసాయ కొనుగోలు"
-                : "Smart agricultural procurement"}
+
+            {
+              language ===
+                "hi"
+                ? "स्मार्ट कृषि खरीद"
+                : language ===
+                    "te"
+                  ? "స్మార్ట్ వ్యవసాయ కొనుగోలు"
+                  : "Smart agricultural procurement"
+            }
+
           </span>
 
         </div>
@@ -4171,19 +5613,24 @@ const availabilityTemplate =
 
         <span>
 
-          {language === "hi"
-            ? "बुकिंग जानकारी आपके खरीद रिकॉर्ड में सुरक्षित रूप से संग्रहीत है।"
-            : language === "te"
-              ? "బుకింగ్ సమాచారం మీ కొనుగోలు రికార్డులో సురక్షితంగా నిల్వ చేయబడుతుంది."
-              : "Booking information is stored securely in your procurement record."}
+          {
+            language ===
+              "hi"
+              ? "बुकिंग जानकारी आपके खरीद रिकॉर्ड में सुरक्षित रूप से संग्रहीत है।"
+              : language ===
+                  "te"
+                ? "బుకింగ్ సమాచారం మీ కొనుగోలు రికార్డులో సురక్షితంగా నిల్వ చేయబడుతుంది."
+                : "Booking information is stored securely in your procurement record."
+          }
 
         </span>
 
       </footer>
 
-
     </div>
+
   );
+
 }
 
 
@@ -4203,14 +5650,15 @@ function ConfirmCard({
 
     <div className="confirm-review-card">
 
-
       <div
         className={
           `confirm-review-icon ${tone}`
         }
       >
 
-        {icon}
+        {
+          icon
+        }
 
       </div>
 
@@ -4218,17 +5666,23 @@ function ConfirmCard({
       <div>
 
         <span>
-          {title}
+          {
+            title
+          }
         </span>
 
 
         <strong>
-          {value}
+          {
+            value
+          }
         </strong>
 
 
         <small>
-          {detail}
+          {
+            detail
+          }
         </small>
 
       </div>
@@ -4236,6 +5690,7 @@ function ConfirmCard({
     </div>
 
   );
+
 }
 
 
@@ -4253,32 +5708,276 @@ function SummaryRow({
 
     <div className="summary-row">
 
-
       <div className="summary-row-label">
-
 
         <div className="summary-row-icon">
 
-          {icon}
+          {
+            icon
+          }
 
         </div>
 
 
         <span>
-          {label}
+          {
+            label
+          }
         </span>
 
       </div>
 
 
       <strong>
-        {value}
+        {
+          value
+        }
       </strong>
 
     </div>
 
   );
+
 }
+
+
+/* =========================================================
+   CENTER CAPACITY
+========================================================= */
+
+function getCenterCapacity(
+  center,
+  settings
+) {
+
+  const capacity =
+    Number(
+      center?.capacity ??
+      center?.capacityPerSlot ??
+      center?.capacity_per_slot ??
+      settings?.defaultCapacity ??
+      20
+    );
+
+
+  if (
+    !Number.isFinite(
+      capacity
+    ) ||
+    capacity <=
+    0
+  ) {
+
+    return Number(
+      settings?.defaultCapacity ||
+      20
+    );
+
+  }
+
+
+  return capacity;
+
+}
+
+
+/* =========================================================
+   BOOKING COUNT
+========================================================= */
+
+function getBookedCount(
+  bookingRows,
+  centerId,
+  date,
+  slotStart,
+  slotEnd
+) {
+
+  if (
+    !Array.isArray(
+      bookingRows
+    )
+  ) {
+
+    return 0;
+
+  }
+
+
+  return bookingRows.filter(
+    booking => {
+
+      const bookingCenterId =
+        String(
+          booking?.center_id ??
+          booking?.centerId ??
+          ""
+        );
+
+
+      const bookingDate =
+        String(
+          booking?.date ??
+          ""
+        );
+
+
+      const bookingStart =
+        String(
+          booking?.slot_start ??
+          booking?.slotStart ??
+          ""
+        );
+
+
+      const bookingEnd =
+        String(
+          booking?.slot_end ??
+          booking?.slotEnd ??
+          ""
+        );
+
+
+      const status =
+        String(
+          booking?.status ??
+          ""
+        );
+
+
+      return (
+
+        bookingCenterId ===
+        String(
+          centerId
+        ) &&
+
+        bookingDate ===
+        String(
+          date
+        ) &&
+
+        bookingStart ===
+        String(
+          slotStart
+        ) &&
+
+        bookingEnd ===
+        String(
+          slotEnd
+        ) &&
+
+        status !==
+        "PAYMENT_SENT"
+
+      );
+
+    }
+  ).length;
+
+}
+
+
+/* =========================================================
+   FARMER NORMALIZATION
+========================================================= */
+
+function normalizeFarmer(
+  farmer
+) {
+
+  if (
+    !farmer
+  ) {
+
+    return null;
+
+  }
+
+
+  return {
+
+    ...farmer,
+
+    id:
+      String(
+        farmer.id ||
+        ""
+      ),
+
+    name:
+      farmer.name ||
+      "",
+
+    phone:
+      normalisePhone(
+        farmer.phone
+      ),
+
+    stateId:
+      farmer.state_id ??
+      farmer.stateId ??
+      null,
+
+    districtId:
+      farmer.district_id ??
+      farmer.districtId ??
+      null,
+
+    mandalId:
+      farmer.mandal_id ??
+      farmer.mandalId ??
+      null,
+
+    village:
+      farmer.village ||
+      "",
+
+    language:
+      farmer.language ||
+      "en",
+
+    preferredCenterId:
+      farmer.preferred_center_id ??
+      farmer.preferredCenterId ??
+      null,
+
+    primaryCrop:
+      farmer.primary_crop ??
+      farmer.primaryCrop ??
+      null,
+
+    estimatedQuantity:
+      Number(
+        farmer.estimated_quantity ??
+        farmer.estimatedQuantity ??
+        0
+      ),
+
+  };
+
+}
+
+
+function normalisePhone(
+  value
+) {
+
+  return String(
+    value ||
+    ""
+  ).replace(
+    /\D/g,
+    ""
+  );
+
+}
+
+
+/* =========================================================
+   TIME HELPERS
+========================================================= */
+
 function generateTimeSlots(
   openingTime,
   closingTime,
@@ -4286,7 +5985,8 @@ function generateTimeSlots(
   capacity = 20
 ) {
 
-  const slots = [];
+  const slots =
+    [];
 
 
   let current =
@@ -4306,12 +6006,34 @@ function generateTimeSlots(
       5,
       Number(
         duration
-      ) || 30
+      ) ||
+      30
     );
 
 
+  const safeCapacity =
+    Math.max(
+      1,
+      Number(
+        capacity
+      ) ||
+      20
+    );
+
+
+  if (
+    end <=
+    current
+  ) {
+
+    return slots;
+
+  }
+
+
   while (
-    current + safeDuration <=
+    current +
+    safeDuration <=
     end
   ) {
 
@@ -4348,9 +6070,7 @@ function generateTimeSlots(
         ),
 
       capacity:
-        Number(
-          capacity
-        ) || 20,
+        safeCapacity,
 
     });
 
@@ -4372,7 +6092,8 @@ function timeToMinutes(
 
   const text =
     String(
-      value || ""
+      value ||
+      ""
     )
       .trim()
       .toUpperCase();
@@ -4410,9 +6131,14 @@ function timeToMinutes(
 
 
   if (
-    !Number.isFinite(hours) ||
-    !Number.isFinite(minutes) ||
-    minutes > 59
+    !Number.isFinite(
+      hours
+    ) ||
+    !Number.isFinite(
+      minutes
+    ) ||
+    minutes >
+    59
   ) {
 
     return 0;
@@ -4421,38 +6147,56 @@ function timeToMinutes(
 
 
   if (
-    period === "AM"
+    period ===
+    "AM"
   ) {
 
     if (
-      hours === 12
+      hours ===
+      12
     ) {
 
-      hours = 0;
+      hours =
+        0;
 
     }
 
   } else if (
-    period === "PM"
+    period ===
+    "PM"
   ) {
 
     if (
-      hours !== 12
+      hours !==
+      12
     ) {
 
-      hours += 12;
+      hours +=
+        12;
 
     }
 
   }
 
 
+  if (
+    hours >
+    23
+  ) {
+
+    return 0;
+
+  }
+
+
   return (
-    hours * 60 +
+    hours *
+    60 +
     minutes
   );
 
 }
+
 
 function minutesToTime(
   total
@@ -4460,28 +6204,34 @@ function minutesToTime(
 
   const hours =
     Math.floor(
-      total / 60
+      total /
+      60
     );
 
 
   const minutes =
-    total % 60;
+    total %
+    60;
 
 
   return (
+
     String(
       hours
     ).padStart(
       2,
       "0"
     ) +
+
     ":" +
+
     String(
       minutes
     ).padStart(
       2,
       "0"
     )
+
   );
 
 }
@@ -4499,33 +6249,40 @@ function formatTime(
 
   const hours =
     Math.floor(
-      minutes / 60
+      minutes /
+      60
     );
 
 
   const minute =
-    minutes % 60;
+    minutes %
+    60;
 
 
   const suffix =
-    hours >= 12
+    hours >=
+    12
       ? "PM"
       : "AM";
 
 
   const displayHour =
-    hours % 12 ||
+    hours %
+      12 ||
     12;
 
 
   return (
+
     `${displayHour}:` +
+
     `${String(
       minute
     ).padStart(
       2,
       "0"
     )} ${suffix}`
+
   );
 
 }
@@ -4537,30 +6294,43 @@ function formatTimeRange(
 ) {
 
   return (
+
     `${formatTime(
       start
     )} – ${formatTime(
       end
     )}`
+
   );
 
 }
+
+
+/* =========================================================
+   BOOKING DATES
+========================================================= */
 
 function generateBookingDates(
   days
 ) {
 
-  const result = [];
+  const result =
+    [];
+
 
   const safeDays =
     Math.max(
       0,
-      Number(days) || 7
+      Number(
+        days
+      ) ||
+      7
     );
 
 
   const today =
     new Date();
+
 
   today.setHours(
     0,
@@ -4571,8 +6341,10 @@ function generateBookingDates(
 
 
   for (
-    let index = 0;
-    index <= safeDays;
+    let index =
+      0;
+    index <=
+    safeDays;
     index++
   ) {
 
@@ -4594,7 +6366,8 @@ function generateBookingDates(
 
     const monthNumber =
       String(
-        date.getMonth() + 1
+        date.getMonth() +
+        1
       ).padStart(
         2,
         "0"
@@ -4610,6 +6383,16 @@ function generateBookingDates(
       );
 
 
+    const monthName =
+      date.toLocaleString(
+        "en-US",
+        {
+          month:
+            "short",
+        }
+      );
+
+
     const iso =
       `${year}-${monthNumber}-${dayNumber}`;
 
@@ -4617,15 +6400,7 @@ function generateBookingDates(
     result.push({
 
       id:
-        `${dayNumber}-${date
-          .toLocaleString(
-            "en-US",
-            {
-              month:
-                "short",
-            }
-          )
-          .toLowerCase()}`,
+        `${dayNumber}-${monthName.toLowerCase()}`,
 
       date:
         iso,
@@ -4634,20 +6409,14 @@ function generateBookingDates(
         dayNumber,
 
       month:
-        date
-          .toLocaleString(
-            "en-US",
-            {
-              month:
-                "short",
-            }
-          )
-          .toUpperCase(),
+        monthName.toUpperCase(),
 
       label:
-        index === 0
+        index ===
+        0
           ? "Today"
-          : index === 1
+          : index ===
+            1
             ? "Tomorrow"
             : date.toLocaleString(
                 "en-US",
@@ -4665,5 +6434,6 @@ function generateBookingDates(
   return result;
 
 }
+
 
 export default FarmerBook;

@@ -1,3 +1,4 @@
+
 import {
   Bell,
   CheckCircle2,
@@ -26,7 +27,7 @@ import Header from "../../components/Header";
 
 import {
   getCurrentFarmer,
-  updateFarmer,
+  setCurrentFarmer,
 } from "../../data/appStore";
 
 import {
@@ -43,14 +44,22 @@ function FarmerSettings() {
   const navigate =
     useNavigate();
 
+
   const {
     language,
+    setLanguage,
   } =
     useLanguage();
 
 
-  const farmer =
-    getCurrentFarmer();
+  const [
+    farmer,
+    setFarmer,
+  ] =
+    useState(
+      () =>
+        getCurrentFarmer()
+    );
 
 
   const [
@@ -110,6 +119,22 @@ function FarmerSettings() {
     useState("");
 
 
+  /*
+    Refresh the local farmer reference when the
+    currently logged-in farmer changes.
+  */
+  useEffect(() => {
+
+    const current =
+      getCurrentFarmer();
+
+    setFarmer(
+      current
+    );
+
+  }, []);
+
+
   useEffect(() => {
 
     if (
@@ -142,10 +167,12 @@ function FarmerSettings() {
 
         primaryCrop:
           farmer.primary_crop ||
+          farmer.primaryCrop ||
           "wheat",
 
         estimatedQuantity:
-          farmer.estimated_quantity ||
+          farmer.estimated_quantity ??
+          farmer.estimatedQuantity ??
           "",
 
       });
@@ -156,6 +183,48 @@ function FarmerSettings() {
     farmer,
     language,
   ]);
+
+
+  useEffect(() => {
+
+    const stored =
+      localStorage.getItem(
+        "krishisetu-farmer-settings"
+      );
+
+    if (!stored) {
+      return;
+    }
+
+    try {
+
+      const parsed =
+        JSON.parse(
+          stored
+        );
+
+      setSmsEnabled(
+        parsed?.smsEnabled !==
+          false
+      );
+
+      setInAppEnabled(
+        parsed?.inAppEnabled !==
+          false
+      );
+
+    } catch (
+      settingsError
+    ) {
+
+      console.error(
+        "Could not load farmer settings:",
+        settingsError
+      );
+
+    }
+
+  }, []);
 
 
   useEffect(() => {
@@ -214,14 +283,109 @@ function FarmerSettings() {
     setForm(
       current => ({
         ...current,
+
         [field]:
           value,
       })
     );
 
 
-    setSaved(false);
-    setError("");
+    setSaved(
+      false
+    );
+
+
+    setError(
+      ""
+    );
+
+  }
+
+
+  function normalisePhone(
+    value
+  ) {
+
+    return String(
+      value || ""
+    ).replace(
+      /\D/g,
+      ""
+    );
+
+  }
+
+
+  function normalizeFarmer(
+    value
+  ) {
+
+    if (
+      !value
+    ) {
+
+      return null;
+
+    }
+
+
+    return {
+
+      ...value,
+
+      id:
+        value.id,
+
+      name:
+        value.name ||
+        "",
+
+      phone:
+        normalisePhone(
+          value.phone
+        ),
+
+      stateId:
+        value.state_id ??
+        value.stateId ??
+        null,
+
+      districtId:
+        value.district_id ??
+        value.districtId ??
+        null,
+
+      mandalId:
+        value.mandal_id ??
+        value.mandalId ??
+        null,
+
+      village:
+        value.village ||
+        "",
+
+      language:
+        value.language ||
+        "en",
+
+      preferredCenterId:
+        value.preferred_center_id ??
+        value.preferredCenterId ??
+        null,
+
+      primaryCrop:
+        value.primary_crop ??
+        value.primaryCrop ??
+        null,
+
+      estimatedQuantity:
+        Number(
+          value.estimated_quantity ??
+          value.estimatedQuantity ??
+          0
+        ),
+
+    };
 
   }
 
@@ -233,12 +397,16 @@ function FarmerSettings() {
     event.preventDefault();
 
 
+    const currentFarmer =
+      getCurrentFarmer();
+
+
     if (
-      !farmer?.id
+      !currentFarmer?.id
     ) {
 
       setError(
-        "Farmer account could not be loaded."
+        "Farmer account could not be loaded. Please login again."
       );
 
       return;
@@ -246,8 +414,29 @@ function FarmerSettings() {
     }
 
 
+    const name =
+      form.name.trim();
+
+
+    const cleanedPhone =
+      normalisePhone(
+        form.phone
+      );
+
+
+    const village =
+      form.village.trim();
+
+
+    const estimatedQuantity =
+      Number(
+        form.estimatedQuantity ||
+        0
+      );
+
+
     if (
-      !form.name.trim()
+      !name
     ) {
 
       setError(
@@ -257,16 +446,6 @@ function FarmerSettings() {
       return;
 
     }
-
-
-    const cleanedPhone =
-      String(
-        form.phone || ""
-      )
-        .replace(
-          /\D/g,
-          ""
-        );
 
 
     if (
@@ -283,17 +462,68 @@ function FarmerSettings() {
     }
 
 
-    setSaving(true);
-    setSaved(false);
-    setError("");
+    if (
+      !Number.isFinite(
+        estimatedQuantity
+      ) ||
+      estimatedQuantity <
+        0
+    ) {
+
+      setError(
+        "Quantity cannot be negative."
+      );
+
+      return;
+
+    }
+
+
+    if (
+      ![
+        "en",
+        "hi",
+        "te",
+      ].includes(
+        form.language
+      )
+    ) {
+
+      setError(
+        "Invalid language."
+      );
+
+      return;
+
+    }
+
+
+    setSaving(
+      true
+    );
+
+
+    setSaved(
+      false
+    );
+
+
+    setError(
+      ""
+    );
 
 
     try {
 
+      /*
+        Use the current canonical database ID.
+        Never generate or replace it locally.
+      */
+
       const response =
         await fetch(
           `${API_URL}/farmers/${encodeURIComponent(
-            farmer.id
+            currentFarmer.id
           )}`,
           {
             method:
@@ -306,29 +536,28 @@ function FarmerSettings() {
 
             body:
               JSON.stringify({
-                name:
-                  form.name.trim(),
+
+                name,
 
                 phone:
                   cleanedPhone,
 
                 village:
-                  form.village.trim(),
+                  village ||
+                  null,
 
                 language:
                   form.language,
 
                 preferredCenterId:
-                  form.preferredCenterId,
+                  form.preferredCenterId ||
+                  null,
 
                 primaryCrop:
-                  form.primaryCrop,
+                  form.primaryCrop ||
+                  null,
 
-                estimatedQuantity:
-                  Number(
-                    form.estimatedQuantity ||
-                    0
-                  ),
+                estimatedQuantity,
 
               }),
 
@@ -336,86 +565,147 @@ function FarmerSettings() {
         );
 
 
-      const data =
-  await response.json();
+      let data =
+        null;
 
 
-if (
-  !response.ok
-) {
+      try {
 
-  throw new Error(
-    data?.message ||
-    "Unable to save settings."
-  );
+        data =
+          await response.json();
 
-}
+      } catch {
 
+        data =
+          null;
 
-if (
-  data?.farmer
-) {
-
-  updateFarmer(
-    farmer.id,
-    {
-      id:
-        data.farmer.id,
-
-      name:
-        data.farmer.name,
-
-      phone:
-        data.farmer.phone,
-
-      stateId:
-        data.farmer.state_id,
-
-      districtId:
-        data.farmer.district_id,
-
-      mandalId:
-        data.farmer.mandal_id,
-
-      village:
-        data.farmer.village,
-
-      language:
-        data.farmer.language,
-
-      preferredCenterId:
-        data.farmer.preferred_center_id,
-
-      primaryCrop:
-        data.farmer.primary_crop,
-
-      estimatedQuantity:
-        data.farmer.estimated_quantity,
-    }
-  );
-
-}
+      }
 
 
+      if (
+        !response.ok
+      ) {
+
+        throw new Error(
+          data?.message ||
+          "Unable to save settings."
+        );
+
+      }
+
+
+      const savedFarmer =
+        normalizeFarmer(
+          data?.farmer
+        );
+
+
+      if (
+        !savedFarmer?.id
+      ) {
+
+        throw new Error(
+          "Settings were saved, but the server did not return the updated farmer account."
+        );
+
+      }
+
+
+      /*
+        IMPORTANT:
+
+        The backend response is now the
+        single source of truth.
+
+        This updates:
+        - farmer data
+        - current farmer ID
+        - current phone number
+        - current language
+      */
+
+      setCurrentFarmer(
+        savedFarmer
+      );
+
+
+      setFarmer(
+        savedFarmer
+      );
+
+
+      setForm({
+
+        name:
+          savedFarmer.name ||
+          "",
+
+        phone:
+          savedFarmer.phone ||
+          "",
+
+        village:
+          savedFarmer.village ||
+          "",
+
+        language:
+          savedFarmer.language ||
+          "en",
+
+        preferredCenterId:
+          savedFarmer.preferredCenterId ||
+          "main",
+
+        primaryCrop:
+          savedFarmer.primaryCrop ||
+          "wheat",
+
+        estimatedQuantity:
+          savedFarmer.estimatedQuantity ??
+          "",
+
+      });
+
+
+      setLanguage(
+        savedFarmer.language ||
+        form.language
+      );
 
 
       localStorage.setItem(
         "krishisetu-farmer-settings",
         JSON.stringify({
+
           smsEnabled,
+
           inAppEnabled,
+
         })
       );
 
 
-      setSaved(true);
+      setSaved(
+        true
+      );
 
+
+      /*
+        Give React/store listeners a moment to
+        receive the new farmer, then go home.
+      */
 
       setTimeout(
         () => {
+
           navigate(
-            "/farmer/home"
+            "/farmer/home",
+            {
+              replace:
+                true,
+            }
           );
+
         },
         500
       );
@@ -438,7 +728,9 @@ if (
 
     } finally {
 
-      setSaving(false);
+      setSaving(
+        false
+      );
 
     }
 
@@ -455,6 +747,7 @@ if (
 
         <Header />
 
+
         <main className="farmer-settings-container">
 
           <section className="farmer-settings-empty">
@@ -463,19 +756,24 @@ if (
               size={34}
             />
 
+
             <h1>
               Farmer account not found
             </h1>
+
 
             <p>
               Please login again to continue.
             </p>
 
+
             <Link
               to="/farmer/login"
               className="farmer-settings-primary"
             >
+
               Go to Login
+
             </Link>
 
           </section>
@@ -498,6 +796,7 @@ if (
 
       <main className="farmer-settings-container">
 
+
         <Link
           to="/farmer/home"
           className="farmer-settings-back"
@@ -517,12 +816,16 @@ if (
           <div>
 
             <span className="page-eyebrow">
+
               FARMER PORTAL
+
             </span>
+
 
             <h1>
               Account & preferences
             </h1>
+
 
             <p>
               Keep your farmer profile and communication preferences up to date.
@@ -549,6 +852,7 @@ if (
           }
         >
 
+
           <section className="farmer-settings-card">
 
             <div className="farmer-settings-section-heading">
@@ -560,6 +864,7 @@ if (
                 />
 
               </div>
+
 
               <div>
 
@@ -622,6 +927,14 @@ if (
                       updateField(
                         "phone",
                         event.target.value
+                          .replace(
+                            /[^0-9]/g,
+                            ""
+                          )
+                          .slice(
+                            0,
+                            10
+                          )
                       )
                   }
                   inputMode="numeric"
@@ -712,6 +1025,7 @@ if (
                 />
 
               </div>
+
 
               <div>
 
@@ -848,9 +1162,11 @@ if (
                             center.id
                           }
                         >
+
                           {
                             center.name
                           }
+
                         </option>
 
                       )
@@ -877,6 +1193,7 @@ if (
                 />
 
               </div>
+
 
               <div>
 
@@ -958,7 +1275,9 @@ if (
               to="/farmer/home"
               className="farmer-settings-secondary"
             >
+
               Cancel
+
             </Link>
 
 
@@ -996,6 +1315,7 @@ if (
             </button>
 
           </div>
+
 
         </form>
 

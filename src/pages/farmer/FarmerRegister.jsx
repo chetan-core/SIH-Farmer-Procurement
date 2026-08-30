@@ -1,9 +1,9 @@
+
 import {
   useEffect,
   useMemo,
   useState,
 } from "react";
-
 
 import {
   ArrowLeft,
@@ -16,21 +16,17 @@ import {
   UserRound,
 } from "lucide-react";
 
-
 import {
   Link,
   useNavigate,
 } from "react-router";
 
-
 import Header from "../../components/Header";
 import Button from "../../components/Button";
-
 
 import {
   useLanguage,
 } from "../../translations/LanguageContext";
-
 
 import {
   getStates,
@@ -39,10 +35,8 @@ import {
   getVillages,
 } from "../../data/locationData";
 
-
 import {
-  addFarmer,
-  setCurrentUser,
+  setCurrentFarmer,
 } from "../../data/appStore";
 
 
@@ -249,6 +243,7 @@ function FarmerRegister() {
             "",
         })
       );
+
     }
 
   }, [
@@ -284,6 +279,7 @@ function FarmerRegister() {
             "",
         })
       );
+
     }
 
   }, [
@@ -313,6 +309,7 @@ function FarmerRegister() {
             villages[0],
         })
       );
+
     }
 
   }, [
@@ -344,6 +341,7 @@ function FarmerRegister() {
           "",
       })
     );
+
   }
 
 
@@ -367,6 +365,7 @@ function FarmerRegister() {
       "phone",
       value
     );
+
   }
 
 
@@ -395,6 +394,7 @@ function FarmerRegister() {
     setOpenMenu(
       null
     );
+
   }
 
 
@@ -420,6 +420,7 @@ function FarmerRegister() {
     setOpenMenu(
       null
     );
+
   }
 
 
@@ -442,6 +443,7 @@ function FarmerRegister() {
     setOpenMenu(
       null
     );
+
   }
 
 
@@ -458,6 +460,7 @@ function FarmerRegister() {
     setOpenMenu(
       null
     );
+
   }
 
 
@@ -481,6 +484,7 @@ function FarmerRegister() {
 
       nextErrors.name =
         "Name must be at least 3 characters.";
+
     }
 
 
@@ -491,6 +495,7 @@ function FarmerRegister() {
 
       nextErrors.phone =
         "Please enter a valid 10-digit mobile number.";
+
     }
 
 
@@ -500,6 +505,7 @@ function FarmerRegister() {
 
       nextErrors.stateId =
         "Please select your state.";
+
     }
 
 
@@ -509,6 +515,7 @@ function FarmerRegister() {
 
       nextErrors.districtId =
         "Please select your district.";
+
     }
 
 
@@ -518,6 +525,7 @@ function FarmerRegister() {
 
       nextErrors.mandalId =
         "Please select your mandal.";
+
     }
 
 
@@ -527,10 +535,100 @@ function FarmerRegister() {
 
       nextErrors.village =
         "Please select your village.";
+
     }
 
 
     return nextErrors;
+
+  }
+
+
+  function normalisePhone(
+    value
+  ) {
+
+    return String(
+      value || ""
+    ).replace(
+      /\D/g,
+      ""
+    );
+
+  }
+
+
+  function normalizeFarmer(
+    farmer
+  ) {
+
+    if (
+      !farmer
+    ) {
+
+      return null;
+
+    }
+
+
+    return {
+
+      ...farmer,
+
+      id:
+        farmer.id,
+
+      name:
+        farmer.name ||
+        "",
+
+      phone:
+        normalisePhone(
+          farmer.phone
+        ),
+
+      stateId:
+        farmer.state_id ??
+        farmer.stateId ??
+        "",
+
+      districtId:
+        farmer.district_id ??
+        farmer.districtId ??
+        "",
+
+      mandalId:
+        farmer.mandal_id ??
+        farmer.mandalId ??
+        "",
+
+      village:
+        farmer.village ||
+        "",
+
+      language:
+        farmer.language ||
+        "en",
+
+      preferredCenterId:
+        farmer.preferred_center_id ??
+        farmer.preferredCenterId ??
+        null,
+
+      primaryCrop:
+        farmer.primary_crop ??
+        farmer.primaryCrop ??
+        null,
+
+      estimatedQuantity:
+        Number(
+          farmer.estimated_quantity ??
+          farmer.estimatedQuantity ??
+          0
+        ),
+
+    };
+
   }
 
 
@@ -544,7 +642,9 @@ function FarmerRegister() {
     if (
       submitting
     ) {
+
       return;
+
     }
 
 
@@ -564,49 +664,8 @@ function FarmerRegister() {
     ) {
 
       return;
+
     }
-
-
-    const farmerId =
-      `F${Date.now()}`;
-
-
-    const farmer = {
-
-      id:
-        farmerId,
-
-      name:
-        form.name.trim(),
-
-      phone:
-        form.phone,
-
-      stateId:
-        form.stateId,
-
-      districtId:
-        form.districtId,
-
-      mandalId:
-        form.mandalId,
-
-      village:
-        form.village,
-
-      language:
-        form.language,
-
-      preferredCenterId:
-        null,
-
-      primaryCrop:
-        null,
-
-      estimatedQuantity:
-        0,
-
-    };
 
 
     setSubmitting(
@@ -615,6 +674,63 @@ function FarmerRegister() {
 
 
     try {
+
+      /*
+        The frontend may generate a temporary id
+        because the existing backend accepts one.
+
+        IMPORTANT:
+        We NEVER use this temporary id as the
+        authenticated farmer id.
+
+        The backend response is the source of truth.
+      */
+
+      const temporaryId =
+        `F${Date.now()}${Math.floor(
+          Math.random() * 1000
+        )}`;
+
+
+      const farmerPayload = {
+
+        id:
+          temporaryId,
+
+        name:
+          form.name.trim(),
+
+        phone:
+          normalisePhone(
+            form.phone
+          ),
+
+        stateId:
+          form.stateId,
+
+        districtId:
+          form.districtId,
+
+        mandalId:
+          form.mandalId,
+
+        village:
+          form.village,
+
+        language:
+          form.language,
+
+        preferredCenterId:
+          null,
+
+        primaryCrop:
+          null,
+
+        estimatedQuantity:
+          0,
+
+      };
+
 
       const response =
         await fetch(
@@ -630,7 +746,7 @@ function FarmerRegister() {
 
             body:
               JSON.stringify(
-                farmer
+                farmerPayload
               ),
           }
         );
@@ -649,6 +765,7 @@ function FarmerRegister() {
 
         data =
           null;
+
       }
 
 
@@ -660,36 +777,60 @@ function FarmerRegister() {
           data?.message ||
           "Unable to create your account."
         );
+
       }
 
 
       /*
-       * Save to the existing frontend store
-       * only after the backend accepted it.
-       */
+        ALWAYS use the farmer returned by
+        the backend.
 
-      addFarmer(
-        farmer
+        This is the canonical database identity.
+      */
+
+      const savedFarmer =
+        normalizeFarmer(
+          data?.farmer
+        );
+
+
+      if (
+        !savedFarmer?.id
+      ) {
+
+        throw new Error(
+          "Account was created but the server did not return a valid farmer account."
+        );
+
+      }
+
+
+      /*
+        Store exactly the database farmer.
+
+        This fixes the problem where:
+        frontend ID != database ID.
+      */
+
+      setCurrentFarmer(
+        savedFarmer
       );
 
 
-      setCurrentUser({
-        role:
-          "farmer",
-
-        farmerId:
-          farmer.id,
-      });
-
-
       setLanguage(
+        savedFarmer.language ||
         form.language
       );
 
 
       navigate(
-        "/farmer/home"
+        "/farmer/home",
+        {
+          replace:
+            true,
+        }
       );
+
 
     } catch (
       registrationError
@@ -714,8 +855,12 @@ function FarmerRegister() {
       );
 
     }
+
   }
-    return (
+
+
+  return (
+
     <div className="farmer-register-page">
 
       <Header
@@ -829,7 +974,6 @@ function FarmerRegister() {
           </div>
 
 
-
           <form
             className="register-form-card"
             onSubmit={
@@ -873,7 +1017,6 @@ function FarmerRegister() {
             </div>
 
 
-
             <div className="register-section">
 
 
@@ -884,7 +1027,6 @@ function FarmerRegister() {
                 )}
 
               </div>
-
 
 
               <div className="register-field">
@@ -954,7 +1096,6 @@ function FarmerRegister() {
                 )}
 
               </div>
-
 
 
               <div className="register-field">
@@ -1036,9 +1177,7 @@ function FarmerRegister() {
 
               </div>
 
-
             </div>
-
 
 
             <div className="register-section">
@@ -1053,7 +1192,6 @@ function FarmerRegister() {
               </div>
 
 
-
               <div className="register-two-column">
 
 
@@ -1061,31 +1199,25 @@ function FarmerRegister() {
                   label={t(
                     "location.state"
                   )}
-
                   value={
                     selectedState?.stateName ||
                     ""
                   }
-
                   placeholder={t(
                     "location.selectState"
                   )}
-
                   typeLabel={t(
                     "location.stateType"
                   )}
-
                   icon={
                     <MapPin
                       size={16}
                     />
                   }
-
                   isOpen={
                     openMenu ===
                     "state"
                   }
-
                   onToggle={() =>
                     setOpenMenu(
                       openMenu ===
@@ -1094,14 +1226,15 @@ function FarmerRegister() {
                         : "state"
                     )
                   }
-
                   error={
                     errors.stateId
                   }
                 >
 
                   {states.map(
-                    (item) => (
+                    (
+                      item
+                    ) => (
 
                       <button
                         key={
@@ -1168,41 +1301,36 @@ function FarmerRegister() {
                   label={t(
                     "location.district"
                   )}
-
                   value={
                     selectedDistrict?.districtName ||
                     ""
                   }
-
                   placeholder={t(
                     "location.selectDistrict"
                   )}
-
                   typeLabel={t(
                     "location.districtType"
                   )}
-
                   icon={
                     <MapPin
                       size={16}
                     />
                   }
-
                   disabled={
                     !form.stateId
                   }
-
                   isOpen={
                     openMenu ===
                     "district"
                   }
-
                   onToggle={() => {
 
                     if (
                       !form.stateId
                     ) {
+
                       return;
+
                     }
 
 
@@ -1214,14 +1342,15 @@ function FarmerRegister() {
                     );
 
                   }}
-
                   error={
                     errors.districtId
                   }
                 >
 
                   {districts.map(
-                    (item) => (
+                    (
+                      item
+                    ) => (
 
                       <button
                         key={
@@ -1293,41 +1422,36 @@ function FarmerRegister() {
                   label={t(
                     "location.mandal"
                   )}
-
                   value={
                     selectedMandal?.mandalName ||
                     ""
                   }
-
                   placeholder={t(
                     "location.selectMandal"
                   )}
-
                   typeLabel={t(
                     "location.mandalType"
                   )}
-
                   icon={
                     <MapPin
                       size={16}
                     />
                   }
-
                   disabled={
                     !form.districtId
                   }
-
                   isOpen={
                     openMenu ===
                     "mandal"
                   }
-
                   onToggle={() => {
 
                     if (
                       !form.districtId
                     ) {
+
                       return;
+
                     }
 
 
@@ -1339,14 +1463,15 @@ function FarmerRegister() {
                     );
 
                   }}
-
                   error={
                     errors.mandalId
                   }
                 >
 
                   {mandals.map(
-                    (item) => (
+                    (
+                      item
+                    ) => (
 
                       <button
                         key={
@@ -1413,40 +1538,35 @@ function FarmerRegister() {
                   label={t(
                     "location.village"
                   )}
-
                   value={
                     form.village
                   }
-
                   placeholder={t(
                     "location.selectVillage"
                   )}
-
                   typeLabel={t(
                     "location.villageType"
                   )}
-
                   icon={
                     <MapPin
                       size={16}
                     />
                   }
-
                   disabled={
                     !form.mandalId
                   }
-
                   isOpen={
                     openMenu ===
                     "village"
                   }
-
                   onToggle={() => {
 
                     if (
                       !form.mandalId
                     ) {
+
                       return;
+
                     }
 
 
@@ -1458,14 +1578,15 @@ function FarmerRegister() {
                     );
 
                   }}
-
                   error={
                     errors.village
                   }
                 >
 
                   {villages.map(
-                    (village) => (
+                    (
+                      village
+                    ) => (
 
                       <button
                         key={
@@ -1532,7 +1653,6 @@ function FarmerRegister() {
 
               <div className="location-path-card">
 
-
                 <div className="location-path-icon">
 
                   <MapPin
@@ -1582,7 +1702,10 @@ function FarmerRegister() {
               </div>
 
             </div>
-                        <div className="register-section">
+
+
+            <div className="register-section">
+
 
               <div className="register-section-label">
 
@@ -1596,19 +1719,25 @@ function FarmerRegister() {
               <div className="register-field">
 
                 <label>
+
                   {t(
                     "register.preferredLanguage"
                   )}
+
                 </label>
 
 
                 <div className="language-options">
 
                   {languages.map(
-                    (item) => (
+                    (
+                      item
+                    ) => (
 
                       <button
-                        key={item.id}
+                        key={
+                          item.id
+                        }
                         type="button"
                         className={
                           form.language ===
@@ -1627,6 +1756,7 @@ function FarmerRegister() {
                         <Globe2
                           size={15}
                         />
+
 
                         <span>
                           {item.nativeLabel}
@@ -1661,7 +1791,6 @@ function FarmerRegister() {
               </div>
 
             </div>
-
 
 
             {errors.submit && (
@@ -1700,7 +1829,9 @@ function FarmerRegister() {
 
               <Button
                 type="submit"
-                disabled={submitting}
+                disabled={
+                  submitting
+                }
               >
 
                 {submitting
@@ -1708,6 +1839,7 @@ function FarmerRegister() {
                   : t(
                       "register.createAccountButton"
                     )}
+
 
                 {!submitting && (
 
@@ -1720,7 +1852,6 @@ function FarmerRegister() {
               </Button>
 
             </div>
-
 
 
             <p className="register-terms">
@@ -1742,6 +1873,10 @@ function FarmerRegister() {
   );
 }
 
+
+/* =========================================================
+   LOCATION SELECT
+========================================================= */
 
 function LocationSelect({
   label,
@@ -1775,13 +1910,17 @@ function LocationSelect({
 
         <button
           type="button"
-          disabled={disabled}
+          disabled={
+            disabled
+          }
           className={
             error
               ? "register-select-button-error"
               : ""
           }
-          onClick={onToggle}
+          onClick={
+            onToggle
+          }
         >
 
           <div className="register-select-main">
@@ -1831,13 +1970,13 @@ function LocationSelect({
         {isOpen &&
           !disabled && (
 
-            <div className="register-dropdown">
+          <div className="register-dropdown">
 
-              {children}
+            {children}
 
-            </div>
+          </div>
 
-          )}
+        )}
 
       </div>
 
@@ -1857,6 +1996,10 @@ function LocationSelect({
   );
 }
 
+
+/* =========================================================
+   BENEFITS
+========================================================= */
 
 function Benefit({
   icon,
@@ -1898,6 +2041,10 @@ function Benefit({
 }
 
 
+/* =========================================================
+   ICONS
+========================================================= */
+
 function CalendarIcon() {
 
   return (
@@ -1921,6 +2068,7 @@ function CalendarIcon() {
         rx="2"
       />
 
+
       <line
         x1="16"
         y1="2"
@@ -1928,12 +2076,14 @@ function CalendarIcon() {
         y2="6"
       />
 
+
       <line
         x1="8"
         y1="2"
         x2="8"
         y2="6"
       />
+
 
       <line
         x1="3"
