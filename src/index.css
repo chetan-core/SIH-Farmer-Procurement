@@ -83794,3 +83794,4373 @@ body.dark .admin-payments-page
   }
 
 }
+
+/* =========================================================
+   KRISHISETU HERO JOURNEY ILLUSTRATION
+========================================================= */
+
+.landing-hero-visual {
+  position: relative;
+
+  min-height: 620px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  overflow: hidden;
+}
+
+
+/* =========================================================
+   MAIN ILLUSTRATION
+========================================================= */
+
+.landing-journey-illustration {
+  position: relative;
+
+  width: min(560px, 90vw);
+
+  aspect-ratio: 1;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  animation:
+    heroFloat 7s ease-in-out infinite;
+}
+
+
+/* =========================================================
+   CENTRAL CIRCLE
+========================================================= */
+
+.journey-center {
+  position: relative;
+
+  width: 190px;
+  height: 190px;
+
+  border-radius: 50%;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 5px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.96),
+      rgba(242,248,244,.92)
+    );
+
+  border:
+    1px solid
+    rgba(31,120,77,.18);
+
+  box-shadow:
+    0 25px 70px rgba(26,91,60,.16),
+    inset 0 0 0 10px rgba(31,120,77,.045);
+
+  z-index: 5;
+
+  overflow: hidden;
+}
+
+
+.journey-center-glow {
+  position: absolute;
+
+  width: 150px;
+  height: 150px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(48,178,111,.18),
+      transparent 68%
+    );
+
+  filter: blur(4px);
+
+  animation:
+    centerGlow 3.5s ease-in-out infinite;
+}
+
+
+.journey-center-icon {
+  position: relative;
+
+  width: 82px;
+  height: 82px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border-radius: 24px;
+
+  color: #1b8957;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(38,161,96,.13),
+      rgba(38,161,96,.035)
+    );
+
+  border:
+    1px solid
+    rgba(38,161,96,.16);
+
+  z-index: 2;
+}
+
+
+.journey-center strong {
+  position: relative;
+
+  z-index: 2;
+
+  font-size: 20px;
+
+  font-weight: 950;
+
+  letter-spacing: -.03em;
+}
+
+
+.journey-center span {
+  position: relative;
+
+  z-index: 2;
+
+  font-size: 9px;
+
+  letter-spacing: .18em;
+
+  font-weight: 900;
+
+  color: #71917f;
+}
+
+
+/* =========================================================
+   ORBIT RINGS
+========================================================= */
+
+.journey-ring {
+  position: absolute;
+
+  border-radius: 50%;
+
+  pointer-events: none;
+
+  border:
+    1px solid
+    rgba(39,145,94,.15);
+}
+
+
+.ring-one {
+  width: 360px;
+  height: 360px;
+
+  animation:
+    rotateRing 24s linear infinite;
+}
+
+
+.ring-two {
+  width: 500px;
+  height: 500px;
+
+  border-style: dashed;
+
+  border-color:
+    rgba(77,112,183,.13);
+
+  animation:
+    rotateRingReverse 32s linear infinite;
+}
+
+
+/* =========================================================
+   NODES
+========================================================= */
+
+.journey-node {
+  position: absolute;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  min-width: 145px;
+
+  padding: 11px 14px;
+
+  border-radius: 16px;
+
+  background:
+    rgba(255,255,255,.94);
+
+  border:
+    1px solid
+    rgba(20,65,47,.10);
+
+  box-shadow:
+    0 14px 35px rgba(22,58,43,.09);
+
+  backdrop-filter:
+    blur(12px);
+
+  -webkit-backdrop-filter:
+    blur(12px);
+
+  z-index: 8;
+
+  transition:
+    transform .25s ease,
+    box-shadow .25s ease;
+}
+
+
+.journey-node:hover {
+  transform:
+    translateY(-6px) scale(1.035);
+
+  box-shadow:
+    0 20px 42px rgba(22,58,43,.15);
+}
+
+
+.journey-node-icon {
+  width: 42px;
+  height: 42px;
+
+  flex: 0 0 42px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border-radius: 13px;
+
+  background:
+    rgba(30,140,88,.09);
+
+  color:
+    #238a58;
+}
+
+
+.journey-node span {
+  display: block;
+
+  margin-bottom: 3px;
+
+  font-size: 8px;
+
+  letter-spacing: .13em;
+
+  font-weight: 950;
+
+  color: #849b91;
+}
+
+
+.journey-node strong {
+  display: block;
+
+  font-size: 13px;
+
+  line-height: 1.1;
+
+  font-weight: 900;
+
+  color: #18382b;
+}
+
+
+/* =========================================================
+   NODE POSITIONS
+========================================================= */
+
+.journey-farm {
+  top: 7%;
+
+  left: 12%;
+
+  animation:
+    nodeFloatOne 4.4s ease-in-out infinite;
+}
+
+
+.journey-token {
+  top: 15%;
+
+  right: 3%;
+
+  animation:
+    nodeFloatTwo 4.8s ease-in-out infinite;
+}
+
+
+.journey-weighing {
+  right: 2%;
+
+  bottom: 18%;
+
+  animation:
+    nodeFloatThree 5.1s ease-in-out infinite;
+}
+
+
+.journey-center-node {
+  left: 4%;
+
+  bottom: 14%;
+
+  animation:
+    nodeFloatTwo 4.7s ease-in-out infinite;
+}
+
+
+.journey-payment {
+  top: 44%;
+
+  left: -3%;
+
+  animation:
+    nodeFloatOne 4.9s ease-in-out infinite;
+}
+
+
+/* =========================================================
+   CONNECTING ENERGY
+========================================================= */
+
+.journey-pulse {
+  position: absolute;
+
+  width: 9px;
+  height: 9px;
+
+  border-radius: 50%;
+
+  background:
+    #2faa72;
+
+  box-shadow:
+    0 0 0 6px rgba(47,170,114,.08),
+    0 0 22px rgba(47,170,114,.42);
+
+  z-index: 7;
+}
+
+
+.pulse-one {
+  top: 30%;
+
+  left: 29%;
+
+  animation:
+    pulseTravelOne 3.2s ease-in-out infinite;
+}
+
+
+.pulse-two {
+  top: 63%;
+
+  left: 72%;
+
+  animation:
+    pulseTravelTwo 3.7s ease-in-out infinite;
+}
+
+
+.pulse-three {
+  top: 72%;
+
+  left: 32%;
+
+  animation:
+    pulseTravelThree 4s ease-in-out infinite;
+}
+
+
+/* =========================================================
+   FLOATING BACKGROUND GLOW
+========================================================= */
+
+.landing-visual-glow {
+  position: absolute;
+
+  width: 460px;
+  height: 460px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(56,178,116,.17),
+      rgba(56,178,116,.055) 38%,
+      transparent 72%
+    );
+
+  filter:
+    blur(18px);
+
+  animation:
+    visualGlow 5s ease-in-out infinite;
+
+  pointer-events: none;
+}
+
+
+/* =========================================================
+   ANIMATIONS
+========================================================= */
+
+@keyframes heroFloat {
+
+  0%,
+  100% {
+    transform:
+      translateY(0);
+  }
+
+  50% {
+    transform:
+      translateY(-9px);
+  }
+
+}
+
+
+@keyframes centerGlow {
+
+  0%,
+  100% {
+    transform:
+      scale(.9);
+
+    opacity: .65;
+  }
+
+  50% {
+    transform:
+      scale(1.08);
+
+    opacity: 1;
+  }
+
+}
+
+
+@keyframes rotateRing {
+
+  from {
+    transform:
+      rotate(0deg);
+  }
+
+  to {
+    transform:
+      rotate(360deg);
+  }
+
+}
+
+
+@keyframes rotateRingReverse {
+
+  from {
+    transform:
+      rotate(360deg);
+  }
+
+  to {
+    transform:
+      rotate(0deg);
+  }
+
+}
+
+
+@keyframes visualGlow {
+
+  0%,
+  100% {
+    transform:
+      scale(.95);
+
+    opacity: .65;
+  }
+
+  50% {
+    transform:
+      scale(1.08);
+
+    opacity: 1;
+  }
+
+}
+
+
+@keyframes nodeFloatOne {
+
+  0%,
+  100% {
+    transform:
+      translateY(0);
+  }
+
+  50% {
+    transform:
+      translateY(-8px);
+  }
+
+}
+
+
+@keyframes nodeFloatTwo {
+
+  0%,
+  100% {
+    transform:
+      translateY(0);
+  }
+
+  50% {
+    transform:
+      translateY(7px);
+  }
+
+}
+
+
+@keyframes nodeFloatThree {
+
+  0%,
+  100% {
+    transform:
+      translateY(0);
+  }
+
+  50% {
+    transform:
+      translateY(-6px);
+  }
+
+}
+
+
+@keyframes pulseTravelOne {
+
+  0% {
+    opacity: 0;
+
+    transform:
+      translate(0, 0)
+      scale(.7);
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+
+    transform:
+      translate(95px, 35px)
+      scale(1.15);
+  }
+
+}
+
+
+@keyframes pulseTravelTwo {
+
+  0% {
+    opacity: 0;
+
+    transform:
+      translate(0, 0)
+      scale(.7);
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  75% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+
+    transform:
+      translate(-80px, -95px)
+      scale(1.15);
+  }
+
+}
+
+
+@keyframes pulseTravelThree {
+
+  0% {
+    opacity: 0;
+
+    transform:
+      translate(0, 0)
+      scale(.7);
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  75% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+
+    transform:
+      translate(110px, -55px)
+      scale(1.15);
+  }
+
+}
+
+
+/* =========================================================
+   DARK MODE
+========================================================= */
+
+html.dark .journey-center,
+body.dark .journey-center {
+  background:
+    linear-gradient(
+      145deg,
+      rgba(24,31,28,.96),
+      rgba(29,39,34,.94)
+    );
+
+  border-color:
+    rgba(105,201,151,.18);
+
+  box-shadow:
+    0 25px 70px rgba(0,0,0,.35),
+    inset 0 0 0 10px rgba(80,180,126,.045);
+}
+
+
+html.dark .journey-node,
+body.dark .journey-node {
+  background:
+    rgba(27,34,31,.93);
+
+  border-color:
+    rgba(255,255,255,.08);
+
+  box-shadow:
+    0 15px 38px rgba(0,0,0,.30);
+}
+
+
+html.dark .journey-node strong,
+body.dark .journey-node strong {
+  color:
+    #edf7f1;
+}
+
+
+html.dark .journey-node span,
+body.dark .journey-node span {
+  color:
+    #8ea79b;
+}
+
+
+html.dark .journey-center strong,
+body.dark .journey-center strong {
+  color:
+    #f1f8f4;
+}
+
+
+html.dark .journey-center span,
+body.dark .journey-center span {
+  color:
+    #91ad9f;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .landing-hero-visual {
+    min-height: 500px;
+  }
+
+  .landing-journey-illustration {
+    width: min(500px, 92vw);
+  }
+
+  .journey-center {
+    width: 155px;
+    height: 155px;
+  }
+
+  .journey-center-icon {
+    width: 67px;
+    height: 67px;
+  }
+
+  .journey-node {
+    min-width: 125px;
+
+    padding: 9px 11px;
+  }
+
+  .journey-node-icon {
+    width: 36px;
+    height: 36px;
+
+    flex-basis: 36px;
+  }
+
+  .journey-node strong {
+    font-size: 11px;
+  }
+
+}
+
+
+@media (max-width: 600px) {
+
+  .landing-hero-visual {
+    min-height: 430px;
+  }
+
+  .landing-journey-illustration {
+    transform: scale(.82);
+  }
+
+  .journey-payment {
+    left: 0;
+  }
+
+  .journey-center-node {
+    left: 1%;
+  }
+
+}
+
+.landing-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-hero-content {
+  position: relative;
+  z-index: 3;
+}
+
+.landing-hero-visual {
+  position: absolute;
+  inset: -12% -8% -12% 42%;
+  z-index: 1;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.landing-hero-visual::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      circle at 55% 50%,
+      rgba(255,255,255,0.08),
+      transparent 42%
+    );
+  pointer-events: none;
+}
+
+.landing-journey-illustration {
+  position: absolute;
+  width: 720px;
+  height: 720px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  overflow: visible;
+}
+
+.journey-ring {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.ring-one {
+  inset: 5%;
+}
+
+.ring-two {
+  inset: 15%;
+}
+
+.journey-center,
+.journey-node {
+  position: absolute;
+  z-index: 4;
+}
+
+.landing-hero-visual > * {
+  overflow: visible;
+}
+
+@media (max-width: 1100px) {
+  .landing-hero-visual {
+    inset: -5% -18% -5% 35%;
+    opacity: 0.72;
+  }
+
+  .landing-journey-illustration {
+    width: 620px;
+    height: 620px;
+  }
+}
+
+@media (max-width: 800px) {
+  .landing-hero {
+    overflow: hidden;
+  }
+  .landing-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-hero-visual {
+  position: relative;
+  overflow: visible;
+}
+
+.landing-journey-illustration {
+  position: relative;
+  overflow: visible;
+}
+}
+.landing-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-hero-visual {
+  position: relative;
+  overflow: visible;
+}
+
+.landing-journey-illustration {
+  position: relative;
+  overflow: visible;
+}
+
+
+.landing-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-hero-content {
+  position: relative;
+  z-index: 5;
+}
+
+.landing-hero-visual {
+  position: absolute;
+  top: 50%;
+  right: 3%;
+  width: min(52vw, 680px);
+  aspect-ratio: 1;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.landing-visual-glow {
+  position: absolute;
+  width: 72%;
+  height: 72%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(80, 170, 110, 0.18),
+    transparent 68%
+  );
+  filter: blur(25px);
+}
+
+.landing-journey-illustration {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 680px;
+  max-height: 680px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  overflow: visible;
+}
+
+/* ORBITS */
+
+.journey-orbit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.orbit-main {
+  width: 76%;
+  height: 76%;
+  border: 1.5px solid rgba(65, 145, 88, 0.32);
+  animation: journeyRotate 22s linear infinite;
+}
+
+.orbit-inner {
+  width: 55%;
+  height: 55%;
+  border: 1px dashed rgba(65, 145, 88, 0.22);
+  animation: journeyRotateReverse 15s linear infinite;
+}
+
+/* CENTER */
+
+.journey-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 150px;
+  height: 150px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(65, 145, 88, 0.22);
+  box-shadow:
+    0 20px 60px rgba(20, 60, 30, 0.14),
+    0 0 0 12px rgba(75, 160, 95, 0.06);
+  z-index: 4;
+}
+
+.journey-center-icon {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  background: rgba(75, 160, 95, 0.1);
+}
+
+.journey-center strong {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.journey-center span {
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  opacity: 0.58;
+}
+
+/* NODES */
+
+.journey-node {
+  position: absolute;
+  min-width: 145px;
+  padding: 10px 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(25, 55, 35, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(20, 50, 30, 0.10);
+  z-index: 5;
+}
+
+.journey-node-icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(75, 160, 95, 0.10);
+}
+
+.journey-node span {
+  display: block;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  opacity: 0.55;
+}
+
+.journey-node strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* FIXED POSITIONS */
+
+.journey-farm {
+  top: 7%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.journey-token {
+  top: 25%;
+  right: 3%;
+}
+
+.journey-weighing {
+  right: -1%;
+  top: 62%;
+}
+
+.journey-center-node {
+  bottom: 7%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.journey-payment {
+  left: 3%;
+  top: 62%;
+}
+
+/* PULSES */
+
+.journey-pulse {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 6px rgba(75, 160, 95, 0.08);
+  z-index: 3;
+}
+
+.pulse-one {
+  left: 18%;
+  top: 29%;
+  color: #62a96f;
+  animation: pulseFloat 3s ease-in-out infinite;
+}
+
+.pulse-two {
+  right: 18%;
+  top: 43%;
+  color: #d2a947;
+  animation: pulseFloat 3.5s ease-in-out infinite;
+}
+
+.pulse-three {
+  left: 24%;
+  bottom: 23%;
+  color: #4b82b8;
+  animation: pulseFloat 4s ease-in-out infinite;
+}
+
+/* ANIMATION */
+
+@keyframes journeyRotate {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes journeyRotateReverse {
+  from {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+
+  to {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+}
+
+@keyframes pulseFloat {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+
+  50% {
+    transform: scale(1.7);
+    opacity: 1;
+  }
+}
+
+/* TABLET */
+
+@media (max-width: 1100px) {
+  .landing-hero-visual {
+    right: -2%;
+    width: min(52vw, 560px);
+    opacity: 0.9;
+  }
+
+  .journey-node {
+    min-width: 130px;
+  }
+
+  .journey-center {
+    width: 135px;
+    height: 135px;
+  }
+}
+
+/* MOBILE */
+
+@media (max-width: 800px) {
+  .landing-hero {
+    min-height: 900px;
+  }
+
+  .landing-hero-visual {
+    top: auto;
+    bottom: -60px;
+    left: 50%;
+    right: auto;
+    width: 560px;
+    max-width: none;
+    transform: translateX(-50%);
+    opacity: 0.25;
+    z-index: 1;
+  }
+
+  .landing-hero-content {
+    z-index: 5;
+  }
+
+  .journey-node {
+    transform: scale(0.88);
+  }
+
+  .journey-token {
+    right: 1%;
+  }
+
+  .journey-weighing {
+    right: 0;
+  }
+
+  .journey-payment {
+    left: 1%;
+  }
+}
+
+/* =========================================================
+   HERO VISUAL POSITIONING — UPDATED ONLY
+========================================================= */
+
+.landing-hero-visual {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: min(48vw, 620px);
+  aspect-ratio: 1;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+
+/* Keep the text safely in its own half */
+
+.landing-hero-content {
+  position: relative;
+  z-index: 5;
+  width: 48%;
+}
+
+
+/* Large screens */
+
+@media (min-width: 1200px) {
+
+  .landing-hero-visual {
+    right: 4%;
+  }
+
+}
+
+
+/* Medium screens */
+
+@media (max-width: 1100px) {
+
+  .landing-hero-visual {
+    right: 2%;
+    width: min(47vw, 560px);
+  }
+
+}
+
+
+/* Smaller screens */
+
+@media (max-width: 800px) {
+
+  .landing-hero-content {
+    width: 100%;
+  }
+
+  .landing-hero-visual {
+    top: auto;
+    bottom: -60px;
+    left: 50%;
+    right: auto;
+    width: 560px;
+    max-width: none;
+    transform: translateX(-50%);
+  }
+
+}
+/* =========================================================
+   HERO VISUAL — MOVE CIRCLE LEFT
+========================================================= */
+
+.landing-hero-visual {
+  position: absolute;
+  top: 50%;
+  right: 10%;
+  width: min(44vw, 580px);
+  aspect-ratio: 1;
+
+  transform: translateY(-50%);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  pointer-events: none;
+  z-index: 2;
+}
+
+
+/* Text stays above the illustration */
+
+.landing-hero-content {
+  position: relative;
+  z-index: 5;
+  width: 48%;
+}
+
+
+/* Desktop — pull the illustration further toward center */
+
+@media (min-width: 1200px) {
+  .landing-hero-visual {
+    right: 11%;
+  }
+}
+
+
+/* Medium screens */
+
+@media (max-width: 1100px) {
+  .landing-hero-visual {
+    right: 8%;
+    width: min(43vw, 520px);
+  }
+}
+
+
+/* Mobile */
+
+@media (max-width: 800px) {
+
+  .landing-hero-content {
+    width: 100%;
+  }
+
+  .landing-hero-visual {
+    top: auto;
+    bottom: -50px;
+
+    left: 50%;
+    right: auto;
+
+    width: 520px;
+    max-width: none;
+
+    transform: translateX(-50%);
+  }
+
+}
+/* =========================================================
+   HERO LAYOUT — STRONGER LEFT SHIFT
+========================================================= */
+
+.landing-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+
+/* LEFT CONTENT */
+
+.landing-hero-content {
+  position: relative;
+  z-index: 10;
+
+  width: 43%;
+  max-width: 620px;
+
+  flex-shrink: 0;
+}
+
+
+/* RIGHT VISUAL */
+
+.landing-hero-visual {
+  position: absolute;
+
+  top: 50%;
+
+  right: 24%;
+
+  width: min(42vw, 580px);
+  aspect-ratio: 1;
+
+  transform: translateY(-50%);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  pointer-events: none;
+  z-index: 2;
+}
+
+
+/* KEEP LOGO / TEXT FROM SHRINKING */
+
+.landing-hero-logo {
+  white-space: nowrap;
+}
+
+.landing-hero-logo .krishisetu-logow-ordmark {
+  white-space: nowrap;
+}
+
+.landing-hero-logo strong {
+  white-space: nowrap;
+}
+
+
+/* LARGE DESKTOP */
+
+@media (min-width: 1400px) {
+
+  .landing-hero-content {
+    width: 44%;
+    max-width: 650px;
+  }
+
+  .landing-hero-visual {
+    right: 22%;
+    width: min(40vw, 590px);
+  }
+
+}
+
+
+/* NORMAL DESKTOP */
+
+@media (min-width: 1101px) and (max-width: 1399px) {
+
+  .landing-hero-content {
+    width: 44%;
+  }
+
+  .landing-hero-visual {
+    right: 20%;
+    width: min(41vw, 550px);
+  }
+
+}
+
+
+/* TABLET */
+
+@media (max-width: 1100px) {
+
+  .landing-hero-content {
+    width: 46%;
+  }
+
+  .landing-hero-visual {
+    right: 17%;
+    width: min(40vw, 490px);
+  }
+
+}
+
+
+/* MOBILE */
+
+@media (max-width: 800px) {
+
+  .landing-hero-content {
+    width: 100%;
+    max-width: none;
+  }
+
+  .landing-hero-visual {
+    top: auto;
+    bottom: -50px;
+
+    left: 50%;
+    right: auto;
+
+    width: 520px;
+    max-width: none;
+
+    transform: translateX(-50%);
+  }
+
+}
+
+/* =========================================================
+   KRISHISETU LANDING HERO
+   Background journey + overlapping content
+========================================================= */
+
+.landing-hero {
+  position: relative;
+  min-height: 760px;
+  overflow: hidden;
+
+  display: flex;
+  align-items: center;
+
+  isolation: isolate;
+}
+
+
+/* =========================================================
+   HERO BACKGROUND
+========================================================= */
+
+.landing-hero-background {
+  position: absolute;
+  inset: 0;
+
+  z-index: 0;
+
+  pointer-events: none;
+}
+
+.landing-glow {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.landing-glow-one {
+  width: 520px;
+  height: 520px;
+
+  left: -180px;
+  top: -170px;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(79, 145, 88, 0.11),
+      transparent 68%
+    );
+
+  filter: blur(10px);
+}
+
+.landing-glow-two {
+  width: 680px;
+  height: 680px;
+
+  right: -280px;
+  bottom: -300px;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(209, 171, 76, 0.08),
+      transparent 68%
+    );
+
+  filter: blur(12px);
+}
+
+.landing-grid-pattern {
+  position: absolute;
+  inset: 0;
+
+  opacity: 0.22;
+
+  background-image:
+    linear-gradient(
+      rgba(60, 95, 70, 0.045) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(60, 95, 70, 0.045) 1px,
+      transparent 1px
+    );
+
+  background-size: 42px 42px;
+
+  mask-image:
+    linear-gradient(
+      to right,
+      transparent,
+      black 15%,
+      black 85%,
+      transparent
+    );
+
+  pointer-events: none;
+}
+
+
+/* =========================================================
+   HERO VISUAL
+========================================================= */
+
+.landing-hero-visual {
+  position: absolute;
+
+  width: min(920px, 72vw);
+  height: min(920px, 72vw);
+
+  left: 10%;
+  top: 50%;
+
+  transform: translate(-80%, -105%);
+
+  z-index: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  pointer-events: none;
+}
+
+
+/* atmospheric glow behind the animation */
+
+.landing-visual-glow {
+  position: absolute;
+
+  width: 72%;
+  height: 72%;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(78, 144, 88, 0.105),
+      rgba(78, 144, 88, 0.035) 42%,
+      transparent 73%
+    );
+
+  filter: blur(28px);
+}
+
+
+/* =========================================================
+   JOURNEY CONTAINER
+========================================================= */
+
+.landing-journey-illustration {
+  position: relative;
+
+  width: 100%;
+  height: 100%;
+
+  border-radius: 50%;
+
+  overflow: visible;
+
+  opacity: 0.88;
+}
+
+
+/* =========================================================
+   ORBITS
+========================================================= */
+
+.journey-orbit {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  border-radius: 50%;
+
+  transform: translate(-50%, -50%);
+}
+
+.orbit-main {
+  width: 70%;
+  height: 70%;
+
+  border:
+    1px solid rgba(72, 136, 82, 0.22);
+
+  box-shadow:
+    0 0 50px rgba(72, 136, 82, 0.035);
+
+  animation:
+    journeyRotate 30s linear infinite;
+}
+
+.orbit-inner {
+  width: 48%;
+  height: 48%;
+
+  border:
+    1px dashed rgba(72, 136, 82, 0.16);
+
+  animation:
+    journeyRotateReverse 20s linear infinite;
+}
+
+
+/* =========================================================
+   CENTER
+========================================================= */
+
+.journey-center {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 164px;
+  height: 164px;
+
+  transform: translate(-50%, -50%);
+
+  border-radius: 50%;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  background:
+    rgba(255, 255, 255, 0.93);
+
+  border:
+    1px solid rgba(67, 120, 76, 0.15);
+
+  box-shadow:
+    0 25px 70px rgba(32, 72, 40, 0.10),
+    0 0 0 16px rgba(75, 145, 87, 0.025);
+
+  backdrop-filter: blur(12px);
+}
+
+.journey-center-icon {
+  width: 60px;
+  height: 60px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background:
+    rgba(75, 145, 87, 0.085);
+
+  margin-bottom: 7px;
+}
+
+.journey-center strong {
+  font-size: 19px;
+  font-weight: 800;
+
+  white-space: nowrap;
+}
+
+.journey-center span {
+  margin-top: 3px;
+
+  font-size: 9px;
+  font-weight: 800;
+
+  letter-spacing: 0.14em;
+
+  opacity: 0.48;
+
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   NODES
+========================================================= */
+
+.journey-node {
+  position: absolute;
+
+  min-width: 150px;
+
+  padding: 11px 13px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  border-radius: 15px;
+
+  background:
+    rgba(255, 255, 255, 0.91);
+
+  border:
+    1px solid rgba(42, 76, 48, 0.075);
+
+  box-shadow:
+    0 16px 38px rgba(35, 69, 42, 0.075);
+
+  backdrop-filter: blur(12px);
+
+  white-space: nowrap;
+}
+
+.journey-node-icon {
+  width: 42px;
+  height: 42px;
+
+  flex: 0 0 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 12px;
+
+  background:
+    rgba(74, 145, 86, 0.08);
+}
+
+.journey-node span {
+  display: block;
+
+  font-size: 9px;
+  font-weight: 800;
+
+  letter-spacing: 0.1em;
+
+  opacity: 0.46;
+}
+
+.journey-node strong {
+  display: block;
+
+  margin-top: 2px;
+
+  font-size: 14px;
+  font-weight: 800;
+}
+
+
+/* =========================================================
+   NODE POSITIONS
+========================================================= */
+
+.journey-farm {
+  left: 20%;
+  top: 15%;
+
+  transform: translateX(-50%);
+}
+
+.journey-token {
+  right: 10%;
+  top: 25%;
+}
+
+.journey-weighing {
+  right: 10%;
+  left: auto;
+  top: 65%;
+}
+
+.journey-center-node {
+  left: 50%;
+  bottom: 4%;
+
+  transform: translateX(-50%);
+}
+
+.journey-payment {
+  left: auto;
+  right: 59%;
+  top: 70%;
+}
+
+
+/* =========================================================
+   FLOATING PULSES
+========================================================= */
+
+.journey-pulse {
+  position: absolute;
+
+  width: 8px;
+  height: 8px;
+
+  border-radius: 50%;
+
+  background: currentColor;
+
+  box-shadow:
+    0 0 0 7px rgba(75, 145, 87, 0.045);
+}
+
+.pulse-one {
+  left: 19%;
+  top: 29%;
+
+  color: #6da679;
+
+  animation:
+    pulseFloat 3s ease-in-out infinite;
+}
+
+.pulse-two {
+  right: 18%;
+  top: 44%;
+
+  color: #c9a657;
+
+  animation:
+    pulseFloat 3.8s ease-in-out infinite;
+}
+
+.pulse-three {
+  left: 25%;
+  bottom: 23%;
+
+  color: #648bb7;
+
+  animation:
+    pulseFloat 4.2s ease-in-out infinite;
+}
+
+
+/* =========================================================
+   CONTENT
+   Text is intentionally above the journey.
+========================================================= */
+
+.landing-hero-content {
+  position: relative;
+
+  z-index: 5;
+
+  width: min(650px, 57%);
+
+  padding:
+    72px 0
+    72px 5vw;
+
+  margin-left: 0;
+}
+
+
+/* Keep KrishiSetu logo and wordmark together */
+
+.landing-hero-logo {
+  position: relative;
+
+  z-index: 7;
+
+  white-space: nowrap;
+
+  margin-bottom: 18px;
+}
+
+
+/* =========================================================
+   HERO TEXT
+========================================================= */
+
+.landing-hero-content h1 {
+  position: relative;
+  z-index: 7;
+
+  max-width: 620px;
+
+  margin-bottom: 22px;
+}
+
+.landing-hero-description {
+  position: relative;
+  z-index: 7;
+
+  max-width: 570px;
+}
+
+
+/* =========================================================
+   HERO ACTIONS
+========================================================= */
+
+.landing-hero-actions {
+  position: relative;
+  z-index: 8;
+}
+
+
+/* =========================================================
+   HERO POINTS
+========================================================= */
+
+.landing-hero-points {
+  position: relative;
+  z-index: 8;
+}
+
+
+/* =========================================================
+   ANIMATION
+========================================================= */
+
+@keyframes journeyRotate {
+
+  from {
+    transform:
+      translate(-50%, -50%)
+      rotate(0deg);
+  }
+
+  to {
+    transform:
+      translate(-50%, -50%)
+      rotate(360deg);
+  }
+
+}
+
+@keyframes journeyRotateReverse {
+
+  from {
+    transform:
+      translate(-50%, -50%)
+      rotate(360deg);
+  }
+
+  to {
+    transform:
+      translate(-50%, -50%)
+      rotate(0deg);
+  }
+
+}
+
+@keyframes pulseFloat {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.4;
+  }
+
+  50% {
+    transform: scale(1.7);
+    opacity: 0.9;
+  }
+
+}
+
+
+/* =========================================================
+   LARGE DESKTOP
+========================================================= */
+
+@media (min-width: 1400px) {
+
+  .landing-hero {
+    min-height: 800px;
+  }
+
+  .landing-hero-content {
+    width: 54%;
+
+    padding-left: 6vw;
+  }
+
+  .landing-hero-visual {
+    left: 57%;
+    width: 860px;
+    height: 860px;
+  }
+
+}
+
+
+/* =========================================================
+   DESKTOP / LAPTOP
+========================================================= */
+
+@media (max-width: 1250px) {
+
+  .landing-hero {
+    min-height: 740px;
+  }
+
+  .landing-hero-content {
+    width: 55%;
+
+    padding-left: 4vw;
+  }
+
+  .landing-hero-visual {
+    left: 59%;
+
+    width: 720px;
+    height: 720px;
+
+    opacity: 0.78;
+  }
+
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1000px) {
+
+  .landing-hero {
+    min-height: 820px;
+    align-items: flex-start;
+  }
+
+  .landing-hero-content {
+    width: 72%;
+
+    padding:
+      55px
+      5vw
+      120px;
+  }
+
+  .landing-hero-visual {
+    left: 64%;
+    top: 58%;
+
+    width: 640px;
+    height: 640px;
+
+    opacity: 0.42;
+  }
+
+  .landing-hero-description {
+    max-width: 650px;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+  .landing-hero {
+    min-height: 920px;
+
+    align-items: flex-start;
+
+    text-align: center;
+  }
+
+  .landing-hero-content {
+    width: 100%;
+
+    padding:
+      40px
+      22px
+      180px;
+  }
+
+  .landing-hero-logo {
+    display: flex;
+    justify-content: center;
+  }
+
+  .landing-hero-actions {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .landing-hero-points {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .landing-hero-visual {
+    left: 50%;
+    top: auto;
+    bottom: -155px;
+
+    width: 640px;
+    height: 640px;
+
+    opacity: 0.28;
+
+    transform: translateX(-50%);
+  }
+
+  .journey-node {
+    transform: scale(0.82);
+  }
+
+  .journey-farm,
+  .journey-center-node {
+    transform:
+      translateX(-50%)
+      scale(0.82);
+  }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+
+  .landing-hero {
+    min-height: 850px;
+  }
+
+  .landing-hero-content {
+    padding:
+      32px
+      16px
+      150px;
+  }
+
+  .landing-hero-visual {
+    width: 560px;
+    height: 560px;
+
+    bottom: -130px;
+  }
+
+  .journey-node {
+    min-width: 138px;
+
+    padding: 9px 10px;
+  }
+
+  .journey-node-icon {
+    width: 38px;
+    height: 38px;
+
+    flex-basis: 38px;
+  }
+
+}
+
+/* =========================================================
+   KRISHISETU PREMIUM LANDING EFFECTS
+   IMPORTANT:
+   This block does NOT change the position of the main
+   .landing-hero-visual / journey animation.
+========================================================= */
+
+
+/* =========================================================
+   GLOBAL SMOOTHNESS
+========================================================= */
+
+html {
+  scroll-behavior: smooth;
+}
+
+.landing-page {
+  position: relative;
+  overflow-x: hidden;
+}
+
+.landing-page a,
+.landing-page button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.landing-page a,
+.landing-page button,
+.landing-page input,
+.landing-page select {
+  transition:
+    color 0.25s ease,
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.3s ease,
+    transform 0.3s cubic-bezier(.2,.8,.2,1),
+    opacity 0.25s ease;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.landing-header {
+  position: relative;
+  z-index: 50;
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.90),
+      rgba(255,255,255,0.76)
+    );
+
+  border-bottom:
+    1px solid rgba(40,75,48,0.07);
+}
+
+.landing-brand {
+  transition:
+    transform 0.35s cubic-bezier(.2,.8,.2,1),
+    filter 0.35s ease;
+}
+
+.landing-brand:hover {
+  transform: translateY(-2px);
+  filter:
+    drop-shadow(
+      0 8px 16px
+      rgba(47,108,57,0.12)
+    );
+}
+
+.landing-nav a {
+  position: relative;
+}
+
+.landing-nav a::after {
+  content: "";
+
+  position: absolute;
+
+  left: 50%;
+  bottom: -7px;
+
+  width: 0;
+  height: 2px;
+
+  border-radius: 99px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #4f9158,
+      #9dba69
+    );
+
+  transform: translateX(-50%);
+
+  transition:
+    width 0.3s ease;
+}
+
+.landing-nav a:hover::after {
+  width: 70%;
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.landing-hero {
+  position: relative;
+  isolation: isolate;
+}
+
+
+/* subtle top atmospheric wash */
+
+.landing-hero::before {
+  content: "";
+
+  position: absolute;
+
+  inset:
+    0 0 auto 0;
+
+  height: 260px;
+
+  z-index: 0;
+
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.76),
+      transparent
+    );
+}
+
+
+/* =========================================================
+   HERO BADGE
+========================================================= */
+
+.landing-hero-badge {
+  position: relative;
+
+  overflow: hidden;
+
+  border:
+    1px solid rgba(78,137,85,0.16);
+
+  background:
+    rgba(255,255,255,0.70);
+
+  backdrop-filter:
+    blur(12px);
+
+  -webkit-backdrop-filter:
+    blur(12px);
+
+  box-shadow:
+    0 10px 30px
+    rgba(53,99,59,0.055);
+
+  animation:
+    heroFadeUp 0.8s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.landing-hero-badge::after {
+  content: "";
+
+  position: absolute;
+
+  top: 0;
+  left: -120%;
+
+  width: 75%;
+  height: 100%;
+
+  background:
+    linear-gradient(
+      105deg,
+      transparent,
+      rgba(255,255,255,0.58),
+      transparent
+    );
+
+  transform: skewX(-18deg);
+
+  animation:
+    badgeShine 5s ease-in-out 1.5s infinite;
+}
+
+.landing-hero-badge:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 14px 36px
+    rgba(53,99,59,0.09);
+}
+
+
+/* =========================================================
+   HERO LOGO
+========================================================= */
+
+.landing-hero-logo {
+  animation:
+    heroLogoEnter 0.9s cubic-bezier(.2,.8,.2,1) 0.08s both;
+}
+
+
+/* =========================================================
+   HERO HEADING
+========================================================= */
+
+.landing-hero-content h1 {
+  animation:
+    heroFadeUp 0.9s cubic-bezier(.2,.8,.2,1) 0.16s both;
+
+  letter-spacing:
+    -0.035em;
+}
+
+.landing-hero-content h1 span {
+  display: inline-block;
+
+  background:
+    linear-gradient(
+      120deg,
+      #376b40 0%,
+      #57915b 42%,
+      #7eaa61 75%,
+      #4c8655 100%
+    );
+
+  background-size: 180% auto;
+
+  -webkit-background-clip: text;
+  background-clip: text;
+
+  -webkit-text-fill-color: transparent;
+
+  animation:
+    gradientText 8s ease-in-out infinite;
+}
+
+
+/* =========================================================
+   HERO DESCRIPTION
+========================================================= */
+
+.landing-hero-description {
+  animation:
+    heroFadeUp 0.9s cubic-bezier(.2,.8,.2,1) 0.26s both;
+}
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.landing-primary-button,
+.landing-secondary-button {
+  position: relative;
+
+  overflow: hidden;
+
+  isolation: isolate;
+}
+
+.landing-primary-button::before,
+.landing-secondary-button::before {
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  background:
+    linear-gradient(
+      115deg,
+      transparent 20%,
+      rgba(255,255,255,0.28) 48%,
+      transparent 76%
+    );
+
+  transform:
+    translateX(-120%);
+
+  transition:
+    transform 0.65s cubic-bezier(.2,.8,.2,1);
+
+  z-index: -1;
+}
+
+.landing-primary-button:hover::before,
+.landing-secondary-button:hover::before {
+  transform:
+    translateX(120%);
+}
+
+.landing-primary-button:hover {
+  transform:
+    translateY(-4px);
+
+  box-shadow:
+    0 15px 32px
+    rgba(52,112,60,0.18);
+}
+
+.landing-secondary-button:hover {
+  transform:
+    translateY(-4px);
+
+  box-shadow:
+    0 12px 28px
+    rgba(45,75,51,0.08);
+}
+
+.landing-primary-button:active,
+.landing-secondary-button:active {
+  transform:
+    translateY(-1px)
+    scale(0.985);
+}
+
+
+/* =========================================================
+   HERO POINTS
+========================================================= */
+
+.landing-hero-points > div {
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
+}
+
+.landing-hero-points > div:hover {
+  transform:
+    translateX(5px);
+}
+
+
+/* =========================================================
+   MAIN CIRCLE
+   Position is intentionally untouched.
+========================================================= */
+
+.landing-hero-visual {
+  pointer-events: none;
+}
+
+
+/* atmospheric glow animation only */
+
+.landing-visual-glow {
+  animation:
+    visualGlow 7s ease-in-out infinite;
+}
+
+
+/* orbit emphasis */
+
+.orbit-main {
+  box-shadow:
+    0 0 45px
+    rgba(72,136,82,0.045);
+
+  animation:
+    journeyRotate 30s linear infinite,
+    orbitPulse 6s ease-in-out infinite;
+}
+
+.orbit-inner {
+  animation:
+    journeyRotateReverse 20s linear infinite,
+    orbitInnerPulse 5s ease-in-out infinite;
+}
+
+
+/* =========================================================
+   JOURNEY CENTER
+========================================================= */
+
+.journey-center {
+  transition:
+    box-shadow 0.4s ease,
+    transform 0.4s cubic-bezier(.2,.8,.2,1);
+}
+
+.journey-center:hover {
+  transform:
+    translate(-50%, -50%)
+    scale(1.035);
+
+  box-shadow:
+    0 30px 80px
+    rgba(32,72,40,0.13),
+    0 0 0 20px
+    rgba(75,145,87,0.035);
+}
+
+.journey-center-icon {
+  animation:
+    centerBreath 4s ease-in-out infinite;
+}
+
+
+/* =========================================================
+   JOURNEY NODES
+========================================================= */
+
+.journey-node {
+  transition:
+    transform 0.4s cubic-bezier(.2,.8,.2,1),
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+}
+
+.journey-node:hover {
+  transform:
+    translateY(-6px)
+    scale(1.025);
+
+  box-shadow:
+    0 22px 48px
+    rgba(35,69,42,0.12);
+
+  border-color:
+    rgba(72,136,82,0.18);
+}
+
+.journey-node-icon {
+  transition:
+    transform 0.35s ease,
+    background-color 0.35s ease;
+}
+
+.journey-node:hover .journey-node-icon {
+  transform:
+    rotate(-5deg)
+    scale(1.08);
+
+  background:
+    rgba(74,145,86,0.13);
+}
+
+
+/* =========================================================
+   PULSES
+========================================================= */
+
+.journey-pulse {
+  animation:
+    journeyPulse 3.6s ease-in-out infinite;
+}
+
+.pulse-two {
+  animation-delay:
+    -1.2s;
+}
+
+.pulse-three {
+  animation-delay:
+    -2.35s;
+}
+
+
+/* =========================================================
+   TRUST STRIP
+========================================================= */
+
+.landing-trust-strip {
+  position: relative;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,0.82),
+      rgba(248,251,247,0.92)
+    );
+
+  border-top:
+    1px solid rgba(53,91,61,0.055);
+
+  border-bottom:
+    1px solid rgba(53,91,61,0.055);
+}
+
+.landing-trust-strip > div {
+  transition:
+    transform 0.35s cubic-bezier(.2,.8,.2,1),
+    box-shadow 0.35s ease,
+    background-color 0.35s ease;
+}
+
+.landing-trust-strip > div:hover {
+  transform:
+    translateY(-4px);
+
+  background:
+    rgba(255,255,255,0.78);
+
+  box-shadow:
+    0 10px 28px
+    rgba(48,84,53,0.055);
+}
+
+
+/* =========================================================
+   SECTION HEADINGS
+========================================================= */
+
+.landing-section-heading > span,
+.landing-portals-intro > span,
+.landing-support-card span,
+.landing-final-cta-content > span {
+  letter-spacing:
+    0.16em;
+
+  transition:
+    letter-spacing 0.35s ease;
+}
+
+.landing-section-heading:hover > span {
+  letter-spacing:
+    0.21em;
+}
+
+.landing-section-heading h2,
+.landing-portals-intro h2,
+.landing-final-cta-content h2 {
+  letter-spacing:
+    -0.035em;
+}
+
+.landing-section-heading em,
+.landing-portals-intro em,
+.landing-final-cta-content em {
+  background:
+    linear-gradient(
+      120deg,
+      #477e4e,
+      #6d9d5f
+    );
+
+  -webkit-background-clip: text;
+  background-clip: text;
+
+  -webkit-text-fill-color: transparent;
+
+  font-style: normal;
+}
+
+
+/* =========================================================
+   PURPOSE CARDS
+========================================================= */
+
+.purpose-card {
+  position: relative;
+
+  overflow: hidden;
+
+  transition:
+    transform 0.45s cubic-bezier(.2,.8,.2,1),
+    box-shadow 0.45s ease,
+    border-color 0.35s ease;
+}
+
+.purpose-card::before {
+  content: "";
+
+  position: absolute;
+
+  width: 180px;
+  height: 180px;
+
+  right: -85px;
+  top: -85px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(255,255,255,0.34),
+      transparent 68%
+    );
+
+  opacity: 0;
+
+  transition:
+    opacity 0.4s ease,
+    transform 0.5s ease;
+}
+
+.purpose-card:hover {
+  transform:
+    translateY(-9px);
+
+  box-shadow:
+    0 22px 48px
+    rgba(39,71,43,0.11);
+}
+
+.purpose-card:hover::before {
+  opacity: 1;
+  transform:
+    scale(1.25);
+}
+
+.purpose-card-icon {
+  transition:
+    transform 0.4s cubic-bezier(.2,.8,.2,1);
+}
+
+.purpose-card:hover .purpose-card-icon {
+  transform:
+    translateY(-3px)
+    rotate(-5deg)
+    scale(1.06);
+}
+
+.purpose-card-number {
+  transition:
+    transform 0.4s ease,
+    opacity 0.4s ease;
+}
+
+.purpose-card:hover .purpose-card-number {
+  transform:
+    translateX(4px);
+}
+
+
+/* =========================================================
+   PROCESS STEPS
+========================================================= */
+
+.landing-process-step {
+  transition:
+    transform 0.4s cubic-bezier(.2,.8,.2,1),
+    opacity 0.4s ease;
+}
+
+.landing-process-step:hover {
+  transform:
+    translateY(-7px);
+}
+
+.process-step-icon {
+  transition:
+    transform 0.4s cubic-bezier(.2,.8,.2,1),
+    box-shadow 0.35s ease;
+}
+
+.landing-process-step:hover .process-step-icon {
+  transform:
+    scale(1.08)
+    rotate(-4deg);
+
+  box-shadow:
+    0 12px 26px
+    rgba(42,73,46,0.09);
+}
+
+.landing-process-connector {
+  transition:
+    transform 0.35s ease,
+    opacity 0.35s ease;
+}
+
+.landing-process-track:hover .landing-process-connector {
+  opacity: 0.7;
+}
+
+
+/* =========================================================
+   STATS FLOW
+========================================================= */
+
+.landing-stats-strip > div:not(.stats-arrow) {
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
+}
+
+.landing-stats-strip > div:not(.stats-arrow):hover {
+  transform:
+    translateY(-4px);
+}
+
+.stats-arrow {
+  animation:
+    flowArrow 2.8s ease-in-out infinite;
+}
+
+.stats-arrow:nth-of-type(2) {
+  animation-delay: 0.2s;
+}
+
+.stats-arrow:nth-of-type(4) {
+  animation-delay: 0.4s;
+}
+
+.stats-arrow:nth-of-type(6) {
+  animation-delay: 0.6s;
+}
+
+
+/* =========================================================
+   PORTAL CARDS
+========================================================= */
+
+.landing-portal-card {
+  position: relative;
+
+  overflow: hidden;
+
+  transition:
+    transform 0.5s cubic-bezier(.2,.8,.2,1),
+    box-shadow 0.5s ease,
+    border-color 0.4s ease;
+}
+
+.landing-portal-card::before {
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  background:
+    linear-gradient(
+      125deg,
+      transparent 20%,
+      rgba(255,255,255,0.18) 48%,
+      transparent 73%
+    );
+
+  transform:
+    translateX(-125%);
+
+  transition:
+    transform 0.8s cubic-bezier(.2,.8,.2,1);
+
+  pointer-events: none;
+}
+
+.landing-portal-card:hover {
+  transform:
+    translateY(-10px);
+
+  box-shadow:
+    0 28px 60px
+    rgba(38,69,42,0.12);
+}
+
+.landing-portal-card:hover::before {
+  transform:
+    translateX(125%);
+}
+
+.portal-card-icon {
+  transition:
+    transform 0.4s cubic-bezier(.2,.8,.2,1);
+}
+
+.landing-portal-card:hover .portal-card-icon {
+  transform:
+    scale(1.08)
+    rotate(-5deg);
+}
+
+.portal-card-action > div {
+  transition:
+    transform 0.4s cubic-bezier(.2,.8,.2,1);
+}
+
+.landing-portal-card:hover .portal-card-action > div {
+  transform:
+    translateX(6px);
+}
+
+
+/* =========================================================
+   FEATURE CARDS
+========================================================= */
+
+.landing-feature-card {
+  position: relative;
+
+  overflow: hidden;
+
+  transition:
+    transform 0.4s cubic-bezier(.2,.8,.2,1),
+    box-shadow 0.4s ease,
+    border-color 0.35s ease;
+}
+
+.landing-feature-card::after {
+  content: "";
+
+  position: absolute;
+
+  width: 150px;
+  height: 150px;
+
+  right: -80px;
+  bottom: -90px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(92,151,98,0.08),
+      transparent 68%
+    );
+
+  opacity: 0;
+
+  transition:
+    opacity 0.4s ease,
+    transform 0.5s ease;
+}
+
+.landing-feature-card:hover {
+  transform:
+    translateY(-7px);
+
+  box-shadow:
+    0 18px 42px
+    rgba(38,70,42,0.09);
+}
+
+.landing-feature-card:hover::after {
+  opacity: 1;
+  transform:
+    scale(1.25);
+}
+
+.landing-feature-icon {
+  transition:
+    transform 0.4s cubic-bezier(.2,.8,.2,1);
+}
+
+.landing-feature-card:hover .landing-feature-icon {
+  transform:
+    translateY(-3px)
+    scale(1.07)
+    rotate(-4deg);
+}
+
+
+/* =========================================================
+   SUPPORT CARD
+========================================================= */
+
+.landing-support-card {
+  position: relative;
+
+  overflow: hidden;
+
+  backdrop-filter:
+    blur(14px);
+
+  -webkit-backdrop-filter:
+    blur(14px);
+
+  transition:
+    transform 0.45s cubic-bezier(.2,.8,.2,1),
+    box-shadow 0.45s ease;
+}
+
+.landing-support-card::after {
+  content: "";
+
+  position: absolute;
+
+  width: 300px;
+  height: 300px;
+
+  right: -150px;
+  top: -150px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(255,255,255,0.20),
+      transparent 68%
+    );
+
+  pointer-events: none;
+}
+
+.landing-support-card:hover {
+  transform:
+    translateY(-5px);
+
+  box-shadow:
+    0 25px 58px
+    rgba(38,70,42,0.10);
+}
+
+.landing-support-icon {
+  transition:
+    transform 0.45s cubic-bezier(.2,.8,.2,1);
+}
+
+.landing-support-card:hover .landing-support-icon {
+  transform:
+    scale(1.08)
+    rotate(-5deg);
+}
+
+
+/* =========================================================
+   FINAL CTA
+========================================================= */
+
+.landing-final-cta {
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-final-cta::before {
+  content: "";
+
+  position: absolute;
+
+  width: 500px;
+  height: 500px;
+
+  right: -160px;
+  top: -180px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(255,255,255,0.08),
+      transparent 70%
+    );
+
+  animation:
+    finalOrb 8s ease-in-out infinite;
+
+  pointer-events: none;
+}
+
+.landing-final-cta-actions a {
+  position: relative;
+  overflow: hidden;
+}
+
+.landing-final-cta-actions a::before {
+  content: "";
+
+  position: absolute;
+
+  top: 0;
+  left: -130%;
+
+  width: 80%;
+  height: 100%;
+
+  background:
+    linear-gradient(
+      110deg,
+      transparent,
+      rgba(255,255,255,0.23),
+      transparent
+    );
+
+  transform: skewX(-20deg);
+
+  transition:
+    transform 0.8s ease;
+}
+
+.landing-final-cta-actions a:hover::before {
+  transform:
+    translateX(270%)
+    skewX(-20deg);
+}
+
+.landing-final-cta-actions a:hover {
+  transform:
+    translateY(-4px);
+}
+
+
+/* =========================================================
+   FINAL CTA DECORATION
+========================================================= */
+
+.landing-final-cta-decoration > div {
+  transition:
+    transform 0.45s cubic-bezier(.2,.8,.2,1),
+    opacity 0.4s ease;
+}
+
+.landing-final-cta-decoration > div:nth-child(1) {
+  animation:
+    decorationFloat 5s ease-in-out infinite;
+}
+
+.landing-final-cta-decoration > div:nth-child(2) {
+  animation:
+    decorationFloat 5s ease-in-out 1.1s infinite;
+}
+
+.landing-final-cta-decoration > div:nth-child(3) {
+  animation:
+    decorationFloat 5s ease-in-out 2.1s infinite;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.landing-footer-column a {
+  position: relative;
+
+  width: fit-content;
+}
+
+.landing-footer-column a::after {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  bottom: -3px;
+
+  width: 0;
+  height: 1px;
+
+  background:
+    currentColor;
+
+  opacity: 0.6;
+
+  transition:
+    width 0.3s ease;
+}
+
+.landing-footer-column a:hover::after {
+  width: 100%;
+}
+
+
+/* =========================================================
+   GENERAL KEYFRAMES
+========================================================= */
+
+@keyframes heroFadeUp {
+
+  from {
+    opacity: 0;
+    transform:
+      translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform:
+      translateY(0);
+  }
+
+}
+
+@keyframes heroLogoEnter {
+
+  from {
+    opacity: 0;
+    transform:
+      translateY(18px)
+      scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform:
+      translateY(0)
+      scale(1);
+  }
+
+}
+
+@keyframes badgeShine {
+
+  0%,
+  58%,
+  100% {
+    transform:
+      translateX(-140%)
+      skewX(-18deg);
+  }
+
+  72% {
+    transform:
+      translateX(230%)
+      skewX(-18deg);
+  }
+
+}
+
+@keyframes gradientText {
+
+  0%,
+  100% {
+    background-position:
+      0% 50%;
+  }
+
+  50% {
+    background-position:
+      100% 50%;
+  }
+
+}
+
+@keyframes visualGlow {
+
+  0%,
+  100% {
+    transform:
+      scale(0.96);
+    opacity:
+      0.72;
+  }
+
+  50% {
+    transform:
+      scale(1.04);
+    opacity:
+      1;
+  }
+
+}
+
+@keyframes orbitPulse {
+
+  0%,
+  100% {
+    opacity:
+      0.70;
+  }
+
+  50% {
+    opacity:
+      1;
+  }
+
+}
+
+@keyframes orbitInnerPulse {
+
+  0%,
+  100% {
+    opacity:
+      0.48;
+  }
+
+  50% {
+    opacity:
+      0.82;
+  }
+
+}
+
+@keyframes centerBreath {
+
+  0%,
+  100% {
+    transform:
+      scale(1);
+  }
+
+  50% {
+    transform:
+      scale(1.045);
+  }
+
+}
+
+@keyframes journeyPulse {
+
+  0%,
+  100% {
+    opacity:
+      0.35;
+
+    transform:
+      scale(0.9);
+  }
+
+  50% {
+    opacity:
+      0.95;
+
+    transform:
+      scale(1.6);
+  }
+
+}
+
+@keyframes flowArrow {
+
+  0%,
+  100% {
+    opacity:
+      0.45;
+
+    transform:
+      translateX(0);
+  }
+
+  50% {
+    opacity:
+      0.9;
+
+    transform:
+      translateX(4px);
+  }
+
+}
+
+@keyframes finalOrb {
+
+  0%,
+  100% {
+    transform:
+      translate(0, 0)
+      scale(1);
+  }
+
+  50% {
+    transform:
+      translate(-18px, 14px)
+      scale(1.08);
+  }
+
+}
+
+@keyframes decorationFloat {
+
+  0%,
+  100% {
+    transform:
+      translateY(0)
+      rotate(0deg);
+  }
+
+  50% {
+    transform:
+      translateY(-12px)
+      rotate(2deg);
+  }
+
+}
+
+
+/* =========================================================
+   ACCESSIBILITY
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration:
+      0.01ms !important;
+
+    animation-iteration-count:
+      1 !important;
+
+    transition-duration:
+      0.01ms !important;
+
+    scroll-behavior:
+      auto !important;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE TUNING
+========================================================= */
+
+@media (max-width: 700px) {
+
+  .landing-hero-content h1 span {
+    background-size:
+      100% auto;
+  }
+
+  .landing-portal-card:hover,
+  .purpose-card:hover,
+  .landing-feature-card:hover {
+    transform:
+      translateY(-4px);
+  }
+
+  .landing-trust-strip > div:hover {
+    transform:
+      translateY(-2px);
+  }
+
+}
+
+@media (max-width: 480px) {
+
+  .landing-hero-badge::after {
+    animation:
+      none;
+  }
+
+  .landing-hero-content h1 span {
+    background: none;
+
+    -webkit-text-fill-color:
+      currentColor;
+  }
+
+}
+
+
+/* =========================================================
+   FINAL LANDING POLISH
+   Only enlarges process/step boxes and shifts CTA artwork.
+   Does not alter hero circle positioning.
+========================================================= */
+
+
+/* =========================================================
+   HOW IT WORKS — BIGGER STEP BOXES
+========================================================= */
+
+.landing-process-step {
+  min-height: 245px;
+
+  padding: 26px 24px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+
+  border-radius: 20px;
+}
+
+.process-step-top {
+  min-height: 68px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 18px;
+}
+
+.process-step-icon {
+  width: 58px;
+  height: 58px;
+
+  flex: 0 0 58px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 16px;
+}
+
+.process-step-icon svg {
+  width: 30px;
+  height: 30px;
+}
+
+.landing-process-step h3 {
+  font-size: 21px;
+
+  line-height: 1.2;
+
+  margin-bottom: 10px;
+}
+
+.landing-process-step p {
+  max-width: 250px;
+
+  font-size: 14px;
+
+  line-height: 1.65;
+
+  margin: 0;
+}
+
+
+/* slightly larger numbering */
+
+.process-step-top > span {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+
+/* Give the connectors a little more breathing room */
+
+.landing-process-track {
+  column-gap: 12px;
+}
+
+.landing-process-connector {
+  flex: 0 0 auto;
+
+  margin-inline: 2px;
+}
+
+
+/* =========================================================
+   PROCESS RESPONSIVE
+========================================================= */
+
+@media (max-width: 1100px) {
+
+  .landing-process-step {
+    min-height: 225px;
+
+    padding: 22px 19px;
+  }
+
+  .landing-process-step h3 {
+    font-size: 19px;
+  }
+
+  .landing-process-step p {
+    font-size: 13px;
+  }
+
+}
+
+@media (max-width: 700px) {
+
+  .landing-process-step {
+    min-height: 215px;
+
+    padding: 22px 20px;
+  }
+
+  .landing-process-step h3 {
+    font-size: 20px;
+  }
+
+  .landing-process-step p {
+    max-width: none;
+
+    font-size: 14px;
+  }
+
+}
+
+
+/* =========================================================
+   BOTTOM CTA ILLUSTRATIONS
+   Move only the decoration toward the right.
+========================================================= */
+
+.landing-final-cta-decoration {
+  transform:
+    translateX(65px);
+}
+
+.landing-final-cta-decoration > div {
+  position: relative;
+}
+
+
+/* Keep it from becoming too far right on smaller screens */
+
+@media (max-width: 1100px) {
+
+  .landing-final-cta-decoration {
+    transform:
+      translateX(30px);
+  }
+
+}
+
+@media (max-width: 700px) {
+
+  .landing-final-cta-decoration {
+    transform:
+      translateX(0);
+  }
+
+}
+
+/* =========================================================
+   HOW IT WORKS — LARGE SQUARE STEP CARDS
+========================================================= */
+
+.landing-process-step {
+  width: 250px;
+  min-width: 250px;
+  height: 250px;
+  min-height: 250px;
+
+  padding: 26px 24px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+
+  box-sizing: border-box;
+
+  border-radius: 22px;
+}
+
+
+/* Larger top area */
+
+.process-step-top {
+  width: 100%;
+
+  min-height: 64px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 22px;
+}
+
+
+/* Larger icon */
+
+.process-step-icon {
+  width: 62px;
+  height: 62px;
+
+  flex: 0 0 62px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 17px;
+}
+
+.process-step-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+
+/* Larger title */
+
+.landing-process-step h3 {
+  font-size: 22px;
+  line-height: 1.2;
+
+  margin: 0 0 12px;
+}
+
+
+/* More readable description */
+
+.landing-process-step p {
+  width: 100%;
+  max-width: none;
+
+  font-size: 14px;
+  line-height: 1.65;
+
+  margin: 0;
+}
+
+
+/* Larger number */
+
+.process-step-top > span {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+
+/* Give square cards enough room in the horizontal track */
+
+.landing-process-track {
+  align-items: stretch;
+  gap: 14px;
+}
+
+
+/* Keep connectors centered vertically */
+
+.landing-process-connector {
+  align-self: center;
+  flex-shrink: 0;
+}
+
+
+/* =========================================================
+   LARGE DESKTOP
+========================================================= */
+
+@media (min-width: 1400px) {
+
+  .landing-process-step {
+    width: 270px;
+    min-width: 270px;
+
+    height: 270px;
+    min-height: 270px;
+
+    padding: 29px 27px;
+  }
+
+  .landing-process-step h3 {
+    font-size: 23px;
+  }
+
+  .landing-process-step p {
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+}
+
+
+/* =========================================================
+   LAPTOP
+========================================================= */
+
+@media (max-width: 1250px) {
+
+  .landing-process-step {
+    width: 220px;
+    min-width: 220px;
+
+    height: 220px;
+    min-height: 220px;
+
+    padding: 22px 20px;
+  }
+
+  .landing-process-step h3 {
+    font-size: 19px;
+  }
+
+  .landing-process-step p {
+    font-size: 13px;
+  }
+
+}
+
+
+/* =========================================================
+   TABLET / MOBILE
+========================================================= */
+
+@media (max-width: 1000px) {
+
+  .landing-process-track {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .landing-process-step {
+    width: 240px;
+    min-width: 240px;
+
+    height: 240px;
+    min-height: 240px;
+  }
+
+  .landing-process-connector {
+    display: none;
+  }
+
+}
+
+
+@media (max-width: 550px) {
+
+  .landing-process-step {
+    width: min(88vw, 330px);
+    min-width: min(88vw, 330px);
+
+    height: auto;
+    min-height: 260px;
+
+    padding: 25px 23px;
+  }
+
+  .landing-process-step h3 {
+    font-size: 21px;
+  }
+
+  .landing-process-step p {
+    font-size: 14px;
+  }
+
+}
+/* =========================================================
+   BOTTOM CTA — THREE ILLUSTRATIONS POSITION
+========================================================= */
+
+.landing-final-cta-decoration {
+  position: absolute;
+
+  right: -5%;
+  top: 30%;
+
+  transform:
+    translateY(-40%);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 20px;
+}
+
+
+/* individual illustration cards */
+
+.landing-final-cta-decoration > div {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 105px;
+  height: 105px;
+
+  border-radius: 24px;
+
+  background:
+    rgba(255, 255, 255, 0.08);
+
+  border:
+    1px solid rgba(255, 255, 255, 0.12);
+
+  backdrop-filter:
+    blur(10px);
+
+  -webkit-backdrop-filter:
+    blur(10px);
+
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.08);
+
+  transition:
+    transform 0.4s cubic-bezier(.2,.8,.2,1),
+    background-color 0.3s ease;
+}
+
+.landing-final-cta-decoration > div:hover {
+  transform:
+    translateY(-8px)
+    scale(1.05);
+}
+
+
+/* stagger the three illustrations */
+
+.landing-final-cta-decoration > div:nth-child(1) {
+  margin-top: 28px;
+}
+
+.landing-final-cta-decoration > div:nth-child(2) {
+  margin-top: -18px;
+}
+
+.landing-final-cta-decoration > div:nth-child(3) {
+  margin-top: 30px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1100px) {
+
+  .landing-final-cta-decoration {
+    right: 2%;
+    gap: 18px;
+  }
+
+  .landing-final-cta-decoration > div {
+    width: 88px;
+    height: 88px;
+  }
+
+}
+
+
+@media (max-width: 800px) {
+
+  .landing-final-cta-decoration {
+    position: relative;
+
+    right: auto;
+    top: auto;
+
+    transform: none;
+
+    margin:
+      30px auto 0;
+
+    justify-content: center;
+  }
+
+}
+
+
+@media (max-width: 500px) {
+
+  .landing-final-cta-decoration {
+    gap: 10px;
+  }
+
+  .landing-final-cta-decoration > div {
+    width: 72px;
+    height: 72px;
+  }
+
+}
+
+/* =========================================================
+   FOOTER LOGO — FIT INSIDE BRAND BOX
+========================================================= */
+
+.landing-footer-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 230px;
+  min-height: 82px;
+
+  padding: 10px 18px;
+
+  box-sizing: border-box;
+
+  border-radius: 18px;
+}
+
+
+/* Make the logo fit comfortably */
+
+.landing-footer-logo .logo {
+  max-width: 100%;
+}
+
+
+/* If Logo component doesn't use .logo */
+
+.landing-footer-logo img {
+  max-width: 100%;
+  height: auto;
+}
+
+
+/* Footer brand text */
+
+.landing-footer-brand p {
+  max-width: 320px;
+
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+
+/* Slightly larger box on desktop */
+
+@media (min-width: 1100px) {
+
+  .landing-footer-logo {
+    min-width: 250px;
+    min-height: 88px;
+
+    padding: 10px 22px;
+  }
+
+}
+/* =========================================================
+   FOOTER BRAND — CLEAN / COMPACT
+========================================================= */
+
+.landing-footer-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+
+/* Remove the oversized visual box */
+
+.landing-footer-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+
+  padding: 0;
+
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+
+  border-radius: 0;
+}
+
+
+/* Keep the logo at its original comfortable size */
+
+.landing-footer-logo img {
+  max-width: none;
+  height: auto;
+}
+
+
+/* One clean line for the description */
+
+.landing-footer-brand p {
+  max-width: none;
+
+  width: max-content;
+
+  margin-top: 10px;
+
+  font-size: 15px;
+  line-height: 1.5;
+
+  white-space: nowrap;
+}
+
+
+/* Prevent unwanted wrapping on normal desktop */
+
+@media (min-width: 801px) {
+
+  .landing-footer-brand {
+    min-width: 360px;
+  }
+
+}
+
+
+/* On mobile, allow natural wrapping */
+
+@media (max-width: 800px) {
+
+  .landing-footer-brand p {
+    width: auto;
+    max-width: 320px;
+
+    white-space: normal;
+  }
+
+}
+
+/* =========================================================
+   FOOTER BRAND — FINAL FIX
+========================================================= */
+
+.landing-footer-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  overflow: visible;
+}
+
+
+/* Logo wrapper: no clipping / no artificial box */
+
+.landing-footer-logo {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+
+  width: auto;
+  height: auto;
+
+  padding: 0;
+  margin: 0;
+
+  background: transparent;
+  border: none;
+  box-shadow: none;
+
+  overflow: visible;
+
+  border-radius: 0;
+}
+
+
+/* Let the actual Logo component extend naturally */
+
+.landing-footer-logo img,
+.landing-footer-logo svg {
+  max-width: none;
+  overflow: visible;
+}
+
+
+/* Description flush to the left */
+
+.landing-footer-brand p {
+  display: block;
+
+  width: 100%;
+  max-width: 360px;
+
+  margin:
+    12px 0 0 0;
+
+  padding: 0;
+
+  font-size: 15px;
+  line-height: 1.55;
+
+  text-align: left;
+
+  white-space: nowrap;
+}
+
+
+/* Make sure the footer column itself isn't clipping it */
+
+.landing-footer-main,
+.landing-footer-brand {
+  overflow: visible;
+}
+
+
+/* Desktop: keep description on one line */
+
+@media (min-width: 801px) {
+
+  .landing-footer-brand p {
+    max-width: none;
+    width: max-content;
+  }
+
+}
+
+
+/* Mobile */
+
+@media (max-width: 800px) {
+
+  .landing-footer-brand p {
+    width: auto;
+    max-width: 320px;
+
+    white-space: normal;
+  }
+
+}
+.landing-footer-brand p {
+  position: relative;
+  left: -100px;
+
+  display: block;
+  width: max-content;
+  max-width: none;
+
+  margin: 12px 0 0 0;
+
+  padding: 0;
+
+  font-size: 15px;
+  line-height: 1.55;
+
+  text-align: left;
+  white-space: nowrap;
+}
