@@ -1560,41 +1560,51 @@ function FarmerHome() {
 
                                         <small>
 
-                                          {
-                                            formatNotificationDate(
-                                              notification.created_at,
-                                              language
-                                            )
-                                          }
+  {
+    formatNotificationDate(
+      notification.created_at,
+      language
+    )
+  }
 
-                                          {" · "}
+  {" · "}
 
-                                          {
-                                            notification.status ===
-                                            "SENT"
-                                              ? getText(
-                                                  language,
-                                                  "SMS sent",
-                                                  "SMS भेजा गया",
-                                                  "SMS పంపబడింది"
-                                                )
-                                              : notification.status ===
-                                                "FAILED"
-                                                ? getText(
-                                                    language,
-                                                    "SMS failed",
-                                                    "SMS विफल",
-                                                    "SMS విఫలమైంది"
-                                                  )
-                                                : getText(
-                                                    language,
-                                                    "In-app update",
-                                                    "ऐप सूचना",
-                                                    "యాప్ అప్‌డేట్"
-                                                  )
-                                          }
+  {
+    notification.channel ===
+    "SMS"
+      ? (
+        notification.status ===
+        "SENT"
+          ? getText(
+              language,
+              "SMS sent",
+              "SMS भेजा गया",
+              "SMS పంపబడింది"
+            )
+          : notification.status ===
+            "FAILED"
+            ? getText(
+                language,
+                "SMS failed",
+                "SMS विफल",
+                "SMS విఫలమైంది"
+              )
+            : getText(
+                language,
+                "SMS pending",
+                "SMS लंबित",
+                "SMS పెండింగ్‌లో ఉంది"
+              )
+      )
+      : getText(
+          language,
+          "In-app update",
+          "ऐप सूचना",
+          "యాప్ అప్‌డేట్"
+        )
+  }
 
-                                        </small>
+</small>
 
                                       </div>
 
