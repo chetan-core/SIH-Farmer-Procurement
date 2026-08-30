@@ -715,61 +715,7 @@ function AdminLogin() {
             LOWER TRUST STRIP
         ====================================================== */}
 
-        <section className="admin-login-trust">
-
-
-          <div>
-
-            <CheckCircle2
-              size={17}
-            />
-
-            <span>
-              Live farmer queue
-            </span>
-
-          </div>
-
-
-          <div>
-
-            <CheckCircle2
-              size={17}
-            />
-
-            <span>
-              Weighing records
-            </span>
-
-          </div>
-
-
-          <div>
-
-            <CheckCircle2
-              size={17}
-            />
-
-            <span>
-              Procurement status
-            </span>
-
-          </div>
-
-
-          <div>
-
-            <CheckCircle2
-              size={17}
-            />
-
-            <span>
-              Payment tracking
-            </span>
-
-          </div>
-
-        </section>
+       
 
 
       </main>
