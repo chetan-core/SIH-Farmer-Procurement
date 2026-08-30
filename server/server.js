@@ -60,6 +60,34 @@ function ensurePaymentIssuesTable() {
   `);
 }
 
+function ensureNotificationsTable() {
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS notifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+      farmer_id TEXT NOT NULL,
+      booking_id TEXT,
+
+      type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      message TEXT NOT NULL,
+
+      channel TEXT NOT NULL DEFAULT 'IN_APP',
+
+      status TEXT NOT NULL DEFAULT 'CREATED',
+
+      read_at TEXT,
+      sent_at TEXT,
+
+      provider_response TEXT,
+
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+}
+
 
 try {
   addColumnIfMissing(
@@ -93,6 +121,7 @@ try {
   );
 
   ensurePaymentIssuesTable();
+ensureNotificationsTable();
 } catch (error) {
   console.error(
     "Database migration error:",
@@ -367,7 +396,139 @@ async function sendSms(
   };
 }
 
+async function createNotification({
+  farmerId,
+  bookingId = null,
+  type,
+  title,
+  message,
+  sms = false,
+  phone = null,
+}) {
 
+  const result =
+    db.prepare(`
+      INSERT INTO notifications (
+        farmer_id,
+        booking_id,
+        type,
+        title,
+        message,
+        channel,
+        status
+      )
+      VALUES (
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        ?,
+        'CREATED'
+      )
+    `).run(
+      farmerId,
+      bookingId,
+      type,
+      title,
+      message,
+      sms
+        ? "SMS"
+        : "IN_APP"
+    );
+
+
+  let smsStatus =
+    "NOT_SENT";
+
+  let sentAt =
+    null;
+
+  let providerResponse =
+    null;
+
+
+  if (
+    sms &&
+    phone
+  ) {
+
+    try {
+
+      const smsResult =
+        await sendSms(
+          phone,
+          message
+        );
+
+
+      smsStatus =
+        smsResult.status ||
+        "SENT";
+
+
+      sentAt =
+        smsStatus === "SENT"
+          ? new Date().toISOString()
+          : null;
+
+
+      providerResponse =
+        smsResult.data
+          ? JSON.stringify(
+              smsResult.data
+            )
+          : null;
+
+
+    } catch (error) {
+
+      console.warn(
+        "Notification SMS failed:",
+        error
+      );
+
+
+      smsStatus =
+        "FAILED";
+
+
+      providerResponse =
+        error?.message ||
+        null;
+
+    }
+
+  }
+
+
+  db.prepare(`
+    UPDATE notifications
+    SET
+      status = ?,
+      sent_at = ?,
+      provider_response = ?
+    WHERE id = ?
+  `).run(
+    smsStatus,
+    sentAt,
+    providerResponse,
+    result.lastInsertRowid
+  );
+
+
+  return {
+    id:
+      result.lastInsertRowid,
+
+    status:
+      smsStatus,
+
+    sentAt,
+
+  };
+
+}
 app.get(
   "/api/health",
   (req, res) => {
@@ -1160,7 +1321,33 @@ app.post(
 
       const created =
         getBookingById(id);
+      const notification =
+  await createNotification({
 
+    farmerId:
+      farmer.id,
+
+    bookingId:
+      id,
+
+    type:
+      "BOOKING_CONFIRMED",
+
+    title:
+      "Booking confirmed",
+
+    message:
+      `Your KrishiSetu booking ${token} is confirmed for ${date} from ${slotStart} to ${slotEnd}.`,
+
+    sms:
+      settings.bookingConfirmationSms &&
+      settings.smsEnabled &&
+      SMS_ENABLED,
+
+    phone:
+      farmer.phone,
+
+  });
       let bookingSmsStatus =
         "NOT_SENT";
 
@@ -1191,11 +1378,11 @@ app.post(
       }
 
       res.status(201).json({
-        success: true,
-        booking: created,
-        smsStatus:
-          bookingSmsStatus,
-      });
+  success: true,
+  booking: created,
+  smsStatus:
+    notification.status,
+});
     } catch (error) {
       console.error(
         "Create booking error:",
@@ -1411,7 +1598,55 @@ app.patch(
         });
 
       transaction();
+      const notification =
+  await createNotification({
 
+    farmerId:
+      booking.farmer_id,
+
+    bookingId:
+      bookingId,
+
+    type:
+      nextStatus,
+
+    title:
+      getNotificationTitle(
+        nextStatus
+      ),
+
+    message:
+      getStatusSms(
+        booking.token,
+        nextStatus
+      ) ||
+      `Booking ${booking.token} status updated.`,
+
+    sms:
+      settings.smsEnabled &&
+      SMS_ENABLED &&
+      Boolean(
+        booking.farmer_phone
+      ),
+
+    phone:
+      booking.farmer_phone,
+
+  });
+      res.json({
+  success: true,
+
+  message:
+    "Booking status updated.",
+
+  booking:
+    getBookingById(
+      bookingId
+    ),
+
+  smsStatus:
+    notification.status,
+});
       const settings =
         getSettings();
 
@@ -1814,7 +2049,39 @@ app.patch(
     }
   }
 );
+function getNotificationTitle(
+  status
+) {
 
+  const titles = {
+
+    ARRIVED:
+      "Arrival recorded",
+
+    LATE:
+      "Late arrival recorded",
+
+    WEIGHING:
+      "Weighing started",
+
+    PROCURED:
+      "Procurement completed",
+
+    PAYMENT_PENDING:
+      "Payment processing started",
+
+    PAYMENT_SENT:
+      "Payment sent",
+
+  };
+
+
+  return (
+    titles[status] ||
+    "Booking update"
+  );
+
+}
 
 app.patch(
   "/api/bookings/:id/payment",
@@ -2122,7 +2389,6 @@ app.patch(
     }
   }
 );
-
 
 app.get(
   "/api/bookings/:id/payments",
@@ -2992,7 +3258,102 @@ app.get(
     }
   }
 );
+app.get(
+  "/api/farmers/:id/notifications",
+  (req, res) => {
 
+    try {
+
+      const notifications =
+        db.prepare(`
+          SELECT
+            *
+          FROM notifications
+          WHERE farmer_id = ?
+          ORDER BY
+            datetime(created_at) DESC,
+            id DESC
+        `).all(
+          req.params.id
+        );
+
+
+      res.json({
+
+        success:
+          true,
+
+        notifications,
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Get notifications error:",
+        error
+      );
+
+
+      res.status(500).json({
+
+        success:
+          false,
+
+        message:
+          "Failed to load notifications.",
+
+      });
+
+    }
+
+  }
+);
+
+app.patch(
+  "/api/notifications/:id/read",
+  (req, res) => {
+
+    try {
+
+      db.prepare(`
+        UPDATE notifications
+        SET read_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).run(
+        req.params.id
+      );
+
+
+      res.json({
+
+        success:
+          true,
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Read notification error:",
+        error
+      );
+
+
+      res.status(500).json({
+
+        success:
+          false,
+
+        message:
+          "Failed to update notification.",
+
+      });
+
+    }
+
+  }
+);
 
 app.use(
   (req, res) => {

@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  Bell,
   CalendarClock,
   CalendarDays,
   Check,
@@ -13,7 +14,9 @@ import {
   RefreshCw,
   Scale,
   ShieldCheck,
+  Smartphone,
   Wheat,
+  X,
 } from "lucide-react";
 
 import {
@@ -71,6 +74,27 @@ function FarmerHome() {
     setBookings,
   ] =
     useState([]);
+
+
+  const [
+    notifications,
+    setNotifications,
+  ] =
+    useState([]);
+
+
+  const [
+    notificationsOpen,
+    setNotificationsOpen,
+  ] =
+    useState(false);
+
+
+  const [
+    notificationsLoading,
+    setNotificationsLoading,
+  ] =
+    useState(false);
 
 
   const [
@@ -226,15 +250,115 @@ function FarmerHome() {
     );
 
 
+  const loadNotifications =
+    useCallback(
+      async (
+        silent = false
+      ) => {
+
+        if (
+          !farmerId
+        ) {
+
+          return;
+
+        }
+
+
+        if (
+          !silent
+        ) {
+
+          setNotificationsLoading(
+            true
+          );
+
+        }
+
+
+        try {
+
+          const response =
+            await fetch(
+              `${API_URL}/farmers/${encodeURIComponent(
+                farmerId
+              )}/notifications`
+            );
+
+
+          const data =
+            await response.json();
+
+
+          if (
+            !response.ok
+          ) {
+
+            throw new Error(
+              data?.message ||
+              "Unable to load notifications."
+            );
+
+          }
+
+
+          setNotifications(
+            Array.isArray(
+              data?.notifications
+            )
+              ? data.notifications
+              : []
+          );
+
+
+        } catch (
+          notificationError
+        ) {
+
+          console.error(
+            "FarmerHome notifications error:",
+            notificationError
+          );
+
+        } finally {
+
+          if (
+            !silent
+          ) {
+
+            setNotificationsLoading(
+              false
+            );
+
+          }
+
+        }
+
+      },
+      [
+        farmerId,
+      ]
+    );
+
+
   useEffect(() => {
 
     loadBookings();
 
+    loadNotifications();
+
 
     const timer =
       setInterval(
-        () =>
-          loadBookings(),
+        () => {
+
+          loadBookings();
+
+          loadNotifications(
+            true
+          );
+
+        },
         5000
       );
 
@@ -249,7 +373,79 @@ function FarmerHome() {
 
   }, [
     loadBookings,
+    loadNotifications,
   ]);
+
+
+  async function markNotificationRead(
+    id
+  ) {
+
+    try {
+
+      const response =
+        await fetch(
+          `${API_URL}/notifications/${encodeURIComponent(
+            id
+          )}/read`,
+          {
+            method:
+              "PATCH",
+          }
+        );
+
+
+      if (
+        !response.ok
+      ) {
+
+        throw new Error(
+          "Unable to mark notification as read."
+        );
+
+      }
+
+
+      setNotifications(
+        (
+          current
+        ) =>
+          current.map(
+            (
+              notification
+            ) =>
+              notification.id ===
+              id
+                ? {
+                    ...notification,
+                    read_at:
+                      new Date().toISOString(),
+                  }
+                : notification
+          )
+      );
+
+    } catch (
+      notificationError
+    ) {
+
+      console.error(
+        "Mark notification read error:",
+        notificationError
+      );
+
+    }
+
+  }
+
+
+  const unreadNotificationCount =
+    notifications.filter(
+      (
+        notification
+      ) =>
+        !notification.read_at
+    ).length;
 
 
   const farmerName =
@@ -1043,28 +1239,299 @@ function FarmerHome() {
             </div>
 
 
-            <button
-              type="button"
-              className="farmer-refresh-button"
-              onClick={() =>
-                loadBookings(true)
-              }
-              disabled={
-                refreshing
-              }
-              title="Refresh"
-            >
+            <div className="farmer-home-header-actions">
 
-              <RefreshCw
-                size={16}
-                className={
+              <div className="farmer-notification-wrap">
+
+                <button
+                  type="button"
+                  className={
+                      `farmer-notification-button ${
+                        notificationsOpen
+                          ? "open"
+                          : ""
+                      } ${
+                        unreadNotificationCount > 0
+                          ? "has-unread"
+                          : ""
+                      }`
+
+                  }
+                  onClick={() => {
+
+                    setNotificationsOpen(
+                      current =>
+                        !current
+                    );
+
+                    loadNotifications();
+
+                  }}
+                  aria-label="Notifications"
+                  aria-expanded={
+                    notificationsOpen
+                  }
+                >
+
+                  <Bell
+                    size={18}
+                  />
+
+
+                  {
+                    unreadNotificationCount >
+                      0 && (
+
+                      <span className="farmer-notification-count">
+
+                        {
+                          unreadNotificationCount >
+                            9
+                            ? "9+"
+                            : unreadNotificationCount
+                        }
+
+                      </span>
+
+                    )
+                  }
+
+                </button>
+
+
+                {notificationsOpen && (
+
+                  <div className="farmer-notification-panel">
+
+                    <div className="farmer-notification-header">
+
+                      <div>
+
+                        <span className="page-eyebrow">
+                          NOTIFICATIONS
+                        </span>
+
+                        <strong>
+                          {
+                            getText(
+                              language,
+                              "Procurement updates",
+                              "खरीद अपडेट",
+                              "కొనుగోలు అప్‌డేట్‌లు"
+                            )
+                          }
+                        </strong>
+
+                      </div>
+
+
+                      <button
+                        type="button"
+                        className="farmer-notification-close"
+                        onClick={() =>
+                          setNotificationsOpen(
+                            false
+                          )
+                        }
+                        aria-label="Close notifications"
+                      >
+
+                        <X
+                          size={16}
+                        />
+
+                      </button>
+
+                    </div>
+
+
+                    <div className="farmer-notification-list">
+
+                      {notificationsLoading ? (
+
+                        <div className="farmer-notification-empty">
+
+                          <RefreshCw
+                            size={19}
+                            className="loading-spin"
+                          />
+
+                          <span>
+                            {
+                              getText(
+                                language,
+                                "Loading notifications...",
+                                "सूचनाएं लोड हो रही हैं...",
+                                "నోటిఫికేషన్‌లను లోడ్ చేస్తోంది..."
+                              )
+                            }
+                          </span>
+
+                        </div>
+
+                      ) : notifications.length ===
+                        0 ? (
+
+                        <div className="farmer-notification-empty">
+
+                          <Bell
+                            size={19}
+                          />
+
+                          <span>
+                            {
+                              getText(
+                                language,
+                                "No notifications yet.",
+                                "अभी कोई सूचना नहीं है।",
+                                "ఇంకా నోటిఫికేషన్‌లు లేవు."
+                              )
+                            }
+                          </span>
+
+                        </div>
+
+                      ) : (
+
+                        notifications
+                          .slice(
+                            0,
+                            8
+                          )
+                          .map(
+                            (
+                              notification
+                            ) => (
+
+                              <button
+                                type="button"
+                                key={
+                                  notification.id
+                                }
+                                className={
+                                  `farmer-notification-item ${
+                                    notification.read_at
+                                      ? "read"
+                                      : "unread"
+                                  }`
+                                }
+                                onClick={() => {
+
+                                  if (
+                                    !notification.read_at
+                                  ) {
+
+                                    markNotificationRead(
+                                      notification.id
+                                    );
+
+                                  }
+
+                                }}
+                              >
+
+                                <div className="farmer-notification-dot" />
+
+
+                                <div className="farmer-notification-content">
+
+                                  <strong>
+                                    {
+                                      notification.title
+                                    }
+                                  </strong>
+
+
+                                  <span>
+                                    {
+                                      notification.message
+                                    }
+                                  </span>
+
+
+                                  <small>
+
+                                    {
+                                      formatNotificationDate(
+                                        notification.created_at,
+                                        language
+                                      )
+                                    }
+
+                                    {" · "}
+
+                                    {
+                                      notification.status ===
+                                      "SENT"
+                                        ? getText(
+                                            language,
+                                            "SMS sent",
+                                            "SMS भेजा गया",
+                                            "SMS పంపబడింది"
+                                          )
+                                        : notification.status ===
+                                          "FAILED"
+                                          ? getText(
+                                              language,
+                                              "SMS failed",
+                                              "SMS विफल",
+                                              "SMS విఫలమైంది"
+                                            )
+                                          : getText(
+                                              language,
+                                              "In-app update",
+                                              "ऐप सूचना",
+                                              "యాప్ అప్‌డేట్"
+                                            )
+                                    }
+
+                                  </small>
+
+                                </div>
+
+                              </button>
+
+                            )
+                          )
+
+                      )}
+
+                    </div>
+
+                  </div>
+
+                )}
+
+              </div>
+
+
+              <button
+                type="button"
+                className="farmer-refresh-button"
+                onClick={() => {
+
+                  loadBookings(true);
+                  loadNotifications();
+
+                }}
+                disabled={
                   refreshing
-                    ? "loading-spin"
-                    : ""
                 }
-              />
+                title="Refresh"
+              >
 
-            </button>
+                <RefreshCw
+                  size={16}
+                  className={
+                    refreshing
+                      ? "loading-spin"
+                      : ""
+                  }
+                />
+
+              </button>
+
+            </div>
 
           </div>
 
@@ -2679,7 +3146,7 @@ function FarmerHome() {
                       language,
                       "Stay informed about your procurement progress.",
                       "अपनी खरीद की प्रगति के बारे में अपडेट रहें।",
-                      "మీ కొనుగోలు పురోగతిని తెలుసుకోండి."
+                      "మీ కొనుగోలు పురోగతి గురించి తెలుసుకోండి."
                     )
               }
 
@@ -3583,6 +4050,84 @@ function formatTime(
   return end
     ? `${convert(start)} – ${convert(end)}`
     : convert(start);
+
+}
+
+
+function formatNotificationDate(
+  value,
+  language
+) {
+
+  if (
+    !value
+  ) {
+
+    return "—";
+
+  }
+
+
+  const raw =
+    String(
+      value
+    );
+
+
+  const normalized =
+    raw.includes("T")
+      ? raw
+      : raw.replace(
+          " ",
+          "T"
+        ) +
+        "Z";
+
+
+  const date =
+    new Date(
+      normalized
+    );
+
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+
+    return value;
+
+  }
+
+
+  const locale =
+    language ===
+      "hi"
+      ? "hi-IN"
+      : language ===
+          "te"
+        ? "te-IN"
+        : "en-IN";
+
+
+  return date.toLocaleString(
+    locale,
+    {
+      day:
+        "numeric",
+
+      month:
+        "short",
+
+      hour:
+        "numeric",
+
+      minute:
+        "2-digit",
+
+    }
+  );
 
 }
 
