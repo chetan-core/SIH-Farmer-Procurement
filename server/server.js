@@ -5128,17 +5128,106 @@ app.get(
 
     try {
 
-      const notifications =
+      const requestedFarmerId =
+        String(
+          req.params.id ||
+          ""
+        ).trim();
+
+
+      if (
+        !requestedFarmerId
+      ) {
+
+        return res
+          .status(400)
+          .json({
+            success:
+              false,
+
+            message:
+              "Farmer id is required.",
+          });
+
+      }
+
+
+      const requestedFarmer =
         db.prepare(`
-          SELECT *
-          FROM notifications
-          WHERE farmer_id = ?
-          ORDER BY
-            datetime(created_at) DESC,
-            id DESC
-        `).all(
-          req.params.id
+          SELECT
+            id,
+            phone
+          FROM farmers
+          WHERE id = ?
+        `).get(
+          requestedFarmerId
         );
+
+
+      if (
+        !requestedFarmer
+      ) {
+
+        return res
+          .status(404)
+          .json({
+            success:
+              false,
+
+            message:
+              "Farmer account not found.",
+          });
+
+      }
+
+
+      const phone =
+        normalisePhone(
+          requestedFarmer.phone
+        );
+
+
+      let notifications;
+
+
+      if (
+        phone
+      ) {
+
+        notifications =
+          db.prepare(`
+            SELECT *
+            FROM notifications
+            WHERE
+              farmer_id = ?
+              OR farmer_id IN (
+                SELECT id
+                FROM farmers
+                WHERE phone = ?
+              )
+            ORDER BY
+              datetime(created_at) DESC,
+              id DESC
+          `).all(
+            requestedFarmerId,
+            phone
+          );
+
+      } else {
+
+        notifications =
+          db.prepare(`
+            SELECT *
+            FROM notifications
+            WHERE farmer_id = ?
+            ORDER BY
+              datetime(created_at) DESC,
+              id DESC
+          `).all(
+            requestedFarmerId
+          );
+
+      }
 
 
       res.json({
@@ -5170,54 +5259,6 @@ app.get(
 
   }
 );
-
-
-app.patch(
-  "/api/notifications/:id/read",
-  (
-    req,
-    res
-  ) => {
-
-    try {
-
-      db.prepare(`
-        UPDATE notifications
-        SET read_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).run(
-        req.params.id
-      );
-
-
-      res.json({
-        success:
-          true,
-      });
-
-    } catch (
-      error
-    ) {
-
-      console.error(
-        "Read notification error:",
-        error
-      );
-
-
-      res.status(500).json({
-        success:
-          false,
-
-        message:
-          "Failed to update notification.",
-      });
-
-    }
-
-  }
-);
-
 
 /* =========================================================
    FALLBACK
