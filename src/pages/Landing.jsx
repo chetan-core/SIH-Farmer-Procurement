@@ -50,6 +50,7 @@ function Landing() {
 
       <header className="landing-header">
 
+
         <Link
           to="/"
           className="landing-brand"
@@ -197,8 +198,6 @@ function Landing() {
         <section className="landing-hero">
 
 
-          {/* BACKGROUND */}
-
           <div className="landing-hero-background">
 
             <div className="landing-glow landing-glow-one" />
@@ -210,212 +209,12 @@ function Landing() {
           </div>
 
 
-          {/* =================================================
-              LARGE BACKGROUND JOURNEY
-          ================================================== */}
-
-          <div className="landing-hero-visual">
-
-            <div className="landing-visual-glow" />
-
-            <div className="landing-journey-illustration">
-
-
-              <div className="journey-orbit orbit-main" />
-
-              <div className="journey-orbit orbit-inner" />
-
-
-              {/* CENTER */}
-
-              <div className="journey-center">
-
-                <div className="journey-center-icon">
-
-                  <Wheat
-                    size={54}
-                  />
-
-                </div>
-
-
-                <strong>
-                  KrishiSetu
-                </strong>
-
-
-                <span>
-                  FARM → MARKET
-                </span>
-
-              </div>
-
-
-              {/* FARM */}
-
-              <div className="journey-node journey-farm">
-
-                <div className="journey-node-icon">
-
-                  <Wheat
-                    size={22}
-                  />
-
-                </div>
-
-
-                <div>
-
-                  <span>
-                    FARM
-                  </span>
-
-                  <strong>
-                    Produce
-                  </strong>
-
-                </div>
-
-              </div>
-
-
-              {/* TOKEN */}
-
-              <div className="journey-node journey-token">
-
-                <div className="journey-node-icon">
-
-                  <ShieldCheck
-                    size={22}
-                  />
-
-                </div>
-
-
-                <div>
-
-                  <span>
-                    TOKEN
-                  </span>
-
-                  <strong>
-                    #B018
-                  </strong>
-
-                </div>
-
-              </div>
-
-
-              {/* WEIGHING */}
-
-              <div className="journey-node journey-weighing">
-
-                <div className="journey-node-icon">
-
-                  <Scale
-                    size={22}
-                  />
-
-                </div>
-
-
-                <div>
-
-                  <span>
-                    WEIGHING
-                  </span>
-
-                  <strong>
-                    248 kg
-                  </strong>
-
-                </div>
-
-              </div>
-
-
-              {/* CENTER */}
-
-              <div className="journey-node journey-center-node">
-
-                <div className="journey-node-icon">
-
-                  <MapPin
-                    size={22}
-                  />
-
-                </div>
-
-
-                <div>
-
-                  <span>
-                    CENTER
-                  </span>
-
-                  <strong>
-                    Arrival
-                  </strong>
-
-                </div>
-
-              </div>
-
-
-              {/* PAYMENT */}
-
-              <div className="journey-node journey-payment">
-
-                <div className="journey-node-icon">
-
-                  <Coins
-                    size={22}
-                  />
-
-                </div>
-
-
-                <div>
-
-                  <span>
-                    PAYMENT
-                  </span>
-
-                  <strong>
-                    Tracked
-                  </strong>
-
-                </div>
-
-              </div>
-
-
-              {/* PULSES */}
-
-              <div className="journey-pulse pulse-one" />
-
-              <div className="journey-pulse pulse-two" />
-
-              <div className="journey-pulse pulse-three" />
-
-            </div>
-
-          </div>
-
-
-          {/* =================================================
-              HERO CONTENT
-          ================================================== */}
-
           <div className="landing-hero-content">
 
 
             <div className="landing-hero-badge">
 
-              <Leaf
-                size={17}
-              />
+              <Leaf size={17} />
 
               <span>
                 DIGITAL PROCUREMENT FOR AGRICULTURE
@@ -427,7 +226,7 @@ function Landing() {
             <div className="landing-hero-logo">
 
               <Logo
-                size={118}
+                size={132}
                 showName
               />
 
@@ -462,15 +261,11 @@ function Landing() {
                 className="landing-primary-button"
               >
 
-                <Wheat
-                  size={21}
-                />
+                <Wheat size={21} />
 
                 Enter Farmer Portal
 
-                <ArrowRight
-                  size={18}
-                />
+                <ArrowRight size={18} />
 
               </Link>
 
@@ -482,9 +277,7 @@ function Landing() {
 
                 See How It Works
 
-                <ArrowDown
-                  size={18}
-                />
+                <ArrowDown size={18} />
 
               </a>
 
@@ -493,44 +286,200 @@ function Landing() {
 
             <div className="landing-hero-points">
 
-
               <div>
-
-                <CheckCircle2
-                  size={18}
-                />
+                <CheckCircle2 size={18} />
 
                 <span>
                   Schedule your arrival
                 </span>
-
               </div>
 
 
               <div>
-
-                <CheckCircle2
-                  size={18}
-                />
+                <CheckCircle2 size={18} />
 
                 <span>
                   Get a digital token
                 </span>
-
               </div>
 
 
               <div>
-
-                <CheckCircle2
-                  size={18}
-                />
+                <CheckCircle2 size={18} />
 
                 <span>
                   Follow your payment
                 </span>
+              </div>
+
+            </div>
+
+          </div>
+
+
+          {/* ===================================================
+              CIRCLE ANIMATION
+              KEPT UNCHANGED
+          ==================================================== */}
+
+          <div className="landing-hero-visual">
+
+            <div className="landing-visual-glow" />
+
+
+            <div className="landing-journey-illustration">
+
+              <div className="journey-orbit orbit-main" />
+
+              <div className="journey-orbit orbit-inner" />
+
+
+              <div className="journey-center">
+
+                <div className="journey-center-icon">
+
+                  <Wheat size={52} />
+
+                </div>
+
+
+                <strong>
+                  KrishiSetu
+                </strong>
+
+
+                <span>
+                  FARM → MARKET
+                </span>
 
               </div>
+
+
+              <div className="journey-node journey-farm">
+
+                <div className="journey-node-icon">
+
+                  <Wheat size={22} />
+
+                </div>
+
+
+                <div>
+
+                  <span>
+                    FARM
+                  </span>
+
+                  <strong>
+                    Produce
+                  </strong>
+
+                </div>
+
+              </div>
+
+
+              <div className="journey-node journey-token">
+
+                <div className="journey-node-icon">
+
+                  <ShieldCheck size={22} />
+
+                </div>
+
+
+                <div>
+
+                  <span>
+                    TOKEN
+                  </span>
+
+                  <strong>
+                    #B018
+                  </strong>
+
+                </div>
+
+              </div>
+
+
+              <div className="journey-node journey-weighing">
+
+                <div className="journey-node-icon">
+
+                  <Scale size={22} />
+
+                </div>
+
+
+                <div>
+
+                  <span>
+                    WEIGHING
+                  </span>
+
+                  <strong>
+                    248 kg
+                  </strong>
+
+                </div>
+
+              </div>
+
+
+              <div className="journey-node journey-center-node">
+
+                <div className="journey-node-icon">
+
+                  <MapPin size={22} />
+
+                </div>
+
+
+                <div>
+
+                  <span>
+                    CENTER
+                  </span>
+
+                  <strong>
+                    Arrival
+                  </strong>
+
+                </div>
+
+              </div>
+
+
+              <div className="journey-node journey-payment">
+
+                <div className="journey-node-icon">
+
+                  <Coins size={22} />
+
+                </div>
+
+
+                <div>
+
+                  <span>
+                    PAYMENT
+                  </span>
+
+                  <strong>
+                    Tracked
+                  </strong>
+
+                </div>
+
+              </div>
+
+
+              <div className="journey-pulse pulse-one" />
+
+              <div className="journey-pulse pulse-two" />
+
+              <div className="journey-pulse pulse-three" />
 
             </div>
 
@@ -543,58 +492,29 @@ function Landing() {
             TRUST STRIP
         ====================================================== */}
 
-        <section className="landing-trust-strip">
+        <section className="landing-trust-strip scroll-reveal-group">
 
-
-          <div>
-
-            <ShieldCheck
-              size={20}
-            />
-
-            <span>
-              Clear procurement status
-            </span>
-
+          <div className="scroll-reveal-item">
+            <ShieldCheck size={20} />
+            <span>Clear procurement status</span>
           </div>
 
 
-          <div>
-
-            <CalendarCheck2
-              size={20}
-            />
-
-            <span>
-              Scheduled arrival windows
-            </span>
-
+          <div className="scroll-reveal-item">
+            <CalendarCheck2 size={20} />
+            <span>Scheduled arrival windows</span>
           </div>
 
 
-          <div>
-
-            <Smartphone
-              size={20}
-            />
-
-            <span>
-              SMS-ready communication
-            </span>
-
+          <div className="scroll-reveal-item">
+            <Smartphone size={20} />
+            <span>SMS-ready communication</span>
           </div>
 
 
-          <div>
-
-            <Wheat
-              size={20}
-            />
-
-            <span>
-              Farmer-first experience
-            </span>
-
+          <div className="scroll-reveal-item">
+            <Wheat size={20} />
+            <span>Farmer-first experience</span>
           </div>
 
         </section>
@@ -609,7 +529,7 @@ function Landing() {
           className="landing-purpose-section"
         >
 
-          <div className="landing-section-heading">
+          <div className="landing-section-heading scroll-reveal">
 
             <span>
               OUR PURPOSE
@@ -638,10 +558,10 @@ function Landing() {
           </div>
 
 
-          <div className="landing-purpose-grid">
+          <div className="landing-purpose-grid scroll-reveal-group">
 
 
-            <div className="purpose-card purpose-green">
+            <div className="purpose-card purpose-green scroll-reveal-item">
 
               <div className="purpose-card-number">
                 01
@@ -649,11 +569,7 @@ function Landing() {
 
 
               <div className="purpose-card-icon">
-
-                <Leaf
-                  size={30}
-                />
-
+                <Leaf size={30} />
               </div>
 
 
@@ -679,7 +595,7 @@ function Landing() {
             </div>
 
 
-            <div className="purpose-card purpose-gold">
+            <div className="purpose-card purpose-gold scroll-reveal-item">
 
               <div className="purpose-card-number">
                 02
@@ -687,11 +603,7 @@ function Landing() {
 
 
               <div className="purpose-card-icon">
-
-                <Scale
-                  size={30}
-                />
-
+                <Scale size={30} />
               </div>
 
 
@@ -716,7 +628,7 @@ function Landing() {
             </div>
 
 
-            <div className="purpose-card purpose-blue">
+            <div className="purpose-card purpose-blue scroll-reveal-item">
 
               <div className="purpose-card-number">
                 03
@@ -724,11 +636,7 @@ function Landing() {
 
 
               <div className="purpose-card-icon">
-
-                <Smartphone
-                  size={30}
-                />
-
+                <Smartphone size={30} />
               </div>
 
 
@@ -761,117 +669,66 @@ function Landing() {
             FLOW
         ====================================================== */}
 
-        <section className="landing-stats-strip">
-
+        <section className="landing-stats-strip scroll-reveal">
 
           <div>
-            <strong>
-              01
-            </strong>
-
-            <span>
-              Book
-            </span>
+            <strong>01</strong>
+            <span>Book</span>
           </div>
 
 
           <div className="stats-arrow">
-
-            <ArrowRight
-              size={20}
-            />
-
+            <ArrowRight size={20} />
           </div>
 
 
           <div>
-            <strong>
-              02
-            </strong>
-
-            <span>
-              Token
-            </span>
+            <strong>02</strong>
+            <span>Token</span>
           </div>
 
 
           <div className="stats-arrow">
-
-            <ArrowRight
-              size={20}
-            />
-
+            <ArrowRight size={20} />
           </div>
 
 
           <div>
-            <strong>
-              03
-            </strong>
-
-            <span>
-              Arrive
-            </span>
+            <strong>03</strong>
+            <span>Arrive</span>
           </div>
 
 
           <div className="stats-arrow">
-
-            <ArrowRight
-              size={20}
-            />
-
+            <ArrowRight size={20} />
           </div>
 
 
           <div>
-            <strong>
-              04
-            </strong>
-
-            <span>
-              Weigh
-            </span>
+            <strong>04</strong>
+            <span>Weigh</span>
           </div>
 
 
           <div className="stats-arrow">
-
-            <ArrowRight
-              size={20}
-            />
-
+            <ArrowRight size={20} />
           </div>
 
 
           <div>
-            <strong>
-              05
-            </strong>
-
-            <span>
-              Procure
-            </span>
+            <strong>05</strong>
+            <span>Procure</span>
           </div>
 
 
           <div className="stats-arrow">
-
-            <ArrowRight
-              size={20}
-            />
-
+            <ArrowRight size={20} />
           </div>
 
 
           <div>
-            <strong>
-              06
-            </strong>
-
-            <span>
-              Payment
-            </span>
+            <strong>06</strong>
+            <span>Payment</span>
           </div>
 
         </section>
@@ -886,7 +743,7 @@ function Landing() {
           className="landing-process-section"
         >
 
-          <div className="landing-section-heading centered">
+          <div className="landing-section-heading centered scroll-reveal">
 
             <span>
               HOW IT WORKS
@@ -912,7 +769,7 @@ function Landing() {
           </div>
 
 
-          <div className="landing-process-track">
+          <div className="landing-process-track scroll-reveal-group">
 
 
             <ProcessStep
@@ -929,11 +786,7 @@ function Landing() {
 
             <ProcessStep
               number="02"
-              icon={
-                <CalendarCheck2
-                  size={28}
-                />
-              }
+              icon={<CalendarCheck2 size={28} />}
               title="Book a slot"
               text="Choose your crop, quantity, center and available arrival window."
               tone="gold"
@@ -945,11 +798,7 @@ function Landing() {
 
             <ProcessStep
               number="03"
-              icon={
-                <ShieldCheck
-                  size={28}
-                />
-              }
+              icon={<ShieldCheck size={28} />}
               title="Receive token"
               text="Get a digital token that identifies your procurement booking."
               tone="blue"
@@ -961,11 +810,7 @@ function Landing() {
 
             <ProcessStep
               number="04"
-              icon={
-                <MapPin
-                  size={28}
-                />
-              }
+              icon={<MapPin size={28} />}
               title="Arrive"
               text="Come to your selected procurement center during your assigned window."
               tone="orange"
@@ -977,11 +822,7 @@ function Landing() {
 
             <ProcessStep
               number="05"
-              icon={
-                <Scale
-                  size={28}
-                />
-              }
+              icon={<Scale size={28} />}
               title="Weigh"
               text="The procurement team records actual produce weight and quality."
               tone="green"
@@ -993,11 +834,7 @@ function Landing() {
 
             <ProcessStep
               number="06"
-              icon={
-                <CheckCircle2
-                  size={28}
-                />
-              }
+              icon={<CheckCircle2 size={28} />}
               title="Procure"
               text="Your produce moves through a recorded procurement workflow."
               tone="blue"
@@ -1009,11 +846,7 @@ function Landing() {
 
             <ProcessStep
               number="07"
-              icon={
-                <Coins
-                  size={28}
-                />
-              }
+              icon={<Coins size={28} />}
               title="Payment"
               text="Follow the payment stage after procurement is completed."
               tone="gold"
@@ -1034,7 +867,7 @@ function Landing() {
           className="landing-portals-section"
         >
 
-          <div className="landing-portals-intro">
+          <div className="landing-portals-intro scroll-reveal">
 
             <span>
               CHOOSE YOUR PATH
@@ -1064,12 +897,12 @@ function Landing() {
           </div>
 
 
-          <div className="landing-portal-grid">
+          <div className="landing-portal-grid scroll-reveal-group">
 
 
             <Link
               to="/farmer/login"
-              className="landing-portal-card farmer"
+              className="landing-portal-card farmer scroll-reveal-item"
             >
 
               <div className="portal-card-top">
@@ -1080,11 +913,7 @@ function Landing() {
 
 
                 <div className="portal-card-icon">
-
-                  <Wheat
-                    size={35}
-                  />
-
+                  <Wheat size={35} />
                 </div>
 
               </div>
@@ -1118,48 +947,27 @@ function Landing() {
 
                 <div className="portal-card-features">
 
-
                   <span>
-
-                    <CheckCircle2
-                      size={16}
-                    />
-
+                    <CheckCircle2 size={16} />
                     Book a procurement slot
-
                   </span>
 
 
                   <span>
-
-                    <CheckCircle2
-                      size={16}
-                    />
-
+                    <CheckCircle2 size={16} />
                     Get a digital token
-
                   </span>
 
 
                   <span>
-
-                    <CheckCircle2
-                      size={16}
-                    />
-
+                    <CheckCircle2 size={16} />
                     Track your status
-
                   </span>
 
 
                   <span>
-
-                    <CheckCircle2
-                      size={16}
-                    />
-
+                    <CheckCircle2 size={16} />
                     Follow payment
-
                   </span>
 
                 </div>
@@ -1175,11 +983,7 @@ function Landing() {
 
 
                 <div>
-
-                  <ArrowRight
-                    size={21}
-                  />
-
+                  <ArrowRight size={21} />
                 </div>
 
               </div>
@@ -1189,7 +993,7 @@ function Landing() {
 
             <Link
               to="/admin/login"
-              className="landing-portal-card operations"
+              className="landing-portal-card operations scroll-reveal-item"
             >
 
               <div className="portal-card-top">
@@ -1200,11 +1004,7 @@ function Landing() {
 
 
                 <div className="portal-card-icon">
-
-                  <ShieldCheck
-                    size={35}
-                  />
-
+                  <ShieldCheck size={35} />
                 </div>
 
               </div>
@@ -1237,48 +1037,27 @@ function Landing() {
 
                 <div className="portal-card-features">
 
-
                   <span>
-
-                    <CheckCircle2
-                      size={16}
-                    />
-
+                    <CheckCircle2 size={16} />
                     Monitor live queue
-
                   </span>
 
 
                   <span>
-
-                    <CheckCircle2
-                      size={16}
-                    />
-
+                    <CheckCircle2 size={16} />
                     Record actual weighing
-
                   </span>
 
 
                   <span>
-
-                    <CheckCircle2
-                      size={16}
-                    />
-
+                    <CheckCircle2 size={16} />
                     Complete procurement
-
                   </span>
 
 
                   <span>
-
-                    <CheckCircle2
-                      size={16}
-                    />
-
+                    <CheckCircle2 size={16} />
                     Track payments and reports
-
                   </span>
 
                 </div>
@@ -1294,11 +1073,7 @@ function Landing() {
 
 
                 <div>
-
-                  <ArrowRight
-                    size={21}
-                  />
-
+                  <ArrowRight size={21} />
                 </div>
 
               </div>
@@ -1319,7 +1094,7 @@ function Landing() {
           className="landing-features-section"
         >
 
-          <div className="landing-section-heading centered">
+          <div className="landing-section-heading centered scroll-reveal">
 
             <span>
               THE KRISHISETU DIFFERENCE
@@ -1347,15 +1122,11 @@ function Landing() {
           </div>
 
 
-          <div className="landing-feature-grid">
+          <div className="landing-feature-grid scroll-reveal-group">
 
 
             <FeatureCard
-              icon={
-                <CalendarCheck2
-                  size={29}
-                />
-              }
+              icon={<CalendarCheck2 size={29} />}
               title="Scheduled arrivals"
               text="Give farmers a clear procurement date and arrival window."
               tone="green"
@@ -1363,11 +1134,7 @@ function Landing() {
 
 
             <FeatureCard
-              icon={
-                <ShieldCheck
-                  size={29}
-                />
-              }
+              icon={<ShieldCheck size={29} />}
               title="Digital identity"
               text="Each booking receives a unique token for quick identification."
               tone="blue"
@@ -1375,11 +1142,7 @@ function Landing() {
 
 
             <FeatureCard
-              icon={
-                <Scale
-                  size={29}
-                />
-              }
+              icon={<Scale size={29} />}
               title="Transparent weighing"
               text="Keep estimated quantity and actual weight clearly separated."
               tone="orange"
@@ -1387,11 +1150,7 @@ function Landing() {
 
 
             <FeatureCard
-              icon={
-                <Coins
-                  size={29}
-                />
-              }
+              icon={<Coins size={29} />}
               title="Payment visibility"
               text="Continue the journey into a visible payment stage."
               tone="gold"
@@ -1399,11 +1158,7 @@ function Landing() {
 
 
             <FeatureCard
-              icon={
-                <Smartphone
-                  size={29}
-                />
-              }
+              icon={<Smartphone size={29} />}
               title="Status updates"
               text="Keep farmers informed as their procurement status changes."
               tone="purple"
@@ -1411,11 +1166,7 @@ function Landing() {
 
 
             <FeatureCard
-              icon={
-                <MapPin
-                  size={29}
-                />
-              }
+              icon={<MapPin size={29} />}
               title="Location-aware booking"
               text="Connect farmers with the relevant procurement center."
               tone="teal"
@@ -1432,13 +1183,11 @@ function Landing() {
 
         <section className="landing-support-section">
 
-          <div className="landing-support-card">
+          <div className="landing-support-card scroll-reveal">
 
             <div className="landing-support-icon">
 
-              <Smartphone
-                size={32}
-              />
+              <Smartphone size={32} />
 
             </div>
 
@@ -1481,8 +1230,7 @@ function Landing() {
         <section className="landing-final-cta">
 
 
-          <div className="landing-final-cta-content">
-
+          <div className="landing-final-cta-content scroll-reveal">
 
             <span>
               READY TO GET STARTED?
@@ -1511,21 +1259,16 @@ function Landing() {
 
             <div className="landing-final-cta-actions">
 
-
               <Link
                 to="/farmer/login"
                 className="landing-final-farmer-button"
               >
 
-                <Wheat
-                  size={21}
-                />
+                <Wheat size={21} />
 
                 Farmer Portal
 
-                <ArrowRight
-                  size={18}
-                />
+                <ArrowRight size={18} />
 
               </Link>
 
@@ -1535,15 +1278,11 @@ function Landing() {
                 className="landing-final-admin-button"
               >
 
-                <ShieldCheck
-                  size={21}
-                />
+                <ShieldCheck size={21} />
 
                 Operations Portal
 
-                <ArrowRight
-                  size={18}
-                />
+                <ArrowRight size={18} />
 
               </Link>
 
@@ -1554,31 +1293,18 @@ function Landing() {
 
           <div className="landing-final-cta-decoration">
 
-
             <div>
-
-              <Wheat
-                size={105}
-              />
-
+              <Wheat size={105} />
             </div>
 
 
             <div>
-
-              <Scale
-                size={82}
-              />
-
+              <Scale size={82} />
             </div>
 
 
             <div>
-
-              <Coins
-                size={74}
-              />
-
+              <Coins size={74} />
             </div>
 
           </div>
@@ -1588,9 +1314,9 @@ function Landing() {
       </main>
 
 
-      {/* =====================================================
+      {/* =======================================================
           FOOTER
-      ====================================================== */}
+      ======================================================== */}
 
       <footer className="landing-footer">
 
@@ -1599,7 +1325,6 @@ function Landing() {
 
 
           <div className="landing-footer-brand">
-
 
             <Link
               to="/"
@@ -1626,7 +1351,6 @@ function Landing() {
 
           <div className="landing-footer-column">
 
-
             <strong>
               PLATFORM
             </strong>
@@ -1651,29 +1375,22 @@ function Landing() {
 
           <div className="landing-footer-column">
 
-
             <strong>
               FARMERS
             </strong>
 
 
-            <Link
-              to="/farmer/login"
-            >
+            <Link to="/farmer/login">
               Farmer Login
             </Link>
 
 
-            <Link
-              to="/farmer/register"
-            >
+            <Link to="/farmer/register">
               Create Account
             </Link>
 
 
-            <Link
-              to="/farmer/help"
-            >
+            <Link to="/farmer/help">
               Farmer Help
             </Link>
 
@@ -1682,29 +1399,22 @@ function Landing() {
 
           <div className="landing-footer-column">
 
-
             <strong>
               OPERATIONS
             </strong>
 
 
-            <Link
-              to="/admin/login"
-            >
+            <Link to="/admin/login">
               Operations Login
             </Link>
 
 
-            <Link
-              to="/admin/dashboard"
-            >
+            <Link to="/admin/dashboard">
               Dashboard
             </Link>
 
 
-            <Link
-              to="/admin/reports"
-            >
+            <Link to="/admin/reports">
               Reports
             </Link>
 
@@ -1715,11 +1425,8 @@ function Landing() {
 
         <div className="landing-footer-bottom">
 
-
           <span>
-
             © {new Date().getFullYear()} KrishiSetu
-
           </span>
 
 
@@ -1737,7 +1444,6 @@ function Landing() {
       </footer>
 
     </div>
-
   );
 }
 
@@ -1760,10 +1466,8 @@ function ProcessStep({
     <div
       className={
         `landing-process-step tone-${tone} ${
-          last
-            ? "last"
-            : ""
-        }`
+          last ? "last" : ""
+        } scroll-reveal-item`
       }
     >
 
@@ -1795,6 +1499,7 @@ function ProcessStep({
     </div>
 
   );
+
 }
 
 
@@ -1808,13 +1513,12 @@ function ProcessConnector() {
 
     <div className="landing-process-connector">
 
-      <ArrowRight
-        size={20}
-      />
+      <ArrowRight size={20} />
 
     </div>
 
   );
+
 }
 
 
@@ -1833,7 +1537,7 @@ function FeatureCard({
 
     <div
       className={
-        `landing-feature-card tone-${tone}`
+        `landing-feature-card tone-${tone} scroll-reveal-item`
       }
     >
 
@@ -1860,6 +1564,7 @@ function FeatureCard({
     </div>
 
   );
+
 }
 
 
@@ -1882,9 +1587,7 @@ function UserIcon() {
       strokeLinejoin="round"
     >
 
-      <path
-        d="M20 21a8 8 0 0 0-16 0"
-      />
+      <path d="M20 21a8 8 0 0 0-16 0" />
 
 
       <circle
@@ -1896,6 +1599,7 @@ function UserIcon() {
     </svg>
 
   );
+
 }
 
 

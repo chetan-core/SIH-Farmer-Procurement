@@ -26,6 +26,7 @@ import AdminActivityLog from "./pages/admin/AdminActivityLog";
 import FarmerHistory from "./pages/farmer/FarmerHistory";
 import FarmerPayments from "./pages/farmer/FarmerPayments";
 import AdminPaymentIssues from "./pages/admin/AdminPaymentIssues";
+import PageTransition from "./components/PageTransition";
 function App() {
 
   return (
@@ -46,12 +47,13 @@ function App() {
       ========================== */}
 
       <Route
-        path="/farmer/login"
-        element={
-          <FarmerLogin />
-        }
-      />
-
+  path="/farmer/login"
+  element={
+    <PageTransition>
+      <FarmerLogin />
+    </PageTransition>
+  }
+/>
       <Route
         path="/farmer/register"
         element={
@@ -60,11 +62,13 @@ function App() {
       />
 
       <Route
-        path="/farmer/home"
-        element={
-          <FarmerHome />
-        }
-      />
+  path="/farmer/home"
+  element={
+    <PageTransition>
+      <FarmerHome />
+    </PageTransition>
+  }
+/>
 
       <Route
         path="/farmer/book"
@@ -103,18 +107,22 @@ function App() {
       ========================== */}
 
       <Route
-        path="/admin/login"
-        element={
-          <AdminLogin />
-        }
-      />
+  path="/admin/login"
+  element={
+    <PageTransition>
+      <AdminLogin />
+    </PageTransition>
+  }
+/>
 
       <Route
-        path="/admin/dashboard"
-        element={
-          <AdminDashboard />
-        }
-      />
+  path="/admin/dashboard"
+  element={
+    <PageTransition>
+      <AdminDashboard />
+    </PageTransition>
+  }
+/>
 
       <Route
         path="/admin/queue"
