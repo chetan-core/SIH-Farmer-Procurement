@@ -120,6 +120,16 @@ export function setCurrentUser(user) {
     },
   }));
 }
+export function logoutUser() {
+  return updateState((currentState) => ({
+    ...currentState,
+
+    currentUser: {
+      role: null,
+      farmerId: null,
+    },
+  }));
+}
 
 export function getCurrentFarmer() {
   const farmerId = state.currentUser?.farmerId;
