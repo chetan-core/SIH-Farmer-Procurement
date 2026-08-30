@@ -27,6 +27,7 @@ import FarmerHistory from "./pages/farmer/FarmerHistory";
 import FarmerPayments from "./pages/farmer/FarmerPayments";
 import AdminPaymentIssues from "./pages/admin/AdminPaymentIssues";
 import PageTransition from "./components/PageTransition";
+import FarmerSettings from "./pages/farmer/FarmerSettings";
 function App() {
 
   return (
@@ -70,6 +71,7 @@ function App() {
   }
 />
 
+
       <Route
         path="/farmer/book"
         element={
@@ -91,6 +93,12 @@ function App() {
   path="/farmer/payments"
   element={
     <FarmerPayments />
+  }
+/>
+<Route
+  path="/farmer/settings"
+  element={
+    <FarmerSettings />
   }
 />
 

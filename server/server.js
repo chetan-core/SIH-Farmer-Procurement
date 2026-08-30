@@ -1,58 +1,78 @@
-
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import db from "./db.js";
 
-dotenv.config({
-  path: "./src/.env",
-});
-
 dotenv.config();
 
-const app = express();
 
-const PORT = process.env.PORT || 5000;
+const app =
+  express();
+
+
+const PORT =
+  process.env.PORT ||
+  5000;
+
 
 const SMS_ENABLED =
-  process.env.SMS_ENABLED === "true";
-
+  process.env.SMS_ENABLED ===
+  "true";
 
 
 app.use(cors());
-app.use(express.json());
+app.use(
+  express.json()
+);
 
+
+/* =========================================================
+   DATABASE HELPERS
+========================================================= */
 
 function addColumnIfMissing(
   table,
   column,
   definition
 ) {
-  const columns = db
-    .prepare(
-      `PRAGMA table_info(${table})`
-    )
-    .all();
 
-  const exists = columns.some(
-    (item) =>
-      item.name === column
-  );
+  const columns =
+    db
+      .prepare(
+        `PRAGMA table_info(${table})`
+      )
+      .all();
 
-  if (!exists) {
+
+  const exists =
+    columns.some(
+      item =>
+        item.name ===
+        column
+    );
+
+
+  if (
+    !exists
+  ) {
+
     db.exec(
       `ALTER TABLE ${table}
        ADD COLUMN ${column} ${definition}`
     );
 
+
     console.log(
       `Added ${table}.${column}`
     );
+
   }
+
 }
 
 
 function ensurePaymentIssuesTable() {
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS payment_issues (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -63,7 +83,9 @@ function ensurePaymentIssuesTable() {
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
 }
+
 
 function ensureNotificationsTable() {
 
@@ -80,7 +102,7 @@ function ensureNotificationsTable() {
 
       channel TEXT NOT NULL DEFAULT 'IN_APP',
 
-      status TEXT NOT NULL DEFAULT 'CREATED',
+      status TEXT NOT NULL DEFAULT 'DELIVERED',
 
       read_at TEXT,
       sent_at TEXT,
@@ -95,11 +117,13 @@ function ensureNotificationsTable() {
 
 
 try {
+
   addColumnIfMissing(
     "payments",
     "rate_per_kg",
     "REAL"
   );
+
 
   addColumnIfMissing(
     "payments",
@@ -107,11 +131,13 @@ try {
     "TEXT"
   );
 
+
   addColumnIfMissing(
     "payments",
     "updated_at",
     "TEXT"
   );
+
 
   addColumnIfMissing(
     "payments",
@@ -119,111 +145,204 @@ try {
     "TEXT"
   );
 
+
   addColumnIfMissing(
     "payments",
     "sms_sent_at",
     "TEXT"
   );
 
+
   ensurePaymentIssuesTable();
-ensureNotificationsTable();
-} catch (error) {
+
+  ensureNotificationsTable();
+
+} catch (
+  error
+) {
+
   console.error(
     "Database migration error:",
     error
   );
+
 }
 
 
+/* =========================================================
+   SETTINGS
+========================================================= */
+
 const DEFAULT_SETTINGS = {
-  bookingEnabled: true,
-  maxQuantity: 5000,
-  defaultCapacity: 20,
-  slotDuration: 30,
-  advanceBookingDays: 7,
-  requireActualWeight: true,
-  smsEnabled: false,
-  bookingConfirmationSms: true,
-  lateArrivalSms: true,
-  procurementSms: true,
-  paymentSms: true,
-  defaultLanguage: "en",
-  maintenanceMode: false,
+
+  bookingEnabled:
+    true,
+
+  maxQuantity:
+    5000,
+
+  defaultCapacity:
+    20,
+
+  slotDuration:
+    30,
+
+  advanceBookingDays:
+    7,
+
+  requireActualWeight:
+    true,
+
+  smsEnabled:
+    false,
+
+  bookingConfirmationSms:
+    true,
+
+  lateArrivalSms:
+    true,
+
+  procurementSms:
+    true,
+
+  paymentSms:
+    true,
+
+  defaultLanguage:
+    "en",
+
+  maintenanceMode:
+    false,
+
 };
 
 
 function getSettings() {
-  const rows = db
-    .prepare(`
-      SELECT key, value
-      FROM settings
-      ORDER BY key ASC
-    `)
-    .all();
+
+  const rows =
+    db
+      .prepare(`
+        SELECT key, value
+        FROM settings
+        ORDER BY key ASC
+      `)
+      .all();
+
 
   const settings = {
     ...DEFAULT_SETTINGS,
   };
 
-  for (const row of rows) {
+
+  for (
+    const row
+    of rows
+  ) {
+
     try {
-      settings[row.key] =
-        JSON.parse(row.value);
+
+      settings[
+        row.key
+      ] =
+        JSON.parse(
+          row.value
+        );
+
     } catch {
-      settings[row.key] =
+
+      settings[
+        row.key
+      ] =
         row.value;
+
     }
+
   }
 
+
   return settings;
+
 }
 
 
-function saveSettings(settings) {
+function saveSettings(
+  settings
+) {
+
   const now =
     new Date().toISOString();
 
-  const statement = db.prepare(`
-    INSERT INTO settings (
-      key,
-      value,
-      updated_at
-    )
-    VALUES (?, ?, ?)
-    ON CONFLICT(key)
-    DO UPDATE SET
-      value = excluded.value,
-      updated_at = excluded.updated_at
-  `);
+
+  const statement =
+    db.prepare(`
+      INSERT INTO settings (
+        key,
+        value,
+        updated_at
+      )
+      VALUES (?, ?, ?)
+      ON CONFLICT(key)
+      DO UPDATE SET
+        value = excluded.value,
+        updated_at = excluded.updated_at
+    `);
+
 
   const transaction =
-    db.transaction(() => {
-      for (
-        const [
-          key,
-          value,
-        ]
-        of Object.entries(settings)
-      ) {
-        statement.run(
-          key,
-          JSON.stringify(value),
-          now
-        );
+    db.transaction(
+      () => {
+
+        for (
+          const [
+            key,
+            value,
+          ]
+          of Object.entries(
+            settings
+          )
+        ) {
+
+          statement.run(
+            key,
+            JSON.stringify(
+              value
+            ),
+            now
+          );
+
+        }
+
       }
-    });
+    );
+
 
   transaction();
+
 }
 
 
-function normalisePhone(value) {
-  return String(value || "")
-    .replace(/\D/g, "");
+/* =========================================================
+   COMMON HELPERS
+========================================================= */
+
+function normalisePhone(
+  value
+) {
+
+  return String(
+    value || ""
+  ).replace(
+    /\D/g,
+    ""
+  );
+
 }
 
 
-function getBookingById(id) {
+function getBookingById(
+  id
+) {
+
   return db.prepare(`
     SELECT
       b.*,
@@ -257,12 +376,19 @@ function getBookingById(id) {
       )
 
     WHERE b.id = ?
-  `).get(id);
+  `).get(
+    id
+  );
+
 }
 
 
-function isValidStatus(status) {
+function isValidStatus(
+  status
+) {
+
   return [
+
     "CONFIRMED",
     "ARRIVED",
     "LATE",
@@ -270,12 +396,20 @@ function isValidStatus(status) {
     "PROCURED",
     "PAYMENT_PENDING",
     "PAYMENT_SENT",
-  ].includes(status);
+
+  ].includes(
+    status
+  );
+
 }
 
 
-function getAllowedNextStatuses(status) {
+function getAllowedNextStatuses(
+  status
+) {
+
   const transitions = {
+
     CONFIRMED: [
       "ARRIVED",
       "LATE",
@@ -304,12 +438,16 @@ function getAllowedNextStatuses(status) {
     ],
 
     PAYMENT_SENT: [],
+
   };
 
+
   return (
-    transitions[status] ||
-    []
+    transitions[
+      status
+    ] || []
   );
+
 }
 
 
@@ -317,7 +455,9 @@ function getStatusSms(
   token,
   status
 ) {
+
   const messages = {
+
     ARRIVED:
       `KrishiSetu update: token ${token} has been marked arrived.`,
 
@@ -335,14 +475,60 @@ function getStatusSms(
 
     PAYMENT_SENT:
       `KrishiSetu update: payment for token ${token} has been sent.`,
+
   };
 
+
   return (
-    messages[status] ||
+    messages[
+      status
+    ] ||
     null
   );
+
 }
 
+
+function getNotificationTitle(
+  status
+) {
+
+  const titles = {
+
+    ARRIVED:
+      "Arrival recorded",
+
+    LATE:
+      "Late arrival recorded",
+
+    WEIGHING:
+      "Weighing started",
+
+    PROCURED:
+      "Procurement completed",
+
+    PAYMENT_PENDING:
+      "Payment processing started",
+
+    PAYMENT_SENT:
+      "Payment sent",
+
+  };
+
+
+  return (
+    titles[
+      status
+    ] ||
+    "Booking update"
+  );
+
+}
+
+
+/* =========================================================
+   TWILIO SMS
+========================================================= */
 
 async function sendSms(
   number,
@@ -352,11 +538,14 @@ async function sendSms(
   const accountSid =
     process.env.TWILIO_ACCOUNT_SID;
 
+
   const apiKey =
     process.env.TWILIO_API_KEY;
 
+
   const apiSecret =
     process.env.TWILIO_API_SECRET;
+
 
   const from =
     process.env.TWILIO_PHONE_NUMBER;
@@ -371,18 +560,25 @@ async function sendSms(
   ) {
 
     return {
-      sent: false,
-      status: "NOT_SENT",
+
+      sent:
+        false,
+
+      status:
+        "NOT_SENT",
+
       reason:
         "SMS disabled or Twilio credentials missing.",
+
     };
 
   }
 
 
   const twilio =
-    (await import("twilio"))
-      .default;
+    (
+      await import("twilio")
+    ).default;
 
 
   const client =
@@ -420,7 +616,9 @@ async function sendSms(
   } else if (
     cleanedNumber.length ===
       12 &&
-    cleanedNumber.startsWith("91")
+    cleanedNumber.startsWith(
+      "91"
+    )
   ) {
 
     recipient =
@@ -477,20 +675,29 @@ async function sendSms(
 
   const response =
     await client.messages.create({
+
       to:
         recipient,
 
-      from,
+      from:
+        from,
 
       body:
         template,
+
     });
 
 
   return {
-    sent: true,
-    status: "SENT",
+
+    sent:
+      true,
+
+    status:
+      "SENT",
+
     data: {
+
       sid:
         response.sid,
 
@@ -498,20 +705,44 @@ async function sendSms(
         response.status,
 
       template,
+
     },
+
   };
 
 }
 
+
+/* =========================================================
+   NOTIFICATIONS
+========================================================= */
+
 async function createNotification({
+
   farmerId,
-  bookingId = null,
+
+  bookingId =
+    null,
+
   type,
+
   title,
+
   message,
-  sms = false,
-  phone = null,
+
+  sms =
+    false,
+
+  phone =
+    null,
+
 }) {
+
+  const initialStatus =
+    sms
+      ? "CREATED"
+      : "DELIVERED";
+
 
   const result =
     db.prepare(`
@@ -531,25 +762,38 @@ async function createNotification({
         ?,
         ?,
         ?,
-        'CREATED'
+        ?
       )
     `).run(
+
       farmerId,
+
       bookingId,
+
       type,
+
       title,
+
       message,
+
       sms
         ? "SMS"
-        : "IN_APP"
+        : "IN_APP",
+
+      initialStatus,
+
     );
 
 
   let smsStatus =
-    "NOT_SENT";
+    sms
+      ? "NOT_SENT"
+      : "DELIVERED";
+
 
   let sentAt =
     null;
+
 
   let providerResponse =
     null;
@@ -575,7 +819,8 @@ async function createNotification({
 
 
       sentAt =
-        smsStatus === "SENT"
+        smsStatus ===
+        "SENT"
           ? new Date().toISOString()
           : null;
 
@@ -588,7 +833,9 @@ async function createNotification({
           : null;
 
 
-    } catch (error) {
+    } catch (
+      error
+    ) {
 
       console.warn(
         "Notification SMS failed:",
@@ -617,14 +864,20 @@ async function createNotification({
       provider_response = ?
     WHERE id = ?
   `).run(
+
     smsStatus,
+
     sentAt,
+
     providerResponse,
-    result.lastInsertRowid
+
+    result.lastInsertRowid,
+
   );
 
 
   return {
+
     id:
       result.lastInsertRowid,
 
@@ -636,65 +889,112 @@ async function createNotification({
   };
 
 }
+
+
+/* =========================================================
+   HEALTH
+========================================================= */
+
 app.get(
   "/api/health",
-  (req, res) => {
+  (
+    req,
+    res
+  ) => {
+
     res.json({
-      success: true,
+
+      success:
+        true,
+
       message:
         "KrishiSetu backend is running",
+
       timestamp:
         new Date().toISOString(),
+
     });
+
   }
 );
 
 
+/* =========================================================
+   FARMERS
+========================================================= */
+
 app.post(
   "/api/farmers",
-  (req, res) => {
+  (
+    req,
+    res
+  ) => {
+
     try {
+
       const farmer =
-        req.body || {};
+        req.body ||
+        {};
 
-      const id = String(
-        farmer.id || ""
-      ).trim();
 
-      const name = String(
-        farmer.name || ""
-      ).trim();
+      const id =
+        String(
+          farmer.id ||
+          ""
+        ).trim();
+
+
+      const name =
+        String(
+          farmer.name ||
+          ""
+        ).trim();
+
 
       const phone =
         normalisePhone(
           farmer.phone
         );
 
+
       if (
         !id ||
         !name ||
-        phone.length !== 10
+        phone.length !==
+          10
       ) {
+
         return res
           .status(400)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Farmer id, name and valid 10-digit phone are required.",
+
           });
+
       }
+
 
       const existingByPhone =
         db.prepare(`
           SELECT *
           FROM farmers
           WHERE phone = ?
-        `).get(phone);
+        `).get(
+          phone
+        );
+
 
       if (
         existingByPhone &&
-        existingByPhone.id !== id
+        existingByPhone.id !==
+          id
       ) {
+
         db.prepare(`
           UPDATE farmers
           SET
@@ -709,34 +1009,65 @@ app.post(
             estimated_quantity = ?
           WHERE phone = ?
         `).run(
+
           name,
-          farmer.stateId || null,
-          farmer.districtId || null,
-          farmer.mandalId || null,
-          farmer.village || null,
-          farmer.language || "en",
-          farmer.preferredCenterId || null,
-          farmer.primaryCrop || null,
+
+          farmer.stateId ||
+            null,
+
+          farmer.districtId ||
+            null,
+
+          farmer.mandalId ||
+            null,
+
+          farmer.village ||
+            null,
+
+          farmer.language ||
+            "en",
+
+          farmer.preferredCenterId ||
+            null,
+
+          farmer.primaryCrop ||
+            null,
+
           Number(
-            farmer.estimatedQuantity || 0
+            farmer.estimatedQuantity ||
+            0
           ),
-          phone
+
+          phone,
+
         );
+
 
         const saved =
           db.prepare(`
             SELECT *
             FROM farmers
             WHERE phone = ?
-          `).get(phone);
+          `).get(
+            phone
+          );
+
 
         return res.json({
-          success: true,
+
+          success:
+            true,
+
           message:
             "Farmer already existed and was updated.",
-          farmer: saved,
+
+          farmer:
+            saved,
+
         });
+
       }
+
 
       db.prepare(`
         INSERT INTO farmers (
@@ -778,75 +1109,128 @@ app.post(
           primary_crop = excluded.primary_crop,
           estimated_quantity = excluded.estimated_quantity
       `).run({
+
         id,
+
         name,
+
         phone,
+
         state_id:
-          farmer.stateId || null,
+          farmer.stateId ||
+          null,
+
         district_id:
-          farmer.districtId || null,
+          farmer.districtId ||
+          null,
+
         mandal_id:
-          farmer.mandalId || null,
+          farmer.mandalId ||
+          null,
+
         village:
-          farmer.village || null,
+          farmer.village ||
+          null,
+
         language:
-          farmer.language || "en",
+          farmer.language ||
+          "en",
+
         preferred_center_id:
-          farmer.preferredCenterId || null,
+          farmer.preferredCenterId ||
+          null,
+
         primary_crop:
-          farmer.primaryCrop || null,
+          farmer.primaryCrop ||
+          null,
+
         estimated_quantity:
           Number(
-            farmer.estimatedQuantity || 0
+            farmer.estimatedQuantity ||
+            0
           ),
+
       });
+
 
       const saved =
         db.prepare(`
           SELECT *
           FROM farmers
           WHERE id = ?
-        `).get(id);
+        `).get(
+          id
+        );
+
 
       res.status(201).json({
-        success: true,
+
+        success:
+          true,
+
         message:
           "Farmer saved.",
-        farmer: saved,
+
+        farmer:
+          saved,
+
       });
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
+
       console.error(
         "Create farmer error:",
         error
       );
 
+
       if (
         error?.code ===
         "SQLITE_CONSTRAINT_UNIQUE"
       ) {
+
         return res
           .status(409)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "A farmer with this phone number already exists.",
+
           });
+
       }
 
+
       res.status(500).json({
-        success: false,
+
+        success:
+          false,
+
         message:
           "Failed to save farmer.",
+
       });
+
     }
+
   }
 );
 
 
 app.get(
   "/api/farmers",
-  (req, res) => {
+  (
+    req,
+    res
+  ) => {
+
     try {
+
       const farmers =
         db.prepare(`
           SELECT *
@@ -854,30 +1238,354 @@ app.get(
           ORDER BY datetime(created_at) DESC
         `).all();
 
+
       res.json({
-        success: true,
+
+        success:
+          true,
+
         farmers,
+
       });
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
+
       console.error(
         "Get farmers error:",
         error
       );
 
+
       res.status(500).json({
-        success: false,
+
+        success:
+          false,
+
         message:
           "Failed to load farmers.",
+
       });
+
     }
+
+  }
+);
+
+
+/* =========================================================
+   FARMER SETTINGS UPDATE
+========================================================= */
+
+app.patch(
+  "/api/farmers/:id",
+  (
+    req,
+    res
+  ) => {
+
+    try {
+
+      const farmerId =
+        String(
+          req.params.id ||
+          ""
+        ).trim();
+
+
+      const existing =
+        db.prepare(`
+          SELECT *
+          FROM farmers
+          WHERE id = ?
+        `).get(
+          farmerId
+        );
+
+
+      if (
+        !existing
+      ) {
+
+        return res
+          .status(404)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "Farmer not found.",
+
+          });
+
+      }
+
+
+      const name =
+        String(
+          req.body?.name ??
+          existing.name ??
+          ""
+        ).trim();
+
+
+      const phone =
+        normalisePhone(
+          req.body?.phone ??
+          existing.phone
+        );
+
+
+      const village =
+        String(
+          req.body?.village ??
+          existing.village ??
+          ""
+        ).trim();
+
+
+      const language =
+        String(
+          req.body?.language ??
+          existing.language ??
+          "en"
+        ).trim();
+
+
+      const preferredCenterId =
+        req.body?.preferredCenterId ??
+        existing.preferred_center_id ??
+        null;
+
+
+      const primaryCrop =
+        String(
+          req.body?.primaryCrop ??
+          existing.primary_crop ??
+          ""
+        ).trim();
+
+
+      const estimatedQuantity =
+        Number(
+          req.body?.estimatedQuantity ??
+          existing.estimated_quantity ??
+          0
+        );
+
+
+      if (
+        !name
+      ) {
+
+        return res
+          .status(400)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "Farmer name is required.",
+
+          });
+
+      }
+
+
+      if (
+        phone.length !==
+        10
+      ) {
+
+        return res
+          .status(400)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "A valid 10-digit phone number is required.",
+
+          });
+
+      }
+
+
+      if (
+        ![
+          "en",
+          "hi",
+          "te",
+        ].includes(
+          language
+        )
+      ) {
+
+        return res
+          .status(400)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "Invalid language.",
+
+          });
+
+      }
+
+
+      if (
+        !Number.isFinite(
+          estimatedQuantity
+        ) ||
+        estimatedQuantity <
+          0
+      ) {
+
+        return res
+          .status(400)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "Quantity cannot be negative.",
+
+          });
+
+      }
+
+
+      const otherFarmer =
+        db.prepare(`
+          SELECT id
+          FROM farmers
+          WHERE phone = ?
+            AND id != ?
+        `).get(
+          phone,
+          farmerId
+        );
+
+
+      if (
+        otherFarmer
+      ) {
+
+        return res
+          .status(409)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "This mobile number is already registered to another farmer.",
+
+          });
+
+      }
+
+
+      db.prepare(`
+        UPDATE farmers
+        SET
+          name = ?,
+          phone = ?,
+          village = ?,
+          language = ?,
+          preferred_center_id = ?,
+          primary_crop = ?,
+          estimated_quantity = ?
+        WHERE id = ?
+      `).run(
+
+        name,
+
+        phone,
+
+        village ||
+          null,
+
+        language,
+
+        preferredCenterId,
+
+        primaryCrop ||
+          null,
+
+        estimatedQuantity,
+
+        farmerId,
+
+      );
+
+
+      const updated =
+        db.prepare(`
+          SELECT *
+          FROM farmers
+          WHERE id = ?
+        `).get(
+          farmerId
+        );
+
+
+      res.json({
+
+        success:
+          true,
+
+        message:
+          "Farmer settings updated.",
+
+        farmer:
+          updated,
+
+      });
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        "Update farmer settings error:",
+        error
+      );
+
+
+      res.status(500).json({
+
+        success:
+          false,
+
+        message:
+          "Failed to update farmer settings.",
+
+      });
+
+    }
+
   }
 );
 
 
 app.get(
   "/api/farmers/:id",
-  (req, res) => {
+  (
+    req,
+    res
+  ) => {
+
     try {
+
       const farmer =
         db.prepare(`
           SELECT *
@@ -887,40 +1595,74 @@ app.get(
           req.params.id
         );
 
-      if (!farmer) {
+
+      if (
+        !farmer
+      ) {
+
         return res
           .status(404)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Farmer not found.",
+
           });
+
       }
 
+
       res.json({
-        success: true,
+
+        success:
+          true,
+
         farmer,
+
       });
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
+
       console.error(
         "Get farmer error:",
         error
       );
 
+
       res.status(500).json({
-        success: false,
+
+        success:
+          false,
+
         message:
           "Failed to load farmer.",
+
       });
+
     }
+
   }
 );
 
 
+/* =========================================================
+   CENTERS
+========================================================= */
+
 app.get(
   "/api/centers",
-  (req, res) => {
+  (
+    req,
+    res
+  ) => {
+
     try {
+
       const centers =
         db.prepare(`
           SELECT *
@@ -928,30 +1670,55 @@ app.get(
           ORDER BY name ASC
         `).all();
 
+
       res.json({
-        success: true,
+
+        success:
+          true,
+
         centers,
+
       });
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
+
       console.error(
         "Get centers error:",
         error
       );
 
+
       res.status(500).json({
-        success: false,
+
+        success:
+          false,
+
         message:
           "Failed to load procurement centers.",
+
       });
+
     }
+
   }
 );
 
 
+/* =========================================================
+   BOOKINGS - LIST
+========================================================= */
+
 app.get(
   "/api/bookings",
-  (req, res) => {
+  (
+    req,
+    res
+  ) => {
+
     try {
+
       const bookings =
         db.prepare(`
           SELECT
@@ -986,97 +1753,157 @@ app.get(
           ORDER BY datetime(b.created_at) DESC
         `).all();
 
+
       res.json({
-        success: true,
+
+        success:
+          true,
+
         bookings,
+
       });
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
+
       console.error(
         "Get bookings error:",
         error
       );
 
+
       res.status(500).json({
-        success: false,
+
+        success:
+          false,
+
         message:
           "Failed to load bookings.",
+
       });
+
     }
+
   }
 );
 
 
+/* =========================================================
+   CREATE BOOKING
+========================================================= */
+
 app.post(
   "/api/bookings",
-  async (req, res) => {
+  async (
+    req,
+    res
+  ) => {
+
     try {
+
       const booking =
-        req.body || {};
+        req.body ||
+        {};
+
 
       const farmerData =
-        booking.farmer || {};
+        booking.farmer ||
+        {};
+
 
       const id =
         String(
-          booking.id || ""
+          booking.id ||
+          ""
         ).trim();
+
 
       const token =
         String(
-          booking.token || ""
+          booking.token ||
+          ""
         ).trim();
+
 
       const farmerId =
         String(
-          farmerData.id || ""
+          farmerData.id ||
+          ""
         ).trim();
+
 
       const phone =
         normalisePhone(
           farmerData.phone
         );
 
+
       if (
         !id ||
         !token ||
         (
           !farmerId &&
-          phone.length !== 10
+          phone.length !==
+            10
         )
       ) {
+
         return res
           .status(400)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Booking id, token and farmer identity are required.",
+
           });
+
       }
+
 
       const existingBooking =
         db.prepare(`
           SELECT *
           FROM bookings
           WHERE id = ?
-        `).get(id);
+        `).get(
+          id
+        );
+
 
       if (
         existingBooking
       ) {
+
         return res.json({
-          success: true,
+
+          success:
+            true,
+
           booking:
-            getBookingById(id),
-          alreadyExists: true,
+            getBookingById(
+              id
+            ),
+
+          alreadyExists:
+            true,
+
         });
+
       }
+
 
       let farmer =
         null;
 
+
       if (
         farmerId
       ) {
+
         farmer =
           db.prepare(`
             SELECT *
@@ -1085,12 +1912,16 @@ app.post(
           `).get(
             farmerId
           );
+
       }
+
 
       if (
         !farmer &&
-        phone.length === 10
+        phone.length ===
+          10
       ) {
+
         farmer =
           db.prepare(`
             SELECT *
@@ -1099,80 +1930,126 @@ app.post(
           `).get(
             phone
           );
+
       }
 
-      if (!farmer) {
+
+      if (
+        !farmer
+      ) {
+
         return res
           .status(404)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Farmer account not found. Please login again.",
+
           });
+
       }
+
 
       const centerId =
         String(
-          booking.centerId || ""
+          booking.centerId ||
+          ""
         ).trim();
+
 
       const crop =
         String(
-          booking.crop || ""
+          booking.crop ||
+          ""
         ).trim();
+
 
       const estimatedQuantity =
         Number(
-          booking.estimatedQuantity || 0
+          booking.estimatedQuantity ||
+          0
         );
 
+
       const date =
-        booking.date || null;
+        booking.date ||
+        null;
+
 
       const slotStart =
-        booking.slotStart || null;
+        booking.slotStart ||
+        null;
+
 
       const slotEnd =
-        booking.slotEnd || null;
+        booking.slotEnd ||
+        null;
+
 
       const settings =
         getSettings();
 
+
       if (
         !settings.bookingEnabled
       ) {
+
         return res
           .status(409)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "New farmer bookings are currently disabled by the administrator.",
+
           });
+
       }
+
 
       if (
         settings.maintenanceMode
       ) {
+
         return res
           .status(503)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "KrishiSetu is currently under maintenance.",
+
           });
+
       }
 
+
       if (
-        estimatedQuantity <= 0
+        estimatedQuantity <=
+          0
       ) {
+
         return res
           .status(400)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Estimated quantity must be greater than zero.",
+
           });
+
       }
+
 
       if (
         estimatedQuantity >
@@ -1180,14 +2057,21 @@ app.post(
           settings.maxQuantity
         )
       ) {
+
         return res
           .status(400)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               `Maximum quantity allowed per booking is ${settings.maxQuantity} kg.`,
+
           });
+
       }
+
 
       if (
         !centerId ||
@@ -1196,17 +2080,25 @@ app.post(
         !slotStart ||
         !slotEnd
       ) {
+
         return res
           .status(400)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Incomplete booking details.",
+
           });
+
       }
+
 
       const today =
         new Date();
+
 
       today.setHours(
         0,
@@ -1215,40 +2107,59 @@ app.post(
         0
       );
 
+
       const requestedDate =
         new Date(
           `${date}T00:00:00`
         );
+
 
       if (
         Number.isNaN(
           requestedDate.getTime()
         )
       ) {
+
         return res
           .status(400)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Invalid booking date.",
+
           });
+
       }
+
 
       if (
         requestedDate <
         today
       ) {
+
         return res
           .status(400)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Bookings cannot be created for a past date.",
+
           });
+
       }
 
+
       const maximumDate =
-        new Date(today);
+        new Date(
+          today
+        );
+
 
       maximumDate.setDate(
         maximumDate.getDate() +
@@ -1257,18 +2168,26 @@ app.post(
         )
       );
 
+
       if (
         requestedDate >
         maximumDate
       ) {
+
         return res
           .status(400)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               `Bookings can only be made up to ${settings.advanceBookingDays} days in advance.`,
+
           });
+
       }
+
 
       const center =
         db.prepare(`
@@ -1279,31 +2198,51 @@ app.post(
           centerId
         );
 
-      if (!center) {
+
+      if (
+        !center
+      ) {
+
         return res
           .status(404)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Procurement center not found.",
+
           });
+
       }
 
+
       if (
-        center.active !== undefined &&
-        center.active !== null &&
+        center.active !==
+          undefined &&
+        center.active !==
+          null &&
         Number(
           center.active
-        ) === 0
+        ) ===
+          0
       ) {
+
         return res
           .status(409)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "This procurement center is currently inactive.",
+
           });
+
       }
+
 
       const capacity =
         Number(
@@ -1313,26 +2252,34 @@ app.post(
           20
         );
 
+
       if (
         !Number.isFinite(
           capacity
         ) ||
-        capacity <= 0
+        capacity <=
+          0
       ) {
+
         return res
           .status(400)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Invalid slot capacity.",
+
           });
+
       }
+
 
       const slotConflict =
         db.prepare(`
           SELECT COUNT(*) AS count
           FROM bookings
-
           WHERE
             center_id = ?
             AND date = ?
@@ -1340,203 +2287,253 @@ app.post(
             AND slot_end = ?
             AND status != 'PAYMENT_SENT'
         `).get(
+
           centerId,
+
           date,
+
           slotStart,
-          slotEnd
+
+          slotEnd,
+
         );
+
 
       if (
         Number(
-          slotConflict?.count || 0
-        ) >= capacity
+          slotConflict?.count ||
+          0
+        ) >=
+        capacity
       ) {
+
         return res
           .status(409)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "This arrival window is full. Please choose another slot.",
+
           });
+
       }
 
+
       const transaction =
-        db.transaction(() => {
+        db.transaction(
+          () => {
 
-          db.prepare(`
-            INSERT INTO bookings (
+            db.prepare(`
+              INSERT INTO bookings (
+                id,
+                token,
+                farmer_id,
+                center_id,
+                crop,
+                estimated_quantity,
+                actual_quantity,
+                date,
+                slot_start,
+                slot_end,
+                status,
+                quality
+              )
+              VALUES (
+                @id,
+                @token,
+                @farmer_id,
+                @center_id,
+                @crop,
+                @estimated_quantity,
+                NULL,
+                @date,
+                @slot_start,
+                @slot_end,
+                'CONFIRMED',
+                NULL
+              )
+            `).run({
+
               id,
+
               token,
-              farmer_id,
-              center_id,
+
+              farmer_id:
+                farmer.id,
+
+              center_id:
+                centerId,
+
               crop,
-              estimated_quantity,
-              actual_quantity,
+
+              estimated_quantity:
+                estimatedQuantity,
+
               date,
-              slot_start,
-              slot_end,
-              status,
-              quality
-            )
 
-            VALUES (
-              @id,
-              @token,
-              @farmer_id,
-              @center_id,
-              @crop,
-              @estimated_quantity,
-              NULL,
-              @date,
-              @slot_start,
-              @slot_end,
-              'CONFIRMED',
-              NULL
-            )
-          `).run({
-            id,
-            token,
-            farmer_id:
-              farmer.id,
-            center_id:
-              centerId,
-            crop,
-            estimated_quantity:
-              estimatedQuantity,
-            date,
-            slot_start:
-              slotStart,
-            slot_end:
-              slotEnd,
-          });
+              slot_start:
+                slotStart,
 
-          db.prepare(`
-            INSERT INTO status_events (
-              booking_id,
-              status
-            )
+              slot_end:
+                slotEnd,
 
-            VALUES (
-              ?,
-              'CONFIRMED'
-            )
-          `).run(id);
+            });
 
-        });
+
+            db.prepare(`
+              INSERT INTO status_events (
+                booking_id,
+                status
+              )
+              VALUES (
+                ?,
+                'CONFIRMED'
+              )
+            `).run(
+              id
+            );
+
+          }
+        );
+
 
       transaction();
 
+
       const created =
-        getBookingById(id);
+        getBookingById(
+          id
+        );
+
+
       const notification =
-  await createNotification({
+        await createNotification({
 
-    farmerId:
-      farmer.id,
+          farmerId:
+            farmer.id,
 
-    bookingId:
-      id,
+          bookingId:
+            id,
 
-    type:
-      "BOOKING_CONFIRMED",
+          type:
+            "BOOKING_CONFIRMED",
 
-    title:
-      "Booking confirmed",
+          title:
+            "Booking confirmed",
 
-    message:
-      `Your KrishiSetu booking ${token} is confirmed for ${date} from ${slotStart} to ${slotEnd}.`,
+          message:
+            `Your KrishiSetu booking ${token} is confirmed for ${date} from ${slotStart} to ${slotEnd}.`,
 
-    sms:
-      settings.bookingConfirmationSms &&
-      settings.smsEnabled &&
-      SMS_ENABLED,
+          sms:
+            settings.bookingConfirmationSms &&
+            settings.smsEnabled &&
+            SMS_ENABLED,
 
-    phone:
-      farmer.phone,
+          phone:
+            farmer.phone,
 
-  });
-      let bookingSmsStatus =
-        "NOT_SENT";
+        });
 
-      if (
-        settings.bookingConfirmationSms &&
-        settings.smsEnabled &&
-        SMS_ENABLED &&
-        farmer.phone
-      ) {
-        try {
-          const sms =
-            await sendSms(
-              farmer.phone,
-              `KrishiSetu booking confirmed. Token: ${token}. Date: ${date}. Time: ${slotStart}-${slotEnd}.`
-            );
-
-          bookingSmsStatus =
-            sms.status;
-        } catch (smsError) {
-          console.warn(
-            "Booking SMS warning:",
-            smsError
-          );
-
-          bookingSmsStatus =
-            "FAILED";
-        }
-      }
 
       res.status(201).json({
-  success: true,
-  booking: created,
-  smsStatus:
-    notification.status,
-});
-    } catch (error) {
+
+        success:
+          true,
+
+        booking:
+          created,
+
+        smsStatus:
+          notification.status,
+
+      });
+
+    } catch (
+      error
+    ) {
+
       console.error(
         "Create booking error:",
         error
       );
 
+
       if (
         error?.code ===
         "SQLITE_CONSTRAINT_UNIQUE"
       ) {
+
         return res
           .status(409)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "This booking or token already exists.",
+
           });
+
       }
 
+
       res.status(500).json({
-        success: false,
+
+        success:
+          false,
+
         message:
           "Failed to create booking.",
+
       });
+
     }
+
   }
 );
 
 
+/* =========================================================
+   BOOKING DETAILS
+========================================================= */
+
 app.get(
   "/api/bookings/:id",
-  (req, res) => {
+  (
+    req,
+    res
+  ) => {
+
     try {
+
       const booking =
         getBookingById(
           req.params.id
         );
 
-      if (!booking) {
+
+      if (
+        !booking
+      ) {
+
         return res
           .status(404)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Booking not found.",
+
           });
+
       }
+
 
       const statusEvents =
         db.prepare(`
@@ -1554,52 +2551,88 @@ app.get(
           req.params.id
         );
 
+
       res.json({
-        success: true,
+
+        success:
+          true,
+
         booking,
+
         statusEvents,
+
       });
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
+
       console.error(
         "Get booking error:",
         error
       );
 
+
       res.status(500).json({
-        success: false,
+
+        success:
+          false,
+
         message:
           "Failed to load booking.",
+
       });
+
     }
+
   }
 );
 
 
+/* =========================================================
+   BOOKING STATUS
+========================================================= */
+
 app.patch(
   "/api/bookings/:id/status",
-  async (req, res) => {
+  async (
+    req,
+    res
+  ) => {
+
     try {
+
       const bookingId =
         req.params.id;
 
+
       const nextStatus =
         String(
-          req.body?.status || ""
+          req.body?.status ||
+          ""
         ).trim();
+
 
       if (
         !isValidStatus(
           nextStatus
         )
       ) {
+
         return res
           .status(400)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Invalid booking status.",
+
           });
+
       }
+
 
       const booking =
         db.prepare(`
@@ -1614,53 +2647,80 @@ app.patch(
           bookingId
         );
 
-      if (!booking) {
+
+      if (
+        !booking
+      ) {
+
         return res
           .status(404)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Booking not found.",
+
           });
+
       }
+
 
       const currentStatus =
         booking.status ||
         "CONFIRMED";
 
+
       if (
         currentStatus ===
         nextStatus
       ) {
+
         return res.json({
-          success: true,
+
+          success:
+            true,
+
           message:
             "Booking is already in this status.",
+
           booking:
             getBookingById(
               bookingId
             ),
+
         });
+
       }
+
 
       const allowed =
         getAllowedNextStatuses(
           currentStatus
         );
 
+
       if (
         !allowed.includes(
           nextStatus
         )
       ) {
+
         return res
           .status(409)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               `Cannot move booking from ${currentStatus} to ${nextStatus}.`,
+
           });
+
       }
+
 
       if (
         [
@@ -1670,546 +2730,180 @@ app.patch(
           nextStatus
         )
       ) {
+
         return res
           .status(409)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Use the payment workflow to update payment status.",
+
           });
+
       }
 
+
       const transaction =
-        db.transaction(() => {
+        db.transaction(
+          () => {
 
-          db.prepare(`
-            UPDATE bookings
-            SET status = ?
-            WHERE id = ?
-          `).run(
-            nextStatus,
-            bookingId
-          );
+            db.prepare(`
+              UPDATE bookings
+              SET status = ?
+              WHERE id = ?
+            `).run(
 
-          db.prepare(`
-            INSERT INTO status_events (
-              booking_id,
-              status
-            )
-            VALUES (?, ?)
-          `).run(
-            bookingId,
-            nextStatus
-          );
+              nextStatus,
 
-        });
+              bookingId,
+
+            );
+
+
+            db.prepare(`
+              INSERT INTO status_events (
+                booking_id,
+                status
+              )
+              VALUES (?, ?)
+            `).run(
+
+              bookingId,
+
+              nextStatus,
+
+            );
+
+          }
+        );
+
 
       transaction();
-      const notification =
-  await createNotification({
 
-    farmerId:
-      booking.farmer_id,
 
-    bookingId:
-      bookingId,
-
-    type:
-      nextStatus,
-
-    title:
-      getNotificationTitle(
-        nextStatus
-      ),
-
-    message:
-      getStatusSms(
-        booking.token,
-        nextStatus
-      ) ||
-      `Booking ${booking.token} status updated.`,
-
-    sms:
-      settings.smsEnabled &&
-      SMS_ENABLED &&
-      Boolean(
-        booking.farmer_phone
-      ),
-
-    phone:
-      booking.farmer_phone,
-
-  });
-      res.json({
-  success: true,
-
-  message:
-    "Booking status updated.",
-
-  booking:
-    getBookingById(
-      bookingId
-    ),
-
-  smsStatus:
-    notification.status,
-});
       const settings =
         getSettings();
 
-      let smsStatus =
-        "NOT_SENT";
+
+      let notification =
+        null;
+
 
       if (
-        settings.smsEnabled &&
-        SMS_ENABLED &&
-        booking.farmer_phone
+        nextStatus !==
+        "PAYMENT_SENT"
       ) {
-        const message =
-          getStatusSms(
-            booking.token,
-            nextStatus
-          );
 
-        if (message) {
-          try {
-            const sms =
-              await sendSms(
-                booking.farmer_phone,
-                message
-              );
+        notification =
+          await createNotification({
 
-            smsStatus =
-              sms.status;
-          } catch (smsError) {
-            console.warn(
-              "Status SMS warning:",
-              smsError
-            );
+            farmerId:
+              booking.farmer_id,
 
-            smsStatus =
-              "FAILED";
-          }
-        }
+            bookingId:
+              bookingId,
+
+            type:
+              nextStatus,
+
+            title:
+              getNotificationTitle(
+                nextStatus
+              ),
+
+            message:
+              getStatusSms(
+                booking.token,
+                nextStatus
+              ) ||
+              `Booking ${booking.token} status updated.`,
+
+            sms:
+              settings.smsEnabled &&
+              SMS_ENABLED &&
+              Boolean(
+                booking.farmer_phone
+              ),
+
+            phone:
+              booking.farmer_phone,
+
+          });
+
       }
 
+
       res.json({
-        success: true,
+
+        success:
+          true,
+
         message:
           "Booking status updated.",
+
         booking:
           getBookingById(
             bookingId
           ),
-        smsStatus,
+
+        smsStatus:
+          notification?.status ||
+          "NOT_SENT",
+
       });
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
+
       console.error(
         "Update status error:",
         error
       );
 
+
       res.status(500).json({
-        success: false,
+
+        success:
+          false,
+
         message:
           "Failed to update status.",
+
       });
+
     }
+
   }
 );
 
 
+/* =========================================================
+   WEIGHING
+========================================================= */
+
 app.patch(
   "/api/bookings/:id/weigh",
-  (req, res) => {
+  async (
+    req,
+    res
+  ) => {
+
     try {
+
       const actualQuantity =
         Number(
           req.body?.actualQuantity
         );
 
+
       const quality =
         req.body?.quality ||
         null;
 
-      const notes =
-        String(
-          req.body?.notes || ""
-        ).trim();
-
-      if (
-        !Number.isFinite(
-          actualQuantity
-        ) ||
-        actualQuantity <= 0
-      ) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "Valid actual quantity is required.",
-          });
-      }
-
-      const booking =
-        db.prepare(`
-          SELECT *
-          FROM bookings
-          WHERE id = ?
-        `).get(
-          req.params.id
-        );
-
-      if (!booking) {
-        return res
-          .status(404)
-          .json({
-            success: false,
-            message:
-              "Booking not found.",
-          });
-      }
-
-      if (
-        [
-          "PROCURED",
-          "PAYMENT_PENDING",
-          "PAYMENT_SENT",
-        ].includes(
-          booking.status
-        )
-      ) {
-        return res
-          .status(409)
-          .json({
-            success: false,
-            message:
-              "This booking has already completed procurement.",
-          });
-      }
-
-      const transaction =
-        db.transaction(() => {
-
-          db.prepare(`
-            UPDATE bookings
-            SET
-              actual_quantity = ?,
-              quality = ?,
-              status = 'WEIGHING'
-            WHERE id = ?
-          `).run(
-            actualQuantity,
-            quality,
-            req.params.id
-          );
-
-          db.prepare(`
-            INSERT INTO status_events (
-              booking_id,
-              status
-            )
-            VALUES (?, 'WEIGHING')
-          `).run(
-            req.params.id
-          );
-
-        });
-
-      transaction();
-
-      res.json({
-        success: true,
-        message:
-          "Weight recorded.",
-        booking:
-          getBookingById(
-            req.params.id
-          ),
-        notes,
-      });
-    } catch (error) {
-      console.error(
-        "Weighing error:",
-        error
-      );
-
-      res.status(500).json({
-        success: false,
-        message:
-          "Failed to record weighing.",
-      });
-    }
-  }
-);
-
-
-app.patch(
-  "/api/bookings/:id/procure",
-  (req, res) => {
-    try {
-      const booking =
-        db.prepare(`
-          SELECT *
-          FROM bookings
-          WHERE id = ?
-        `).get(
-          req.params.id
-        );
-
-      if (!booking) {
-        return res
-          .status(404)
-          .json({
-            success: false,
-            message:
-              "Booking not found.",
-          });
-      }
-
-      if (
-        booking.actual_quantity === null ||
-        booking.actual_quantity === undefined ||
-        Number(
-          booking.actual_quantity
-        ) <= 0
-      ) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "Actual quantity must be recorded before procurement.",
-          });
-      }
-
-      if (
-        [
-          "PROCURED",
-          "PAYMENT_PENDING",
-          "PAYMENT_SENT",
-        ].includes(
-          booking.status
-        )
-      ) {
-        return res
-          .status(409)
-          .json({
-            success: false,
-            message:
-              "Procurement has already been completed.",
-          });
-      }
-
-      const rate =
-        Number(
-          req.body?.rate
-        );
-
-      const adjustment =
-        Number(
-          req.body?.adjustment || 0
-        );
-
-      const notes =
-        String(
-          req.body?.notes || ""
-        ).trim();
-
-      if (
-        !Number.isFinite(
-          rate
-        ) ||
-        rate <= 0
-      ) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "A valid procurement rate per kg is required.",
-          });
-      }
-
-      if (
-        !Number.isFinite(
-          adjustment
-        )
-      ) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "Invalid adjustment amount.",
-          });
-      }
-
-      const payableAmount =
-        Number(
-          booking.actual_quantity
-        ) *
-        rate +
-        adjustment;
-
-      if (
-        payableAmount <= 0
-      ) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "Payable amount must be greater than zero.",
-          });
-      }
-
-      const transaction =
-        db.transaction(() => {
-
-          db.prepare(`
-            UPDATE bookings
-            SET status = 'PAYMENT_PENDING'
-            WHERE id = ?
-          `).run(
-            req.params.id
-          );
-
-          db.prepare(`
-            INSERT INTO payments (
-              booking_id,
-              amount,
-              method,
-              reference,
-              status,
-              rate_per_kg,
-              notes,
-              updated_at,
-              sms_status,
-              sms_sent_at
-            )
-            VALUES (
-              ?,
-              ?,
-              NULL,
-              NULL,
-              'PAYMENT_PENDING',
-              ?,
-              ?,
-              CURRENT_TIMESTAMP,
-              'NOT_SENT',
-              NULL
-            )
-          `).run(
-            req.params.id,
-            payableAmount,
-            rate,
-            notes ||
-              `Procurement rate: ₹${rate}/kg. Adjustment: ₹${adjustment}.`
-          );
-
-          db.prepare(`
-            INSERT INTO status_events (
-              booking_id,
-              status
-            )
-            VALUES (?, 'PROCURED')
-          `).run(
-            req.params.id
-          );
-
-          db.prepare(`
-            INSERT INTO status_events (
-              booking_id,
-              status
-            )
-            VALUES (?, 'PAYMENT_PENDING')
-          `).run(
-            req.params.id
-          );
-
-        });
-
-      transaction();
-
-      res.json({
-        success: true,
-        message:
-          "Procurement completed.",
-        booking:
-          getBookingById(
-            req.params.id
-          ),
-      });
-    } catch (error) {
-      console.error(
-        "Complete procurement error:",
-        error
-      );
-
-      res.status(500).json({
-        success: false,
-        message:
-          "Failed to complete procurement.",
-      });
-    }
-  }
-);
-function getNotificationTitle(
-  status
-) {
-
-  const titles = {
-
-    ARRIVED:
-      "Arrival recorded",
-
-    LATE:
-      "Late arrival recorded",
-
-    WEIGHING:
-      "Weighing started",
-
-    PROCURED:
-      "Procurement completed",
-
-    PAYMENT_PENDING:
-      "Payment processing started",
-
-    PAYMENT_SENT:
-      "Payment sent",
-
-  };
-
-
-  return (
-    titles[status] ||
-    "Booking update"
-  );
-
-}
-
-app.patch(
-  "/api/bookings/:id/payment",
-  async (req, res) => {
-    try {
-      const amount =
-        Number(
-          req.body?.amount
-        );
-
-      const method =
-        String(
-          req.body?.method ||
-          "UPI"
-        ).trim();
-
-      const reference =
-        String(
-          req.body?.reference ||
-          ""
-        ).trim();
 
       const notes =
         String(
@@ -2217,36 +2911,34 @@ app.patch(
           ""
         ).trim();
 
+
       if (
         !Number.isFinite(
-          amount
+          actualQuantity
         ) ||
-        amount <= 0
+        actualQuantity <=
+          0
       ) {
+
         return res
           .status(400)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
-              "A valid payment amount is required.",
+              "Valid actual quantity is required.",
+
           });
+
       }
 
-      if (!reference) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "Payment reference is required.",
-          });
-      }
 
       const booking =
         db.prepare(`
           SELECT
             b.*,
-            f.name AS farmer_name,
             f.phone AS farmer_phone
           FROM bookings b
           LEFT JOIN farmers f
@@ -2256,94 +2948,373 @@ app.patch(
           req.params.id
         );
 
-      if (!booking) {
+
+      if (
+        !booking
+      ) {
+
         return res
           .status(404)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Booking not found.",
+
           });
+
       }
 
-      if (
-        booking.status ===
-        "PAYMENT_SENT"
-      ) {
-        return res
-          .status(409)
-          .json({
-            success: false,
-            message:
-              "Payment has already been sent for this booking.",
-          });
-      }
 
       if (
-        ![
+        [
           "PROCURED",
           "PAYMENT_PENDING",
+          "PAYMENT_SENT",
         ].includes(
           booking.status
         )
       ) {
+
         return res
           .status(409)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
-              "This booking is not ready for payment.",
+              "This booking has already completed procurement.",
+
           });
+
       }
 
-      const existingPayment =
+
+      const transaction =
+        db.transaction(
+          () => {
+
+            db.prepare(`
+              UPDATE bookings
+              SET
+                actual_quantity = ?,
+                quality = ?,
+                status = 'WEIGHING'
+              WHERE id = ?
+            `).run(
+
+              actualQuantity,
+
+              quality,
+
+              req.params.id,
+
+            );
+
+
+            db.prepare(`
+              INSERT INTO status_events (
+                booking_id,
+                status
+              )
+              VALUES (?, 'WEIGHING')
+            `).run(
+              req.params.id
+            );
+
+          }
+        );
+
+
+      transaction();
+
+
+      const settings =
+        getSettings();
+
+
+      const notification =
+        await createNotification({
+
+          farmerId:
+            booking.farmer_id,
+
+          bookingId:
+            req.params.id,
+
+          type:
+            "WEIGHING",
+
+          title:
+            "Weighing started",
+
+          message:
+            `KrishiSetu update: token ${booking.token} is now being weighed.`,
+
+          sms:
+            settings.smsEnabled &&
+            SMS_ENABLED &&
+            Boolean(
+              booking.farmer_phone
+            ),
+
+          phone:
+            booking.farmer_phone,
+
+        });
+
+
+      res.json({
+
+        success:
+          true,
+
+        message:
+          "Weight recorded.",
+
+        booking:
+          getBookingById(
+            req.params.id
+          ),
+
+        notes,
+
+        smsStatus:
+          notification.status,
+
+      });
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        "Weighing error:",
+        error
+      );
+
+
+      res.status(500).json({
+
+        success:
+          false,
+
+        message:
+          "Failed to record weighing.",
+
+      });
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   PROCUREMENT
+========================================================= */
+
+app.patch(
+  "/api/bookings/:id/procure",
+  async (
+    req,
+    res
+  ) => {
+
+    try {
+
+      const booking =
         db.prepare(`
-          SELECT *
-          FROM payments
-          WHERE booking_id = ?
-          ORDER BY id DESC
-          LIMIT 1
+          SELECT
+            b.*,
+            f.phone AS farmer_phone
+          FROM bookings b
+          LEFT JOIN farmers f
+            ON f.id = b.farmer_id
+          WHERE b.id = ?
         `).get(
           req.params.id
         );
 
+
       if (
-        existingPayment?.status ===
-        "PAYMENT_SENT"
+        !booking
       ) {
+
+        return res
+          .status(404)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "Booking not found.",
+
+          });
+
+      }
+
+
+      if (
+        booking.actual_quantity ===
+          null ||
+        booking.actual_quantity ===
+          undefined ||
+        Number(
+          booking.actual_quantity
+        ) <=
+          0
+      ) {
+
+        return res
+          .status(400)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "Actual quantity must be recorded before procurement.",
+
+          });
+
+      }
+
+
+      if (
+        [
+          "PROCURED",
+          "PAYMENT_PENDING",
+          "PAYMENT_SENT",
+        ].includes(
+          booking.status
+        )
+      ) {
+
         return res
           .status(409)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
-              "A payment has already been recorded for this booking.",
+              "Procurement has already been completed.",
+
           });
+
       }
 
-      const transaction =
-        db.transaction(() => {
 
-          if (
-            existingPayment
-          ) {
+      const rate =
+        Number(
+          req.body?.rate
+        );
+
+
+      const adjustment =
+        Number(
+          req.body?.adjustment ||
+          0
+        );
+
+
+      const notes =
+        String(
+          req.body?.notes ||
+          ""
+        ).trim();
+
+
+      if (
+        !Number.isFinite(
+          rate
+        ) ||
+        rate <=
+          0
+      ) {
+
+        return res
+          .status(400)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "A valid procurement rate per kg is required.",
+
+          });
+
+      }
+
+
+      if (
+        !Number.isFinite(
+          adjustment
+        )
+      ) {
+
+        return res
+          .status(400)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "Invalid adjustment amount.",
+
+          });
+
+      }
+
+
+      const payableAmount =
+        Number(
+          booking.actual_quantity
+        ) *
+        rate +
+        adjustment;
+
+
+      if (
+        payableAmount <=
+          0
+      ) {
+
+        return res
+          .status(400)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "Payable amount must be greater than zero.",
+
+          });
+
+      }
+
+
+      const transaction =
+        db.transaction(
+          () => {
+
             db.prepare(`
-              UPDATE payments
-              SET
-                amount = ?,
-                method = ?,
-                reference = ?,
-                status = 'PAYMENT_SENT',
-                notes = ?,
-                updated_at = CURRENT_TIMESTAMP
+              UPDATE bookings
+              SET status = 'PAYMENT_PENDING'
               WHERE id = ?
             `).run(
-              amount,
-              method,
-              reference,
-              notes || null,
-              existingPayment.id
+              req.params.id
             );
-          } else {
+
+
             db.prepare(`
               INSERT INTO payments (
                 booking_id,
@@ -2360,90 +3331,482 @@ app.patch(
               VALUES (
                 ?,
                 ?,
-                ?,
-                ?,
-                'PAYMENT_SENT',
                 NULL,
+                NULL,
+                'PAYMENT_PENDING',
+                ?,
                 ?,
                 CURRENT_TIMESTAMP,
                 'NOT_SENT',
                 NULL
               )
             `).run(
+
               req.params.id,
-              amount,
-              method,
-              reference,
-              notes || null
+
+              payableAmount,
+
+              rate,
+
+              notes ||
+                `Procurement rate: ₹${rate}/kg. Adjustment: ₹${adjustment}.`,
+
             );
+
+
+            db.prepare(`
+              INSERT INTO status_events (
+                booking_id,
+                status
+              )
+              VALUES (?, 'PROCURED')
+            `).run(
+              req.params.id
+            );
+
+
+            db.prepare(`
+              INSERT INTO status_events (
+                booking_id,
+                status
+              )
+              VALUES (?, 'PAYMENT_PENDING')
+            `).run(
+              req.params.id
+            );
+
           }
+        );
 
-          db.prepare(`
-            UPDATE bookings
-            SET status = 'PAYMENT_SENT'
-            WHERE id = ?
-          `).run(
-            req.params.id
-          );
-
-          db.prepare(`
-            INSERT INTO status_events (
-              booking_id,
-              status
-            )
-            VALUES (?, 'PAYMENT_SENT')
-          `).run(
-            req.params.id
-          );
-
-        });
 
       transaction();
+
 
       const settings =
         getSettings();
 
-      let smsStatus =
-        "NOT_SENT";
 
-      let smsSentAt =
-        null;
+      const notification =
+        await createNotification({
 
-      const shouldSendSms =
-        settings.paymentSms !== false &&
-        settings.smsEnabled &&
-        SMS_ENABLED &&
-        Boolean(
-          process.env.FAST2SMS_API_KEY
-        ) &&
-        Boolean(
-          booking.farmer_phone
+          farmerId:
+            booking.farmer_id,
+
+          bookingId:
+            req.params.id,
+
+          type:
+            "PROCUREMENT_COMPLETED",
+
+          title:
+            "Procurement completed",
+
+          message:
+            `Your KrishiSetu procurement for token ${booking.token} is complete. Payment of ₹${payableAmount} is now being processed.`,
+
+          sms:
+            settings.procurementSms !==
+              false &&
+            settings.smsEnabled &&
+            SMS_ENABLED &&
+            Boolean(
+              booking.farmer_phone
+            ),
+
+          phone:
+            booking.farmer_phone,
+
+        });
+
+
+      res.json({
+
+        success:
+          true,
+
+        message:
+          "Procurement completed.",
+
+        booking:
+          getBookingById(
+            req.params.id
+          ),
+
+        smsStatus:
+          notification.status,
+
+      });
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        "Complete procurement error:",
+        error
+      );
+
+
+      res.status(500).json({
+
+        success:
+          false,
+
+        message:
+          "Failed to complete procurement.",
+
+      });
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   PAYMENT
+========================================================= */
+
+app.patch(
+  "/api/bookings/:id/payment",
+  async (
+    req,
+    res
+  ) => {
+
+    try {
+
+      const amount =
+        Number(
+          req.body?.amount
         );
 
+
+      const method =
+        String(
+          req.body?.method ||
+          "UPI"
+        ).trim();
+
+
+      const reference =
+        String(
+          req.body?.reference ||
+          ""
+        ).trim();
+
+
+      const notes =
+        String(
+          req.body?.notes ||
+          ""
+        ).trim();
+
+
       if (
-        shouldSendSms
+        !Number.isFinite(
+          amount
+        ) ||
+        amount <=
+          0
       ) {
-        try {
-          await sendSms(
-            booking.farmer_phone,
-            `KrishiSetu payment sent for token ${booking.token}. Amount: ₹${amount}. Reference: ${reference}.`
-          );
 
-          smsStatus =
-            "SENT";
+        return res
+          .status(400)
+          .json({
 
-          smsSentAt =
-            new Date().toISOString();
-        } catch (smsError) {
-          console.warn(
-            "Payment SMS warning:",
-            smsError
-          );
+            success:
+              false,
 
-          smsStatus =
-            "FAILED";
-        }
+            message:
+              "A valid payment amount is required.",
+
+          });
+
       }
+
+
+      if (
+        !reference
+      ) {
+
+        return res
+          .status(400)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "Payment reference is required.",
+
+          });
+
+      }
+
+
+      const booking =
+        db.prepare(`
+          SELECT
+            b.*,
+            f.name AS farmer_name,
+            f.phone AS farmer_phone
+          FROM bookings b
+          LEFT JOIN farmers f
+            ON f.id = b.farmer_id
+          WHERE b.id = ?
+        `).get(
+          req.params.id
+        );
+
+
+      if (
+        !booking
+      ) {
+
+        return res
+          .status(404)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "Booking not found.",
+
+          });
+
+      }
+
+
+      if (
+        booking.status ===
+        "PAYMENT_SENT"
+      ) {
+
+        return res
+          .status(409)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "Payment has already been sent for this booking.",
+
+          });
+
+      }
+
+
+      if (
+        ![
+          "PROCURED",
+          "PAYMENT_PENDING",
+        ].includes(
+          booking.status
+        )
+      ) {
+
+        return res
+          .status(409)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "This booking is not ready for payment.",
+
+          });
+
+      }
+
+
+      const existingPayment =
+        db.prepare(`
+          SELECT *
+          FROM payments
+          WHERE booking_id = ?
+          ORDER BY id DESC
+          LIMIT 1
+        `).get(
+          req.params.id
+        );
+
+
+      if (
+        existingPayment?.status ===
+        "PAYMENT_SENT"
+      ) {
+
+        return res
+          .status(409)
+          .json({
+
+            success:
+              false,
+
+            message:
+              "A payment has already been recorded for this booking.",
+
+          });
+
+      }
+
+
+      const transaction =
+        db.transaction(
+          () => {
+
+            if (
+              existingPayment
+            ) {
+
+              db.prepare(`
+                UPDATE payments
+                SET
+                  amount = ?,
+                  method = ?,
+                  reference = ?,
+                  status = 'PAYMENT_SENT',
+                  notes = ?,
+                  updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+              `).run(
+
+                amount,
+
+                method,
+
+                reference,
+
+                notes ||
+                  null,
+
+                existingPayment.id,
+
+              );
+
+            } else {
+
+              db.prepare(`
+                INSERT INTO payments (
+                  booking_id,
+                  amount,
+                  method,
+                  reference,
+                  status,
+                  rate_per_kg,
+                  notes,
+                  updated_at,
+                  sms_status,
+                  sms_sent_at
+                )
+                VALUES (
+                  ?,
+                  ?,
+                  ?,
+                  ?,
+                  'PAYMENT_SENT',
+                  NULL,
+                  ?,
+                  CURRENT_TIMESTAMP,
+                  'NOT_SENT',
+                  NULL
+                )
+              `).run(
+
+                req.params.id,
+
+                amount,
+
+                method,
+
+                reference,
+
+                notes ||
+                  null,
+
+              );
+
+            }
+
+
+            db.prepare(`
+              UPDATE bookings
+              SET status = 'PAYMENT_SENT'
+              WHERE id = ?
+            `).run(
+              req.params.id
+            );
+
+
+            db.prepare(`
+              INSERT INTO status_events (
+                booking_id,
+                status
+              )
+              VALUES (?, 'PAYMENT_SENT')
+            `).run(
+              req.params.id
+            );
+
+          }
+        );
+
+
+      transaction();
+
+
+      const settings =
+        getSettings();
+
+
+      const notification =
+        await createNotification({
+
+          farmerId:
+            booking.farmer_id,
+
+          bookingId:
+            req.params.id,
+
+          type:
+            "PAYMENT_SENT",
+
+          title:
+            "Payment sent",
+
+          message:
+            `KrishiSetu payment of ₹${amount} for token ${booking.token} has been sent. Reference: ${reference}.`,
+
+          sms:
+            settings.paymentSms !==
+              false &&
+            settings.smsEnabled &&
+            SMS_ENABLED &&
+            Boolean(
+              booking.farmer_phone
+            ),
+
+          phone:
+            booking.farmer_phone,
+
+        });
+
+
+      const savedPaymentBeforeSmsUpdate =
+        db.prepare(`
+          SELECT *
+          FROM payments
+          WHERE booking_id = ?
+          ORDER BY id DESC
+          LIMIT 1
+        `).get(
+          req.params.id
+        );
+
 
       db.prepare(`
         UPDATE payments
@@ -2451,16 +3814,17 @@ app.patch(
           sms_status = ?,
           sms_sent_at = ?,
           updated_at = CURRENT_TIMESTAMP
-        WHERE id = (
-          SELECT MAX(id)
-          FROM payments
-          WHERE booking_id = ?
-        )
+        WHERE id = ?
       `).run(
-        smsStatus,
-        smsSentAt,
-        req.params.id
+
+        notification.status,
+
+        notification.sentAt,
+
+        savedPaymentBeforeSmsUpdate.id,
+
       );
+
 
       const savedPayment =
         db.prepare(`
@@ -2473,34 +3837,65 @@ app.patch(
           req.params.id
         );
 
+
       res.json({
-        success: true,
+
+        success:
+          true,
+
         message:
           "Payment recorded.",
+
         payment:
           savedPayment,
-        smsStatus,
-        smsSentAt,
+
+        smsStatus:
+          notification.status,
+
+        smsSentAt:
+          notification.sentAt,
+
       });
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
+
       console.error(
         "Payment error:",
         error
       );
 
+
       res.status(500).json({
-        success: false,
+
+        success:
+          false,
+
         message:
           "Failed to record payment.",
+
       });
+
     }
+
   }
 );
 
+
+/* =========================================================
+   PAYMENT HISTORY
+========================================================= */
+
 app.get(
   "/api/bookings/:id/payments",
-  (req, res) => {
+  (
+    req,
+    res
+  ) => {
+
     try {
+
       const booking =
         db.prepare(`
           SELECT id
@@ -2510,15 +3905,25 @@ app.get(
           req.params.id
         );
 
-      if (!booking) {
+
+      if (
+        !booking
+      ) {
+
         return res
           .status(404)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Booking not found.",
+
           });
+
       }
+
 
       const payments =
         db.prepare(`
@@ -2530,30 +3935,55 @@ app.get(
           req.params.id
         );
 
+
       res.json({
-        success: true,
+
+        success:
+          true,
+
         payments,
+
       });
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
+
       console.error(
         "Payment history error:",
         error
       );
 
+
       res.status(500).json({
-        success: false,
+
+        success:
+          false,
+
         message:
           "Failed to load payment history.",
+
       });
+
     }
+
   }
 );
 
 
+/* =========================================================
+   STATUS HISTORY
+========================================================= */
+
 app.get(
   "/api/bookings/:id/status-history",
-  (req, res) => {
+  (
+    req,
+    res
+  ) => {
+
     try {
+
       const booking =
         db.prepare(`
           SELECT id
@@ -2563,15 +3993,25 @@ app.get(
           req.params.id
         );
 
-      if (!booking) {
+
+      if (
+        !booking
+      ) {
+
         return res
           .status(404)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Booking not found.",
+
           });
+
       }
+
 
       const events =
         db.prepare(`
@@ -2589,35 +4029,61 @@ app.get(
           req.params.id
         );
 
+
       res.json({
-        success: true,
+
+        success:
+          true,
+
         events,
+
       });
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
+
       console.error(
         "Status history error:",
         error
       );
 
+
       res.status(500).json({
-        success: false,
+
+        success:
+          false,
+
         message:
           "Failed to load status history.",
+
       });
+
     }
+
   }
 );
 
 
+/* =========================================================
+   PAYMENT ISSUES
+========================================================= */
+
 app.post(
   "/api/payment-issues",
-  (req, res) => {
+  (
+    req,
+    res
+  ) => {
+
     try {
+
       const farmerId =
         String(
           req.body?.farmerId ||
           ""
         ).trim();
+
 
       const bookingId =
         String(
@@ -2625,38 +4091,54 @@ app.post(
           ""
         ).trim();
 
+
       const message =
         String(
           req.body?.message ||
           ""
         ).trim();
 
+
       if (
         !farmerId ||
         !bookingId ||
         !message
       ) {
+
         return res
           .status(400)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Farmer, booking and issue description are required.",
+
           });
+
       }
+
 
       if (
         message.length >
         1000
       ) {
+
         return res
           .status(400)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Payment issue description is too long.",
+
           });
+
       }
+
 
       const farmer =
         db.prepare(`
@@ -2667,15 +4149,25 @@ app.post(
           farmerId
         );
 
-      if (!farmer) {
+
+      if (
+        !farmer
+      ) {
+
         return res
           .status(404)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Farmer account not found.",
+
           });
+
       }
+
 
       const booking =
         db.prepare(`
@@ -2690,15 +4182,25 @@ app.post(
           bookingId
         );
 
-      if (!booking) {
+
+      if (
+        !booking
+      ) {
+
         return res
           .status(404)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Booking not found.",
+
           });
+
       }
+
 
       if (
         String(
@@ -2708,14 +4210,21 @@ app.post(
           farmerId
         )
       ) {
+
         return res
           .status(403)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "This booking does not belong to the farmer.",
+
           });
+
       }
+
 
       const result =
         db.prepare(`
@@ -2727,43 +4236,75 @@ app.post(
           )
           VALUES (?, ?, ?, 'OPEN')
         `).run(
+
           farmerId,
+
           bookingId,
-          message
+
+          message,
+
         );
 
+
       res.status(201).json({
-        success: true,
+
+        success:
+          true,
+
         message:
           "Payment issue reported successfully.",
+
         issue: {
+
           id:
             result.lastInsertRowid,
+
           farmerId,
+
           bookingId,
-          status: "OPEN",
+
+          status:
+            "OPEN",
+
         },
+
       });
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
+
       console.error(
         "Payment issue error:",
         error
       );
 
+
       res.status(500).json({
-        success: false,
+
+        success:
+          false,
+
         message:
           "Failed to report payment issue.",
+
       });
+
     }
+
   }
 );
 
 
 app.get(
   "/api/payment-issues",
-  (req, res) => {
+  (
+    req,
+    res
+  ) => {
+
     try {
+
       const issues =
         db.prepare(`
           SELECT
@@ -2809,34 +4350,56 @@ app.get(
             pi.id DESC
         `).all();
 
+
       res.json({
-        success: true,
+
+        success:
+          true,
+
         issues,
+
       });
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
+
       console.error(
         "Get payment issues error:",
         error
       );
 
+
       res.status(500).json({
-        success: false,
+
+        success:
+          false,
+
         message:
           "Failed to load payment issues.",
+
       });
+
     }
+
   }
 );
 
 
 app.patch(
   "/api/payment-issues/:id",
-  (req, res) => {
+  (
+    req,
+    res
+  ) => {
+
     try {
+
       const issueId =
         Number(
           req.params.id
         );
+
 
       const status =
         String(
@@ -2846,19 +4409,27 @@ app.patch(
           .trim()
           .toUpperCase();
 
+
       if (
         !Number.isInteger(
           issueId
         )
       ) {
+
         return res
           .status(400)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Invalid payment issue id.",
+
           });
+
       }
+
 
       if (
         ![
@@ -2868,14 +4439,21 @@ app.patch(
           status
         )
       ) {
+
         return res
           .status(400)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Payment issue status must be OPEN or RESOLVED.",
+
           });
+
       }
+
 
       const issue =
         db.prepare(`
@@ -2886,24 +4464,38 @@ app.patch(
           issueId
         );
 
-      if (!issue) {
+
+      if (
+        !issue
+      ) {
+
         return res
           .status(404)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Payment issue not found.",
+
           });
+
       }
+
 
       db.prepare(`
         UPDATE payment_issues
         SET status = ?
         WHERE id = ?
       `).run(
+
         status,
-        issueId
+
+        issueId,
+
       );
+
 
       const updated =
         db.prepare(`
@@ -2945,40 +4537,68 @@ app.patch(
           issueId
         );
 
+
       res.json({
-        success: true,
+
+        success:
+          true,
+
         message:
-          status === "RESOLVED"
+          status ===
+          "RESOLVED"
             ? "Payment issue resolved."
             : "Payment issue reopened.",
+
         issue:
           updated,
+
       });
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
+
       console.error(
         "Update payment issue error:",
         error
       );
 
+
       res.status(500).json({
-        success: false,
+
+        success:
+          false,
+
         message:
           "Failed to update payment issue.",
+
       });
+
     }
+
   }
 );
 
 
+/* =========================================================
+   DASHBOARD SUMMARY
+========================================================= */
+
 app.get(
   "/api/dashboard/summary",
-  (req, res) => {
+  (
+    req,
+    res
+  ) => {
+
     try {
+
       const total =
         db.prepare(`
           SELECT COUNT(*) AS count
           FROM bookings
         `).get().count;
+
 
       const confirmed =
         db.prepare(`
@@ -2987,12 +4607,14 @@ app.get(
           WHERE status = 'CONFIRMED'
         `).get().count;
 
+
       const arrived =
         db.prepare(`
           SELECT COUNT(*) AS count
           FROM bookings
           WHERE status = 'ARRIVED'
         `).get().count;
+
 
       const late =
         db.prepare(`
@@ -3001,12 +4623,14 @@ app.get(
           WHERE status = 'LATE'
         `).get().count;
 
+
       const weighing =
         db.prepare(`
           SELECT COUNT(*) AS count
           FROM bookings
           WHERE status = 'WEIGHING'
         `).get().count;
+
 
       const procured =
         db.prepare(`
@@ -3019,6 +4643,7 @@ app.get(
           )
         `).get().count;
 
+
       const paymentPending =
         db.prepare(`
           SELECT COUNT(*) AS count
@@ -3026,12 +4651,14 @@ app.get(
           WHERE status = 'PAYMENT_PENDING'
         `).get().count;
 
+
       const paymentSent =
         db.prepare(`
           SELECT COUNT(*) AS count
           FROM bookings
           WHERE status = 'PAYMENT_SENT'
         `).get().count;
+
 
       const totalPaid =
         db.prepare(`
@@ -3044,6 +4671,7 @@ app.get(
           WHERE status = 'PAYMENT_SENT'
         `).get().amount;
 
+
       const pendingAmount =
         db.prepare(`
           SELECT
@@ -3055,6 +4683,7 @@ app.get(
           WHERE status = 'PAYMENT_PENDING'
         `).get().amount;
 
+
       const openPaymentIssues =
         db.prepare(`
           SELECT COUNT(*) AS count
@@ -3062,157 +4691,257 @@ app.get(
           WHERE status = 'OPEN'
         `).get().count;
 
+
       res.json({
-        success: true,
+
+        success:
+          true,
+
         summary: {
+
           total,
+
           confirmed,
+
           arrived,
+
           late,
+
           weighing,
+
           procured,
+
           paymentPending,
+
           paymentSent,
+
           totalPaid,
+
           pendingAmount,
+
           openPaymentIssues,
+
         },
+
       });
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
+
       console.error(
         "Dashboard summary error:",
         error
       );
 
+
       res.status(500).json({
-        success: false,
+
+        success:
+          false,
+
         message:
           "Failed to load dashboard summary.",
+
       });
+
     }
+
   }
 );
 
 
+/* =========================================================
+   SYSTEM SETTINGS
+========================================================= */
+
 app.get(
   "/api/settings",
-  (req, res) => {
+  (
+    req,
+    res
+  ) => {
+
     try {
+
       res.json({
-        success: true,
+
+        success:
+          true,
+
         settings:
           getSettings(),
+
       });
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
+
       console.error(
         "Get settings error:",
         error
       );
 
+
       res.status(500).json({
-        success: false,
+
+        success:
+          false,
+
         message:
           "Failed to load system settings.",
+
       });
+
     }
+
   }
 );
 
 
 app.patch(
   "/api/settings",
-  (req, res) => {
+  (
+    req,
+    res
+  ) => {
+
     try {
+
       const incoming =
-        req.body || {};
+        req.body ||
+        {};
+
 
       const current =
         getSettings();
 
+
       const next = {
+
         ...current,
+
         ...incoming,
+
       };
+
 
       next.maxQuantity =
         Number(
           next.maxQuantity
         );
 
+
       next.defaultCapacity =
         Number(
           next.defaultCapacity
         );
+
 
       next.slotDuration =
         Number(
           next.slotDuration
         );
 
+
       next.advanceBookingDays =
         Number(
           next.advanceBookingDays
         );
 
+
       if (
         !Number.isFinite(
           next.maxQuantity
         ) ||
-        next.maxQuantity <= 0
+        next.maxQuantity <=
+          0
       ) {
+
         return res
           .status(400)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Maximum quantity must be greater than zero.",
+
           });
+
       }
+
 
       if (
         !Number.isFinite(
           next.defaultCapacity
         ) ||
-        next.defaultCapacity <= 0
+        next.defaultCapacity <=
+          0
       ) {
+
         return res
           .status(400)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Default capacity must be greater than zero.",
+
           });
+
       }
+
 
       if (
         !Number.isFinite(
           next.slotDuration
         ) ||
-        next.slotDuration <= 0
+        next.slotDuration <=
+          0
       ) {
+
         return res
           .status(400)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Slot duration must be greater than zero.",
+
           });
+
       }
+
 
       if (
         !Number.isFinite(
           next.advanceBookingDays
         ) ||
-        next.advanceBookingDays < 0
+        next.advanceBookingDays <
+          0
       ) {
+
         return res
           .status(400)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Advance booking days cannot be negative.",
+
           });
+
       }
+
 
       if (
         ![
@@ -3223,98 +4952,166 @@ app.patch(
           next.defaultLanguage
         )
       ) {
+
         return res
           .status(400)
           .json({
-            success: false,
+
+            success:
+              false,
+
             message:
               "Invalid default language.",
+
           });
+
       }
 
+
       const booleanKeys = [
+
         "bookingEnabled",
+
         "requireActualWeight",
+
         "smsEnabled",
+
         "bookingConfirmationSms",
+
         "lateArrivalSms",
+
         "procurementSms",
+
         "paymentSms",
+
         "maintenanceMode",
+
       ];
+
 
       for (
         const key
         of booleanKeys
       ) {
+
         next[key] =
           Boolean(
             next[key]
           );
+
       }
+
 
       saveSettings(
         next
       );
 
+
       res.json({
-        success: true,
+
+        success:
+          true,
+
         message:
           "System settings saved.",
+
         settings:
           getSettings(),
+
       });
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
+
       console.error(
         "Update settings error:",
         error
       );
 
+
       res.status(500).json({
-        success: false,
+
+        success:
+          false,
+
         message:
           "Failed to save system settings.",
+
       });
+
     }
+
   }
 );
 
 
 app.post(
   "/api/settings/reset",
-  (req, res) => {
+  (
+    req,
+    res
+  ) => {
+
     try {
+
       saveSettings(
         DEFAULT_SETTINGS
       );
 
+
       res.json({
-        success: true,
+
+        success:
+          true,
+
         message:
           "System settings reset to defaults.",
+
         settings:
           getSettings(),
+
       });
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
+
       console.error(
         "Reset settings error:",
         error
       );
 
+
       res.status(500).json({
-        success: false,
+
+        success:
+          false,
+
         message:
           "Failed to reset system settings.",
+
       });
+
     }
+
   }
 );
 
 
+/* =========================================================
+   ACTIVITY LOG
+========================================================= */
+
 app.get(
   "/api/activity-log",
-  (req, res) => {
+  (
+    req,
+    res
+  ) => {
+
     try {
+
       const events =
         db.prepare(`
           SELECT
@@ -3347,34 +5144,58 @@ app.get(
             se.id DESC
         `).all();
 
+
       res.json({
-        success: true,
+
+        success:
+          true,
+
         events,
+
       });
-    } catch (error) {
+
+    } catch (
+      error
+    ) {
+
       console.error(
         "Activity log error:",
         error
       );
 
+
       res.status(500).json({
-        success: false,
+
+        success:
+          false,
+
         message:
           "Failed to load activity log.",
+
       });
+
     }
+
   }
 );
+
+
+/* =========================================================
+   FARMER NOTIFICATIONS
+========================================================= */
+
 app.get(
   "/api/farmers/:id/notifications",
-  (req, res) => {
+  (
+    req,
+    res
+  ) => {
 
     try {
 
       const notifications =
         db.prepare(`
-          SELECT
-            *
+          SELECT *
           FROM notifications
           WHERE farmer_id = ?
           ORDER BY
@@ -3394,7 +5215,9 @@ app.get(
 
       });
 
-    } catch (error) {
+    } catch (
+      error
+    ) {
 
       console.error(
         "Get notifications error:",
@@ -3417,9 +5240,13 @@ app.get(
   }
 );
 
+
 app.patch(
   "/api/notifications/:id/read",
-  (req, res) => {
+  (
+    req,
+    res
+  ) => {
 
     try {
 
@@ -3439,7 +5266,9 @@ app.patch(
 
       });
 
-    } catch (error) {
+    } catch (
+      error
+    ) {
 
       console.error(
         "Read notification error:",
@@ -3462,18 +5291,36 @@ app.patch(
   }
 );
 
+
+/* =========================================================
+   FALLBACK
+========================================================= */
+
 app.use(
-  (req, res) => {
+  (
+    req,
+    res
+  ) => {
+
     res
       .status(404)
       .json({
-        success: false,
+
+        success:
+          false,
+
         message:
           "Route not found.",
+
       });
+
   }
 );
 
+
+/* =========================================================
+   ERROR HANDLER
+========================================================= */
 
 app.use(
   (
@@ -3482,28 +5329,41 @@ app.use(
     res,
     next
   ) => {
+
     console.error(
       "Unhandled server error:",
       error
     );
 
+
     res
       .status(500)
       .json({
-        success: false,
+
+        success:
+          false,
+
         message:
           "Internal server error.",
+
       });
+
   }
 );
 
 
+/* =========================================================
+   START SERVER
+========================================================= */
+
 app.listen(
   PORT,
   () => {
+
     console.log(
       `KrishiSetu backend running on port ${PORT}`
     );
+
 
     console.log(
       `SMS mode: ${
@@ -3512,5 +5372,6 @@ app.listen(
           : "DEMO / DISABLED"
       }`
     );
+
   }
 );

@@ -1,11 +1,4 @@
 import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-
-import {
   ArrowLeft,
   ArrowRight,
   CalendarDays,
@@ -28,6 +21,13 @@ import {
   Link,
   useSearchParams,
 } from "react-router";
+
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import Header from "../../components/Header";
 
@@ -78,7 +78,8 @@ function FarmerToken() {
   const {
     t,
     language,
-  } = useLanguage();
+  } =
+    useLanguage();
 
 
   const [
@@ -474,6 +475,28 @@ function FarmerToken() {
     "PAYMENT_PENDING";
 
 
+  const smsStatus =
+    String(
+      booking?.payment_sms_status ||
+      "NOT_SENT"
+    ).toUpperCase();
+
+
+  const smsSent =
+    smsStatus ===
+    "SENT";
+
+
+  const smsFailed =
+    smsStatus ===
+    "FAILED";
+
+
+  const smsNotSent =
+    !smsSent &&
+    !smsFailed;
+
+
   const cropName =
     getCropName(
       booking?.crop,
@@ -744,19 +767,94 @@ function FarmerToken() {
     );
 
 
-  function handleIssueSubmit(
+  async function handleIssueSubmit(
     event
   ) {
 
     event.preventDefault();
 
 
-    setIssueSubmitted(
-      true
-    );
+    if (
+      !booking?.farmer_id ||
+      !booking?.id ||
+      !issueNote.trim()
+    ) {
+
+      setIssueSubmitted(
+        true
+      );
+
+      return;
+
+    }
 
 
-    setIssueNote("");
+    try {
+
+      const response =
+        await fetch(
+          `${API_URL}/payment-issues`,
+          {
+            method:
+              "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                farmerId:
+                  booking.farmer_id,
+
+                bookingId:
+                  booking.id,
+
+                message:
+                  `${paymentIssueType}: ${issueNote.trim()}`,
+              }),
+          }
+        );
+
+
+      const data =
+        await response.json();
+
+
+      if (
+        !response.ok
+      ) {
+
+        throw new Error(
+          data?.message ||
+          "Failed to report payment issue."
+        );
+
+      }
+
+
+      setIssueSubmitted(
+        true
+      );
+
+      setIssueNote("");
+
+
+    } catch (
+      issueError
+    ) {
+
+      console.error(
+        "Payment issue submit:",
+        issueError
+      );
+
+      setIssueSubmitted(
+        false
+      );
+
+    }
 
   }
 
@@ -1183,43 +1281,150 @@ function FarmerToken() {
             </div>
 
 
-            <div className="token-sms-confirmation">
+            <div
+              className={
+                `token-sms-confirmation ${
+                  smsSent
+                    ? "sent"
+                    : smsFailed
+                      ? "failed"
+                      : "not-sent"
+                }`
+              }
+            >
 
               <div className="token-sms-confirmation-icon">
 
-                <Check
-                  size={16}
-                />
+                {
+                  smsSent ? (
+
+                    <CheckCircle2
+                      size={21}
+                    />
+
+                  ) : smsFailed ? (
+
+                    <X
+                      size={21}
+                    />
+
+                  ) : (
+
+                    <Info
+                      size={21}
+                    />
+
+                  )
+                }
 
               </div>
 
 
-              <div>
+              <div className="token-sms-confirmation-content">
+
+                <span className="token-sms-status-label">
+
+                  {
+                    smsSent
+                      ? getText(
+                          language,
+                          "SMS SENT",
+                          "SMS भेजा गया",
+                          "SMS పంపబడింది"
+                        )
+                      : smsFailed
+                        ? getText(
+                            language,
+                            "SMS DELIVERY FAILED",
+                            "SMS नहीं भेजा जा सका",
+                            "SMS పంపడం విఫలమైంది"
+                          )
+                        : getText(
+                            language,
+                            "SMS NOT SENT",
+                            "SMS नहीं भेजा गया",
+                            "SMS పంపబడలేదు"
+                          )
+                  }
+
+                </span>
+
 
                 <strong>
 
-                  {getText(
-                    language,
-                    "Payment SMS sent",
-                    "भुगतान SMS भेजा गया",
-                    "చెల్లింపు SMS పంపబడింది"
-                  )}
+                  {
+                    smsSent
+                      ? getText(
+                          language,
+                          "Payment confirmation sent",
+                          "भुगतान की पुष्टि भेज दी गई",
+                          "చెల్లింపు నిర్ధారణ పంపబడింది"
+                        )
+                      : smsFailed
+                        ? getText(
+                            language,
+                            "Payment recorded, but SMS could not be delivered.",
+                            "भुगतान दर्ज हो गया, लेकिन SMS नहीं भेजा जा सका।",
+                            "చెల్లింపు నమోదు అయింది, కానీ SMS పంపడం సాధ్యపడలేదు."
+                          )
+                        : getText(
+                            language,
+                            "Payment recorded without SMS delivery.",
+                            "भुगतान दर्ज हो गया, लेकिन SMS नहीं भेजा गया।",
+                            "చెల్లింపు నమోదు అయింది, కానీ SMS పంపబడలేదు."
+                          )
+                  }
 
                 </strong>
 
 
                 <span>
 
-                  {getText(
-                    language,
-                    "A payment confirmation was sent to your registered mobile number.",
-                    "आपके पंजीकृत मोबाइल नंबर पर भुगतान की पुष्टि भेजी गई।",
-                    "మీ రిజిస్టర్డ్ మొబైల్ నంబర్‌కు చెల్లింపు నిర్ధారణ పంపబడింది."
-                  )}
+                  {
+                    smsSent
+                      ? getText(
+                          language,
+                          "A confirmation was sent to your registered mobile number.",
+                          "आपके पंजीकृत मोबाइल नंबर पर पुष्टि भेजी गई।",
+                          "మీ రిజిస్టర్డ్ మొబైల్ నంబర్‌కు నిర్ధారణ పంపబడింది."
+                        )
+                      : smsFailed
+                        ? getText(
+                            language,
+                            "Your payment is still recorded safely in KrishiSetu.",
+                            "आपका भुगतान KrishiSetu में सुरक्षित रूप से दर्ज है।",
+                            "మీ చెల్లింపు KrishiSetuలో సురక్షితంగా నమోదు చేయబడింది."
+                          )
+                        : getText(
+                            language,
+                            "Your payment information is available inside KrishiSetu.",
+                            "आपके भुगतान की जानकारी KrishiSetu में उपलब्ध है।",
+                            "మీ చెల్లింపు సమాచారం KrishiSetuలో అందుబాటులో ఉంది."
+                          )
+                  }
 
                 </span>
 
               </div>
+
+
+              {
+                smsSent &&
+                booking?.payment_sms_sent_at && (
+
+                  <small className="token-sms-time">
+
+                    {
+                      formatNotificationDate(
+                        booking.payment_sms_sent_at,
+                        language
+                      )
+                    }
+
+                  </small>
+
+                )
+              }
 
             </div>
 
@@ -2767,25 +2972,73 @@ function FarmerToken() {
 
 
 
-            <div className="token-side-card token-sms-card">
+            <div
+              className={
+                `token-side-card token-sms-card ${
+                  smsSent
+                    ? "sms-sent"
+                    : smsFailed
+                      ? "sms-failed"
+                      : "sms-pending"
+                }`
+              }
+            >
 
-              <div className="token-side-icon blue">
+              <div
+                className={
+                  `token-side-icon ${
+                    smsSent
+                      ? "sms-sent"
+                      : smsFailed
+                        ? "sms-failed"
+                        : "sms-pending"
+                  }`
+                }
+              >
 
-                <CheckCircle2
-                  size={18}
-                />
+                {
+                  smsSent ? (
+                    <CheckCircle2
+                      size={18}
+                    />
+                  ) : smsFailed ? (
+                    <X
+                      size={18}
+                    />
+                  ) : (
+                    <Info
+                      size={18}
+                    />
+                  )
+                }
 
               </div>
 
 
               <span className="token-side-label">
 
-                {getText(
-                  language,
-                  "SMS UPDATES",
-                  "SMS अपडेट",
-                  "SMS అప్‌డేట్‌లు"
-                )}
+                {
+                  smsSent
+                    ? getText(
+                        language,
+                        "SMS SENT",
+                        "SMS भेजा गया",
+                        "SMS పంపబడింది"
+                      )
+                    : smsFailed
+                      ? getText(
+                          language,
+                          "SMS FAILED",
+                          "SMS विफल",
+                          "SMS విఫలమైంది"
+                        )
+                      : getText(
+                          language,
+                          "SMS STATUS",
+                          "SMS स्थिति",
+                          "SMS స్థితి"
+                        )
+                }
 
               </span>
 
@@ -2793,19 +3046,26 @@ function FarmerToken() {
               <h3>
 
                 {
-                  paymentSent
+                  smsSent
                     ? getText(
                         language,
                         "Payment SMS sent",
                         "भुगतान SMS भेजा गया",
                         "చెల్లింపు SMS పంపబడింది"
                       )
-                    : getText(
-                        language,
-                        "Stay updated by SMS",
-                        "SMS से अपडेट पाएं",
-                        "SMS ద్వారా అప్‌డేట్‌లు పొందండి"
-                      )
+                    : smsFailed
+                      ? getText(
+                          language,
+                          "SMS delivery failed",
+                          "SMS भेजना विफल रहा",
+                          "SMS పంపడం విఫలమైంది"
+                        )
+                      : getText(
+                          language,
+                          "Payment update available",
+                          "भुगतान अपडेट उपलब्ध है",
+                          "చెల్లింపు అప్‌డేట్ అందుబాటులో ఉంది"
+                        )
                 }
 
               </h3>
@@ -2813,12 +3073,28 @@ function FarmerToken() {
 
               <p>
 
-                {getText(
-                  language,
-                  "Booking, procurement and payment notifications can be sent to your registered mobile number.",
-                  "बुकिंग, खरीद और भुगतान की सूचनाएं आपके पंजीकृत मोबाइल नंबर पर भेजी जा सकती हैं।",
-                  "బుకింగ్, కొనుగోలు మరియు చెల్లింపు నోటిఫికేషన్‌లు మీ రిజిస్టర్డ్ మొబైల్ నంబర్‌కు పంపవచ్చు."
-                )}
+                {
+                  smsSent
+                    ? getText(
+                        language,
+                        "A confirmation was sent to your registered mobile number.",
+                        "आपके पंजीकृत मोबाइल नंबर पर पुष्टि भेजी गई।",
+                        "మీ రిజిస్టర్డ్ మొబైల్ నంబర్‌కు నిర్ధారణ పంపబడింది."
+                      )
+                    : smsFailed
+                      ? getText(
+                          language,
+                          "Your payment is safely recorded in KrishiSetu even though the SMS was not delivered.",
+                          "SMS नहीं पहुंचा, लेकिन आपका भुगतान KrishiSetu में सुरक्षित दर्ज है।",
+                          "SMS పంపబడకపోయినా మీ చెల్లింపు KrishiSetuలో సురక్షితంగా నమోదు అయింది."
+                        )
+                      : getText(
+                          language,
+                          "Your payment information is available inside KrishiSetu.",
+                          "आपके भुगतान की जानकारी KrishiSetu में उपलब्ध है।",
+                          "మీ చెల్లింపు సమాచారం KrishiSetuలో అందుబాటులో ఉంది."
+                        )
+                }
 
               </p>
 
@@ -3108,42 +3384,50 @@ function FarmerToken() {
                     >
 
                       <option value="PAYMENT_NOT_RECEIVED">
+
                         {getText(
                           language,
                           "Payment not received",
                           "भुगतान प्राप्त नहीं हुआ",
                           "చెల్లింపు అందలేదు"
                         )}
+
                       </option>
 
 
                       <option value="WRONG_AMOUNT">
+
                         {getText(
                           language,
                           "Wrong payment amount",
                           "गलत भुगतान राशि",
                           "తప్పు చెల్లింపు మొత్తం"
                         )}
+
                       </option>
 
 
                       <option value="REFERENCE_PROBLEM">
+
                         {getText(
                           language,
                           "Payment reference problem",
                           "भुगतान संदर्भ समस्या",
                           "చెల్లింపు రిఫరెన్స్ సమస్య"
                         )}
+
                       </option>
 
 
                       <option value="OTHER">
+
                         {getText(
                           language,
                           "Other",
                           "अन्य",
                           "ఇతర"
                         )}
+
                       </option>
 
                     </select>
@@ -3739,8 +4023,6 @@ function getStatusMessage(
     ] ||
     messages.en[
       status
-    ]?.[
-      status
     ] ||
     "Booking status is being updated."
   );
@@ -3894,6 +4176,66 @@ function formatCurrentMonth(
 
       year:
         "numeric",
+
+    }
+  );
+
+}
+
+
+function formatNotificationDate(
+  value,
+  language
+) {
+
+  if (
+    !value
+  ) {
+
+    return "";
+
+  }
+
+
+  const date =
+    new Date(
+      value
+    );
+
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+
+    return "";
+
+  }
+
+
+  const locale =
+    language === "hi"
+      ? "hi-IN"
+      : language === "te"
+        ? "te-IN"
+        : "en-IN";
+
+
+  return date.toLocaleString(
+    locale,
+    {
+      day:
+        "numeric",
+
+      month:
+        "short",
+
+      hour:
+        "numeric",
+
+      minute:
+        "2-digit",
 
     }
   );
