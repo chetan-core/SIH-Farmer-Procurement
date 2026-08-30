@@ -1,3 +1,4 @@
+
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -5,24 +6,30 @@ import db from "./db.js";
 
 dotenv.config();
 
-
-const app =
-  express();
-
+const app = express();
 
 const PORT =
   process.env.PORT ||
   5000;
 
-
 const SMS_ENABLED =
   process.env.SMS_ENABLED ===
   "true";
 
-
 app.use(cors());
+
 app.use(
   express.json()
+);
+
+app.use(
+  (req, res, next) => {
+    console.log(
+      `${req.method} ${req.originalUrl}`
+    );
+
+    next();
+  }
 );
 
 
@@ -35,14 +42,12 @@ function addColumnIfMissing(
   column,
   definition
 ) {
-
   const columns =
     db
       .prepare(
         `PRAGMA table_info(${table})`
       )
       .all();
-
 
   const exists =
     columns.some(
@@ -51,28 +56,20 @@ function addColumnIfMissing(
         column
     );
 
-
-  if (
-    !exists
-  ) {
-
+  if (!exists) {
     db.exec(
       `ALTER TABLE ${table}
        ADD COLUMN ${column} ${definition}`
     );
 
-
     console.log(
       `Added ${table}.${column}`
     );
-
   }
-
 }
 
 
 function ensurePaymentIssuesTable() {
-
   db.exec(`
     CREATE TABLE IF NOT EXISTS payment_issues (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -83,12 +80,10 @@ function ensurePaymentIssuesTable() {
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `);
-
 }
 
 
 function ensureNotificationsTable() {
-
   db.exec(`
     CREATE TABLE IF NOT EXISTS notifications (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -112,18 +107,15 @@ function ensureNotificationsTable() {
       created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `);
-
 }
 
 
 try {
-
   addColumnIfMissing(
     "payments",
     "rate_per_kg",
     "REAL"
   );
-
 
   addColumnIfMissing(
     "payments",
@@ -131,13 +123,11 @@ try {
     "TEXT"
   );
 
-
   addColumnIfMissing(
     "payments",
     "updated_at",
     "TEXT"
   );
-
 
   addColumnIfMissing(
     "payments",
@@ -145,27 +135,20 @@ try {
     "TEXT"
   );
 
-
   addColumnIfMissing(
     "payments",
     "sms_sent_at",
     "TEXT"
   );
 
-
   ensurePaymentIssuesTable();
 
   ensureNotificationsTable();
-
-} catch (
-  error
-) {
-
+} catch (error) {
   console.error(
     "Database migration error:",
     error
   );
-
 }
 
 
@@ -174,51 +157,25 @@ try {
 ========================================================= */
 
 const DEFAULT_SETTINGS = {
+  bookingEnabled: true,
+  maxQuantity: 5000,
+  defaultCapacity: 20,
+  slotDuration: 30,
+  advanceBookingDays: 7,
+  requireActualWeight: true,
 
-  bookingEnabled:
-    true,
+  smsEnabled: false,
+  bookingConfirmationSms: true,
+  lateArrivalSms: true,
+  procurementSms: true,
+  paymentSms: true,
 
-  maxQuantity:
-    5000,
-
-  defaultCapacity:
-    20,
-
-  slotDuration:
-    30,
-
-  advanceBookingDays:
-    7,
-
-  requireActualWeight:
-    true,
-
-  smsEnabled:
-    false,
-
-  bookingConfirmationSms:
-    true,
-
-  lateArrivalSms:
-    true,
-
-  procurementSms:
-    true,
-
-  paymentSms:
-    true,
-
-  defaultLanguage:
-    "en",
-
-  maintenanceMode:
-    false,
-
+  defaultLanguage: "en",
+  maintenanceMode: false,
 };
 
 
 function getSettings() {
-
   const rows =
     db
       .prepare(`
@@ -228,50 +185,33 @@ function getSettings() {
       `)
       .all();
 
-
   const settings = {
     ...DEFAULT_SETTINGS,
   };
 
-
   for (
-    const row
-    of rows
+    const row of rows
   ) {
-
     try {
-
-      settings[
-        row.key
-      ] =
+      settings[row.key] =
         JSON.parse(
           row.value
         );
-
     } catch {
-
-      settings[
-        row.key
-      ] =
+      settings[row.key] =
         row.value;
-
     }
-
   }
 
-
   return settings;
-
 }
 
 
 function saveSettings(
   settings
 ) {
-
   const now =
     new Date().toISOString();
-
 
   const statement =
     db.prepare(`
@@ -287,11 +227,9 @@ function saveSettings(
         updated_at = excluded.updated_at
     `);
 
-
   const transaction =
     db.transaction(
       () => {
-
         for (
           const [
             key,
@@ -301,7 +239,6 @@ function saveSettings(
             settings
           )
         ) {
-
           statement.run(
             key,
             JSON.stringify(
@@ -309,15 +246,11 @@ function saveSettings(
             ),
             now
           );
-
         }
-
       }
     );
 
-
   transaction();
-
 }
 
 
@@ -328,21 +261,47 @@ function saveSettings(
 function normalisePhone(
   value
 ) {
-
   return String(
     value || ""
   ).replace(
     /\D/g,
     ""
   );
+}
 
+
+function getIndianRecipient(
+  value
+) {
+  const cleaned =
+    normalisePhone(
+      value
+    );
+
+  if (
+    cleaned.length ===
+    10
+  ) {
+    return `+91${cleaned}`;
+  }
+
+  if (
+    cleaned.length ===
+      12 &&
+    cleaned.startsWith(
+      "91"
+    )
+  ) {
+    return `+${cleaned}`;
+  }
+
+  return cleaned;
 }
 
 
 function getBookingById(
   id
 ) {
-
   return db.prepare(`
     SELECT
       b.*,
@@ -376,19 +335,14 @@ function getBookingById(
       )
 
     WHERE b.id = ?
-  `).get(
-    id
-  );
-
+  `).get(id);
 }
 
 
 function isValidStatus(
   status
 ) {
-
   return [
-
     "CONFIRMED",
     "ARRIVED",
     "LATE",
@@ -396,20 +350,16 @@ function isValidStatus(
     "PROCURED",
     "PAYMENT_PENDING",
     "PAYMENT_SENT",
-
   ].includes(
     status
   );
-
 }
 
 
 function getAllowedNextStatuses(
   status
 ) {
-
   const transitions = {
-
     CONFIRMED: [
       "ARRIVED",
       "LATE",
@@ -438,16 +388,12 @@ function getAllowedNextStatuses(
     ],
 
     PAYMENT_SENT: [],
-
   };
 
-
   return (
-    transitions[
-      status
-    ] || []
+    transitions[status] ||
+    []
   );
-
 }
 
 
@@ -455,9 +401,7 @@ function getStatusSms(
   token,
   status
 ) {
-
   const messages = {
-
     ARRIVED:
       `KrishiSetu update: token ${token} has been marked arrived.`,
 
@@ -475,26 +419,19 @@ function getStatusSms(
 
     PAYMENT_SENT:
       `KrishiSetu update: payment for token ${token} has been sent.`,
-
   };
 
-
   return (
-    messages[
-      status
-    ] ||
+    messages[status] ||
     null
   );
-
 }
 
 
 function getNotificationTitle(
   status
 ) {
-
   const titles = {
-
     ARRIVED:
       "Arrival recorded",
 
@@ -515,40 +452,124 @@ function getNotificationTitle(
 
   };
 
-
   return (
-    titles[
-      status
-    ] ||
+    titles[status] ||
     "Booking update"
   );
-
 }
 
 
 /* =========================================================
-   TWILIO SMS
+   TWILIO
 ========================================================= */
+
+/*
+  Twilio Trial restrictions:
+
+  Trial accounts can only send to verified recipients
+  and must use Twilio-provided SMS templates.
+
+  Allowed trial body values include:
+    sms_order_confirmation
+    sms_delivery_updates
+    sms_account_alerts
+    sms_event_notifications
+    sms_customer_support
+    sms_appointment_reminders
+    sms_2fa
+    sms_marketing_promotions
+    sms_feedback_surveys
+    sms_internal_alerts
+
+  Therefore we deliberately keep the trial template
+  as the SMS body. Custom booking-specific SMS content
+  requires an upgraded Twilio account.
+*/
+
+function getTwilioTemplate(
+  type
+) {
+  const templates = {
+    BOOKING_CONFIRMED:
+      "sms_order_confirmation",
+
+    ARRIVED:
+      "sms_delivery_updates",
+
+    LATE:
+      "sms_delivery_updates",
+
+    WEIGHING:
+      "sms_delivery_updates",
+
+    PROCUREMENT_COMPLETED:
+      "sms_delivery_updates",
+
+    PROCURED:
+      "sms_delivery_updates",
+
+    PAYMENT_PENDING:
+      "sms_account_alerts",
+
+    PAYMENT_SENT:
+      "sms_account_alerts",
+
+    BOOKING:
+      "sms_order_confirmation",
+
+    DEFAULT:
+      "sms_event_notifications",
+  };
+
+  return (
+    templates[type] ||
+    templates.DEFAULT
+  );
+}
+
 
 async function sendSms(
   number,
-  message
+  message,
+  type = "DEFAULT"
 ) {
-
   const accountSid =
     process.env.TWILIO_ACCOUNT_SID;
-
 
   const apiKey =
     process.env.TWILIO_API_KEY;
 
-
   const apiSecret =
     process.env.TWILIO_API_SECRET;
 
-
   const from =
     process.env.TWILIO_PHONE_NUMBER;
+
+
+  const recipient =
+    getIndianRecipient(
+      number
+    );
+
+
+  console.log(
+    "========== SEND SMS =========="
+  );
+
+  console.log(
+    "SMS_ENABLED:",
+    SMS_ENABLED
+  );
+
+  console.log(
+    "Recipient:",
+    recipient
+  );
+
+  console.log(
+    "Notification type:",
+    type
+  );
 
 
   if (
@@ -558,21 +579,41 @@ async function sendSms(
     !apiSecret ||
     !from
   ) {
+    console.warn(
+      "SMS not sent: Twilio configuration missing or disabled."
+    );
 
     return {
-
-      sent:
-        false,
-
-      status:
-        "NOT_SENT",
-
+      sent: false,
+      status: "NOT_SENT",
       reason:
         "SMS disabled or Twilio credentials missing.",
-
     };
-
   }
+
+
+  if (
+    !recipient
+  ) {
+    return {
+      sent: false,
+      status: "NOT_SENT",
+      reason:
+        "Recipient phone number is missing.",
+    };
+  }
+
+
+  const template =
+    getTwilioTemplate(
+      type
+    );
+
+
+  console.log(
+    "Twilio trial template:",
+    template
+  );
 
 
   const twilio =
@@ -591,125 +632,90 @@ async function sendSms(
     );
 
 
-  const cleanedNumber =
-    String(
-      number || ""
-    )
-      .replace(
-        /\D/g,
-        ""
-      );
+  try {
+    const response =
+      await client.messages.create({
+        to:
+          recipient,
+
+        from:
+          from,
+
+        body:
+          template,
+      });
 
 
-  let recipient =
-    cleanedNumber;
+    console.log(
+      "Twilio SMS response:",
+      {
+        sid:
+          response.sid,
 
+        status:
+          response.status,
 
-  if (
-    cleanedNumber.length ===
-    10
-  ) {
+        to:
+          recipient,
 
-    recipient =
-      `+91${cleanedNumber}`;
-
-  } else if (
-    cleanedNumber.length ===
-      12 &&
-    cleanedNumber.startsWith(
-      "91"
-    )
-  ) {
-
-    recipient =
-      `+${cleanedNumber}`;
-
-  }
-
-
-  let template =
-    "sms_event_notifications";
-
-
-  const lowerMessage =
-    String(
-      message || ""
-    ).toLowerCase();
-
-
-  if (
-    lowerMessage.includes(
-      "booking"
-    )
-  ) {
-
-    template =
-      "sms_order_confirmation";
-
-  } else if (
-    lowerMessage.includes(
-      "payment"
-    )
-  ) {
-
-    template =
-      "sms_account_alerts";
-
-  } else if (
-    lowerMessage.includes(
-      "arrived"
-    ) ||
-    lowerMessage.includes(
-      "weigh"
-    ) ||
-    lowerMessage.includes(
-      "procurement"
-    )
-  ) {
-
-    template =
-      "sms_delivery_updates";
-
-  }
-
-
-  const response =
-    await client.messages.create({
-
-      to:
-        recipient,
-
-      from:
-        from,
-
-      body:
         template,
+      }
+    );
 
-    });
+
+    console.log(
+      "=============================="
+    );
 
 
-  return {
+    return {
+      sent: true,
 
-    sent:
-      true,
+      status: "SENT",
 
-    status:
-      "SENT",
+      data: {
+        sid:
+          response.sid,
 
-    data: {
+        status:
+          response.status,
 
-      sid:
-        response.sid,
+        to:
+          recipient,
 
-      status:
-        response.status,
+        template,
+      },
+    };
 
-      template,
+  } catch (error) {
+    console.error(
+      "Twilio SMS error:",
+      error
+    );
 
-    },
+    console.error(
+      "Twilio status:",
+      error?.status
+    );
 
-  };
+    console.error(
+      "Twilio code:",
+      error?.code
+    );
 
+    console.error(
+      "Twilio message:",
+      error?.message
+    );
+
+
+    console.log(
+      "=============================="
+    );
+
+
+    throw error;
+  }
 }
 
 
@@ -718,25 +724,33 @@ async function sendSms(
 ========================================================= */
 
 async function createNotification({
-
   farmerId,
-
-  bookingId =
-    null,
-
+  bookingId = null,
   type,
-
   title,
-
   message,
-
-  sms =
-    false,
-
-  phone =
-    null,
-
+  sms = false,
+  phone = null,
 }) {
+
+  console.log(
+    "========== CREATE NOTIFICATION =========="
+  );
+
+  console.log({
+    farmerId,
+    bookingId,
+    type,
+    sms,
+    phone,
+  });
+
+
+  const channel =
+    sms
+      ? "SMS"
+      : "IN_APP";
+
 
   const initialStatus =
     sms
@@ -765,91 +779,102 @@ async function createNotification({
         ?
       )
     `).run(
-
       farmerId,
-
       bookingId,
-
       type,
-
       title,
-
       message,
-
-      sms
-        ? "SMS"
-        : "IN_APP",
-
-      initialStatus,
-
+      channel,
+      initialStatus
     );
 
 
-  let smsStatus =
-    sms
-      ? "NOT_SENT"
-      : "DELIVERED";
-
+  let status =
+    initialStatus;
 
   let sentAt =
     null;
-
 
   let providerResponse =
     null;
 
 
   if (
-    sms &&
-    phone
+    sms
   ) {
 
-    try {
+    if (
+      !phone
+    ) {
 
-      const smsResult =
-        await sendSms(
-          phone,
-          message
+      status =
+        "FAILED";
+
+      providerResponse =
+        "SMS requested but farmer phone number is missing.";
+
+    } else {
+
+      try {
+
+        const smsResult =
+          await sendSms(
+            phone,
+            message,
+            type
+          );
+
+
+        status =
+          smsResult.status ||
+          "SENT";
+
+
+        sentAt =
+          status ===
+          "SENT"
+            ? new Date().toISOString()
+            : null;
+
+
+        providerResponse =
+          smsResult.data
+            ? JSON.stringify(
+                smsResult.data
+              )
+            : smsResult.reason ||
+              null;
+
+      } catch (
+        error
+      ) {
+
+        console.warn(
+          "Notification SMS failed:",
+          error
         );
 
 
-      smsStatus =
-        smsResult.status ||
-        "SENT";
+        status =
+          "FAILED";
 
 
-      sentAt =
-        smsStatus ===
-        "SENT"
-          ? new Date().toISOString()
-          : null;
+        providerResponse =
+          JSON.stringify({
+            code:
+              error?.code ||
+              null,
 
+            status:
+              error?.status ||
+              null,
 
-      providerResponse =
-        smsResult.data
-          ? JSON.stringify(
-              smsResult.data
-            )
-          : null;
+            message:
+              error?.message ||
+              "Unknown Twilio error.",
+          });
 
-
-    } catch (
-      error
-    ) {
-
-      console.warn(
-        "Notification SMS failed:",
-        error
-      );
-
-
-      smsStatus =
-        "FAILED";
-
-
-      providerResponse =
-        error?.message ||
-        null;
+      }
 
     }
 
@@ -864,30 +889,43 @@ async function createNotification({
       provider_response = ?
     WHERE id = ?
   `).run(
-
-    smsStatus,
-
+    status,
     sentAt,
-
     providerResponse,
+    result.lastInsertRowid
+  );
 
-    result.lastInsertRowid,
 
+  console.log(
+    "Notification result:",
+    {
+      id:
+        result.lastInsertRowid,
+
+      channel,
+
+      status,
+
+      sentAt,
+    }
+  );
+
+
+  console.log(
+    "=========================================="
   );
 
 
   return {
-
     id:
       result.lastInsertRowid,
 
-    status:
-      smsStatus,
+    status,
 
     sentAt,
 
+    channel,
   };
-
 }
 
 
@@ -901,20 +939,15 @@ app.get(
     req,
     res
   ) => {
-
     res.json({
-
-      success:
-        true,
+      success: true,
 
       message:
         "KrishiSetu backend is running",
 
       timestamp:
         new Date().toISOString(),
-
     });
-
   }
 );
 
@@ -967,13 +1000,11 @@ app.post(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Farmer id, name and valid 10-digit phone are required.",
-
           });
 
       }
@@ -1009,7 +1040,6 @@ app.post(
             estimated_quantity = ?
           WHERE phone = ?
         `).run(
-
           name,
 
           farmer.stateId ||
@@ -1038,8 +1068,7 @@ app.post(
             0
           ),
 
-          phone,
-
+          phone
         );
 
 
@@ -1054,7 +1083,6 @@ app.post(
 
 
         return res.json({
-
           success:
             true,
 
@@ -1063,7 +1091,6 @@ app.post(
 
           farmer:
             saved,
-
         });
 
       }
@@ -1109,7 +1136,6 @@ app.post(
           primary_crop = excluded.primary_crop,
           estimated_quantity = excluded.estimated_quantity
       `).run({
-
         id,
 
         name,
@@ -1149,7 +1175,6 @@ app.post(
             farmer.estimatedQuantity ||
             0
           ),
-
       });
 
 
@@ -1164,7 +1189,6 @@ app.post(
 
 
       res.status(201).json({
-
         success:
           true,
 
@@ -1173,7 +1197,6 @@ app.post(
 
         farmer:
           saved,
-
       });
 
     } catch (
@@ -1194,26 +1217,22 @@ app.post(
         return res
           .status(409)
           .json({
-
             success:
               false,
 
             message:
               "A farmer with this phone number already exists.",
-
           });
 
       }
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to save farmer.",
-
       });
 
     }
@@ -1240,12 +1259,10 @@ app.get(
 
 
       res.json({
-
         success:
           true,
 
         farmers,
-
       });
 
     } catch (
@@ -1259,13 +1276,11 @@ app.get(
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to load farmers.",
-
       });
 
     }
@@ -1311,13 +1326,11 @@ app.patch(
         return res
           .status(404)
           .json({
-
             success:
               false,
 
             message:
               "Farmer not found.",
-
           });
 
       }
@@ -1383,13 +1396,11 @@ app.patch(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Farmer name is required.",
-
           });
 
       }
@@ -1403,13 +1414,11 @@ app.patch(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "A valid 10-digit phone number is required.",
-
           });
 
       }
@@ -1428,13 +1437,11 @@ app.patch(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Invalid language.",
-
           });
 
       }
@@ -1451,13 +1458,11 @@ app.patch(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Quantity cannot be negative.",
-
           });
 
       }
@@ -1482,13 +1487,11 @@ app.patch(
         return res
           .status(409)
           .json({
-
             success:
               false,
 
             message:
               "This mobile number is already registered to another farmer.",
-
           });
 
       }
@@ -1506,7 +1509,6 @@ app.patch(
           estimated_quantity = ?
         WHERE id = ?
       `).run(
-
         name,
 
         phone,
@@ -1523,8 +1525,7 @@ app.patch(
 
         estimatedQuantity,
 
-        farmerId,
-
+        farmerId
       );
 
 
@@ -1539,7 +1540,6 @@ app.patch(
 
 
       res.json({
-
         success:
           true,
 
@@ -1548,7 +1548,6 @@ app.patch(
 
         farmer:
           updated,
-
       });
 
     } catch (
@@ -1562,13 +1561,11 @@ app.patch(
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to update farmer settings.",
-
       });
 
     }
@@ -1603,25 +1600,21 @@ app.get(
         return res
           .status(404)
           .json({
-
             success:
               false,
 
             message:
               "Farmer not found.",
-
           });
 
       }
 
 
       res.json({
-
         success:
           true,
 
         farmer,
-
       });
 
     } catch (
@@ -1635,13 +1628,11 @@ app.get(
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to load farmer.",
-
       });
 
     }
@@ -1672,12 +1663,10 @@ app.get(
 
 
       res.json({
-
         success:
           true,
 
         centers,
-
       });
 
     } catch (
@@ -1691,13 +1680,11 @@ app.get(
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to load procurement centers.",
-
       });
 
     }
@@ -1755,12 +1742,10 @@ app.get(
 
 
       res.json({
-
         success:
           true,
 
         bookings,
-
       });
 
     } catch (
@@ -1774,13 +1759,11 @@ app.get(
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to load bookings.",
-
       });
 
     }
@@ -1806,11 +1789,9 @@ app.post(
         req.body ||
         {};
 
-
       const farmerData =
         booking.farmer ||
         {};
-
 
       const id =
         String(
@@ -1818,13 +1799,11 @@ app.post(
           ""
         ).trim();
 
-
       const token =
         String(
           booking.token ||
           ""
         ).trim();
-
 
       const farmerId =
         String(
@@ -1832,37 +1811,41 @@ app.post(
           ""
         ).trim();
 
-
       const phone =
         normalisePhone(
           farmerData.phone
         );
-
 
       if (
         !id ||
         !token ||
         (
           !farmerId &&
-          phone.length !==
-            10
+          phone.length !== 10
         )
       ) {
 
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Booking id, token and farmer identity are required.",
-
           });
 
       }
 
+      console.log(
+        "BOOKING REQUEST RECEIVED:",
+        {
+          id,
+          token,
+          farmerId,
+          phone,
+        }
+      );
 
       const existingBooking =
         db.prepare(`
@@ -1873,13 +1856,16 @@ app.post(
           id
         );
 
-
       if (
         existingBooking
       ) {
 
-        return res.json({
+        console.log(
+          "BOOKING ALREADY EXISTS:",
+          existingBooking.id
+        );
 
+        return res.json({
           success:
             true,
 
@@ -1891,14 +1877,14 @@ app.post(
           alreadyExists:
             true,
 
+          smsStatus:
+            "NOT_SENT",
         });
 
       }
 
-
       let farmer =
         null;
-
 
       if (
         farmerId
@@ -1915,11 +1901,9 @@ app.post(
 
       }
 
-
       if (
         !farmer &&
-        phone.length ===
-          10
+        phone.length === 10
       ) {
 
         farmer =
@@ -1933,7 +1917,6 @@ app.post(
 
       }
 
-
       if (
         !farmer
       ) {
@@ -1941,17 +1924,14 @@ app.post(
         return res
           .status(404)
           .json({
-
             success:
               false,
 
             message:
               "Farmer account not found. Please login again.",
-
           });
 
       }
-
 
       const centerId =
         String(
@@ -1959,13 +1939,11 @@ app.post(
           ""
         ).trim();
 
-
       const crop =
         String(
           booking.crop ||
           ""
         ).trim();
-
 
       const estimatedQuantity =
         Number(
@@ -1973,25 +1951,20 @@ app.post(
           0
         );
 
-
       const date =
         booking.date ||
         null;
-
 
       const slotStart =
         booking.slotStart ||
         null;
 
-
       const slotEnd =
         booking.slotEnd ||
         null;
 
-
       const settings =
         getSettings();
-
 
       if (
         !settings.bookingEnabled
@@ -2000,17 +1973,14 @@ app.post(
         return res
           .status(409)
           .json({
-
             success:
               false,
 
             message:
               "New farmer bookings are currently disabled by the administrator.",
-
           });
 
       }
-
 
       if (
         settings.maintenanceMode
@@ -2019,37 +1989,30 @@ app.post(
         return res
           .status(503)
           .json({
-
             success:
               false,
 
             message:
               "KrishiSetu is currently under maintenance.",
-
           });
 
       }
 
-
       if (
-        estimatedQuantity <=
-          0
+        estimatedQuantity <= 0
       ) {
 
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Estimated quantity must be greater than zero.",
-
           });
 
       }
-
 
       if (
         estimatedQuantity >
@@ -2061,17 +2024,14 @@ app.post(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               `Maximum quantity allowed per booking is ${settings.maxQuantity} kg.`,
-
           });
 
       }
-
 
       if (
         !centerId ||
@@ -2084,21 +2044,17 @@ app.post(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Incomplete booking details.",
-
           });
 
       }
 
-
       const today =
         new Date();
-
 
       today.setHours(
         0,
@@ -2107,12 +2063,10 @@ app.post(
         0
       );
 
-
       const requestedDate =
         new Date(
           `${date}T00:00:00`
         );
-
 
       if (
         Number.isNaN(
@@ -2123,17 +2077,14 @@ app.post(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Invalid booking date.",
-
           });
 
       }
-
 
       if (
         requestedDate <
@@ -2143,23 +2094,19 @@ app.post(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Bookings cannot be created for a past date.",
-
           });
 
       }
-
 
       const maximumDate =
         new Date(
           today
         );
-
 
       maximumDate.setDate(
         maximumDate.getDate() +
@@ -2167,7 +2114,6 @@ app.post(
           settings.advanceBookingDays
         )
       );
-
 
       if (
         requestedDate >
@@ -2177,17 +2123,14 @@ app.post(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               `Bookings can only be made up to ${settings.advanceBookingDays} days in advance.`,
-
           });
 
       }
-
 
       const center =
         db.prepare(`
@@ -2198,7 +2141,6 @@ app.post(
           centerId
         );
 
-
       if (
         !center
       ) {
@@ -2206,43 +2148,34 @@ app.post(
         return res
           .status(404)
           .json({
-
             success:
               false,
 
             message:
               "Procurement center not found.",
-
           });
 
       }
 
-
       if (
-        center.active !==
-          undefined &&
-        center.active !==
-          null &&
+        center.active !== undefined &&
+        center.active !== null &&
         Number(
           center.active
-        ) ===
-          0
+        ) === 0
       ) {
 
         return res
           .status(409)
           .json({
-
             success:
               false,
 
             message:
               "This procurement center is currently inactive.",
-
           });
 
       }
-
 
       const capacity =
         Number(
@@ -2252,29 +2185,24 @@ app.post(
           20
         );
 
-
       if (
         !Number.isFinite(
           capacity
         ) ||
-        capacity <=
-          0
+        capacity <= 0
       ) {
 
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Invalid slot capacity.",
-
           });
 
       }
-
 
       const slotConflict =
         db.prepare(`
@@ -2287,17 +2215,11 @@ app.post(
             AND slot_end = ?
             AND status != 'PAYMENT_SENT'
         `).get(
-
           centerId,
-
           date,
-
           slotStart,
-
-          slotEnd,
-
+          slotEnd
         );
-
 
       if (
         Number(
@@ -2310,17 +2232,14 @@ app.post(
         return res
           .status(409)
           .json({
-
             success:
               false,
 
             message:
               "This arrival window is full. Please choose another slot.",
-
           });
 
       }
-
 
       const transaction =
         db.transaction(
@@ -2356,7 +2275,6 @@ app.post(
                 NULL
               )
             `).run({
-
               id,
 
               token,
@@ -2379,9 +2297,7 @@ app.post(
 
               slot_end:
                 slotEnd,
-
             });
-
 
             db.prepare(`
               INSERT INTO status_events (
@@ -2399,19 +2315,48 @@ app.post(
           }
         );
 
-
       transaction();
 
+      console.log(
+        "BOOKING DATABASE INSERTED:",
+        id
+      );
 
-      const created =
-        getBookingById(
-          id
+      const shouldSendBookingSms =
+        settings.bookingConfirmationSms !== false &&
+        settings.smsEnabled === true &&
+        SMS_ENABLED === true &&
+        Boolean(
+          farmer.phone
         );
 
+      console.log(
+        "BOOKING SMS CHECK:",
+        {
+          bookingId:
+            id,
+
+          farmerId:
+            farmer.id,
+
+          phone:
+            farmer.phone,
+
+          bookingConfirmationSms:
+            settings.bookingConfirmationSms,
+
+          smsEnabled:
+            settings.smsEnabled,
+
+          SMS_ENABLED,
+
+          shouldSendSms:
+            shouldSendBookingSms,
+        }
+      );
 
       const notification =
         await createNotification({
-
           farmerId:
             farmer.id,
 
@@ -2428,28 +2373,37 @@ app.post(
             `Your KrishiSetu booking ${token} is confirmed for ${date} from ${slotStart} to ${slotEnd}.`,
 
           sms:
-            settings.bookingConfirmationSms &&
-            settings.smsEnabled &&
-            SMS_ENABLED,
+            shouldSendBookingSms,
 
           phone:
             farmer.phone,
-
         });
 
+      console.log(
+        "BOOKING NOTIFICATION RESULT:",
+        notification
+      );
 
-      res.status(201).json({
+      const created =
+        getBookingById(
+          id
+        );
 
-        success:
-          true,
+      return res
+        .status(201)
+        .json({
+          success:
+            true,
 
-        booking:
-          created,
+          booking:
+            created,
 
-        smsStatus:
-          notification.status,
+          smsStatus:
+            notification.status,
 
-      });
+          notificationId:
+            notification.id,
+        });
 
     } catch (
       error
@@ -2460,7 +2414,6 @@ app.post(
         error
       );
 
-
       if (
         error?.code ===
         "SQLITE_CONSTRAINT_UNIQUE"
@@ -2469,27 +2422,25 @@ app.post(
         return res
           .status(409)
           .json({
-
             success:
               false,
 
             message:
               "This booking or token already exists.",
-
           });
 
       }
 
+      return res
+        .status(500)
+        .json({
+          success:
+            false,
 
-      res.status(500).json({
-
-        success:
-          false,
-
-        message:
-          "Failed to create booking.",
-
-      });
+          message:
+            error?.message ||
+            "Failed to create booking.",
+        });
 
     }
 
@@ -2523,13 +2474,11 @@ app.get(
         return res
           .status(404)
           .json({
-
             success:
               false,
 
             message:
               "Booking not found.",
-
           });
 
       }
@@ -2553,14 +2502,12 @@ app.get(
 
 
       res.json({
-
         success:
           true,
 
         booking,
 
         statusEvents,
-
       });
 
     } catch (
@@ -2574,13 +2521,11 @@ app.get(
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to load booking.",
-
       });
 
     }
@@ -2622,13 +2567,11 @@ app.patch(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Invalid booking status.",
-
           });
 
       }
@@ -2655,13 +2598,11 @@ app.patch(
         return res
           .status(404)
           .json({
-
             success:
               false,
 
             message:
               "Booking not found.",
-
           });
 
       }
@@ -2678,7 +2619,6 @@ app.patch(
       ) {
 
         return res.json({
-
           success:
             true,
 
@@ -2689,7 +2629,6 @@ app.patch(
             getBookingById(
               bookingId
             ),
-
         });
 
       }
@@ -2710,13 +2649,11 @@ app.patch(
         return res
           .status(409)
           .json({
-
             success:
               false,
 
             message:
               `Cannot move booking from ${currentStatus} to ${nextStatus}.`,
-
           });
 
       }
@@ -2734,13 +2671,11 @@ app.patch(
         return res
           .status(409)
           .json({
-
             success:
               false,
 
             message:
               "Use the payment workflow to update payment status.",
-
           });
 
       }
@@ -2755,11 +2690,8 @@ app.patch(
               SET status = ?
               WHERE id = ?
             `).run(
-
               nextStatus,
-
-              bookingId,
-
+              bookingId
             );
 
 
@@ -2770,11 +2702,8 @@ app.patch(
               )
               VALUES (?, ?)
             `).run(
-
               bookingId,
-
-              nextStatus,
-
+              nextStatus
             );
 
           }
@@ -2788,56 +2717,52 @@ app.patch(
         getSettings();
 
 
-      let notification =
-        null;
+      const shouldSendSms =
+        settings.smsEnabled &&
+        SMS_ENABLED &&
+        Boolean(
+          booking.farmer_phone
+        ) &&
+        (
+          nextStatus === "ARRIVED"
+            ? settings.lateArrivalSms !==
+              undefined
+            : true
+        );
 
 
-      if (
-        nextStatus !==
-        "PAYMENT_SENT"
-      ) {
+      const notification =
+        await createNotification({
+          farmerId:
+            booking.farmer_id,
 
-        notification =
-          await createNotification({
+          bookingId:
+            bookingId,
 
-            farmerId:
-              booking.farmer_id,
+          type:
+            nextStatus,
 
-            bookingId:
-              bookingId,
+          title:
+            getNotificationTitle(
+              nextStatus
+            ),
 
-            type:
-              nextStatus,
+          message:
+            getStatusSms(
+              booking.token,
+              nextStatus
+            ) ||
+            `Booking ${booking.token} status updated.`,
 
-            title:
-              getNotificationTitle(
-                nextStatus
-              ),
+          sms:
+            shouldSendSms,
 
-            message:
-              getStatusSms(
-                booking.token,
-                nextStatus
-              ) ||
-              `Booking ${booking.token} status updated.`,
-
-            sms:
-              settings.smsEnabled &&
-              SMS_ENABLED &&
-              Boolean(
-                booking.farmer_phone
-              ),
-
-            phone:
-              booking.farmer_phone,
-
-          });
-
-      }
+          phone:
+            booking.farmer_phone,
+        });
 
 
       res.json({
-
         success:
           true,
 
@@ -2850,9 +2775,10 @@ app.patch(
           ),
 
         smsStatus:
-          notification?.status ||
-          "NOT_SENT",
+          notification.status,
 
+        notificationId:
+          notification.id,
       });
 
     } catch (
@@ -2866,13 +2792,11 @@ app.patch(
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to update status.",
-
       });
 
     }
@@ -2923,13 +2847,11 @@ app.patch(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Valid actual quantity is required.",
-
           });
 
       }
@@ -2956,13 +2878,11 @@ app.patch(
         return res
           .status(404)
           .json({
-
             success:
               false,
 
             message:
               "Booking not found.",
-
           });
 
       }
@@ -2981,13 +2901,11 @@ app.patch(
         return res
           .status(409)
           .json({
-
             success:
               false,
 
             message:
               "This booking has already completed procurement.",
-
           });
 
       }
@@ -3005,13 +2923,9 @@ app.patch(
                 status = 'WEIGHING'
               WHERE id = ?
             `).run(
-
               actualQuantity,
-
               quality,
-
-              req.params.id,
-
+              req.params.id
             );
 
 
@@ -3038,7 +2952,6 @@ app.patch(
 
       const notification =
         await createNotification({
-
           farmerId:
             booking.farmer_id,
 
@@ -3063,12 +2976,10 @@ app.patch(
 
           phone:
             booking.farmer_phone,
-
         });
 
 
       res.json({
-
         success:
           true,
 
@@ -3085,6 +2996,8 @@ app.patch(
         smsStatus:
           notification.status,
 
+        notificationId:
+          notification.id,
       });
 
     } catch (
@@ -3098,13 +3011,11 @@ app.patch(
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to record weighing.",
-
       });
 
     }
@@ -3147,13 +3058,11 @@ app.patch(
         return res
           .status(404)
           .json({
-
             success:
               false,
 
             message:
               "Booking not found.",
-
           });
 
       }
@@ -3173,13 +3082,11 @@ app.patch(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Actual quantity must be recorded before procurement.",
-
           });
 
       }
@@ -3198,13 +3105,11 @@ app.patch(
         return res
           .status(409)
           .json({
-
             success:
               false,
 
             message:
               "Procurement has already been completed.",
-
           });
 
       }
@@ -3241,13 +3146,11 @@ app.patch(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "A valid procurement rate per kg is required.",
-
           });
 
       }
@@ -3262,13 +3165,11 @@ app.patch(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Invalid adjustment amount.",
-
           });
 
       }
@@ -3290,13 +3191,11 @@ app.patch(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Payable amount must be greater than zero.",
-
           });
 
       }
@@ -3341,16 +3240,11 @@ app.patch(
                 NULL
               )
             `).run(
-
               req.params.id,
-
               payableAmount,
-
               rate,
-
               notes ||
-                `Procurement rate: ₹${rate}/kg. Adjustment: ₹${adjustment}.`,
-
+                `Procurement rate: ₹${rate}/kg. Adjustment: ₹${adjustment}.`
             );
 
 
@@ -3388,7 +3282,6 @@ app.patch(
 
       const notification =
         await createNotification({
-
           farmerId:
             booking.farmer_id,
 
@@ -3415,12 +3308,10 @@ app.patch(
 
           phone:
             booking.farmer_phone,
-
         });
 
 
       res.json({
-
         success:
           true,
 
@@ -3435,6 +3326,8 @@ app.patch(
         smsStatus:
           notification.status,
 
+        notificationId:
+          notification.id,
       });
 
     } catch (
@@ -3448,13 +3341,11 @@ app.patch(
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to complete procurement.",
-
       });
 
     }
@@ -3514,13 +3405,11 @@ app.patch(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "A valid payment amount is required.",
-
           });
 
       }
@@ -3533,13 +3422,11 @@ app.patch(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Payment reference is required.",
-
           });
 
       }
@@ -3567,13 +3454,11 @@ app.patch(
         return res
           .status(404)
           .json({
-
             success:
               false,
 
             message:
               "Booking not found.",
-
           });
 
       }
@@ -3587,13 +3472,11 @@ app.patch(
         return res
           .status(409)
           .json({
-
             success:
               false,
 
             message:
               "Payment has already been sent for this booking.",
-
           });
 
       }
@@ -3611,13 +3494,11 @@ app.patch(
         return res
           .status(409)
           .json({
-
             success:
               false,
 
             message:
               "This booking is not ready for payment.",
-
           });
 
       }
@@ -3643,13 +3524,11 @@ app.patch(
         return res
           .status(409)
           .json({
-
             success:
               false,
 
             message:
               "A payment has already been recorded for this booking.",
-
           });
 
       }
@@ -3674,18 +3553,12 @@ app.patch(
                   updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?
               `).run(
-
                 amount,
-
                 method,
-
                 reference,
-
                 notes ||
                   null,
-
-                existingPayment.id,
-
+                existingPayment.id
               );
 
             } else {
@@ -3716,18 +3589,12 @@ app.patch(
                   NULL
                 )
               `).run(
-
                 req.params.id,
-
                 amount,
-
                 method,
-
                 reference,
-
                 notes ||
-                  null,
-
+                  null
               );
 
             }
@@ -3765,7 +3632,6 @@ app.patch(
 
       const notification =
         await createNotification({
-
           farmerId:
             booking.farmer_id,
 
@@ -3792,7 +3658,6 @@ app.patch(
 
           phone:
             booking.farmer_phone,
-
         });
 
 
@@ -3816,13 +3681,9 @@ app.patch(
           updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
       `).run(
-
         notification.status,
-
         notification.sentAt,
-
-        savedPaymentBeforeSmsUpdate.id,
-
+        savedPaymentBeforeSmsUpdate.id
       );
 
 
@@ -3839,7 +3700,6 @@ app.patch(
 
 
       res.json({
-
         success:
           true,
 
@@ -3855,6 +3715,8 @@ app.patch(
         smsSentAt:
           notification.sentAt,
 
+        notificationId:
+          notification.id,
       });
 
     } catch (
@@ -3868,13 +3730,11 @@ app.patch(
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to record payment.",
-
       });
 
     }
@@ -3913,13 +3773,11 @@ app.get(
         return res
           .status(404)
           .json({
-
             success:
               false,
 
             message:
               "Booking not found.",
-
           });
 
       }
@@ -3937,12 +3795,10 @@ app.get(
 
 
       res.json({
-
         success:
           true,
 
         payments,
-
       });
 
     } catch (
@@ -3956,13 +3812,11 @@ app.get(
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to load payment history.",
-
       });
 
     }
@@ -4001,13 +3855,11 @@ app.get(
         return res
           .status(404)
           .json({
-
             success:
               false,
 
             message:
               "Booking not found.",
-
           });
 
       }
@@ -4031,12 +3883,10 @@ app.get(
 
 
       res.json({
-
         success:
           true,
 
         events,
-
       });
 
     } catch (
@@ -4050,13 +3900,11 @@ app.get(
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to load status history.",
-
       });
 
     }
@@ -4108,13 +3956,11 @@ app.post(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Farmer, booking and issue description are required.",
-
           });
 
       }
@@ -4128,13 +3974,11 @@ app.post(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Payment issue description is too long.",
-
           });
 
       }
@@ -4157,13 +4001,11 @@ app.post(
         return res
           .status(404)
           .json({
-
             success:
               false,
 
             message:
               "Farmer account not found.",
-
           });
 
       }
@@ -4190,13 +4032,11 @@ app.post(
         return res
           .status(404)
           .json({
-
             success:
               false,
 
             message:
               "Booking not found.",
-
           });
 
       }
@@ -4214,13 +4054,11 @@ app.post(
         return res
           .status(403)
           .json({
-
             success:
               false,
 
             message:
               "This booking does not belong to the farmer.",
-
           });
 
       }
@@ -4236,18 +4074,13 @@ app.post(
           )
           VALUES (?, ?, ?, 'OPEN')
         `).run(
-
           farmerId,
-
           bookingId,
-
-          message,
-
+          message
         );
 
 
       res.status(201).json({
-
         success:
           true,
 
@@ -4255,7 +4088,6 @@ app.post(
           "Payment issue reported successfully.",
 
         issue: {
-
           id:
             result.lastInsertRowid,
 
@@ -4265,9 +4097,7 @@ app.post(
 
           status:
             "OPEN",
-
         },
-
       });
 
     } catch (
@@ -4281,13 +4111,11 @@ app.post(
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to report payment issue.",
-
       });
 
     }
@@ -4352,12 +4180,10 @@ app.get(
 
 
       res.json({
-
         success:
           true,
 
         issues,
-
       });
 
     } catch (
@@ -4371,13 +4197,11 @@ app.get(
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to load payment issues.",
-
       });
 
     }
@@ -4419,13 +4243,11 @@ app.patch(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Invalid payment issue id.",
-
           });
 
       }
@@ -4443,13 +4265,11 @@ app.patch(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Payment issue status must be OPEN or RESOLVED.",
-
           });
 
       }
@@ -4472,13 +4292,11 @@ app.patch(
         return res
           .status(404)
           .json({
-
             success:
               false,
 
             message:
               "Payment issue not found.",
-
           });
 
       }
@@ -4489,11 +4307,8 @@ app.patch(
         SET status = ?
         WHERE id = ?
       `).run(
-
         status,
-
-        issueId,
-
+        issueId
       );
 
 
@@ -4539,7 +4354,6 @@ app.patch(
 
 
       res.json({
-
         success:
           true,
 
@@ -4551,7 +4365,6 @@ app.patch(
 
         issue:
           updated,
-
       });
 
     } catch (
@@ -4565,13 +4378,11 @@ app.patch(
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to update payment issue.",
-
       });
 
     }
@@ -4693,12 +4504,10 @@ app.get(
 
 
       res.json({
-
         success:
           true,
 
         summary: {
-
           total,
 
           confirmed,
@@ -4720,9 +4529,7 @@ app.get(
           pendingAmount,
 
           openPaymentIssues,
-
         },
-
       });
 
     } catch (
@@ -4736,13 +4543,11 @@ app.get(
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to load dashboard summary.",
-
       });
 
     }
@@ -4765,13 +4570,11 @@ app.get(
     try {
 
       res.json({
-
         success:
           true,
 
         settings:
           getSettings(),
-
       });
 
     } catch (
@@ -4785,13 +4588,11 @@ app.get(
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to load system settings.",
-
       });
 
     }
@@ -4819,11 +4620,8 @@ app.patch(
 
 
       const next = {
-
         ...current,
-
         ...incoming,
-
       };
 
 
@@ -4862,13 +4660,11 @@ app.patch(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Maximum quantity must be greater than zero.",
-
           });
 
       }
@@ -4885,13 +4681,11 @@ app.patch(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Default capacity must be greater than zero.",
-
           });
 
       }
@@ -4908,13 +4702,11 @@ app.patch(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Slot duration must be greater than zero.",
-
           });
 
       }
@@ -4931,13 +4723,11 @@ app.patch(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Advance booking days cannot be negative.",
-
           });
 
       }
@@ -4956,36 +4746,25 @@ app.patch(
         return res
           .status(400)
           .json({
-
             success:
               false,
 
             message:
               "Invalid default language.",
-
           });
 
       }
 
 
       const booleanKeys = [
-
         "bookingEnabled",
-
         "requireActualWeight",
-
         "smsEnabled",
-
         "bookingConfirmationSms",
-
         "lateArrivalSms",
-
         "procurementSms",
-
         "paymentSms",
-
         "maintenanceMode",
-
       ];
 
 
@@ -5008,7 +4787,6 @@ app.patch(
 
 
       res.json({
-
         success:
           true,
 
@@ -5017,7 +4795,6 @@ app.patch(
 
         settings:
           getSettings(),
-
       });
 
     } catch (
@@ -5031,13 +4808,11 @@ app.patch(
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to save system settings.",
-
       });
 
     }
@@ -5061,7 +4836,6 @@ app.post(
 
 
       res.json({
-
         success:
           true,
 
@@ -5070,7 +4844,6 @@ app.post(
 
         settings:
           getSettings(),
-
       });
 
     } catch (
@@ -5084,13 +4857,11 @@ app.post(
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to reset system settings.",
-
       });
 
     }
@@ -5146,12 +4917,10 @@ app.get(
 
 
       res.json({
-
         success:
           true,
 
         events,
-
       });
 
     } catch (
@@ -5165,13 +4934,11 @@ app.get(
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to load activity log.",
-
       });
 
     }
@@ -5207,12 +4974,10 @@ app.get(
 
 
       res.json({
-
         success:
           true,
 
         notifications,
-
       });
 
     } catch (
@@ -5226,13 +4991,11 @@ app.get(
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to load notifications.",
-
       });
 
     }
@@ -5260,10 +5023,8 @@ app.patch(
 
 
       res.json({
-
         success:
           true,
-
       });
 
     } catch (
@@ -5277,13 +5038,11 @@ app.patch(
 
 
       res.status(500).json({
-
         success:
           false,
 
         message:
           "Failed to update notification.",
-
       });
 
     }
@@ -5305,13 +5064,11 @@ app.use(
     res
       .status(404)
       .json({
-
         success:
           false,
 
         message:
           "Route not found.",
-
       });
 
   }
@@ -5339,13 +5096,11 @@ app.use(
     res
       .status(500)
       .json({
-
         success:
           false,
 
         message:
           "Internal server error.",
-
       });
 
   }
@@ -5364,13 +5119,40 @@ app.listen(
       `KrishiSetu backend running on port ${PORT}`
     );
 
-
     console.log(
       `SMS mode: ${
         SMS_ENABLED
           ? "ENABLED"
           : "DEMO / DISABLED"
       }`
+    );
+
+    console.log(
+      "Twilio Account configured:",
+      Boolean(
+        process.env.TWILIO_ACCOUNT_SID
+      )
+    );
+
+    console.log(
+      "Twilio API key configured:",
+      Boolean(
+        process.env.TWILIO_API_KEY
+      )
+    );
+
+    console.log(
+      "Twilio API secret configured:",
+      Boolean(
+        process.env.TWILIO_API_SECRET
+      )
+    );
+
+    console.log(
+      "Twilio phone configured:",
+      Boolean(
+        process.env.TWILIO_PHONE_NUMBER
+      )
     );
 
   }
