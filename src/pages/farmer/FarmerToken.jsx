@@ -35,6 +35,9 @@ import {
   useLanguage,
 } from "../../translations/LanguageContext";
 
+import QRCode from "qrcode";
+import jsPDF from "jspdf";
+
 
 const API_URL =
   import.meta.env.VITE_API_URL;
@@ -84,7 +87,8 @@ function FarmerToken() {
 
   const [
     searchParams,
-  ] = useSearchParams();
+  ] =
+    useSearchParams();
 
 
   const bookingId =
@@ -161,6 +165,13 @@ function FarmerToken() {
     setIssueSubmitted,
   ] =
     useState(false);
+
+
+  const [
+    qrCodeUrl,
+    setQrCodeUrl,
+  ] =
+    useState("");
 
 
   const loadBooking =
@@ -555,6 +566,115 @@ function FarmerToken() {
         100;
 
 
+  useEffect(() => {
+
+    if (
+      !booking
+    ) {
+
+      setQrCodeUrl("");
+
+      return;
+
+    }
+
+
+    async function generateBookingQr() {
+
+      try {
+
+        const qrData =
+          JSON.stringify({
+
+            type:
+              "KRISHISETU_BOOKING",
+
+            token:
+              booking.token ||
+              booking.id,
+
+            bookingId:
+              booking.id,
+
+            farmer:
+              farmerName,
+
+            crop:
+              cropName,
+
+            estimatedQuantity:
+              estimatedQuantity,
+
+            actualQuantity:
+              actualQuantity,
+
+            center:
+              center.name,
+
+            date:
+              booking.date,
+
+            arrivalWindow:
+              formatTime(
+                booking.slot_start,
+                booking.slot_end
+              ),
+
+            status:
+              statusLabel,
+
+          });
+
+
+        const url =
+          await QRCode.toDataURL(
+            qrData,
+            {
+              width:
+                500,
+
+              margin:
+                2,
+
+              errorCorrectionLevel:
+                "M",
+            }
+          );
+
+
+        setQrCodeUrl(
+          url
+        );
+
+      } catch (
+        qrError
+      ) {
+
+        console.error(
+          "QR generation failed:",
+          qrError
+        );
+
+        setQrCodeUrl("");
+
+      }
+
+    }
+
+
+    generateBookingQr();
+
+  }, [
+    booking,
+    farmerName,
+    cropName,
+    estimatedQuantity,
+    actualQuantity,
+    center.name,
+    statusLabel,
+  ]);
+
+
   const monthlyData =
     useMemo(
       () => {
@@ -765,6 +885,632 @@ function FarmerToken() {
         farmerBookings,
       ]
     );
+
+
+  async function downloadBookingPass() {
+
+    if (
+      !booking
+    ) {
+
+      return;
+
+    }
+
+
+    try {
+
+      const qrData =
+        JSON.stringify({
+
+          type:
+            "KRISHISETU_BOOKING",
+
+          token:
+            booking.token ||
+            booking.id,
+
+          bookingId:
+            booking.id,
+
+          farmer:
+            farmerName,
+
+          crop:
+            cropName,
+
+          estimatedQuantity:
+            estimatedQuantity,
+
+          actualQuantity:
+            actualQuantity,
+
+          center:
+            center.name,
+
+          date:
+            booking.date,
+
+          arrivalWindow:
+            formatTime(
+              booking.slot_start,
+              booking.slot_end
+            ),
+
+          status:
+            statusLabel,
+
+        });
+
+
+      const qrDataUrl =
+        await QRCode.toDataURL(
+          qrData,
+          {
+            width:
+              500,
+
+            margin:
+              2,
+
+            errorCorrectionLevel:
+              "M",
+          }
+        );
+
+
+      const pdf =
+        new jsPDF({
+          orientation:
+            "portrait",
+
+          unit:
+            "mm",
+
+          format:
+            "a4",
+        });
+
+
+      const pageWidth =
+        pdf.internal.pageSize.getWidth();
+
+
+      const pageHeight =
+        pdf.internal.pageSize.getHeight();
+
+
+      pdf.setFillColor(
+        27,
+        83,
+        56
+      );
+
+
+      pdf.rect(
+        0,
+        0,
+        pageWidth,
+        31,
+        "F"
+      );
+
+
+      pdf.setTextColor(
+        255,
+        255,
+        255
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "bold"
+      );
+
+
+      pdf.setFontSize(
+        20
+      );
+
+
+      pdf.text(
+        "KrishiSetu",
+        18,
+        14
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "normal"
+      );
+
+
+      pdf.setFontSize(
+        9
+      );
+
+
+      pdf.text(
+        "Digital Procurement Booking Pass",
+        18,
+        22
+      );
+
+
+      pdf.setTextColor(
+        30,
+        55,
+        42
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "bold"
+      );
+
+
+      pdf.setFontSize(
+        10
+      );
+
+
+      pdf.text(
+        "SCAN TO IDENTIFY BOOKING",
+        138,
+        42
+      );
+
+
+      pdf.addImage(
+        qrDataUrl,
+        "PNG",
+        136,
+        47,
+        52,
+        52
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "bold"
+      );
+
+
+      pdf.setFontSize(
+        12
+      );
+
+
+      pdf.text(
+        "YOUR TOKEN",
+        18,
+        48
+      );
+
+
+      pdf.setFontSize(
+        30
+      );
+
+
+      pdf.setTextColor(
+        27,
+        83,
+        56
+      );
+
+
+      pdf.text(
+        `#${booking.token || booking.id}`,
+        18,
+        65
+      );
+
+
+      pdf.setFontSize(
+        10
+      );
+
+
+      pdf.setTextColor(
+        85,
+        105,
+        94
+      );
+
+
+      pdf.text(
+        `Status: ${statusLabel}`,
+        18,
+        74
+      );
+
+
+      let y =
+        92;
+
+
+      pdf.setTextColor(
+        35,
+        55,
+        45
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "bold"
+      );
+
+
+      pdf.setFontSize(
+        13
+      );
+
+
+      pdf.text(
+        "Booking Details",
+        18,
+        y
+      );
+
+
+      y += 12;
+
+
+      const details = [
+
+        [
+          "Farmer",
+          farmerName,
+        ],
+
+        [
+          "Crop",
+          cropName,
+        ],
+
+        [
+          "Estimated Quantity",
+          `${estimatedQuantity.toLocaleString()} kg`,
+        ],
+
+        [
+          "Actual Quantity",
+          actualQuantity === null
+            ? "Not recorded"
+            : `${actualQuantity.toLocaleString()} kg`,
+        ],
+
+        [
+          "Procurement Center",
+          center.name,
+        ],
+
+        [
+          "Arrival Date",
+          formatDate(
+            booking.date,
+            language
+          ),
+        ],
+
+        [
+          "Arrival Window",
+          formatTime(
+            booking.slot_start,
+            booking.slot_end
+          ),
+        ],
+
+        [
+          "Village",
+          village,
+        ],
+
+        [
+          "Quality",
+          booking.quality ||
+          "Not recorded",
+        ],
+
+        [
+          "Booking Reference",
+          booking.id,
+        ],
+
+      ];
+
+
+      pdf.setFontSize(
+        10
+      );
+
+
+      details.forEach(
+        (
+          [
+            label,
+            value,
+          ]
+        ) => {
+
+          pdf.setFont(
+            "helvetica",
+            "bold"
+          );
+
+
+          pdf.setTextColor(
+            100,
+            115,
+            106
+          );
+
+
+          pdf.text(
+            `${label}:`,
+            18,
+            y
+          );
+
+
+          pdf.setFont(
+            "helvetica",
+            "normal"
+          );
+
+
+          pdf.setTextColor(
+            35,
+            55,
+            45
+          );
+
+
+          const lines =
+            pdf.splitTextToSize(
+              String(
+                value || "—"
+              ),
+              105
+            );
+
+
+          pdf.text(
+            lines,
+            62,
+            y
+          );
+
+
+          y +=
+            Math.max(
+              7,
+              lines.length *
+                5
+            );
+
+        }
+      );
+
+
+      if (
+        paymentAmount !== null ||
+        paymentReference !== "—"
+      ) {
+
+        y += 5;
+
+
+        pdf.setFont(
+          "helvetica",
+          "bold"
+        );
+
+
+        pdf.setFontSize(
+          13
+        );
+
+
+        pdf.setTextColor(
+          35,
+          55,
+          45
+        );
+
+
+        pdf.text(
+          "Payment Information",
+          18,
+          y
+        );
+
+
+        y += 10;
+
+
+        pdf.setFontSize(
+          10
+        );
+
+
+        if (
+          paymentAmount !== null
+        ) {
+
+          pdf.setFont(
+            "helvetica",
+            "normal"
+          );
+
+
+          pdf.text(
+            `Amount: ₹${paymentAmount.toLocaleString(
+              "en-IN",
+              {
+                maximumFractionDigits:
+                  2,
+              }
+            )}`,
+            18,
+            y
+          );
+
+
+          y += 6;
+
+        }
+
+
+        pdf.text(
+          `Method: ${paymentMethod}`,
+          18,
+          y
+        );
+
+
+        y += 6;
+
+
+        pdf.text(
+          `Reference: ${paymentReference}`,
+          18,
+          y
+        );
+
+      }
+
+
+      const noteY =
+        Math.min(
+          y + 18,
+          pageHeight - 40
+        );
+
+
+      pdf.setFillColor(
+        239,
+        246,
+        241
+      );
+
+
+      pdf.roundedRect(
+        18,
+        noteY,
+        pageWidth - 36,
+        22,
+        4,
+        4,
+        "F"
+      );
+
+
+      pdf.setTextColor(
+        45,
+        85,
+        63
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "bold"
+      );
+
+
+      pdf.setFontSize(
+        9
+      );
+
+
+      pdf.text(
+        "Keep this pass available offline.",
+        24,
+        noteY + 8
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "normal"
+      );
+
+
+      pdf.setFontSize(
+        8
+      );
+
+
+      pdf.text(
+        "Show the QR code or token at the procurement center.",
+        24,
+        noteY + 15
+      );
+
+
+      pdf.setTextColor(
+        125,
+        135,
+        130
+      );
+
+
+      pdf.setFontSize(
+        7
+      );
+
+
+      pdf.text(
+        "KrishiSetu · Smart Agricultural Procurement",
+        18,
+        pageHeight - 12
+      );
+
+
+      pdf.text(
+        `Generated ${new Date().toLocaleDateString(
+          "en-IN"
+        )}`,
+        pageWidth - 58,
+        pageHeight - 12
+      );
+
+
+      const safeToken =
+        String(
+          booking.token ||
+          booking.id ||
+          "booking"
+        ).replace(
+          /[^a-zA-Z0-9-_]/g,
+          "-"
+        );
+
+
+      pdf.save(
+        `KrishiSetu-${safeToken}-Booking-Pass.pdf`
+      );
+
+
+    } catch (
+      downloadError
+    ) {
+
+      console.error(
+        "Booking pass download failed:",
+        downloadError
+      );
+
+    }
+
+  }
 
 
   async function handleIssueSubmit(
@@ -1651,6 +2397,7 @@ function FarmerToken() {
                   value={
                     center.name
                   }
+
                 />
 
               </div>
@@ -1904,7 +2651,7 @@ function FarmerToken() {
                                   language,
                                   "Current",
                                   "वर्तमान",
-                                  "ప్రస్తుతం"
+                                  "ప్రస్తుత"
                                 )}
 
                               </span>
@@ -2836,6 +3583,55 @@ function FarmerToken() {
               </div>
 
 
+              {qrCodeUrl && (
+
+                <div className="token-quick-qr">
+
+                  <div className="token-quick-qr-frame">
+
+                    <img
+                      src={
+                        qrCodeUrl
+                      }
+                      alt={getText(
+                        language,
+                        "Booking QR code",
+                        "बुकिंग QR कोड",
+                        "బుకింగ్ QR కోడ్"
+                      )}
+                    />
+
+                  </div>
+
+
+                  <strong>
+
+                    {getText(
+                      language,
+                      "Quick scan",
+                      "जल्दी स्कैन करें",
+                      "త్వరగా స్కాన్ చేయండి"
+                    )}
+
+                  </strong>
+
+
+                  <span>
+
+                    {getText(
+                      language,
+                      "Show this QR code at the procurement center.",
+                      "खरीद केंद्र पर यह QR कोड दिखाएं।",
+                      "కొనుగోలు కేంద్రంలో ఈ QR కోడ్‌ను చూపించండి."
+                    )}
+
+                  </span>
+
+                </div>
+
+              )}
+
+
               <div className="token-visual-decoration">
 
                 <span />
@@ -2855,6 +3651,28 @@ function FarmerToken() {
                 )}
 
               </p>
+
+
+              <button
+                type="button"
+                className="token-download-pass-button"
+                onClick={
+                  downloadBookingPass
+                }
+              >
+
+                <CheckCircle2
+                  size={16}
+                />
+
+                {getText(
+                  language,
+                  "Download Offline Pass",
+                  "ऑफलाइन पास डाउनलोड करें",
+                  "ఆఫ్‌లైన్ పాస్ డౌన్‌లోడ్ చేయండి"
+                )}
+
+              </button>
 
             </div>
 

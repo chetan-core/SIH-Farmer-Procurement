@@ -133705,3 +133705,172 @@ body,
   color:
     var(--theme-heading);
 }
+
+.token-download-pass-button {
+  width: 100%;
+
+  margin-top: 16px;
+
+  min-height: 44px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  border: 0;
+
+  border-radius: 12px;
+
+  padding: 10px 14px;
+
+  font: inherit;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  background: #1f7a50;
+
+  color: #ffffff;
+
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+
+.token-download-pass-button:hover {
+  transform:
+    translateY(-1px);
+
+  opacity:
+    0.92;
+}
+
+
+.token-download-pass-button:active {
+  transform:
+    translateY(0);
+}
+
+/* =========================================================
+   TOKEN PAGE — QUICK QR
+========================================================= */
+
+.token-quick-qr {
+  margin-top: 20px;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+
+  text-align: center;
+
+  gap: 7px;
+}
+
+
+.token-quick-qr-frame {
+  width: 164px;
+  height: 164px;
+
+  padding: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+
+  border-radius: 16px;
+
+  box-shadow:
+    0 12px 30px
+    rgba(0, 0, 0, 0.10);
+}
+
+
+.token-quick-qr-frame img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+}
+
+
+.token-quick-qr strong {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+
+.token-quick-qr span {
+  max-width: 220px;
+
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+
+.token-quick-qr + .token-visual-decoration {
+  margin-top: 18px;
+}
+
+
+/* =========================================================
+   DOWNLOAD BUTTON
+========================================================= */
+
+.token-download-pass-button {
+  width: 100%;
+
+  margin-top: 16px;
+
+  min-height: 44px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 10px 14px;
+
+  border: 0;
+  border-radius: 12px;
+
+  font: inherit;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  background: #1f7a50;
+  color: #ffffff;
+
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+
+.token-download-pass-button:hover {
+  transform:
+    translateY(-1px);
+
+  opacity:
+    0.92;
+}
+
+
+.token-download-pass-button:active {
+  transform:
+    translateY(0);
+}
