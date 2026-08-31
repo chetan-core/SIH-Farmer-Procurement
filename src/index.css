@@ -108604,3 +108604,4312 @@ body.dark .text-black,
     #ffffff !important;
 
 }
+
+
+
+
+/* =========================================================
+   KRISHISETU GLOBAL DARK MODE
+   HIGH CONTRAST / ALL PAGES
+   PLACE AT THE VERY END OF GLOBAL CSS
+   ========================================================= */
+
+
+/* =========================================================
+   ROOT
+   ========================================================= */
+
+html.dark,
+body.dark,
+html[data-theme="dark"],
+body[data-theme="dark"],
+[data-theme="dark"] {
+
+  --dark-page:
+    #080d12;
+
+  --dark-surface:
+    #111820;
+
+  --dark-surface-2:
+    #17212b;
+
+  --dark-surface-3:
+    #1d2935;
+
+  --dark-hover:
+    #263542;
+
+  --dark-border:
+    #3a4b5c;
+
+  --dark-text:
+    #ffffff;
+
+  --dark-text-2:
+    #e3eaf1;
+
+  --dark-text-3:
+    #b7c4d0;
+
+}
+
+
+/* =========================================================
+   BODY / PAGE
+   ========================================================= */
+
+html.dark,
+body.dark,
+html[data-theme="dark"],
+body[data-theme="dark"] {
+
+  background:
+    var(--dark-page) !important;
+
+  color:
+    var(--dark-text) !important;
+
+}
+
+
+/* =========================================================
+   EVERYTHING THAT CAN CONTAIN NORMAL TEXT
+   ========================================================= */
+
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6,
+html.dark p,
+html.dark span,
+html.dark strong,
+html.dark b,
+html.dark label,
+html.dark small,
+html.dark li,
+html.dark td,
+html.dark th,
+html.dark dt,
+html.dark dd,
+
+body.dark h1,
+body.dark h2,
+body.dark h3,
+body.dark h4,
+body.dark h5,
+body.dark h6,
+body.dark p,
+body.dark span,
+body.dark strong,
+body.dark b,
+body.dark label,
+body.dark small,
+body.dark li,
+body.dark td,
+body.dark th,
+body.dark dt,
+body.dark dd,
+
+html[data-theme="dark"] h1,
+html[data-theme="dark"] h2,
+html[data-theme="dark"] h3,
+html[data-theme="dark"] h4,
+html[data-theme="dark"] h5,
+html[data-theme="dark"] h6,
+html[data-theme="dark"] p,
+html[data-theme="dark"] span,
+html[data-theme="dark"] strong,
+html[data-theme="dark"] b,
+html[data-theme="dark"] label,
+html[data-theme="dark"] small,
+html[data-theme="dark"] li,
+html[data-theme="dark"] td,
+html[data-theme="dark"] th,
+html[data-theme="dark"] dt,
+html[data-theme="dark"] dd,
+
+body[data-theme="dark"] h1,
+body[data-theme="dark"] h2,
+body[data-theme="dark"] h3,
+body[data-theme="dark"] h4,
+body[data-theme="dark"] h5,
+body[data-theme="dark"] h6,
+body[data-theme="dark"] p,
+body[data-theme="dark"] span,
+body[data-theme="dark"] strong,
+body[data-theme="dark"] b,
+body[data-theme="dark"] label,
+body[data-theme="dark"] small,
+body[data-theme="dark"] li,
+body[data-theme="dark"] td,
+body[data-theme="dark"] th,
+body[data-theme="dark"] dt,
+body[data-theme="dark"] dd {
+
+  color:
+    #ffffff !important;
+
+}
+
+
+/* =========================================================
+   SECONDARY TEXT
+   ========================================================= */
+
+html.dark p,
+html.dark small,
+html.dark label,
+html.dark [class*="description"],
+html.dark [class*="subtitle"],
+html.dark [class*="caption"],
+html.dark [class*="helper"],
+html.dark [class*="hint"],
+html.dark [class*="eyebrow"],
+
+body.dark p,
+body.dark small,
+body.dark label,
+body.dark [class*="description"],
+body.dark [class*="subtitle"],
+body.dark [class*="caption"],
+body.dark [class*="helper"],
+body.dark [class*="hint"],
+body.dark [class*="eyebrow"],
+
+html[data-theme="dark"] p,
+html[data-theme="dark"] small,
+html[data-theme="dark"] label,
+html[data-theme="dark"] [class*="description"],
+html[data-theme="dark"] [class*="subtitle"],
+html[data-theme="dark"] [class*="caption"],
+html[data-theme="dark"] [class*="helper"],
+html[data-theme="dark"] [class*="hint"],
+html[data-theme="dark"] [class*="eyebrow"],
+
+body[data-theme="dark"] p,
+body[data-theme="dark"] small,
+body[data-theme="dark"] label,
+body[data-theme="dark"] [class*="description"],
+body[data-theme="dark"] [class*="subtitle"],
+body[data-theme="dark"] [class*="caption"],
+body[data-theme="dark"] [class*="helper"],
+body[data-theme="dark"] [class*="hint"],
+body[data-theme="dark"] [class*="eyebrow"] {
+
+  color:
+    #d5e0e9 !important;
+
+}
+
+
+/* =========================================================
+   GLOBAL SURFACE SYSTEM
+   Catches YOUR naming convention across every page.
+   ========================================================= */
+
+html.dark
+:where(
+  [class*="card"],
+  [class*="panel"],
+  [class*="box"],
+  [class*="drawer"],
+  [class*="modal"],
+  [class*="section"],
+  [class*="summary"],
+  [class*="banner"],
+  [class*="topic"],
+  [class*="guide"],
+  [class*="faq"],
+  [class*="checklist"],
+  [class*="feature"],
+  [class*="notification"],
+  [class*="support"],
+  [class*="contact"],
+  [class*="hero-card"],
+  [class*="info-bar"],
+  [class*="info-card"],
+  [class*="form-section"],
+  [class*="details"],
+  [class*="row"]
+),
+
+body.dark
+:where(
+  [class*="card"],
+  [class*="panel"],
+  [class*="box"],
+  [class*="drawer"],
+  [class*="modal"],
+  [class*="section"],
+  [class*="summary"],
+  [class*="banner"],
+  [class*="topic"],
+  [class*="guide"],
+  [class*="faq"],
+  [class*="checklist"],
+  [class*="feature"],
+  [class*="notification"],
+  [class*="support"],
+  [class*="contact"],
+  [class*="hero-card"],
+  [class*="info-bar"],
+  [class*="info-card"],
+  [class*="form-section"],
+  [class*="details"],
+  [class*="row"]
+),
+
+html[data-theme="dark"]
+:where(
+  [class*="card"],
+  [class*="panel"],
+  [class*="box"],
+  [class*="drawer"],
+  [class*="modal"],
+  [class*="section"],
+  [class*="summary"],
+  [class*="banner"],
+  [class*="topic"],
+  [class*="guide"],
+  [class*="faq"],
+  [class*="checklist"],
+  [class*="feature"],
+  [class*="notification"],
+  [class*="support"],
+  [class*="contact"],
+  [class*="hero-card"],
+  [class*="info-bar"],
+  [class*="info-card"],
+  [class*="form-section"],
+  [class*="details"],
+  [class*="row"]
+),
+
+body[data-theme="dark"]
+:where(
+  [class*="card"],
+  [class*="panel"],
+  [class*="box"],
+  [class*="drawer"],
+  [class*="modal"],
+  [class*="section"],
+  [class*="summary"],
+  [class*="banner"],
+  [class*="topic"],
+  [class*="guide"],
+  [class*="faq"],
+  [class*="checklist"],
+  [class*="feature"],
+  [class*="notification"],
+  [class*="support"],
+  [class*="contact"],
+  [class*="hero-card"],
+  [class*="info-bar"],
+  [class*="info-card"],
+  [class*="form-section"],
+  [class*="details"],
+  [class*="row"]
+) {
+
+  background:
+    var(--dark-surface) !important;
+
+  color:
+    #ffffff !important;
+
+  border-color:
+    var(--dark-border) !important;
+
+}
+
+
+/* =========================================================
+   ALL "HELP-" COMPONENTS
+   This also catches future Help page components automatically.
+   ========================================================= */
+
+html.dark [class*="help-"],
+body.dark [class*="help-"],
+html[data-theme="dark"] [class*="help-"],
+body[data-theme="dark"] [class*="help-"] {
+
+  color:
+    #ffffff;
+
+}
+
+
+/* Containers that have their own background */
+
+html.dark
+:where(
+  [class*="help-card"],
+  [class*="help-topic"],
+  [class*="help-guide"],
+  [class*="help-faq"],
+  [class*="help-checklist"],
+  [class*="help-contact"],
+  [class*="help-center"],
+  [class*="help-language"],
+  [class*="help-final"],
+  [class*="help-connectivity"],
+  [class*="help-sms"],
+  [class*="help-hero-card"],
+  [class*="help-phone"]
+),
+
+body.dark
+:where(
+  [class*="help-card"],
+  [class*="help-topic"],
+  [class*="help-guide"],
+  [class*="help-faq"],
+  [class*="help-checklist"],
+  [class*="help-contact"],
+  [class*="help-center"],
+  [class*="help-language"],
+  [class*="help-final"],
+  [class*="help-connectivity"],
+  [class*="help-sms"],
+  [class*="help-hero-card"],
+  [class*="help-phone"]
+),
+
+html[data-theme="dark"]
+:where(
+  [class*="help-card"],
+  [class*="help-topic"],
+  [class*="help-guide"],
+  [class*="help-faq"],
+  [class*="help-checklist"],
+  [class*="help-contact"],
+  [class*="help-center"],
+  [class*="help-language"],
+  [class*="help-final"],
+  [class*="help-connectivity"],
+  [class*="help-sms"],
+  [class*="help-hero-card"],
+  [class*="help-phone"]
+),
+
+body[data-theme="dark"]
+:where(
+  [class*="help-card"],
+  [class*="help-topic"],
+  [class*="help-guide"],
+  [class*="help-faq"],
+  [class*="help-checklist"],
+  [class*="help-contact"],
+  [class*="help-center"],
+  [class*="help-language"],
+  [class*="help-final"],
+  [class*="help-connectivity"],
+  [class*="help-sms"],
+  [class*="help-hero-card"],
+  [class*="help-phone"]
+) {
+
+  background:
+    var(--dark-surface) !important;
+
+  color:
+    #ffffff !important;
+
+  border-color:
+    var(--dark-border) !important;
+
+}
+
+
+/* =========================================================
+   INNER ROWS / ITEMS
+   ========================================================= */
+
+html.dark
+:where(
+  [class*="item"],
+  [class*="option"],
+  [class*="reason"],
+  [class*="point"],
+  [class*="detail"],
+  [class*="list"],
+  [class*="content"]
+),
+
+body.dark
+:where(
+  [class*="item"],
+  [class*="option"],
+  [class*="reason"],
+  [class*="point"],
+  [class*="detail"],
+  [class*="list"],
+  [class*="content"]
+),
+
+html[data-theme="dark"]
+:where(
+  [class*="item"],
+  [class*="option"],
+  [class*="reason"],
+  [class*="point"],
+  [class*="detail"],
+  [class*="list"],
+  [class*="content"]
+),
+
+body[data-theme="dark"]
+:where(
+  [class*="item"],
+  [class*="option"],
+  [class*="reason"],
+  [class*="point"],
+  [class*="detail"],
+  [class*="list"],
+  [class*="content"]
+) {
+
+  color:
+    #ffffff !important;
+
+}
+
+
+/* =========================================================
+   INPUTS
+   ========================================================= */
+
+html.dark input,
+html.dark textarea,
+html.dark select,
+
+body.dark input,
+body.dark textarea,
+body.dark select,
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select,
+
+body[data-theme="dark"] input,
+body[data-theme="dark"] textarea,
+body[data-theme="dark"] select {
+
+  background:
+    #17212b !important;
+
+  color:
+    #ffffff !important;
+
+  border-color:
+    #415364 !important;
+
+}
+
+
+/* =========================================================
+   INPUT PLACEHOLDERS
+   ========================================================= */
+
+html.dark input::placeholder,
+html.dark textarea::placeholder,
+
+body.dark input::placeholder,
+body.dark textarea::placeholder,
+
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder,
+
+body[data-theme="dark"] input::placeholder,
+body[data-theme="dark"] textarea::placeholder {
+
+  color:
+    #aebdca !important;
+
+  opacity:
+    1 !important;
+
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+html.dark button,
+body.dark button,
+html[data-theme="dark"] button,
+body[data-theme="dark"] button {
+
+  color:
+    #ffffff;
+
+}
+
+
+/* Neutral buttons */
+
+html.dark
+button:not(
+  .home-primary-action,
+  .help-primary-action,
+  .admin-center-add-button,
+  .admin-center-form-save
+),
+
+body.dark
+button:not(
+  .home-primary-action,
+  .help-primary-action,
+  .admin-center-add-button,
+  .admin-center-form-save
+),
+
+html[data-theme="dark"]
+button:not(
+  .home-primary-action,
+  .help-primary-action,
+  .admin-center-add-button,
+  .admin-center-form-save
+),
+
+body[data-theme="dark"]
+button:not(
+  .home-primary-action,
+  .help-primary-action,
+  .admin-center-add-button,
+  .admin-center-form-save
+) {
+
+  background:
+    var(--dark-surface-2) !important;
+
+  color:
+    #ffffff !important;
+
+  border-color:
+    var(--dark-border);
+
+}
+
+
+/* =========================================================
+   BUTTON HOVER
+   NEVER TURN WHITE
+   ========================================================= */
+
+html.dark button:hover,
+body.dark button:hover,
+html[data-theme="dark"] button:hover,
+body[data-theme="dark"] button:hover {
+
+  background:
+    var(--dark-hover) !important;
+
+  color:
+    #ffffff !important;
+
+  border-color:
+    #536779 !important;
+
+}
+
+
+/* =========================================================
+   LINK HOVER
+   ========================================================= */
+
+html.dark a,
+body.dark a,
+html[data-theme="dark"] a,
+body[data-theme="dark"] a {
+
+  color:
+    #f4f7fa;
+
+}
+
+
+html.dark a:hover,
+body.dark a:hover,
+html[data-theme="dark"] a:hover,
+body[data-theme="dark"] a:hover {
+
+  color:
+    #ffffff !important;
+
+}
+
+
+/* =========================================================
+   FAQ / ACCORDION
+   ========================================================= */
+
+html.dark .help-faq-item,
+html.dark .help-faq-question,
+html.dark .help-faq-answer,
+
+body.dark .help-faq-item,
+body.dark .help-faq-question,
+body.dark .help-faq-answer,
+
+html[data-theme="dark"] .help-faq-item,
+html[data-theme="dark"] .help-faq-question,
+html[data-theme="dark"] .help-faq-answer,
+
+body[data-theme="dark"] .help-faq-item,
+body[data-theme="dark"] .help-faq-question,
+body[data-theme="dark"] .help-faq-answer {
+
+  background:
+    var(--dark-surface) !important;
+
+  color:
+    #ffffff !important;
+
+  border-color:
+    var(--dark-border) !important;
+
+}
+
+
+/* FAQ hover */
+
+html.dark .help-faq-question:hover,
+body.dark .help-faq-question:hover,
+html[data-theme="dark"] .help-faq-question:hover,
+body[data-theme="dark"] .help-faq-question:hover {
+
+  background:
+    var(--dark-hover) !important;
+
+  color:
+    #ffffff !important;
+
+}
+
+
+/* =========================================================
+   TABLES
+   ========================================================= */
+
+html.dark table,
+html.dark thead,
+html.dark tbody,
+html.dark tr,
+html.dark td,
+html.dark th,
+
+body.dark table,
+body.dark thead,
+body.dark tbody,
+body.dark tr,
+body.dark td,
+body.dark th,
+
+html[data-theme="dark"] table,
+html[data-theme="dark"] thead,
+html[data-theme="dark"] tbody,
+html[data-theme="dark"] tr,
+html[data-theme="dark"] td,
+html[data-theme="dark"] th,
+
+body[data-theme="dark"] table,
+body[data-theme="dark"] thead,
+body[data-theme="dark"] tbody,
+body[data-theme="dark"] tr,
+body[data-theme="dark"] td,
+body[data-theme="dark"] th {
+
+  background:
+    var(--dark-surface) !important;
+
+  color:
+    #ffffff !important;
+
+  border-color:
+    var(--dark-border) !important;
+
+}
+
+
+/* =========================================================
+   DISABLED
+   ========================================================= */
+
+html.dark button:disabled,
+html.dark input:disabled,
+html.dark select:disabled,
+html.dark textarea:disabled,
+
+body.dark button:disabled,
+body.dark input:disabled,
+body.dark select:disabled,
+body.dark textarea:disabled,
+
+html[data-theme="dark"] button:disabled,
+html[data-theme="dark"] input:disabled,
+html[data-theme="dark"] select:disabled,
+html[data-theme="dark"] textarea:disabled,
+
+body[data-theme="dark"] button:disabled,
+body[data-theme="dark"] input:disabled,
+body[data-theme="dark"] select:disabled,
+body[data-theme="dark"] textarea:disabled {
+
+  background:
+    #151c23 !important;
+
+  color:
+    #7f8c98 !important;
+
+  border-color:
+    #293641 !important;
+
+  opacity:
+    1 !important;
+
+}
+
+
+/* =========================================================
+   COMMON WHITE BACKGROUNDS
+   ========================================================= */
+
+html.dark .bg-white,
+html.dark .white,
+html.dark .cream,
+
+body.dark .bg-white,
+body.dark .white,
+body.dark .cream,
+
+html[data-theme="dark"] .bg-white,
+html[data-theme="dark"] .white,
+html[data-theme="dark"] .cream,
+
+body[data-theme="dark"] .bg-white,
+body[data-theme="dark"] .white,
+body[data-theme="dark"] .cream {
+
+  background:
+    var(--dark-surface) !important;
+
+  color:
+    #ffffff !important;
+
+}
+
+
+/* =========================================================
+   INLINE WHITE BACKGROUNDS
+   ========================================================= */
+
+html.dark [style*="background:#fff"],
+html.dark [style*="background: #fff"],
+html.dark [style*="background-color:#fff"],
+html.dark [style*="background-color: #fff"],
+html.dark [style*="background:white"],
+html.dark [style*="background: white"],
+
+body.dark [style*="background:#fff"],
+body.dark [style*="background: #fff"],
+body.dark [style*="background-color:#fff"],
+body.dark [style*="background-color: #fff"],
+body.dark [style*="background:white"],
+body.dark [style*="background: white"],
+
+html[data-theme="dark"] [style*="background:#fff"],
+html[data-theme="dark"] [style*="background: #fff"],
+html[data-theme="dark"] [style*="background-color:#fff"],
+html[data-theme="dark"] [style*="background-color: #fff"],
+html[data-theme="dark"] [style*="background:white"],
+html[data-theme="dark"] [style*="background: white"],
+
+body[data-theme="dark"] [style*="background:#fff"],
+body[data-theme="dark"] [style*="background: #fff"],
+body[data-theme="dark"] [style*="background-color:#fff"],
+body[data-theme="dark"] [style*="background-color: #fff"],
+body[data-theme="dark"] [style*="background:white"],
+body[data-theme="dark"] [style*="background: white"] {
+
+  background:
+    var(--dark-surface) !important;
+
+  color:
+    #ffffff !important;
+
+}
+
+
+/* =========================================================
+   GLOBAL SVG
+   ========================================================= */
+
+html.dark svg,
+body.dark svg,
+html[data-theme="dark"] svg,
+body[data-theme="dark"] svg {
+
+  color:
+    currentColor;
+
+}
+
+
+/* =========================================================
+   FINAL HIGH-CONTRAST SAFETY NET
+   ========================================================= */
+
+html.dark [class*="text-dark"],
+html.dark [class*="text-black"],
+
+body.dark [class*="text-dark"],
+body.dark [class*="text-black"],
+
+html[data-theme="dark"] [class*="text-dark"],
+html[data-theme="dark"] [class*="text-black"],
+
+body[data-theme="dark"] [class*="text-dark"],
+body[data-theme="dark"] [class*="text-black"] {
+
+  color:
+    #ffffff !important;
+
+}
+
+
+
+/* =========================================================
+   KRISHISETU DARK MODE
+   ICONS / ILLUSTRATIONS / BADGES / INNER CONTENT
+   FINAL HIGH-CONTRAST OVERRIDE
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   ICON CONTAINERS
+   --------------------------------------------------------- */
+
+html.dark
+:where(
+  [class*="icon"],
+  [class*="Icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="status"],
+  [class*="visual"],
+  [class*="illustration"]
+),
+
+body.dark
+:where(
+  [class*="icon"],
+  [class*="Icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="status"],
+  [class*="visual"],
+  [class*="illustration"]
+),
+
+html[data-theme="dark"]
+:where(
+  [class*="icon"],
+  [class*="Icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="status"],
+  [class*="visual"],
+  [class*="illustration"]
+),
+
+body[data-theme="dark"]
+:where(
+  [class*="icon"],
+  [class*="Icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="status"],
+  [class*="visual"],
+  [class*="illustration"]
+) {
+
+  border-color:
+    #46596b !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   ICONS THAT ARE INSIDE LIGHT BACKGROUNDS
+   --------------------------------------------------------- */
+
+html.dark
+:where(
+  .help-topic-icon,
+  .help-guide-icon,
+  .help-checklist-icon,
+  .help-hero-card-icon,
+  .help-center-icon,
+  .help-faq-side-icon,
+  .help-connectivity-icon,
+  .help-sms-icon,
+  .help-language-icon,
+  .help-contact-use-icon,
+  .booking-info-icon,
+  .booking-check-icon,
+  .booking-help-icon,
+  .booking-confirm-icon,
+  .booking-availability-icon,
+  .summary-header-icon,
+  .home-center-icon,
+  .home-detail-icon,
+  .feature-icon,
+  .empty-state-icon,
+  .panel-icon,
+  .center-select-icon,
+  .center-option-icon,
+  .home-payment-icon,
+  .home-arrival-check,
+  .bottom-card-icon
+),
+
+body.dark
+:where(
+  .help-topic-icon,
+  .help-guide-icon,
+  .help-checklist-icon,
+  .help-hero-card-icon,
+  .help-center-icon,
+  .help-faq-side-icon,
+  .help-connectivity-icon,
+  .help-sms-icon,
+  .help-language-icon,
+  .help-contact-use-icon,
+  .booking-info-icon,
+  .booking-check-icon,
+  .booking-help-icon,
+  .booking-confirm-icon,
+  .booking-availability-icon,
+  .summary-header-icon,
+  .home-center-icon,
+  .home-detail-icon,
+  .feature-icon,
+  .empty-state-icon,
+  .panel-icon,
+  .center-select-icon,
+  .center-option-icon,
+  .home-payment-icon,
+  .home-arrival-check,
+  .bottom-card-icon
+),
+
+html[data-theme="dark"]
+:where(
+  .help-topic-icon,
+  .help-guide-icon,
+  .help-checklist-icon,
+  .help-hero-card-icon,
+  .help-center-icon,
+  .help-faq-side-icon,
+  .help-connectivity-icon,
+  .help-sms-icon,
+  .help-language-icon,
+  .help-contact-use-icon,
+  .booking-info-icon,
+  .booking-check-icon,
+  .booking-help-icon,
+  .booking-confirm-icon,
+  .booking-availability-icon,
+  .summary-header-icon,
+  .home-center-icon,
+  .home-detail-icon,
+  .feature-icon,
+  .empty-state-icon,
+  .panel-icon,
+  .center-select-icon,
+  .center-option-icon,
+  .home-payment-icon,
+  .home-arrival-check,
+  .bottom-card-icon
+),
+
+body[data-theme="dark"]
+:where(
+  .help-topic-icon,
+  .help-guide-icon,
+  .help-checklist-icon,
+  .help-hero-card-icon,
+  .help-center-icon,
+  .help-faq-side-icon,
+  .help-connectivity-icon,
+  .help-sms-icon,
+  .help-language-icon,
+  .help-contact-use-icon,
+  .booking-info-icon,
+  .booking-check-icon,
+  .booking-help-icon,
+  .booking-confirm-icon,
+  .booking-availability-icon,
+  .summary-header-icon,
+  .home-center-icon,
+  .home-detail-icon,
+  .feature-icon,
+  .empty-state-icon,
+  .panel-icon,
+  .center-select-icon,
+  .center-option-icon,
+  .home-payment-icon,
+  .home-arrival-check,
+  .bottom-card-icon
+) {
+
+  background:
+    #1b2732 !important;
+
+  color:
+    #f4f8fb !important;
+
+  border-color:
+    #46596b !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   EVERYTHING INSIDE ICON CONTAINERS
+   --------------------------------------------------------- */
+
+html.dark
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="visual"],
+  [class*="illustration"]
+) *,
+
+body.dark
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="visual"],
+  [class*="illustration"]
+) *,
+
+html[data-theme="dark"]
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="visual"],
+  [class*="illustration"]
+) *,
+
+body[data-theme="dark"]
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="visual"],
+  [class*="illustration"]
+) {
+
+  color:
+    #f4f8fb !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   LUCIDE SVG ICONS
+   --------------------------------------------------------- */
+
+html.dark
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="status"],
+  [class*="visual"],
+  [class*="illustration"]
+) svg,
+
+body.dark
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="status"],
+  [class*="visual"],
+  [class*="illustration"]
+) svg,
+
+html[data-theme="dark"]
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="status"],
+  [class*="visual"],
+  [class*="illustration"]
+) svg,
+
+body[data-theme="dark"]
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="status"],
+  [class*="visual"],
+  [class*="illustration"]
+) svg {
+
+  color:
+    #eef4f8 !important;
+
+  stroke:
+    currentColor !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   FILLED SVG / CROP ILLUSTRATIONS
+   --------------------------------------------------------- */
+
+html.dark
+:where(
+  .crop-visual,
+  .crop-visual-large,
+  .crop-visual-small,
+  [class*="illustration"],
+  [class*="visual"]
+) svg,
+
+body.dark
+:where(
+  .crop-visual,
+  .crop-visual-large,
+  .crop-visual-small,
+  [class*="illustration"],
+  [class*="visual"]
+) svg,
+
+html[data-theme="dark"]
+:where(
+  .crop-visual,
+  .crop-visual-large,
+  .crop-visual-small,
+  [class*="illustration"],
+  [class*="visual"]
+) svg,
+
+body[data-theme="dark"]
+:where(
+  .crop-visual,
+  .crop-visual-large,
+  .crop-visual-small,
+  [class*="illustration"],
+  [class*="visual"]
+) svg {
+
+  fill:
+    none !important;
+
+  stroke:
+    currentColor !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   COLORFUL CROP / ICON VISUAL BOXES
+   --------------------------------------------------------- */
+
+html.dark
+:where(
+  .crop-visual,
+  .crop-visual-small,
+  .crop-visual-large
+),
+
+body.dark
+:where(
+  .crop-visual,
+  .crop-visual-small,
+  .crop-visual-large
+),
+
+html[data-theme="dark"]
+:where(
+  .crop-visual,
+  .crop-visual-small,
+  .crop-visual-large
+),
+
+body[data-theme="dark"]
+:where(
+  .crop-visual,
+  .crop-visual-small,
+  .crop-visual-large
+) {
+
+  background:
+    #18242e !important;
+
+  color:
+    #f6fafc !important;
+
+  border-color:
+    #435565 !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   TEXT INSIDE BADGES / PILLS
+   --------------------------------------------------------- */
+
+html.dark
+:where(
+  [class*="badge"],
+  [class*="pill"],
+  [class*="status"]
+) span,
+
+body.dark
+:where(
+  [class*="badge"],
+  [class*="pill"],
+  [class*="status"]
+) span,
+
+html[data-theme="dark"]
+:where(
+  [class*="badge"],
+  [class*="pill"],
+  [class*="status"]
+) span,
+
+body[data-theme="dark"]
+:where(
+  [class*="badge"],
+  [class*="pill"],
+  [class*="status"]
+) span {
+
+  color:
+    #ffffff !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   STATUS BADGES
+   --------------------------------------------------------- */
+
+html.dark
+:where(
+  .status-badge,
+  .booking-live-pill,
+  .availability-found-pill,
+  .confirm-ready-pill
+),
+
+body.dark
+:where(
+  .status-badge,
+  .booking-live-pill,
+  .availability-found-pill,
+  .confirm-ready-pill
+),
+
+html[data-theme="dark"]
+:where(
+  .status-badge,
+  .booking-live-pill,
+  .availability-found-pill,
+  .confirm-ready-pill
+),
+
+body[data-theme="dark"]
+:where(
+  .status-badge,
+  .booking-live-pill,
+  .availability-found-pill,
+  .confirm-ready-pill
+) {
+
+  background:
+    #1d2a35 !important;
+
+  color:
+    #f4f8fb !important;
+
+  border-color:
+    #46596b !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   WHITE CIRCLES / WHITE ICON BACKGROUNDS
+   --------------------------------------------------------- */
+
+html.dark
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="visual"],
+  [class*="illustration"]
+) {
+
+  box-shadow:
+    none !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   INNER WHITE BACKGROUNDS
+   --------------------------------------------------------- */
+
+html.dark
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="visual"],
+  [class*="illustration"]
+) [style*="background:white"],
+
+html.dark
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="visual"],
+  [class*="illustration"]
+) [style*="background: white"],
+
+html.dark
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="visual"],
+  [class*="illustration"]
+) [style*="background:#fff"],
+
+html.dark
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="visual"],
+  [class*="illustration"]
+) [style*="background: #fff"],
+
+body.dark
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="visual"],
+  [class*="illustration"]
+) [style*="background:white"],
+
+body.dark
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="visual"],
+  [class*="illustration"]
+) [style*="background: white"] {
+
+  background:
+    #18242e !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   IMAGES / ILLUSTRATION CONTAINERS
+   --------------------------------------------------------- */
+
+html.dark
+:where(
+  .illustration,
+  [class*="illustration"],
+  [class*="mockup"],
+  [class*="phone"],
+  [class*="visual"]
+),
+
+body.dark
+:where(
+  .illustration,
+  [class*="illustration"],
+  [class*="mockup"],
+  [class*="phone"],
+  [class*="visual"]
+),
+
+html[data-theme="dark"]
+:where(
+  .illustration,
+  [class*="illustration"],
+  [class*="mockup"],
+  [class*="phone"],
+  [class*="visual"]
+),
+
+body[data-theme="dark"]
+:where(
+  .illustration,
+  [class*="illustration"],
+  [class*="mockup"],
+  [class*="phone"],
+  [class*="visual"]
+) {
+
+  border-color:
+    #46596b !important;
+
+  color:
+    #ffffff !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   IMAGE-LIKE SVG ELEMENTS
+   --------------------------------------------------------- */
+
+html.dark svg [fill="#fff"],
+html.dark svg [fill="#ffffff"],
+html.dark svg [fill="white"],
+
+body.dark svg [fill="#fff"],
+body.dark svg [fill="#ffffff"],
+body.dark svg [fill="white"],
+
+html[data-theme="dark"] svg [fill="#fff"],
+html[data-theme="dark"] svg [fill="#ffffff"],
+html[data-theme="dark"] svg [fill="white"],
+
+body[data-theme="dark"] svg [fill="#fff"],
+body[data-theme="dark"] svg [fill="#ffffff"],
+body[data-theme="dark"] svg [fill="white"] {
+
+  fill:
+    #dce6ed !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   SVG STROKES THAT ARE PURE BLACK
+   --------------------------------------------------------- */
+
+html.dark svg [stroke="#000"],
+html.dark svg [stroke="#000000"],
+html.dark svg [stroke="black"],
+
+body.dark svg [stroke="#000"],
+body.dark svg [stroke="#000000"],
+body.dark svg [stroke="black"],
+
+html[data-theme="dark"] svg [stroke="#000"],
+html[data-theme="dark"] svg [stroke="#000000"],
+html[data-theme="dark"] svg [stroke="black"],
+
+body[data-theme="dark"] svg [stroke="#000"],
+body[data-theme="dark"] svg [stroke="#000000"],
+body[data-theme="dark"] svg [stroke="black"] {
+
+  stroke:
+    #f2f6f9 !important;
+
+}
+
+
+/* ---------------------------------------------------------
+   WHITE TEXT INSIDE DARK ICON AREAS
+   KEEP IT BRIGHT
+   --------------------------------------------------------- */
+
+html.dark
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="status"],
+  [class*="visual"],
+  [class*="illustration"]
+) h1,
+html.dark
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="status"],
+  [class*="visual"],
+  [class*="illustration"]
+) h2,
+html.dark
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="status"],
+  [class*="visual"],
+  [class*="illustration"]
+) h3,
+html.dark
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="status"],
+  [class*="visual"],
+  [class*="illustration"]
+) span,
+html.dark
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="status"],
+  [class*="visual"],
+  [class*="illustration"]
+) strong,
+
+body.dark
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="status"],
+  [class*="visual"],
+  [class*="illustration"]
+) h1,
+body.dark
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="status"],
+  [class*="visual"],
+  [class*="illustration"]
+) h2,
+body.dark
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="status"],
+  [class*="visual"],
+  [class*="illustration"]
+) h3,
+body.dark
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="status"],
+  [class*="visual"],
+  [class*="illustration"]
+) span,
+body.dark
+:where(
+  [class*="icon"],
+  [class*="avatar"],
+  [class*="badge"],
+  [class*="pill"],
+  [class*="status"],
+  [class*="visual"],
+  [class*="illustration"]
+) strong {
+
+  color:
+    #ffffff !important;
+
+}
+
+
+/* =========================================================
+   KRISHISETU — FINAL GLOBAL DARK MODE
+   HIGH CONTRAST COMPONENT OVERRIDES
+   ========================================================= */
+
+
+/* =========================================================
+   ROOT
+   ========================================================= */
+
+html.dark,
+body.dark,
+html[data-theme="dark"],
+body[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+
+/* =========================================================
+   GLOBAL TEXT
+   ========================================================= */
+
+html.dark body,
+body.dark,
+html[data-theme="dark"] body,
+body[data-theme="dark"] {
+  color: #f4f7fa !important;
+}
+
+
+/* =========================================================
+   FARMER LOGIN
+   ========================================================= */
+
+html.dark .farmer-login-card,
+body.dark .farmer-login-card,
+html[data-theme="dark"] .farmer-login-card,
+body[data-theme="dark"] .farmer-login-card {
+  background: #111a23 !important;
+  color: #f5f8fb !important;
+  border-color: #3c5266 !important;
+}
+
+
+/* Icon box */
+
+html.dark .farmer-login-icon,
+body.dark .farmer-login-icon,
+html[data-theme="dark"] .farmer-login-icon,
+body[data-theme="dark"] .farmer-login-icon {
+  background: #1d2c39 !important;
+  color: #ffffff !important;
+  border-color: #42596d !important;
+}
+
+
+html.dark .farmer-login-icon svg,
+body.dark .farmer-login-icon svg,
+html[data-theme="dark"] .farmer-login-icon svg,
+body[data-theme="dark"] .farmer-login-icon svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+
+/* Login labels */
+
+html.dark .farmer-login-card label,
+body.dark .farmer-login-card label,
+html[data-theme="dark"] .farmer-login-card label,
+body[data-theme="dark"] .farmer-login-card label {
+  color: #f1f5f8 !important;
+}
+
+
+/* Login input wrapper */
+
+html.dark .farmer-login-input,
+body.dark .farmer-login-input,
+html[data-theme="dark"] .farmer-login-input,
+body[data-theme="dark"] .farmer-login-input {
+  background: #182430 !important;
+  color: #f5f8fb !important;
+  border-color: #526a7e !important;
+}
+
+
+/* Input */
+
+html.dark .farmer-login-input input,
+body.dark .farmer-login-input input,
+html[data-theme="dark"] .farmer-login-input input,
+body[data-theme="dark"] .farmer-login-input input {
+  background: transparent !important;
+  color: #ffffff !important;
+  caret-color: #ffffff !important;
+}
+
+
+/* Placeholder */
+
+html.dark .farmer-login-input input::placeholder,
+body.dark .farmer-login-input input::placeholder,
+html[data-theme="dark"] .farmer-login-input input::placeholder,
+body[data-theme="dark"] .farmer-login-input input::placeholder {
+  color: #aebdca !important;
+  opacity: 1 !important;
+}
+
+
+/* Phone icon */
+
+html.dark .farmer-login-input svg,
+body.dark .farmer-login-input svg,
+html[data-theme="dark"] .farmer-login-input svg,
+body[data-theme="dark"] .farmer-login-input svg {
+  color: #dce7ef !important;
+  stroke: #dce7ef !important;
+}
+
+
+/* =========================================================
+   PHONE PREFIX / COUNTRY CODE
+   ========================================================= */
+
+html.dark .phone-prefix,
+html.dark .country-code,
+html.dark .farmer-login-prefix,
+html.dark .farmer-login-country-code,
+
+body.dark .phone-prefix,
+body.dark .country-code,
+body.dark .farmer-login-prefix,
+body.dark .farmer-login-country-code,
+
+html[data-theme="dark"] .phone-prefix,
+html[data-theme="dark"] .country-code,
+html[data-theme="dark"] .farmer-login-prefix,
+html[data-theme="dark"] .farmer-login-country-code,
+
+body[data-theme="dark"] .phone-prefix,
+body[data-theme="dark"] .country-code,
+body[data-theme="dark"] .farmer-login-prefix,
+body[data-theme="dark"] .farmer-login-country-code {
+  background: #1d2b38 !important;
+  color: #ffffff !important;
+  border-color: #526a7e !important;
+}
+
+
+/* Any text inside prefix */
+
+html.dark .phone-prefix *,
+html.dark .country-code *,
+html.dark .farmer-login-prefix *,
+html.dark .farmer-login-country-code *,
+
+body.dark .phone-prefix *,
+body.dark .country-code *,
+body.dark .farmer-login-prefix *,
+body.dark .farmer-login-country-code *,
+
+html[data-theme="dark"] .phone-prefix *,
+html[data-theme="dark"] .country-code *,
+html[data-theme="dark"] .farmer-login-prefix *,
+html[data-theme="dark"] .farmer-login-country-code *,
+
+body[data-theme="dark"] .phone-prefix *,
+body[data-theme="dark"] .country-code *,
+body[data-theme="dark"] .farmer-login-prefix *,
+body[data-theme="dark"] .farmer-login-country-code * {
+  color: #ffffff !important;
+}
+
+
+/* =========================================================
+   PRIMARY BUTTONS
+   ========================================================= */
+
+html.dark button,
+body.dark button,
+html[data-theme="dark"] button,
+body[data-theme="dark"] button {
+  -webkit-text-fill-color: inherit;
+}
+
+
+/* Farmer login submit */
+
+html.dark .farmer-login-submit,
+body.dark .farmer-login-submit,
+html[data-theme="dark"] .farmer-login-submit,
+body[data-theme="dark"] .farmer-login-submit {
+  background: #1d2b38 !important;
+  color: #ffffff !important;
+  border-color: #526a7e !important;
+  box-shadow: none !important;
+}
+
+
+/* Every child */
+
+html.dark .farmer-login-submit *,
+body.dark .farmer-login-submit *,
+html[data-theme="dark"] .farmer-login-submit *,
+body[data-theme="dark"] .farmer-login-submit * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+
+/* Arrow */
+
+html.dark .farmer-login-submit svg,
+body.dark .farmer-login-submit svg,
+html[data-theme="dark"] .farmer-login-submit svg,
+body[data-theme="dark"] .farmer-login-submit svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+
+/* Hover */
+
+html.dark .farmer-login-submit:hover,
+body.dark .farmer-login-submit:hover,
+html[data-theme="dark"] .farmer-login-submit:hover,
+body[data-theme="dark"] .farmer-login-submit:hover {
+  background: #263746 !important;
+  color: #ffffff !important;
+  border-color: #6b8498 !important;
+}
+
+
+/* Active */
+
+html.dark .farmer-login-submit:active,
+body.dark .farmer-login-submit:active,
+html[data-theme="dark"] .farmer-login-submit:active,
+body[data-theme="dark"] .farmer-login-submit:active {
+  background: #1a2733 !important;
+}
+
+
+/* Disabled */
+
+html.dark .farmer-login-submit:disabled,
+body.dark .farmer-login-submit:disabled,
+html[data-theme="dark"] .farmer-login-submit:disabled,
+body[data-theme="dark"] .farmer-login-submit:disabled {
+  background: #1b2732 !important;
+  color: #9eacb8 !important;
+  opacity: 1 !important;
+}
+
+
+/* =========================================================
+   GENERIC INPUTS
+   ========================================================= */
+
+html.dark input,
+html.dark textarea,
+html.dark select,
+
+body.dark input,
+body.dark textarea,
+body.dark select,
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select,
+
+body[data-theme="dark"] input,
+body[data-theme="dark"] textarea,
+body[data-theme="dark"] select {
+  background: #182430 !important;
+  color: #ffffff !important;
+  border-color: #526a7e !important;
+}
+
+
+/* Generic placeholders */
+
+html.dark input::placeholder,
+html.dark textarea::placeholder,
+
+body.dark input::placeholder,
+body.dark textarea::placeholder,
+
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder,
+
+body[data-theme="dark"] input::placeholder,
+body[data-theme="dark"] textarea::placeholder {
+  color: #aebdca !important;
+  opacity: 1 !important;
+}
+
+
+/* =========================================================
+   GENERIC BUTTONS
+   ========================================================= */
+
+html.dark
+button:not(.language-selector-button),
+
+body.dark
+button:not(.language-selector-button),
+
+html[data-theme="dark"]
+button:not(.language-selector-button),
+
+body[data-theme="dark"]
+button:not(.language-selector-button) {
+  color: #f4f8fb;
+}
+
+
+/* Prevent white hover backgrounds */
+
+html.dark
+button:hover:not(.language-selector-button),
+
+body.dark
+button:hover:not(.language-selector-button),
+
+html[data-theme="dark"]
+button:hover:not(.language-selector-button),
+
+body[data-theme="dark"]
+button:hover:not(.language-selector-button) {
+  color: #ffffff;
+}
+
+
+/* =========================================================
+   LINKS
+   ========================================================= */
+
+html.dark a,
+body.dark a,
+html[data-theme="dark"] a,
+body[data-theme="dark"] a {
+  color: #d9e8f2;
+}
+
+
+html.dark a:hover,
+body.dark a:hover,
+html[data-theme="dark"] a:hover,
+body[data-theme="dark"] a:hover {
+  color: #ffffff;
+}
+
+
+/* =========================================================
+   CARDS / PANELS
+   ========================================================= */
+
+html.dark
+:where(
+  .card,
+  .panel,
+  .modal,
+  .drawer,
+  .form-card,
+  .empty-state-card,
+  .booking-panel,
+  .booking-summary-card,
+  .help-hero-card,
+  .help-guide-card,
+  .help-checklist-card,
+  .help-faq-side-card,
+  .help-center-card,
+  .help-contact-use-card,
+  .help-connectivity-section,
+  .help-sms-section,
+  .help-language-section,
+  .help-final-card
+),
+
+body.dark
+:where(
+  .card,
+  .panel,
+  .modal,
+  .drawer,
+  .form-card,
+  .empty-state-card,
+  .booking-panel,
+  .booking-summary-card,
+  .help-hero-card,
+  .help-guide-card,
+  .help-checklist-card,
+  .help-faq-side-card,
+  .help-center-card,
+  .help-contact-use-card,
+  .help-connectivity-section,
+  .help-sms-section,
+  .help-language-section,
+  .help-final-card
+),
+
+html[data-theme="dark"]
+:where(
+  .card,
+  .panel,
+  .modal,
+  .drawer,
+  .form-card,
+  .empty-state-card,
+  .booking-panel,
+  .booking-summary-card,
+  .help-hero-card,
+  .help-guide-card,
+  .help-checklist-card,
+  .help-faq-side-card,
+  .help-center-card,
+  .help-contact-use-card,
+  .help-connectivity-section,
+  .help-sms-section,
+  .help-language-section,
+  .help-final-card
+),
+
+body[data-theme="dark"]
+:where(
+  .card,
+  .panel,
+  .modal,
+  .drawer,
+  .form-card,
+  .empty-state-card,
+  .booking-panel,
+  .booking-summary-card,
+  .help-hero-card,
+  .help-guide-card,
+  .help-checklist-card,
+  .help-faq-side-card,
+  .help-center-card,
+  .help-contact-use-card,
+  .help-connectivity-section,
+  .help-sms-section,
+  .help-language-section,
+  .help-final-card
+) {
+  background: #111a23 !important;
+  color: #f4f7fa !important;
+  border-color: #3c5266 !important;
+}
+
+
+/* =========================================================
+   CARD CHILD TEXT
+   ========================================================= */
+
+html.dark
+:where(
+  .card,
+  .panel,
+  .modal,
+  .drawer,
+  .form-card,
+  .empty-state-card,
+  .booking-panel,
+  .booking-summary-card,
+  .help-hero-card,
+  .help-guide-card,
+  .help-checklist-card,
+  .help-faq-side-card,
+  .help-center-card
+) h1,
+
+html.dark
+:where(
+  .card,
+  .panel,
+  .modal,
+  .drawer,
+  .form-card,
+  .empty-state-card,
+  .booking-panel,
+  .booking-summary-card,
+  .help-hero-card,
+  .help-guide-card,
+  .help-checklist-card,
+  .help-faq-side-card,
+  .help-center-card
+) h2,
+
+html.dark
+:where(
+  .card,
+  .panel,
+  .modal,
+  .drawer,
+  .form-card,
+  .empty-state-card,
+  .booking-panel,
+  .booking-summary-card,
+  .help-hero-card,
+  .help-guide-card,
+  .help-checklist-card,
+  .help-faq-side-card,
+  .help-center-card
+) h3,
+
+html.dark
+:where(
+  .card,
+  .panel,
+  .modal,
+  .drawer,
+  .form-card,
+  .empty-state-card,
+  .booking-panel,
+  .booking-summary-card,
+  .help-hero-card,
+  .help-guide-card,
+  .help-checklist-card,
+  .help-faq-side-card,
+  .help-center-card
+) strong,
+
+html.dark
+:where(
+  .card,
+  .panel,
+  .modal,
+  .drawer,
+  .form-card,
+  .empty-state-card,
+  .booking-panel,
+  .booking-summary-card,
+  .help-hero-card,
+  .help-guide-card,
+  .help-checklist-card,
+  .help-faq-side-card,
+  .help-center-card
+) span,
+
+body.dark
+:where(
+  .card,
+  .panel,
+  .modal,
+  .drawer,
+  .form-card,
+  .empty-state-card,
+  .booking-panel,
+  .booking-summary-card,
+  .help-hero-card,
+  .help-guide-card,
+  .help-checklist-card,
+  .help-faq-side-card,
+  .help-center-card
+) h1,
+
+body.dark
+:where(
+  .card,
+  .panel,
+  .modal,
+  .drawer,
+  .form-card,
+  .empty-state-card,
+  .booking-panel,
+  .booking-summary-card,
+  .help-hero-card,
+  .help-guide-card,
+  .help-checklist-card,
+  .help-faq-side-card,
+  .help-center-card
+) h2,
+
+body.dark
+:where(
+  .card,
+  .panel,
+  .modal,
+  .drawer,
+  .form-card,
+  .empty-state-card,
+  .booking-panel,
+  .booking-summary-card,
+  .help-hero-card,
+  .help-guide-card,
+  .help-checklist-card,
+  .help-faq-side-card,
+  .help-center-card
+) h3,
+
+body.dark
+:where(
+  .card,
+  .panel,
+  .modal,
+  .drawer,
+  .form-card,
+  .empty-state-card,
+  .booking-panel,
+  .booking-summary-card,
+  .help-hero-card,
+  .help-guide-card,
+  .help-checklist-card,
+  .help-faq-side-card,
+  .help-center-card
+) strong,
+
+body.dark
+:where(
+  .card,
+  .panel,
+  .modal,
+  .drawer,
+  .form-card,
+  .empty-state-card,
+  .booking-panel,
+  .booking-summary-card,
+  .help-hero-card,
+  .help-guide-card,
+  .help-checklist-card,
+  .help-faq-side-card,
+  .help-center-card
+) span {
+  color: #f5f8fb !important;
+}
+
+
+/* =========================================================
+   LIGHT BACKGROUNDS INSIDE DARK MODE
+   ========================================================= */
+
+html.dark
+:where(
+  .white,
+  .light,
+  .light-card,
+  .light-panel,
+  .icon-box,
+  .feature-icon,
+  .summary-header-icon
+),
+
+body.dark
+:where(
+  .white,
+  .light,
+  .light-card,
+  .light-panel,
+  .icon-box,
+  .feature-icon,
+  .summary-header-icon
+) {
+  background: #1c2a36 !important;
+  color: #f4f8fb !important;
+}
+
+
+/* =========================================================
+   SVG ICONS
+   ========================================================= */
+
+html.dark svg,
+body.dark svg,
+html[data-theme="dark"] svg,
+body[data-theme="dark"] svg {
+  color: currentColor;
+}
+
+
+/* =========================================================
+   FOCUS
+   ========================================================= */
+
+html.dark input:focus,
+html.dark textarea:focus,
+html.dark select:focus,
+html.dark button:focus-visible,
+
+body.dark input:focus,
+body.dark textarea:focus,
+body.dark select:focus,
+body.dark button:focus-visible,
+
+html[data-theme="dark"] input:focus,
+html[data-theme="dark"] textarea:focus,
+html[data-theme="dark"] select:focus,
+html[data-theme="dark"] button:focus-visible,
+
+body[data-theme="dark"] input:focus,
+body[data-theme="dark"] textarea:focus,
+body[data-theme="dark"] select:focus,
+body[data-theme="dark"] button:focus-visible {
+  outline-color: #79b8e5 !important;
+  border-color: #6b91ad !important;
+}
+
+
+/* =========================================================
+   SCROLLBARS
+   ========================================================= */
+
+html.dark *,
+body.dark *,
+html[data-theme="dark"] *,
+body[data-theme="dark"] * {
+  scrollbar-color: #465d70 #101820;
+}
+
+
+/* =========================================================
+   FORCE DARK SURFACE FOR COMMON WHITE UTILITIES
+   ========================================================= */
+
+html.dark
+[class*="white"],
+html.dark
+[class*="light"],
+
+body.dark
+[class*="white"],
+body.dark
+[class*="light"],
+
+html[data-theme="dark"]
+[class*="white"],
+html[data-theme="dark"]
+[class*="light"],
+
+body[data-theme="dark"]
+[class*="white"],
+body[data-theme="dark"]
+[class*="light"] {
+  border-color: #42586b;
+}
+
+
+/* =========================================================
+   EMERGENCY HIGH-CONTRAST RULE
+   ========================================================= */
+
+html.dark .farmer-login-page button,
+body.dark .farmer-login-page button,
+html[data-theme="dark"] .farmer-login-page button,
+body[data-theme="dark"] .farmer-login-page button {
+  text-shadow: none !important;
+  color: #ffffff !important;
+}
+
+
+html.dark .farmer-login-page button *,
+body.dark .farmer-login-page button *,
+html[data-theme="dark"] .farmer-login-page button *,
+body[data-theme="dark"] .farmer-login-page button * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* =========================================================
+   KRISHISETU — GLOBAL DARK MODE
+   REUSABLE COMPONENT FIXES
+   ========================================================= */
+
+
+/* =========================================================
+   ADMIN LOGIN — MAIN CARD
+   ========================================================= */
+
+html.dark .admin-login-card,
+body.dark .admin-login-card,
+html[data-theme="dark"] .admin-login-card,
+body[data-theme="dark"] .admin-login-card {
+  background: #101923 !important;
+  color: #f4f7fa !important;
+  border-color: #41576b !important;
+}
+
+
+/* =========================================================
+   ADMIN LOGIN — FEATURE CARDS
+   ========================================================= */
+
+html.dark .admin-login-feature,
+body.dark .admin-login-feature,
+html[data-theme="dark"] .admin-login-feature,
+body[data-theme="dark"] .admin-login-feature {
+  background: #17232e !important;
+  border-color: #354b5e !important;
+  color: #f2f6f9 !important;
+}
+
+
+html.dark .admin-login-feature strong,
+body.dark .admin-login-feature strong,
+html[data-theme="dark"] .admin-login-feature strong,
+body[data-theme="dark"] .admin-login-feature strong {
+  color: #ffffff !important;
+}
+
+
+html.dark .admin-login-feature span,
+body.dark .admin-login-feature span,
+html[data-theme="dark"] .admin-login-feature span,
+body[data-theme="dark"] .admin-login-feature span {
+  color: #c6d3dd !important;
+}
+
+
+/* =========================================================
+   FEATURE ICON BOXES
+   ========================================================= */
+
+html.dark .admin-login-feature-icon,
+body.dark .admin-login-feature-icon,
+html[data-theme="dark"] .admin-login-feature-icon,
+body[data-theme="dark"] .admin-login-feature-icon {
+  background: #233342 !important;
+  color: #eaf4fa !important;
+  border-color: #465c6e !important;
+}
+
+
+html.dark .admin-login-feature-icon svg,
+body.dark .admin-login-feature-icon svg,
+html[data-theme="dark"] .admin-login-feature-icon svg,
+body[data-theme="dark"] .admin-login-feature-icon svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+
+/* =========================================================
+   LOCK / ILLUSTRATION BOX
+   ========================================================= */
+
+html.dark .admin-login-lock,
+body.dark .admin-login-lock,
+html[data-theme="dark"] .admin-login-lock,
+body[data-theme="dark"] .admin-login-lock {
+  background: #22313d !important;
+  color: #ffffff !important;
+  border-color: #465b6d !important;
+}
+
+
+html.dark .admin-login-lock svg,
+body.dark .admin-login-lock svg,
+html[data-theme="dark"] .admin-login-lock svg,
+body[data-theme="dark"] .admin-login-lock svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+
+/* =========================================================
+   WORKFLOW PANEL
+   ========================================================= */
+
+html.dark .admin-login-workflow,
+body.dark .admin-login-workflow,
+html[data-theme="dark"] .admin-login-workflow,
+body[data-theme="dark"] .admin-login-workflow {
+  background: #141f29 !important;
+  border-color: #354a5c !important;
+  color: #f4f7fa !important;
+}
+
+
+html.dark .admin-login-workflow-heading span,
+body.dark .admin-login-workflow-heading span,
+html[data-theme="dark"] .admin-login-workflow-heading span,
+body[data-theme="dark"] .admin-login-workflow-heading span {
+  color: #aebfcb !important;
+}
+
+
+html.dark .admin-login-workflow-heading strong,
+body.dark .admin-login-workflow-heading strong,
+html[data-theme="dark"] .admin-login-workflow-heading strong,
+body[data-theme="dark"] .admin-login-workflow-heading strong {
+  color: #ffffff !important;
+}
+
+
+/* =========================================================
+   WORKFLOW STEPS
+   ========================================================= */
+
+html.dark .admin-workflow-step,
+body.dark .admin-workflow-step,
+html[data-theme="dark"] .admin-workflow-step,
+body[data-theme="dark"] .admin-workflow-step {
+  color: #ffffff !important;
+}
+
+
+html.dark .admin-workflow-step span,
+body.dark .admin-workflow-step span,
+html[data-theme="dark"] .admin-workflow-step span,
+body[data-theme="dark"] .admin-workflow-step span {
+  background: #22313d !important;
+  color: #ffffff !important;
+  border-color: #50667a !important;
+}
+
+
+html.dark .admin-workflow-step strong,
+body.dark .admin-workflow-step strong,
+html[data-theme="dark"] .admin-workflow-step strong,
+body[data-theme="dark"] .admin-workflow-step strong {
+  color: #f5f8fa !important;
+}
+
+
+html.dark .admin-workflow-line,
+body.dark .admin-workflow-line,
+html[data-theme="dark"] .admin-workflow-line,
+body[data-theme="dark"] .admin-workflow-line {
+  background: #4b6275 !important;
+}
+
+
+/* =========================================================
+   INPUTS
+   ========================================================= */
+
+html.dark .admin-login-input,
+body.dark .admin-login-input,
+html[data-theme="dark"] .admin-login-input,
+body[data-theme="dark"] .admin-login-input {
+  background: #17232e !important;
+  border-color: #536a7d !important;
+  color: #ffffff !important;
+}
+
+
+html.dark .admin-login-input input,
+body.dark .admin-login-input input,
+html[data-theme="dark"] .admin-login-input input,
+body[data-theme="dark"] .admin-login-input input {
+  background: transparent !important;
+  color: #ffffff !important;
+  caret-color: #ffffff !important;
+}
+
+
+html.dark .admin-login-input input::placeholder,
+body.dark .admin-login-input input::placeholder,
+html[data-theme="dark"] .admin-login-input input::placeholder,
+body[data-theme="dark"] .admin-login-input input::placeholder {
+  color: #aebdca !important;
+  opacity: 1 !important;
+}
+
+
+html.dark .admin-login-input svg,
+body.dark .admin-login-input svg,
+html[data-theme="dark"] .admin-login-input svg,
+body[data-theme="dark"] .admin-login-input svg {
+  color: #d9e6ee !important;
+  stroke: #d9e6ee !important;
+}
+
+
+/* =========================================================
+   SHOW / HIDE PASSWORD
+   ========================================================= */
+
+html.dark .admin-show-password,
+body.dark .admin-show-password,
+html[data-theme="dark"] .admin-show-password,
+body[data-theme="dark"] .admin-show-password {
+  background: #22313d !important;
+  color: #ffffff !important;
+  border-color: #52687a !important;
+}
+
+
+html.dark .admin-show-password:hover,
+body.dark .admin-show-password:hover,
+html[data-theme="dark"] .admin-show-password:hover,
+body[data-theme="dark"] .admin-show-password:hover {
+  background: #2b3c4b !important;
+  color: #ffffff !important;
+}
+
+
+/* =========================================================
+   SUBMIT BUTTON
+   ========================================================= */
+
+html.dark .admin-login-submit,
+body.dark .admin-login-submit,
+html[data-theme="dark"] .admin-login-submit,
+body[data-theme="dark"] .admin-login-submit {
+  background: #253744 !important;
+  border-color: #5d7487 !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+
+html.dark .admin-login-submit *,
+body.dark .admin-login-submit *,
+html[data-theme="dark"] .admin-login-submit *,
+body[data-theme="dark"] .admin-login-submit * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+
+html.dark .admin-login-submit svg,
+body.dark .admin-login-submit svg,
+html[data-theme="dark"] .admin-login-submit svg,
+body[data-theme="dark"] .admin-login-submit svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+
+html.dark .admin-login-submit:hover,
+body.dark .admin-login-submit:hover,
+html[data-theme="dark"] .admin-login-submit:hover,
+body[data-theme="dark"] .admin-login-submit:hover {
+  background: #314756 !important;
+  border-color: #7891a3 !important;
+  color: #ffffff !important;
+}
+
+
+/* =========================================================
+   DEMO BOX
+   ========================================================= */
+
+html.dark .admin-demo-box,
+body.dark .admin-demo-box,
+html[data-theme="dark"] .admin-demo-box,
+body[data-theme="dark"] .admin-demo-box {
+  background: #192934 !important;
+  border-color: #455d70 !important;
+  color: #f4f8fb !important;
+}
+
+
+html.dark .admin-demo-box span,
+body.dark .admin-demo-box span,
+html[data-theme="dark"] .admin-demo-box span,
+body[data-theme="dark"] .admin-demo-box span {
+  color: #aebdca !important;
+}
+
+
+html.dark .admin-demo-box strong,
+body.dark .admin-demo-box strong,
+html[data-theme="dark"] .admin-demo-box strong,
+body[data-theme="dark"] .admin-demo-box strong {
+  color: #ffffff !important;
+}
+
+
+html.dark .admin-demo-box p,
+body.dark .admin-demo-box p,
+html[data-theme="dark"] .admin-demo-box p,
+body[data-theme="dark"] .admin-demo-box p {
+  color: #cbd7df !important;
+}
+
+
+html.dark .admin-demo-box b,
+body.dark .admin-demo-box b,
+html[data-theme="dark"] .admin-demo-box b,
+body[data-theme="dark"] .admin-demo-box b {
+  color: #ffffff !important;
+}
+
+
+/* =========================================================
+   DEMO ICON
+   ========================================================= */
+
+html.dark .admin-demo-icon,
+body.dark .admin-demo-icon,
+html[data-theme="dark"] .admin-demo-icon,
+body[data-theme="dark"] .admin-demo-icon {
+  background: #263b4a !important;
+  color: #ffffff !important;
+  border-color: #526a7c !important;
+}
+
+
+html.dark .admin-demo-icon svg,
+body.dark .admin-demo-icon svg,
+html[data-theme="dark"] .admin-demo-icon svg,
+body[data-theme="dark"] .admin-demo-icon svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+
+/* =========================================================
+   SECURITY ROW
+   ========================================================= */
+
+html.dark .admin-security-row,
+body.dark .admin-security-row,
+html[data-theme="dark"] .admin-security-row,
+body[data-theme="dark"] .admin-security-row {
+  color: #cdd9e1 !important;
+}
+
+
+html.dark .admin-security-row svg,
+body.dark .admin-security-row svg,
+html[data-theme="dark"] .admin-security-row svg,
+body[data-theme="dark"] .admin-security-row svg {
+  color: #dce9f1 !important;
+  stroke: #dce9f1 !important;
+}
+
+
+/* =========================================================
+   FIELD LABELS / HELP TEXT
+   ========================================================= */
+
+html.dark .admin-login-field label,
+body.dark .admin-login-field label,
+html[data-theme="dark"] .admin-login-field label,
+body[data-theme="dark"] .admin-login-field label {
+  color: #f0f5f8 !important;
+}
+
+
+html.dark .admin-login-field small,
+body.dark .admin-login-field small,
+html[data-theme="dark"] .admin-login-field small,
+body[data-theme="dark"] .admin-login-field small {
+  color: #afbfca !important;
+}
+
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
+html.dark .admin-login-error,
+body.dark .admin-login-error,
+html[data-theme="dark"] .admin-login-error,
+body[data-theme="dark"] .admin-login-error {
+  background: #3a2024 !important;
+  border-color: #7f444d !important;
+  color: #ffdfe3 !important;
+}
+
+
+html.dark .admin-login-error svg,
+body.dark .admin-login-error svg,
+html[data-theme="dark"] .admin-login-error svg,
+body[data-theme="dark"] .admin-login-error svg {
+  color: #ffdfe3 !important;
+  stroke: #ffdfe3 !important;
+}
+
+
+/* =========================================================
+   REMEMBER ME
+   ========================================================= */
+
+html.dark .admin-remember-row,
+body.dark .admin-remember-row,
+html[data-theme="dark"] .admin-remember-row,
+body[data-theme="dark"] .admin-remember-row {
+  color: #d5e0e7 !important;
+}
+
+
+html.dark .admin-remember-row input,
+body.dark .admin-remember-row input,
+html[data-theme="dark"] .admin-remember-row input,
+body[data-theme="dark"] .admin-remember-row input {
+  accent-color: #5f9bc0;
+}
+
+
+/* =========================================================
+   GENERIC REUSABLE FEATURE / ICON PATTERNS
+   ========================================================= */
+
+html.dark
+[class*="feature-card"],
+html.dark
+[class*="feature-box"],
+html.dark
+[class*="icon-box"],
+html.dark
+[class*="illustration-box"],
+html.dark
+[class*="info-box"],
+
+body.dark
+[class*="feature-card"],
+body.dark
+[class*="feature-box"],
+body.dark
+[class*="icon-box"],
+body.dark
+[class*="illustration-box"],
+body.dark
+[class*="info-box"],
+
+html[data-theme="dark"]
+[class*="feature-card"],
+html[data-theme="dark"]
+[class*="feature-box"],
+html[data-theme="dark"]
+[class*="icon-box"],
+html[data-theme="dark"]
+[class*="illustration-box"],
+html[data-theme="dark"]
+[class*="info-box"],
+
+body[data-theme="dark"]
+[class*="feature-card"],
+body[data-theme="dark"]
+[class*="feature-box"],
+body[data-theme="dark"]
+[class*="icon-box"],
+body[data-theme="dark"]
+[class*="illustration-box"],
+body[data-theme="dark"]
+[class*="info-box"] {
+  color: #f4f8fb !important;
+}
+
+
+/* =========================================================
+   GLOBAL DARK MODE — NEVER LET TEXT BECOME WHITE ON WHITE
+   ========================================================= */
+
+html.dark button,
+html.dark input,
+html.dark textarea,
+html.dark select,
+
+body.dark button,
+body.dark input,
+body.dark textarea,
+body.dark select,
+
+html[data-theme="dark"] button,
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select,
+
+body[data-theme="dark"] button,
+body[data-theme="dark"] input,
+body[data-theme="dark"] textarea,
+body[data-theme="dark"] select {
+  -webkit-text-fill-color: currentColor;
+}
+
+/* =========================================================
+   KRISHISETU GLOBAL DARK THEME
+   HIGH-CONTRAST COMPONENT OVERRIDES
+   ========================================================= */
+
+
+/* =========================================================
+   BASE
+   ========================================================= */
+
+html.dark,
+body.dark,
+html[data-theme="dark"],
+body[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+
+/* =========================================================
+   GENERIC SURFACE / CARD COMPONENTS
+   ========================================================= */
+
+html.dark .help-topic-card,
+html.dark .help-guide-card,
+html.dark .help-checklist-card,
+html.dark .help-faq-item,
+html.dark .help-faq-side-card,
+html.dark .help-contact-use-card,
+html.dark .help-center-card,
+html.dark .help-connectivity-section,
+html.dark .admin-login-feature,
+html.dark .admin-login-workflow,
+html.dark .admin-demo-box,
+
+body.dark .help-topic-card,
+body.dark .help-guide-card,
+body.dark .help-checklist-card,
+body.dark .help-faq-item,
+body.dark .help-faq-side-card,
+body.dark .help-contact-use-card,
+body.dark .help-center-card,
+body.dark .help-connectivity-section,
+body.dark .admin-login-feature,
+body.dark .admin-login-workflow,
+body.dark .admin-demo-box,
+
+html[data-theme="dark"] .help-topic-card,
+html[data-theme="dark"] .help-guide-card,
+html[data-theme="dark"] .help-checklist-card,
+html[data-theme="dark"] .help-faq-item,
+html[data-theme="dark"] .help-faq-side-card,
+html[data-theme="dark"] .help-contact-use-card,
+html[data-theme="dark"] .help-center-card,
+html[data-theme="dark"] .help-connectivity-section,
+html[data-theme="dark"] .admin-login-feature,
+html[data-theme="dark"] .admin-login-workflow,
+html[data-theme="dark"] .admin-demo-box,
+
+body[data-theme="dark"] .help-topic-card,
+body[data-theme="dark"] .help-guide-card,
+body[data-theme="dark"] .help-checklist-card,
+body[data-theme="dark"] .help-faq-item,
+body[data-theme="dark"] .help-faq-side-card,
+body[data-theme="dark"] .help-contact-use-card,
+body[data-theme="dark"] .help-center-card,
+body[data-theme="dark"] .help-connectivity-section,
+body[data-theme="dark"] .admin-login-feature,
+body[data-theme="dark"] .admin-login-workflow,
+body[data-theme="dark"] .admin-demo-box {
+  background: #141e27 !important;
+  color: #f4f7fa !important;
+  border-color: #405466 !important;
+}
+
+
+/* =========================================================
+   GENERIC CARD CHILD TEXT
+   ========================================================= */
+
+html.dark
+.help-topic-card *,
+html.dark
+.help-guide-card *,
+html.dark
+.help-checklist-card *,
+html.dark
+.help-faq-item *,
+html.dark
+.help-faq-side-card *,
+html.dark
+.help-contact-use-card *,
+html.dark
+.help-center-card *,
+html.dark
+.help-connectivity-section *,
+
+body.dark
+.help-topic-card *,
+body.dark
+.help-guide-card *,
+body.dark
+.help-checklist-card *,
+body.dark
+.help-faq-item *,
+body.dark
+.help-faq-side-card *,
+body.dark
+.help-contact-use-card *,
+body.dark
+.help-center-card *,
+body.dark
+.help-connectivity-section *,
+
+html[data-theme="dark"]
+.help-topic-card *,
+html[data-theme="dark"]
+.help-guide-card *,
+html[data-theme="dark"]
+.help-checklist-card *,
+html[data-theme="dark"]
+.help-faq-item *,
+html[data-theme="dark"]
+.help-faq-side-card *,
+html[data-theme="dark"]
+.help-contact-use-card *,
+html[data-theme="dark"]
+.help-center-card *,
+html[data-theme="dark"]
+.help-connectivity-section *,
+
+body[data-theme="dark"]
+.help-topic-card *,
+body[data-theme="dark"]
+.help-guide-card *,
+body[data-theme="dark"]
+.help-checklist-card *,
+body[data-theme="dark"]
+.help-faq-item *,
+body[data-theme="dark"]
+.help-faq-side-card *,
+body[data-theme="dark"]
+.help-contact-use-card *,
+body[data-theme="dark"]
+.help-center-card *,
+body[data-theme="dark"]
+.help-connectivity-section * {
+  color: #f3f7fa !important;
+}
+
+
+/* =========================================================
+   SECONDARY / MUTED TEXT
+   ========================================================= */
+
+html.dark
+.help-topic-card p,
+html.dark
+.help-guide-intro,
+html.dark
+.help-checklist-card p,
+html.dark
+.help-connectivity-point small,
+html.dark
+.help-faq-answer p,
+html.dark
+.help-faq-side-card p,
+html.dark
+.help-contact-description,
+html.dark
+.help-center-details span,
+html.dark
+.help-contact-reasons span,
+
+body.dark
+.help-topic-card p,
+body.dark
+.help-guide-intro,
+body.dark
+.help-checklist-card p,
+body.dark
+.help-connectivity-point small,
+body.dark
+.help-faq-answer p,
+body.dark
+.help-faq-side-card p,
+body.dark
+.help-contact-description,
+body.dark
+.help-center-details span,
+body.dark
+.help-contact-reasons span,
+
+html[data-theme="dark"]
+.help-topic-card p,
+html[data-theme="dark"]
+.help-guide-intro,
+html[data-theme="dark"]
+.help-checklist-card p,
+html[data-theme="dark"]
+.help-connectivity-point small,
+html[data-theme="dark"]
+.help-faq-answer p,
+html[data-theme="dark"]
+.help-faq-side-card p,
+html[data-theme="dark"]
+.help-contact-description,
+html[data-theme="dark"]
+.help-center-details span,
+html[data-theme="dark"]
+.help-contact-reasons span,
+
+body[data-theme="dark"]
+.help-topic-card p,
+body[data-theme="dark"]
+.help-guide-intro,
+body[data-theme="dark"]
+.help-checklist-card p,
+body[data-theme="dark"]
+.help-connectivity-point small,
+body[data-theme="dark"]
+.help-faq-answer p,
+body[data-theme="dark"]
+.help-faq-side-card p,
+body[data-theme="dark"]
+.help-contact-description,
+body[data-theme="dark"]
+.help-center-details span,
+body[data-theme="dark"]
+.help-contact-reasons span {
+  color: #c7d2da !important;
+}
+
+
+/* =========================================================
+   GREEN COMPONENTS
+   ========================================================= */
+
+html.dark .help-topic-card.green,
+html.dark .help-guide-card.green,
+html.dark .help-checklist-card.green,
+
+body.dark .help-topic-card.green,
+body.dark .help-guide-card.green,
+body.dark .help-checklist-card.green,
+
+html[data-theme="dark"] .help-topic-card.green,
+html[data-theme="dark"] .help-guide-card.green,
+html[data-theme="dark"] .help-checklist-card.green,
+
+body[data-theme="dark"] .help-topic-card.green,
+body[data-theme="dark"] .help-guide-card.green,
+body[data-theme="dark"] .help-checklist-card.green {
+  background: #103126 !important;
+  border-color: #1d684b !important;
+}
+
+
+/* =========================================================
+   BLUE COMPONENTS
+   ========================================================= */
+
+html.dark .help-topic-card.blue,
+html.dark .help-guide-card.blue,
+html.dark .help-checklist-card.blue,
+
+body.dark .help-topic-card.blue,
+body.dark .help-guide-card.blue,
+body.dark .help-checklist-card.blue,
+
+html[data-theme="dark"] .help-topic-card.blue,
+html[data-theme="dark"] .help-guide-card.blue,
+html[data-theme="dark"] .help-checklist-card.blue,
+
+body[data-theme="dark"] .help-topic-card.blue,
+body[data-theme="dark"] .help-guide-card.blue,
+body[data-theme="dark"] .help-checklist-card.blue {
+  background: #102b3e !important;
+  border-color: #245c7c !important;
+}
+
+
+/* =========================================================
+   ORANGE / GOLD COMPONENTS
+   ========================================================= */
+
+html.dark .help-topic-card.orange,
+html.dark .help-guide-card.orange,
+html.dark .help-checklist-card.orange,
+html.dark .help-topic-card.gold,
+
+body.dark .help-topic-card.orange,
+body.dark .help-guide-card.orange,
+body.dark .help-checklist-card.orange,
+body.dark .help-topic-card.gold,
+
+html[data-theme="dark"] .help-topic-card.orange,
+html[data-theme="dark"] .help-guide-card.orange,
+html[data-theme="dark"] .help-checklist-card.orange,
+html[data-theme="dark"] .help-topic-card.gold,
+
+body[data-theme="dark"] .help-topic-card.orange,
+body[data-theme="dark"] .help-guide-card.orange,
+body[data-theme="dark"] .help-checklist-card.orange,
+body[data-theme="dark"] .help-topic-card.gold {
+  background: #352a14 !important;
+  border-color: #765c20 !important;
+}
+
+
+/* =========================================================
+   PURPLE / TEAL COMPONENTS
+   ========================================================= */
+
+html.dark .help-topic-card.purple,
+html.dark .help-guide-card.purple,
+html.dark .help-checklist-card.purple,
+html.dark .help-topic-card.teal,
+html.dark .help-guide-card.teal,
+
+body.dark .help-topic-card.purple,
+body.dark .help-guide-card.purple,
+body.dark .help-checklist-card.purple,
+body.dark .help-topic-card.teal,
+body.dark .help-guide-card.teal,
+
+html[data-theme="dark"] .help-topic-card.purple,
+html[data-theme="dark"] .help-guide-card.purple,
+html[data-theme="dark"] .help-checklist-card.purple,
+html[data-theme="dark"] .help-topic-card.teal,
+html[data-theme="dark"] .help-guide-card.teal,
+
+body[data-theme="dark"] .help-topic-card.purple,
+body[data-theme="dark"] .help-guide-card.purple,
+body[data-theme="dark"] .help-checklist-card.purple,
+body[data-theme="dark"] .help-topic-card.teal,
+body[data-theme="dark"] .help-guide-card.teal {
+  background: #27203a !important;
+  border-color: #554477 !important;
+}
+
+
+/* =========================================================
+   ICON / ILLUSTRATION BOXES
+   ========================================================= */
+
+html.dark
+[class*="-icon"],
+html.dark
+[class*="-visual"],
+html.dark
+[class*="-illustration"],
+
+body.dark
+[class*="-icon"],
+body.dark
+[class*="-visual"],
+body.dark
+[class*="-illustration"],
+
+html[data-theme="dark"]
+[class*="-icon"],
+html[data-theme="dark"]
+[class*="-visual"],
+html[data-theme="dark"]
+[class*="-illustration"],
+
+body[data-theme="dark"]
+[class*="-icon"],
+body[data-theme="dark"]
+[class*="-visual"],
+body[data-theme="dark"]
+[class*="-illustration"] {
+  color: #f5f9fb;
+}
+
+
+/* =========================================================
+   FORCE SVG VISIBILITY INSIDE COMPONENTS
+   ========================================================= */
+
+html.dark
+.help-topic-card svg,
+html.dark
+.help-guide-card svg,
+html.dark
+.help-checklist-card svg,
+html.dark
+.help-faq-item svg,
+html.dark
+.help-faq-side-card svg,
+html.dark
+.help-center-card svg,
+html.dark
+.help-connectivity-section svg,
+html.dark
+.admin-login-feature svg,
+html.dark
+.admin-demo-box svg,
+
+body.dark
+.help-topic-card svg,
+body.dark
+.help-guide-card svg,
+body.dark
+.help-checklist-card svg,
+body.dark
+.help-faq-item svg,
+body.dark
+.help-faq-side-card svg,
+body.dark
+.help-center-card svg,
+body.dark
+.help-connectivity-section svg,
+body.dark
+.admin-login-feature svg,
+body.dark
+.admin-demo-box svg,
+
+html[data-theme="dark"]
+.help-topic-card svg,
+html[data-theme="dark"]
+.help-guide-card svg,
+html[data-theme="dark"]
+.help-checklist-card svg,
+html[data-theme="dark"]
+.help-faq-item svg,
+html[data-theme="dark"]
+.help-faq-side-card svg,
+html[data-theme="dark"]
+.help-center-card svg,
+html[data-theme="dark"]
+.help-connectivity-section svg,
+html[data-theme="dark"]
+.admin-login-feature svg,
+html[data-theme="dark"]
+.admin-demo-box svg,
+
+body[data-theme="dark"]
+.help-topic-card svg,
+body[data-theme="dark"]
+.help-guide-card svg,
+body[data-theme="dark"]
+.help-checklist-card svg,
+body[data-theme="dark"]
+.help-faq-item svg,
+body[data-theme="dark"]
+.help-faq-side-card svg,
+body[data-theme="dark"]
+.help-center-card svg,
+body[data-theme="dark"]
+.help-connectivity-section svg,
+body[data-theme="dark"]
+.admin-login-feature svg,
+body[data-theme="dark"]
+.admin-demo-box svg {
+  stroke: currentColor !important;
+}
+
+
+/* =========================================================
+   LIGHT ILLUSTRATION SURFACES
+   ========================================================= */
+
+html.dark .help-hero-card-icon,
+html.dark .help-topic-icon,
+html.dark .help-guide-icon,
+html.dark .help-checklist-icon,
+html.dark .help-faq-side-icon,
+html.dark .help-center-icon,
+html.dark .help-connectivity-icon,
+html.dark .help-contact-use-icon,
+html.dark .help-phone-mockup,
+
+body.dark .help-hero-card-icon,
+body.dark .help-topic-icon,
+body.dark .help-guide-icon,
+body.dark .help-checklist-icon,
+body.dark .help-faq-side-icon,
+body.dark .help-center-icon,
+body.dark .help-connectivity-icon,
+body.dark .help-contact-use-icon,
+body.dark .help-phone-mockup,
+
+html[data-theme="dark"] .help-hero-card-icon,
+html[data-theme="dark"] .help-topic-icon,
+html[data-theme="dark"] .help-guide-icon,
+html[data-theme="dark"] .help-checklist-icon,
+html[data-theme="dark"] .help-faq-side-icon,
+html[data-theme="dark"] .help-center-icon,
+html[data-theme="dark"] .help-connectivity-icon,
+html[data-theme="dark"] .help-contact-use-icon,
+html[data-theme="dark"] .help-phone-mockup,
+
+body[data-theme="dark"] .help-hero-card-icon,
+body[data-theme="dark"] .help-topic-icon,
+body[data-theme="dark"] .help-guide-icon,
+body[data-theme="dark"] .help-checklist-icon,
+body[data-theme="dark"] .help-faq-side-icon,
+body[data-theme="dark"] .help-center-icon,
+body[data-theme="dark"] .help-connectivity-icon,
+body[data-theme="dark"] .help-contact-use-icon,
+body[data-theme="dark"] .help-phone-mockup {
+  background: #202d38 !important;
+  color: #f4f8fb !important;
+  border-color: #4b6272 !important;
+}
+
+
+/* =========================================================
+   CHECKLIST / REASON ROWS
+   These are the white pills visible in your screenshots.
+   ========================================================= */
+
+html.dark .help-connectivity-point,
+html.dark .help-contact-reasons > div,
+html.dark .help-arrival-check,
+html.dark .help-sms-feature-list > div,
+
+body.dark .help-connectivity-point,
+body.dark .help-contact-reasons > div,
+body.dark .help-arrival-check,
+body.dark .help-sms-feature-list > div,
+
+html[data-theme="dark"] .help-connectivity-point,
+html[data-theme="dark"] .help-contact-reasons > div,
+html[data-theme="dark"] .help-arrival-check,
+html[data-theme="dark"] .help-sms-feature-list > div,
+
+body[data-theme="dark"] .help-connectivity-point,
+body[data-theme="dark"] .help-contact-reasons > div,
+body[data-theme="dark"] .help-arrival-check,
+body[data-theme="dark"] .help-sms-feature-list > div {
+  background: #1b2833 !important;
+  border-color: #405665 !important;
+  color: #f3f7fa !important;
+}
+
+
+/* =========================================================
+   CHECKLIST / REASON TEXT
+   ========================================================= */
+
+html.dark .help-connectivity-point span,
+html.dark .help-contact-reasons span,
+html.dark .help-sms-feature-list span,
+
+body.dark .help-connectivity-point span,
+body.dark .help-contact-reasons span,
+body.dark .help-sms-feature-list span,
+
+html[data-theme="dark"] .help-connectivity-point span,
+html[data-theme="dark"] .help-contact-reasons span,
+html[data-theme="dark"] .help-sms-feature-list span,
+
+body[data-theme="dark"] .help-connectivity-point span,
+body[data-theme="dark"] .help-contact-reasons span,
+body[data-theme="dark"] .help-sms-feature-list span {
+  color: #f1f6f9 !important;
+}
+
+
+/* =========================================================
+   ICONS IN CHECKLIST / REASON ROWS
+   ========================================================= */
+
+html.dark .help-connectivity-point svg,
+html.dark .help-contact-reasons svg,
+html.dark .help-sms-feature-list svg,
+
+body.dark .help-connectivity-point svg,
+body.dark .help-contact-reasons svg,
+body.dark .help-sms-feature-list svg,
+
+html[data-theme="dark"] .help-connectivity-point svg,
+html[data-theme="dark"] .help-contact-reasons svg,
+html[data-theme="dark"] .help-sms-feature-list svg,
+
+body[data-theme="dark"] .help-connectivity-point svg,
+body[data-theme="dark"] .help-contact-reasons svg,
+body[data-theme="dark"] .help-sms-feature-list svg {
+  color: #b9e3d0 !important;
+  stroke: #b9e3d0 !important;
+}
+
+
+/* =========================================================
+   PRIMARY / SECONDARY ACTION BUTTONS
+   ========================================================= */
+
+html.dark .help-primary-action,
+html.dark .help-secondary-action,
+html.dark .help-call-button,
+html.dark .admin-login-submit,
+
+body.dark .help-primary-action,
+body.dark .help-secondary-action,
+body.dark .help-call-button,
+body.dark .admin-login-submit,
+
+html[data-theme="dark"] .help-primary-action,
+html[data-theme="dark"] .help-secondary-action,
+html[data-theme="dark"] .help-call-button,
+html[data-theme="dark"] .admin-login-submit,
+
+body[data-theme="dark"] .help-primary-action,
+body[data-theme="dark"] .help-secondary-action,
+body[data-theme="dark"] .help-call-button,
+body[data-theme="dark"] .admin-login-submit {
+  color: #ffffff !important;
+}
+
+
+/* =========================================================
+   SECONDARY BUTTON
+   Prevents the WHITE BUTTON shown in screenshot
+   ========================================================= */
+
+html.dark .help-secondary-action,
+body.dark .help-secondary-action,
+html[data-theme="dark"] .help-secondary-action,
+body[data-theme="dark"] .help-secondary-action {
+  background: #1a2732 !important;
+  border-color: #4c6476 !important;
+}
+
+
+/* =========================================================
+   PRIMARY BUTTON
+   ========================================================= */
+
+html.dark .help-primary-action,
+html.dark .help-call-button,
+body.dark .help-primary-action,
+body.dark .help-call-button,
+html[data-theme="dark"] .help-primary-action,
+html[data-theme="dark"] .help-call-button,
+body[data-theme="dark"] .help-primary-action,
+body[data-theme="dark"] .help-call-button {
+  background: #10884f !important;
+  border-color: #21a764 !important;
+}
+
+
+/* =========================================================
+   BUTTON HOVER
+   NEVER TURN WHITE
+   ========================================================= */
+
+html.dark .help-secondary-action:hover,
+body.dark .help-secondary-action:hover,
+html[data-theme="dark"] .help-secondary-action:hover,
+body[data-theme="dark"] .help-secondary-action:hover {
+  background: #263744 !important;
+  border-color: #698297 !important;
+  color: #ffffff !important;
+}
+
+
+html.dark .help-primary-action:hover,
+html.dark .help-call-button:hover,
+body.dark .help-primary-action:hover,
+body.dark .help-call-button:hover,
+html[data-theme="dark"] .help-primary-action:hover,
+html[data-theme="dark"] .help-call-button:hover,
+body[data-theme="dark"] .help-primary-action:hover,
+body[data-theme="dark"] .help-call-button:hover {
+  background: #159c5d !important;
+  color: #ffffff !important;
+}
+
+
+/* =========================================================
+   ICONS INSIDE BUTTONS
+   ========================================================= */
+
+html.dark
+.help-primary-action svg,
+html.dark
+.help-secondary-action svg,
+html.dark
+.help-call-button svg,
+html.dark
+.admin-login-submit svg,
+
+body.dark
+.help-primary-action svg,
+body.dark
+.help-secondary-action svg,
+body.dark
+.help-call-button svg,
+body.dark
+.admin-login-submit svg,
+
+html[data-theme="dark"]
+.help-primary-action svg,
+html[data-theme="dark"]
+.help-secondary-action svg,
+html[data-theme="dark"]
+.help-call-button svg,
+html[data-theme="dark"]
+.admin-login-submit svg,
+
+body[data-theme="dark"]
+.help-primary-action svg,
+body[data-theme="dark"]
+.help-secondary-action svg,
+body[data-theme="dark"]
+.help-call-button svg,
+body[data-theme="dark"]
+.admin-login-submit svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+
+/* =========================================================
+   FAQ
+   ========================================================= */
+
+html.dark .help-faq-question,
+body.dark .help-faq-question,
+html[data-theme="dark"] .help-faq-question,
+body[data-theme="dark"] .help-faq-question {
+  background: #17232d !important;
+  color: #ffffff !important;
+  border-color: #405464 !important;
+}
+
+
+html.dark .help-faq-question *,
+body.dark .help-faq-question *,
+html[data-theme="dark"] .help-faq-question *,
+body[data-theme="dark"] .help-faq-question * {
+  color: #ffffff !important;
+}
+
+
+html.dark .help-faq-answer,
+body.dark .help-faq-answer,
+html[data-theme="dark"] .help-faq-answer,
+body[data-theme="dark"] .help-faq-answer {
+  background: #111b24 !important;
+  color: #d6e0e7 !important;
+  border-color: #364b5b !important;
+}
+
+
+/* =========================================================
+   CONTACT / EMERGENCY BOXES
+   ========================================================= */
+
+html.dark .help-emergency-note,
+body.dark .help-emergency-note,
+html[data-theme="dark"] .help-emergency-note,
+body[data-theme="dark"] .help-emergency-note {
+  background: #1b2832 !important;
+  border-color: #496172 !important;
+  color: #dce7ed !important;
+}
+
+
+html.dark .help-emergency-note *,
+body.dark .help-emergency-note *,
+html[data-theme="dark"] .help-emergency-note *,
+body[data-theme="dark"] .help-emergency-note * {
+  color: #dce7ed !important;
+}
+
+
+/* =========================================================
+   SMS MESSAGE MOCKUP
+   ========================================================= */
+
+html.dark .help-sms-message,
+body.dark .help-sms-message,
+html[data-theme="dark"] .help-sms-message,
+body[data-theme="dark"] .help-sms-message {
+  background: #17232d !important;
+  border-color: #455d6d !important;
+  color: #f4f8fb !important;
+}
+
+
+html.dark .help-sms-message *,
+body.dark .help-sms-message *,
+html[data-theme="dark"] .help-sms-message *,
+body[data-theme="dark"] .help-sms-message * {
+  color: #edf3f7 !important;
+}
+
+
+/* =========================================================
+   INPUTS / SELECTS
+   ========================================================= */
+
+html.dark input,
+html.dark textarea,
+html.dark select,
+html.dark button,
+
+body.dark input,
+body.dark textarea,
+body.dark select,
+body.dark button,
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select,
+html[data-theme="dark"] button,
+
+body[data-theme="dark"] input,
+body[data-theme="dark"] textarea,
+body[data-theme="dark"] select,
+body[data-theme="dark"] button {
+  color: #f6f9fb !important;
+}
+
+
+html.dark input::placeholder,
+html.dark textarea::placeholder,
+body.dark input::placeholder,
+body.dark textarea::placeholder,
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder,
+body[data-theme="dark"] input::placeholder,
+body[data-theme="dark"] textarea::placeholder {
+  color: #9fb0bd !important;
+  opacity: 1 !important;
+}
+
+
+/* =========================================================
+   WHITE BACKGROUND OVERRIDE FOR COMMON SURFACE ELEMENTS
+   ========================================================= */
+
+html.dark
+.help-topic-card,
+html.dark
+.help-guide-card,
+html.dark
+.help-checklist-card,
+html.dark
+.help-faq-item,
+html.dark
+.help-faq-side-card,
+html.dark
+.help-center-card,
+html.dark
+.help-contact-use-card,
+html.dark
+.help-secondary-action,
+
+body.dark
+.help-topic-card,
+body.dark
+.help-guide-card,
+body.dark
+.help-checklist-card,
+body.dark
+.help-faq-item,
+body.dark
+.help-faq-side-card,
+body.dark
+.help-center-card,
+body.dark
+.help-contact-use-card,
+body.dark
+.help-secondary-action,
+
+html[data-theme="dark"]
+.help-topic-card,
+html[data-theme="dark"]
+.help-guide-card,
+html[data-theme="dark"]
+.help-checklist-card,
+html[data-theme="dark"]
+.help-faq-item,
+html[data-theme="dark"]
+.help-faq-side-card,
+html[data-theme="dark"]
+.help-center-card,
+html[data-theme="dark"]
+.help-contact-use-card,
+html[data-theme="dark"]
+.help-secondary-action,
+
+body[data-theme="dark"]
+.help-topic-card,
+body[data-theme="dark"]
+.help-guide-card,
+body[data-theme="dark"]
+.help-checklist-card,
+body[data-theme="dark"]
+.help-faq-item,
+body[data-theme="dark"]
+.help-faq-side-card,
+body[data-theme="dark"]
+.help-center-card,
+body[data-theme="dark"]
+.help-contact-use-card,
+body[data-theme="dark"]
+.help-secondary-action {
+  background-color: #141e27 !important;
+}
+
+
+/* =========================================================
+   STOP WHITE FILTER / OPACITY EFFECTS
+   ========================================================= */
+
+html.dark [class*="icon"] svg,
+html.dark [class*="check"] svg,
+html.dark [class*="arrow"] svg,
+html.dark [class*="button"] svg,
+
+body.dark [class*="icon"] svg,
+body.dark [class*="check"] svg,
+body.dark [class*="arrow"] svg,
+body.dark [class*="button"] svg,
+
+html[data-theme="dark"] [class*="icon"] svg,
+html[data-theme="dark"] [class*="check"] svg,
+html[data-theme="dark"] [class*="arrow"] svg,
+html[data-theme="dark"] [class*="button"] svg,
+
+body[data-theme="dark"] [class*="icon"] svg,
+body[data-theme="dark"] [class*="check"] svg,
+body[data-theme="dark"] [class*="arrow"] svg,
+body[data-theme="dark"] [class*="button"] svg {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+
+/* =========================================================
+   GENERAL DARK TEXT SAFETY
+   ========================================================= */
+
+html.dark .page-eyebrow,
+html.dark .card-eyebrow,
+body.dark .page-eyebrow,
+body.dark .card-eyebrow,
+html[data-theme="dark"] .page-eyebrow,
+html[data-theme="dark"] .card-eyebrow,
+body[data-theme="dark"] .page-eyebrow,
+body[data-theme="dark"] .card-eyebrow {
+  color: #b9c9d4 !important;
+}
+
+/* =========================================================
+   GLOBAL DARK THEME — FARMER LOGIN / LIGHT SURFACE FIX
+   ========================================================= */
+
+
+/* ---------------------------------------------------------
+   FARMER LOGIN PAGE
+   --------------------------------------------------------- */
+
+html.dark .farmer-login-page,
+body.dark .farmer-login-page,
+html[data-theme="dark"] .farmer-login-page,
+body[data-theme="dark"] .farmer-login-page {
+  color: #f4f8fb !important;
+}
+
+
+/* ---------------------------------------------------------
+   LOGIN CARD
+   --------------------------------------------------------- */
+
+html.dark .farmer-login-card,
+body.dark .farmer-login-card,
+html[data-theme="dark"] .farmer-login-card,
+body[data-theme="dark"] .farmer-login-card {
+  background: #111a23 !important;
+  border-color: #42596b !important;
+  color: #f5f8fa !important;
+}
+
+
+/* ---------------------------------------------------------
+   ALL TEXT INSIDE LOGIN CARD
+   --------------------------------------------------------- */
+
+html.dark .farmer-login-card h1,
+html.dark .farmer-login-card h2,
+html.dark .farmer-login-card h3,
+html.dark .farmer-login-card p,
+html.dark .farmer-login-card span,
+html.dark .farmer-login-card label,
+html.dark .farmer-login-card strong,
+html.dark .farmer-login-card small,
+
+body.dark .farmer-login-card h1,
+body.dark .farmer-login-card h2,
+body.dark .farmer-login-card h3,
+body.dark .farmer-login-card p,
+body.dark .farmer-login-card span,
+body.dark .farmer-login-card label,
+body.dark .farmer-login-card strong,
+body.dark .farmer-login-card small,
+
+html[data-theme="dark"] .farmer-login-card h1,
+html[data-theme="dark"] .farmer-login-card h2,
+html[data-theme="dark"] .farmer-login-card h3,
+html[data-theme="dark"] .farmer-login-card p,
+html[data-theme="dark"] .farmer-login-card span,
+html[data-theme="dark"] .farmer-login-card label,
+html[data-theme="dark"] .farmer-login-card strong,
+html[data-theme="dark"] .farmer-login-card small,
+
+body[data-theme="dark"] .farmer-login-card h1,
+body[data-theme="dark"] .farmer-login-card h2,
+body[data-theme="dark"] .farmer-login-card h3,
+body[data-theme="dark"] .farmer-login-card p,
+body[data-theme="dark"] .farmer-login-card span,
+body[data-theme="dark"] .farmer-login-card label,
+body[data-theme="dark"] .farmer-login-card strong,
+body[data-theme="dark"] .farmer-login-card small {
+  color: #f3f7fa !important;
+}
+
+
+/* ---------------------------------------------------------
+   MUTED DESCRIPTION TEXT
+   --------------------------------------------------------- */
+
+html.dark .farmer-login-card p,
+html.dark .farmer-login-card small,
+body.dark .farmer-login-card p,
+body.dark .farmer-login-card small,
+html[data-theme="dark"] .farmer-login-card p,
+html[data-theme="dark"] .farmer-login-card small,
+body[data-theme="dark"] .farmer-login-card p,
+body[data-theme="dark"] .farmer-login-card small {
+  color: #c5d2dc !important;
+}
+
+
+/* ---------------------------------------------------------
+   TOP PHONE / ILLUSTRATION BOX
+   --------------------------------------------------------- */
+
+html.dark .farmer-login-icon,
+html.dark .farmer-login-illustration,
+html.dark .farmer-login-icon-box,
+
+body.dark .farmer-login-icon,
+body.dark .farmer-login-illustration,
+body.dark .farmer-login-icon-box,
+
+html[data-theme="dark"] .farmer-login-icon,
+html[data-theme="dark"] .farmer-login-illustration,
+html[data-theme="dark"] .farmer-login-icon-box,
+
+body[data-theme="dark"] .farmer-login-icon,
+body[data-theme="dark"] .farmer-login-illustration,
+body[data-theme="dark"] .farmer-login-icon-box {
+  background: #20313d !important;
+  border-color: #4c6878 !important;
+  color: #dff4ff !important;
+  box-shadow: none !important;
+}
+
+
+/* Force icon visibility */
+html.dark .farmer-login-icon svg,
+html.dark .farmer-login-illustration svg,
+html.dark .farmer-login-icon-box svg,
+body.dark .farmer-login-icon svg,
+body.dark .farmer-login-illustration svg,
+body.dark .farmer-login-icon-box svg,
+html[data-theme="dark"] .farmer-login-icon svg,
+html[data-theme="dark"] .farmer-login-illustration svg,
+html[data-theme="dark"] .farmer-login-icon-box svg,
+body[data-theme="dark"] .farmer-login-icon svg,
+body[data-theme="dark"] .farmer-login-illustration svg,
+body[data-theme="dark"] .farmer-login-icon-box svg {
+  color: #e7f7ff !important;
+  stroke: #e7f7ff !important;
+  opacity: 1 !important;
+}
+
+
+/* ---------------------------------------------------------
+   MOBILE INPUT CONTAINER
+   --------------------------------------------------------- */
+
+html.dark .farmer-login-input,
+body.dark .farmer-login-input,
+html[data-theme="dark"] .farmer-login-input,
+body[data-theme="dark"] .farmer-login-input {
+  background: #18242f !important;
+  border-color: #50677a !important;
+  color: #f5f8fa !important;
+}
+
+
+/* ---------------------------------------------------------
+   COUNTRY CODE BOX (+91)
+   --------------------------------------------------------- */
+
+html.dark .farmer-login-country-code,
+html.dark .farmer-login-prefix,
+html.dark .farmer-login-phone-prefix,
+
+body.dark .farmer-login-country-code,
+body.dark .farmer-login-prefix,
+body.dark .farmer-login-phone-prefix,
+
+html[data-theme="dark"] .farmer-login-country-code,
+html[data-theme="dark"] .farmer-login-prefix,
+html[data-theme="dark"] .farmer-login-phone-prefix,
+
+body[data-theme="dark"] .farmer-login-country-code,
+body[data-theme="dark"] .farmer-login-prefix,
+body[data-theme="dark"] .farmer-login-phone-prefix {
+  background: #263742 !important;
+  color: #f4f8fb !important;
+  border-color: #526b7c !important;
+}
+
+
+/* ---------------------------------------------------------
+   INPUT ITSELF
+   --------------------------------------------------------- */
+
+html.dark .farmer-login-input input,
+body.dark .farmer-login-input input,
+html[data-theme="dark"] .farmer-login-input input,
+body[data-theme="dark"] .farmer-login-input input {
+  background: transparent !important;
+  color: #f6f9fb !important;
+  -webkit-text-fill-color: #f6f9fb !important;
+}
+
+
+/* Placeholder */
+html.dark .farmer-login-input input::placeholder,
+body.dark .farmer-login-input input::placeholder,
+html[data-theme="dark"] .farmer-login-input input::placeholder,
+body[data-theme="dark"] .farmer-login-input input::placeholder {
+  color: #b4c3ce !important;
+  opacity: 1 !important;
+}
+
+
+/* ---------------------------------------------------------
+   INPUT ICONS
+   --------------------------------------------------------- */
+
+html.dark .farmer-login-input svg,
+body.dark .farmer-login-input svg,
+html[data-theme="dark"] .farmer-login-input svg,
+body[data-theme="dark"] .farmer-login-input svg {
+  color: #d6e8f2 !important;
+  stroke: #d6e8f2 !important;
+  opacity: 1 !important;
+}
+
+
+/* ---------------------------------------------------------
+   PRIMARY CONTINUE BUTTON
+   --------------------------------------------------------- */
+
+html.dark .farmer-login-submit,
+body.dark .farmer-login-submit,
+html[data-theme="dark"] .farmer-login-submit,
+body[data-theme="dark"] .farmer-login-submit {
+  background: #148b55 !important;
+  border-color: #25ad6d !important;
+  color: #ffffff !important;
+}
+
+
+/* Primary button contents */
+html.dark .farmer-login-submit *,
+body.dark .farmer-login-submit *,
+html[data-theme="dark"] .farmer-login-submit *,
+body[data-theme="dark"] .farmer-login-submit * {
+  color: #ffffff !important;
+}
+
+
+/* Primary arrow */
+html.dark .farmer-login-submit svg,
+body.dark .farmer-login-submit svg,
+html[data-theme="dark"] .farmer-login-submit svg,
+body[data-theme="dark"] .farmer-login-submit svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+
+/* Primary hover */
+html.dark .farmer-login-submit:hover,
+body.dark .farmer-login-submit:hover,
+html[data-theme="dark"] .farmer-login-submit:hover,
+body[data-theme="dark"] .farmer-login-submit:hover {
+  background: #19a462 !important;
+  border-color: #35c17d !important;
+  color: #ffffff !important;
+}
+
+
+/* ---------------------------------------------------------
+   CREATE FARMER ACCOUNT BUTTON
+   --------------------------------------------------------- */
+
+html.dark .farmer-login-create,
+html.dark .farmer-login-register,
+html.dark .farmer-login-secondary-action,
+
+body.dark .farmer-login-create,
+body.dark .farmer-login-register,
+body.dark .farmer-login-secondary-action,
+
+html[data-theme="dark"] .farmer-login-create,
+html[data-theme="dark"] .farmer-login-register,
+html[data-theme="dark"] .farmer-login-secondary-action,
+
+body[data-theme="dark"] .farmer-login-create,
+body[data-theme="dark"] .farmer-login-register,
+body[data-theme="dark"] .farmer-login-secondary-action {
+  background: #192833 !important;
+  border-color: #4a6476 !important;
+  color: #dff5ff !important;
+}
+
+
+/* Everything inside secondary button */
+html.dark .farmer-login-create *,
+html.dark .farmer-login-register *,
+html.dark .farmer-login-secondary-action *,
+
+body.dark .farmer-login-create *,
+body.dark .farmer-login-register *,
+body.dark .farmer-login-secondary-action *,
+
+html[data-theme="dark"] .farmer-login-create *,
+html[data-theme="dark"] .farmer-login-register *,
+html[data-theme="dark"] .farmer-login-secondary-action *,
+
+body[data-theme="dark"] .farmer-login-create *,
+body[data-theme="dark"] .farmer-login-register *,
+body[data-theme="dark"] .farmer-login-secondary-action * {
+  color: #dff5ff !important;
+}
+
+
+/* Secondary hover */
+html.dark .farmer-login-create:hover,
+html.dark .farmer-login-register:hover,
+html.dark .farmer-login-secondary-action:hover,
+
+body.dark .farmer-login-create:hover,
+body.dark .farmer-login-register:hover,
+body.dark .farmer-login-secondary-action:hover,
+
+html[data-theme="dark"] .farmer-login-create:hover,
+html[data-theme="dark"] .farmer-login-register:hover,
+html[data-theme="dark"] .farmer-login-secondary-action:hover,
+
+body[data-theme="dark"] .farmer-login-create:hover,
+body[data-theme="dark"] .farmer-login-register:hover,
+body[data-theme="dark"] .farmer-login-secondary-action:hover {
+  background: #263945 !important;
+  border-color: #688194 !important;
+  color: #ffffff !important;
+}
+
+
+/* ---------------------------------------------------------
+   ARROW BOXES
+   The black square around arrows in your screenshots.
+   --------------------------------------------------------- */
+
+html.dark .farmer-login-card svg,
+body.dark .farmer-login-card svg,
+html[data-theme="dark"] .farmer-login-card svg,
+body[data-theme="dark"] .farmer-login-card svg {
+  opacity: 1 !important;
+}
+
+
+/* If an arrow is inside a square/icon holder */
+html.dark .farmer-login-card [class*="arrow"],
+html.dark .farmer-login-card [class*="icon"],
+body.dark .farmer-login-card [class*="arrow"],
+body.dark .farmer-login-card [class*="icon"],
+html[data-theme="dark"] .farmer-login-card [class*="arrow"],
+html[data-theme="dark"] .farmer-login-card [class*="icon"],
+body[data-theme="dark"] .farmer-login-card [class*="arrow"],
+body[data-theme="dark"] .farmer-login-card [class*="icon"] {
+  color: #e8f4fa !important;
+}
+
+
+/* ---------------------------------------------------------
+   "NEW TO KRISHISETU?" DIVIDER
+   --------------------------------------------------------- */
+
+html.dark .farmer-login-divider,
+html.dark .farmer-login-separator,
+body.dark .farmer-login-divider,
+body.dark .farmer-login-separator,
+html[data-theme="dark"] .farmer-login-divider,
+html[data-theme="dark"] .farmer-login-separator,
+body[data-theme="dark"] .farmer-login-divider,
+body[data-theme="dark"] .farmer-login-separator {
+  color: #aebfc9 !important;
+  border-color: #506576 !important;
+}
+
+
+/* Lines inside divider */
+html.dark .farmer-login-divider::before,
+html.dark .farmer-login-divider::after,
+html.dark .farmer-login-separator::before,
+html.dark .farmer-login-separator::after,
+body.dark .farmer-login-divider::before,
+body.dark .farmer-login-divider::after,
+body.dark .farmer-login-separator::before,
+body.dark .farmer-login-separator::after,
+html[data-theme="dark"] .farmer-login-divider::before,
+html[data-theme="dark"] .farmer-login-divider::after,
+html[data-theme="dark"] .farmer-login-separator::before,
+html[data-theme="dark"] .farmer-login-separator::after,
+body[data-theme="dark"] .farmer-login-divider::before,
+body[data-theme="dark"] .farmer-login-divider::after,
+body[data-theme="dark"] .farmer-login-separator::before,
+body[data-theme="dark"] .farmer-login-separator::after {
+  background: #506576 !important;
+}
+
+
+/* ---------------------------------------------------------
+   DISABLED BUTTONS
+   --------------------------------------------------------- */
+
+html.dark .farmer-login-card button:disabled,
+body.dark .farmer-login-card button:disabled,
+html[data-theme="dark"] .farmer-login-card button:disabled,
+body[data-theme="dark"] .farmer-login-card button:disabled {
+  background: #25313b !important;
+  border-color: #40515e !important;
+  color: #8fa1ad !important;
+  opacity: 1 !important;
+}
+
+
+/* ---------------------------------------------------------
+   GLOBAL DARK LOGIN BUTTON SAFETY
+   Prevent light-theme hover styles from winning.
+   --------------------------------------------------------- */
+
+html.dark .farmer-login-card button:hover,
+body.dark .farmer-login-card button:hover,
+html[data-theme="dark"] .farmer-login-card button:hover,
+body[data-theme="dark"] .farmer-login-card button:hover {
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+
+/* ---------------------------------------------------------
+   REMOVE LIGHT SHADOW / GLOW
+   --------------------------------------------------------- */
+
+html.dark .farmer-login-card [class*="icon"],
+html.dark .farmer-login-card [class*="button"],
+body.dark .farmer-login-card [class*="icon"],
+body.dark .farmer-login-card [class*="button"],
+html[data-theme="dark"] .farmer-login-card [class*="icon"],
+html[data-theme="dark"] .farmer-login-card [class*="button"],
+body[data-theme="dark"] .farmer-login-card [class*="icon"],
+body[data-theme="dark"] .farmer-login-card [class*="button"] {
+  text-shadow: none !important;
+}
