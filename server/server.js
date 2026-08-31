@@ -1,11 +1,19 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import db from "./db.js";
+
+import db, {
+  query,
+  get,
+  all,
+  transaction,
+  initializeDatabase,
+} from "./db.js";
 
 dotenv.config();
 
-const app = express();
+const app =
+  express();
 
 const PORT =
   process.env.PORT ||
@@ -13,8 +21,10 @@ const PORT =
 
 const SMS_ENABLED =
   String(
-    process.env.SMS_ENABLED || ""
-  ).toLowerCase() === "true";
+    process.env.SMS_ENABLED ||
+    ""
+  ).toLowerCase() ===
+  "true";
 
 
 /* =========================================================
@@ -40,196 +50,6 @@ app.use(
 
   }
 );
-
-
-/* =========================================================
-   DATABASE HELPERS
-========================================================= */
-
-function addColumnIfMissing(
-  table,
-  column,
-  definition
-) {
-
-  const columns =
-    db
-      .prepare(
-        `PRAGMA table_info(${table})`
-      )
-      .all();
-
-  const exists =
-    columns.some(
-      item =>
-        item.name ===
-        column
-    );
-
-  if (
-    !exists
-  ) {
-
-    db.exec(
-      `ALTER TABLE ${table}
-       ADD COLUMN ${column} ${definition}`
-    );
-
-    console.log(
-      `Added ${table}.${column}`
-    );
-
-  }
-
-}
-
-
-function ensurePaymentIssuesTable() {
-
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS payment_issues (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      farmer_id TEXT NOT NULL,
-      booking_id TEXT NOT NULL,
-      message TEXT NOT NULL,
-      status TEXT NOT NULL DEFAULT 'OPEN',
-      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-
-}
-
-
-function ensureNotificationsTable() {
-
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS notifications (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-      farmer_id TEXT NOT NULL,
-      booking_id TEXT,
-
-      type TEXT NOT NULL,
-      title TEXT NOT NULL,
-      message TEXT NOT NULL,
-
-      channel TEXT NOT NULL DEFAULT 'IN_APP',
-
-      status TEXT NOT NULL DEFAULT 'DELIVERED',
-
-      read_at TEXT,
-      sent_at TEXT,
-
-      provider_response TEXT,
-
-      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-
-}
-
-
-function ensureFarmerIdentityColumns() {
-
-  addColumnIfMissing(
-    "farmers",
-    "state_id",
-    "TEXT"
-  );
-
-  addColumnIfMissing(
-    "farmers",
-    "district_id",
-    "TEXT"
-  );
-
-  addColumnIfMissing(
-    "farmers",
-    "mandal_id",
-    "TEXT"
-  );
-
-  addColumnIfMissing(
-    "farmers",
-    "village",
-    "TEXT"
-  );
-
-  addColumnIfMissing(
-    "farmers",
-    "language",
-    "TEXT"
-  );
-
-  addColumnIfMissing(
-    "farmers",
-    "preferred_center_id",
-    "TEXT"
-  );
-
-  addColumnIfMissing(
-    "farmers",
-    "primary_crop",
-    "TEXT"
-  );
-
-  addColumnIfMissing(
-    "farmers",
-    "estimated_quantity",
-    "REAL"
-  );
-
-}
-
-
-try {
-
-  ensureFarmerIdentityColumns();
-
-  addColumnIfMissing(
-    "payments",
-    "rate_per_kg",
-    "REAL"
-  );
-
-  addColumnIfMissing(
-    "payments",
-    "notes",
-    "TEXT"
-  );
-
-  addColumnIfMissing(
-    "payments",
-    "updated_at",
-    "TEXT"
-  );
-
-  addColumnIfMissing(
-    "payments",
-    "sms_status",
-    "TEXT"
-  );
-
-  addColumnIfMissing(
-    "payments",
-    "sms_sent_at",
-    "TEXT"
-  );
-
-  ensurePaymentIssuesTable();
-
-  ensureNotificationsTable();
-
-} catch (
-  error
-) {
-
-  console.error(
-    "Database migration error:",
-    error
-  );
-
-}
 
 
 /* =========================================================
@@ -280,23 +100,26 @@ const DEFAULT_SETTINGS = {
 };
 
 
-function getSettings() {
+async function getSettings() {
 
   const rows =
-    db
-      .prepare(`
-        SELECT key, value
-        FROM settings
-        ORDER BY key ASC
-      `)
-      .all();
+    await all(`
+      SELECT
+        key,
+        value
+      FROM settings
+      ORDER BY key ASC
+    `);
+
 
   const settings = {
     ...DEFAULT_SETTINGS,
   };
 
+
   for (
-    const row of rows
+    const row
+    of rows
   ) {
 
     try {
@@ -315,60 +138,67 @@ function getSettings() {
 
   }
 
+
   return settings;
 
 }
 
 
-function saveSettings(
+async function saveSettings(
   settings
 ) {
 
-  const now =
-    new Date().toISOString();
+  await transaction(
+    async (
+      client
+    ) => {
 
-  const statement =
-    db.prepare(`
-      INSERT INTO settings (
-        key,
-        value,
-        updated_at
-      )
-      VALUES (?, ?, ?)
-      ON CONFLICT(key)
-      DO UPDATE SET
-        value = excluded.value,
-        updated_at = excluded.updated_at
-    `);
+      for (
+        const [
+          key,
+          value,
+        ]
+        of Object.entries(
+          settings
+        )
+      ) {
 
-  const transaction =
-    db.transaction(
-      () => {
-
-        for (
-          const [
-            key,
-            value,
-          ]
-            of Object.entries(
-              settings
+        await client.query(
+          `
+            INSERT INTO settings (
+              key,
+              value,
+              updated_at
             )
-        ) {
+            VALUES (
+              $1,
+              $2,
+              CURRENT_TIMESTAMP
+            )
 
-          statement.run(
+            ON CONFLICT (
+              key
+            )
+
+            DO UPDATE SET
+              value =
+                EXCLUDED.value,
+
+              updated_at =
+                CURRENT_TIMESTAMP
+          `,
+          [
             key,
             JSON.stringify(
               value
             ),
-            now
-          );
-
-        }
+          ]
+        );
 
       }
-    );
 
-  transaction();
+    }
+  );
 
 }
 
@@ -401,6 +231,7 @@ function getIndianRecipient(
       value
     );
 
+
   if (
     cleaned.length ===
     10
@@ -409,6 +240,7 @@ function getIndianRecipient(
     return `+91${cleaned}`;
 
   }
+
 
   if (
     cleaned.length ===
@@ -422,6 +254,7 @@ function getIndianRecipient(
 
   }
 
+
   return cleaned;
 
 }
@@ -431,14 +264,15 @@ function generateFarmerId() {
 
   return (
     `F${Date.now()}${Math.floor(
-      Math.random() * 1000
+      Math.random() *
+      1000
     )}`
   );
 
 }
 
 
-function findFarmerById(
+async function findFarmerById(
   farmerId
 ) {
 
@@ -450,18 +284,22 @@ function findFarmerById(
 
   }
 
-  return db.prepare(`
-    SELECT *
-    FROM farmers
-    WHERE id = ?
-  `).get(
-    farmerId
+
+  return await get(
+    `
+      SELECT *
+      FROM farmers
+      WHERE id = $1
+    `,
+    [
+      farmerId,
+    ]
   );
 
 }
 
 
-function findFarmerByPhone(
+async function findFarmerByPhone(
   phone
 ) {
 
@@ -469,6 +307,7 @@ function findFarmerByPhone(
     normalisePhone(
       phone
     );
+
 
   if (
     normalized.length !==
@@ -479,37 +318,37 @@ function findFarmerByPhone(
 
   }
 
-  return db.prepare(`
-    SELECT *
-    FROM farmers
-    WHERE REPLACE(
-      REPLACE(
-        REPLACE(
-          REPLACE(phone, '+', ''),
-          ' ', ''
-        ),
-        '-', ''
-      ),
-      '(', ''
-    ) = ?
-    OR phone = ?
-  `).get(
-    normalized,
-    normalized
+
+  return await get(
+    `
+      SELECT *
+      FROM farmers
+      WHERE
+        regexp_replace(
+          phone,
+          '[^0-9]',
+          '',
+          'g'
+        ) = $1
+    `,
+    [
+      normalized,
+    ]
   );
 
 }
 
 
-function resolveFarmer({
+async function resolveFarmer({
   farmerId = "",
   phone = "",
 }) {
 
   let farmer =
-    findFarmerById(
+    await findFarmerById(
       farmerId
     );
+
 
   if (
     farmer
@@ -519,10 +358,12 @@ function resolveFarmer({
 
   }
 
+
   farmer =
-    findFarmerByPhone(
+    await findFarmerByPhone(
       phone
     );
+
 
   return (
     farmer ||
@@ -532,45 +373,48 @@ function resolveFarmer({
 }
 
 
-function getBookingById(
+async function getBookingById(
   id
 ) {
 
-  return db.prepare(`
-    SELECT
-      b.*,
+  return await get(
+    `
+      SELECT
+        b.*,
 
-      f.name AS farmer_name,
-      f.phone AS farmer_phone,
-      f.village AS farmer_village,
+        f.name AS farmer_name,
+        f.phone AS farmer_phone,
+        f.village AS farmer_village,
 
-      p.amount AS payment_amount,
-      p.method AS payment_method,
-      p.reference AS payment_reference,
-      p.status AS payment_record_status,
-      p.rate_per_kg AS payment_rate_per_kg,
-      p.notes AS payment_notes,
-      p.updated_at AS payment_updated_at,
-      p.sms_status AS payment_sms_status,
-      p.sms_sent_at AS payment_sms_sent_at
+        p.amount AS payment_amount,
+        p.method AS payment_method,
+        p.reference AS payment_reference,
+        p.status AS payment_record_status,
+        p.rate_per_kg AS payment_rate_per_kg,
+        p.notes AS payment_notes,
+        p.updated_at AS payment_updated_at,
+        p.sms_status AS payment_sms_status,
+        p.sms_sent_at AS payment_sms_sent_at
 
-    FROM bookings b
+      FROM bookings b
 
-    LEFT JOIN farmers f
-      ON f.id = b.farmer_id
+      LEFT JOIN farmers f
+        ON f.id = b.farmer_id
 
-    LEFT JOIN payments p
-      ON p.id = (
-        SELECT p2.id
-        FROM payments p2
-        WHERE p2.booking_id = b.id
-        ORDER BY p2.id DESC
-        LIMIT 1
-      )
+      LEFT JOIN payments p
+        ON p.id = (
+          SELECT p2.id
+          FROM payments p2
+          WHERE p2.booking_id = b.id
+          ORDER BY p2.id DESC
+          LIMIT 1
+        )
 
-    WHERE b.id = ?
-  `).get(
-    id
+      WHERE b.id = $1
+    `,
+    [
+      id,
+    ]
   );
 
 }
@@ -634,6 +478,7 @@ function getAllowedNextStatuses(
 
   };
 
+
   return (
     transitions[
       status
@@ -670,6 +515,7 @@ function getStatusSms(
       `KrishiSetu update: payment for token ${token} has been sent.`,
 
   };
+
 
   return (
     messages[
@@ -713,6 +559,7 @@ function getNotificationTitle(
 
   };
 
+
   return (
     titles[
       status
@@ -726,20 +573,6 @@ function getNotificationTitle(
 /* =========================================================
    TWILIO SMS
 ========================================================= */
-
-/*
-   IMPORTANT FOR TWILIO TRIAL:
-
-   Trial accounts cannot use arbitrary SMS text.
-
-   We therefore ALWAYS send the predefined
-   Twilio trial template:
-
-       sms_event_notifications
-
-   The application's own notification message is still
-   stored in the database, but is NOT used as the SMS body.
-*/
 
 const TWILIO_TRIAL_TEMPLATE =
   "sms_event_notifications";
@@ -760,6 +593,7 @@ async function sendSms(
 
   const from =
     process.env.TWILIO_PHONE_NUMBER;
+
 
   const recipient =
     getIndianRecipient(
@@ -803,10 +637,6 @@ async function sendSms(
     !SMS_ENABLED
   ) {
 
-    console.log(
-      "SMS disabled."
-    );
-
     return {
 
       sent:
@@ -829,10 +659,6 @@ async function sendSms(
     !apiSecret ||
     !from
   ) {
-
-    console.error(
-      "Twilio credentials are missing."
-    );
 
     return {
 
@@ -864,11 +690,6 @@ async function sendSms(
       normalizedPhone.length
     )
   ) {
-
-    console.error(
-      "Invalid recipient:",
-      number
-    );
 
     return {
 
@@ -907,11 +728,9 @@ async function sendSms(
 
 
     /*
-       DO NOT replace this body with your
-       KrishiSetu custom message.
-
-       Twilio trial requires its predefined
-       template string.
+      For your current Twilio trial setup,
+      use the predefined template name exactly
+      as required by the trial account.
     */
 
     const response =
@@ -950,18 +769,6 @@ async function sendSms(
       "=========================================="
     );
 
-
-    /*
-       Twilio normally returns "queued" first.
-
-       For compatibility with your current frontend,
-       we return SENT after Twilio accepted the message.
-
-       This means:
-       "Twilio accepted the SMS request."
-
-       It does NOT guarantee the carrier/device delivered it.
-    */
 
     return {
 
@@ -1030,13 +837,6 @@ async function sendSms(
       "=========================================="
     );
 
-
-    /*
-       NEVER throw.
-
-       SMS failure must NEVER make the
-       booking/payment request fail.
-    */
 
     return {
 
@@ -1126,42 +926,46 @@ async function createNotification({
       : "DELIVERED";
 
 
-  const result =
-    db.prepare(`
-      INSERT INTO notifications (
-        farmer_id,
-        booking_id,
+  const inserted =
+    await get(
+      `
+        INSERT INTO notifications (
+          farmer_id,
+          booking_id,
+          type,
+          title,
+          message,
+          channel,
+          status
+        )
+        VALUES (
+          $1,
+          $2,
+          $3,
+          $4,
+          $5,
+          $6,
+          $7
+        )
+        RETURNING id
+      `,
+      [
+
+        farmerId,
+
+        bookingId,
+
         type,
+
         title,
+
         message,
+
         channel,
-        status
-      )
-      VALUES (
-        ?,
-        ?,
-        ?,
-        ?,
-        ?,
-        ?,
-        ?
-      )
-    `).run(
 
-      farmerId,
+        initialStatus,
 
-      bookingId,
-
-      type,
-
-      title,
-
-      message,
-
-      channel,
-
-      initialStatus
-
+      ]
     );
 
 
@@ -1193,108 +997,61 @@ async function createNotification({
 
     } else {
 
-      try {
-
-        const smsResult =
-          await sendSms(
-            phone
-          );
-
-
-        status =
-          smsResult?.status ||
-          "FAILED";
-
-
-        if (
-          status ===
-          "SENT"
-        ) {
-
-          sentAt =
-            new Date().toISOString();
-
-        }
-
-
-        providerResponse =
-          smsResult?.data
-            ? JSON.stringify(
-                smsResult.data
-              )
-            : smsResult?.reason ||
-              null;
-
-
-      } catch (
-        error
-      ) {
-
-        /*
-           Extra protection:
-           even if sendSms somehow throws,
-           notification/booking must continue.
-        */
-
-        console.error(
-          "Notification SMS failed, but operation continues:",
-          error
+      const smsResult =
+        await sendSms(
+          phone
         );
 
 
-        status =
-          "FAILED";
+      status =
+        smsResult?.status ||
+        "FAILED";
 
+
+      if (
+        status ===
+        "SENT"
+      ) {
 
         sentAt =
-          null;
-
-
-        providerResponse =
-          JSON.stringify({
-
-            code:
-              error?.code ||
-              null,
-
-            status:
-              error?.status ||
-              null,
-
-            message:
-              error?.message ||
-              "Unknown SMS error.",
-
-            moreInfo:
-              error?.moreInfo ||
-              null,
-
-          });
+          new Date().toISOString();
 
       }
+
+
+      providerResponse =
+        smsResult?.data
+          ? JSON.stringify(
+              smsResult.data
+            )
+          : smsResult?.reason ||
+            null;
 
     }
 
   }
 
 
-  db.prepare(`
-    UPDATE notifications
-    SET
-      status = ?,
-      sent_at = ?,
-      provider_response = ?
-    WHERE id = ?
-  `).run(
+  await query(
+    `
+      UPDATE notifications
+      SET
+        status = $1,
+        sent_at = $2,
+        provider_response = $3
+      WHERE id = $4
+    `,
+    [
 
-    status,
+      status,
 
-    sentAt,
+      sentAt,
 
-    providerResponse,
+      providerResponse,
 
-    result.lastInsertRowid
+      inserted.id,
 
+    ]
   );
 
 
@@ -1303,7 +1060,7 @@ async function createNotification({
     {
 
       id:
-        result.lastInsertRowid,
+        inserted.id,
 
       channel,
 
@@ -1323,7 +1080,7 @@ async function createNotification({
   return {
 
     id:
-      result.lastInsertRowid,
+      inserted.id,
 
     status,
 
@@ -1370,7 +1127,7 @@ app.get(
 
 app.post(
   "/api/farmers",
-  (
+  async (
     req,
     res
   ) => {
@@ -1381,17 +1138,20 @@ app.post(
         req.body ||
         {};
 
+
       const requestedId =
         String(
           incoming.id ||
           ""
         ).trim();
 
+
       const name =
         String(
           incoming.name ||
           ""
         ).trim();
+
 
       const phone =
         normalisePhone(
@@ -1421,7 +1181,7 @@ app.post(
 
 
       let farmer =
-        resolveFarmer({
+        await resolveFarmer({
 
           farmerId:
             requestedId,
@@ -1441,134 +1201,140 @@ app.post(
         farmer
       ) {
 
-        db.prepare(`
-          UPDATE farmers
-          SET
-            name = ?,
-            phone = ?,
-            state_id = ?,
-            district_id = ?,
-            mandal_id = ?,
-            village = ?,
-            language = ?,
-            preferred_center_id = ?,
-            primary_crop = ?,
-            estimated_quantity = ?
-          WHERE id = ?
-        `).run(
+        await query(
+          `
+            UPDATE farmers
+            SET
+              name = $1,
+              phone = $2,
+              state_id = $3,
+              district_id = $4,
+              mandal_id = $5,
+              village = $6,
+              language = $7,
+              preferred_center_id = $8,
+              primary_crop = $9,
+              estimated_quantity = $10
+            WHERE id = $11
+          `,
+          [
 
-          name,
+            name,
 
-          phone,
+            phone,
 
-          incoming.stateId ||
-            farmer.state_id ||
-            null,
+            incoming.stateId ??
+              farmer.state_id ??
+              null,
 
-          incoming.districtId ||
-            farmer.district_id ||
-            null,
+            incoming.districtId ??
+              farmer.district_id ??
+              null,
 
-          incoming.mandalId ||
-            farmer.mandal_id ||
-            null,
+            incoming.mandalId ??
+              farmer.mandal_id ??
+              null,
 
-          incoming.village ??
-            farmer.village ??
-            null,
+            incoming.village ??
+              farmer.village ??
+              null,
 
-          incoming.language ||
-            farmer.language ||
-            "en",
+            incoming.language ||
+              farmer.language ||
+              "en",
 
-          incoming.preferredCenterId ??
-            farmer.preferred_center_id ??
-            null,
+            incoming.preferredCenterId ??
+              farmer.preferred_center_id ??
+              null,
 
-          incoming.primaryCrop ??
-            farmer.primary_crop ??
-            null,
+            incoming.primaryCrop ??
+              farmer.primary_crop ??
+              null,
 
-          Number(
-            incoming.estimatedQuantity ??
-            farmer.estimated_quantity ??
-            0
-          ),
+            Number(
+              incoming.estimatedQuantity ??
+              farmer.estimated_quantity ??
+              0
+            ),
 
-          farmer.id
+            farmer.id,
 
+          ]
         );
 
       } else {
 
-        db.prepare(`
-          INSERT INTO farmers (
-            id,
+        await query(
+          `
+            INSERT INTO farmers (
+              id,
+              name,
+              phone,
+              state_id,
+              district_id,
+              mandal_id,
+              village,
+              language,
+              preferred_center_id,
+              primary_crop,
+              estimated_quantity
+            )
+            VALUES (
+              $1,
+              $2,
+              $3,
+              $4,
+              $5,
+              $6,
+              $7,
+              $8,
+              $9,
+              $10,
+              $11
+            )
+          `,
+          [
+
+            farmerId,
+
             name,
+
             phone,
-            state_id,
-            district_id,
-            mandal_id,
-            village,
-            language,
-            preferred_center_id,
-            primary_crop,
-            estimated_quantity
-          )
-          VALUES (
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?
-          )
-        `).run(
 
-          farmerId,
+            incoming.stateId ??
+              null,
 
-          name,
+            incoming.districtId ??
+              null,
 
-          phone,
+            incoming.mandalId ??
+              null,
 
-          incoming.stateId ||
-            null,
+            incoming.village ??
+              null,
 
-          incoming.districtId ||
-            null,
+            incoming.language ||
+              "en",
 
-          incoming.mandalId ||
-            null,
+            incoming.preferredCenterId ??
+              null,
 
-          incoming.village ||
-            null,
+            incoming.primaryCrop ??
+              null,
 
-          incoming.language ||
-            "en",
+            Number(
+              incoming.estimatedQuantity ||
+              0
+            ),
 
-          incoming.preferredCenterId ||
-            null,
-
-          incoming.primaryCrop ||
-            null,
-
-          Number(
-            incoming.estimatedQuantity ||
-            0
-          )
-
+          ]
         );
 
       }
 
 
       const saved =
-        findFarmerById(
+        await findFarmerById(
           farmerId
         );
 
@@ -1615,7 +1381,7 @@ app.post(
 
       if (
         error?.code ===
-        "SQLITE_CONSTRAINT_UNIQUE"
+        "23505"
       ) {
 
         return res
@@ -1653,7 +1419,7 @@ app.post(
 
 app.get(
   "/api/farmers",
-  (
+  async (
     req,
     res
   ) => {
@@ -1661,11 +1427,13 @@ app.get(
     try {
 
       const farmers =
-        db.prepare(`
-          SELECT *
-          FROM farmers
-          ORDER BY datetime(created_at) DESC
-        `).all();
+        await all(
+          `
+            SELECT *
+            FROM farmers
+            ORDER BY created_at DESC, id DESC
+          `
+        );
 
 
       res.json({
@@ -1709,7 +1477,7 @@ app.get(
 
 app.get(
   "/api/farmers/by-phone/:phone",
-  (
+  async (
     req,
     res
   ) => {
@@ -1743,7 +1511,7 @@ app.get(
 
 
       const farmer =
-        findFarmerByPhone(
+        await findFarmerByPhone(
           phone
         );
 
@@ -1808,7 +1576,7 @@ app.get(
 
 app.get(
   "/api/farmers/:id",
-  (
+  async (
     req,
     res
   ) => {
@@ -1816,7 +1584,7 @@ app.get(
     try {
 
       const farmer =
-        findFarmerById(
+        await findFarmerById(
           String(
             req.params.id ||
             ""
@@ -1884,7 +1652,7 @@ app.get(
 
 app.patch(
   "/api/farmers/:id",
-  (
+  async (
     req,
     res
   ) => {
@@ -1899,7 +1667,7 @@ app.patch(
 
 
       const existing =
-        resolveFarmer({
+        await resolveFarmer({
 
           farmerId:
             requestedId,
@@ -2071,7 +1839,7 @@ app.patch(
 
 
       const otherFarmer =
-        findFarmerByPhone(
+        await findFarmerByPhone(
           phone
         );
 
@@ -2097,42 +1865,45 @@ app.patch(
       }
 
 
-      db.prepare(`
-        UPDATE farmers
-        SET
-          name = ?,
-          phone = ?,
-          village = ?,
-          language = ?,
-          preferred_center_id = ?,
-          primary_crop = ?,
-          estimated_quantity = ?
-        WHERE id = ?
-      `).run(
+      await query(
+        `
+          UPDATE farmers
+          SET
+            name = $1,
+            phone = $2,
+            village = $3,
+            language = $4,
+            preferred_center_id = $5,
+            primary_crop = $6,
+            estimated_quantity = $7
+          WHERE id = $8
+        `,
+        [
 
-        name,
+          name,
 
-        phone,
+          phone,
 
-        village ||
-          null,
+          village ||
+            null,
 
-        language,
+          language,
 
-        preferredCenterId,
+          preferredCenterId,
 
-        primaryCrop ||
-          null,
+          primaryCrop ||
+            null,
 
-        estimatedQuantity,
+          estimatedQuantity,
 
-        existing.id
+          existing.id,
 
+        ]
       );
 
 
       const updated =
-        findFarmerById(
+        await findFarmerById(
           existing.id
         );
 
@@ -2182,7 +1953,7 @@ app.patch(
 
 app.get(
   "/api/centers",
-  (
+  async (
     req,
     res
   ) => {
@@ -2190,11 +1961,13 @@ app.get(
     try {
 
       const centers =
-        db.prepare(`
-          SELECT *
-          FROM centers
-          ORDER BY name ASC
-        `).all();
+        await all(
+          `
+            SELECT *
+            FROM centers
+            ORDER BY name ASC
+          `
+        );
 
 
       res.json({
@@ -2238,7 +2011,7 @@ app.get(
 
 app.post(
   "/api/centers",
-  (
+  async (
     req,
     res
   ) => {
@@ -2395,7 +2168,7 @@ app.post(
           capacity
         ) ||
         capacity <=
-          0
+        0
       ) {
 
         return res
@@ -2414,12 +2187,15 @@ app.post(
 
 
       const existing =
-        db.prepare(`
-          SELECT *
-          FROM centers
-          WHERE id = ?
-        `).get(
-          id
+        await get(
+          `
+            SELECT *
+            FROM centers
+            WHERE id = $1
+          `,
+          [
+            id,
+          ]
         );
 
 
@@ -2442,91 +2218,88 @@ app.post(
       }
 
 
-      db.prepare(`
-        INSERT INTO centers (
+      await query(
+        `
+          INSERT INTO centers (
+            id,
+            name,
+            state_id,
+            district_id,
+            mandal_id,
+            village,
+            address,
+            manager_name,
+            manager_phone,
+            capacity,
+            opening_time,
+            closing_time,
+            active
+          )
+          VALUES (
+            $1,
+            $2,
+            $3,
+            $4,
+            $5,
+            $6,
+            $7,
+            $8,
+            $9,
+            $10,
+            $11,
+            $12,
+            $13
+          )
+        `,
+        [
+
           id,
+
           name,
-          state_id,
-          district_id,
-          mandal_id,
-          village,
-          address,
-          manager_name,
-          manager_phone,
-          capacity,
-          opening_time,
-          closing_time,
-          active
-        )
-        VALUES (
-          @id,
-          @name,
-          @state_id,
-          @district_id,
-          @mandal_id,
-          @village,
-          @address,
-          @manager_name,
-          @manager_phone,
-          @capacity,
-          @opening_time,
-          @closing_time,
-          @active
-        )
-      `).run({
 
-        id,
-
-        name,
-
-        state_id:
           stateId ||
-          null,
+            null,
 
-        district_id:
           districtId ||
-          null,
+            null,
 
-        mandal_id:
           mandalId ||
-          null,
+            null,
 
-        village:
           village ||
-          null,
+            null,
 
-        address:
           address ||
-          null,
+            null,
 
-        manager_name:
           managerName ||
-          null,
+            null,
 
-        manager_phone:
           managerPhone ||
-          null,
+            null,
 
-        capacity,
+          capacity,
 
-        opening_time:
           openingTime,
 
-        closing_time:
           closingTime,
 
-        active,
+          active,
 
-      });
+        ]
+      );
 
 
       const created =
-        db.prepare(`
-          SELECT *
-          FROM centers
-          WHERE id = ?
-        `).get(
-          id
+        await get(
+          `
+            SELECT *
+            FROM centers
+            WHERE id = $1
+          `,
+          [
+            id,
+          ]
         );
 
 
@@ -2557,7 +2330,7 @@ app.post(
 
       if (
         error?.code ===
-        "SQLITE_CONSTRAINT_UNIQUE"
+        "23505"
       ) {
 
         return res
@@ -2599,7 +2372,7 @@ app.post(
 
 app.patch(
   "/api/centers/:id",
-  (
+  async (
     req,
     res
   ) => {
@@ -2614,12 +2387,15 @@ app.patch(
 
 
       const existing =
-        db.prepare(`
-          SELECT *
-          FROM centers
-          WHERE id = ?
-        `).get(
-          centerId
+        await get(
+          `
+            SELECT *
+            FROM centers
+            WHERE id = $1
+          `,
+          [
+            centerId,
+          ]
         );
 
 
@@ -2792,67 +2568,74 @@ app.patch(
       }
 
 
-      db.prepare(`
-        UPDATE centers
-        SET
-          name = ?,
-          state_id = ?,
-          district_id = ?,
-          mandal_id = ?,
-          village = ?,
-          address = ?,
-          manager_name = ?,
-          manager_phone = ?,
-          capacity = ?,
-          opening_time = ?,
-          closing_time = ?,
-          active = ?
-        WHERE id = ?
-      `).run(
+      await query(
+        `
+          UPDATE centers
+          SET
+            name = $1,
+            state_id = $2,
+            district_id = $3,
+            mandal_id = $4,
+            village = $5,
+            address = $6,
+            manager_name = $7,
+            manager_phone = $8,
+            capacity = $9,
+            opening_time = $10,
+            closing_time = $11,
+            active = $12,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = $13
+        `,
+        [
 
-        name,
+          name,
 
-        stateId ||
-          null,
+          stateId ||
+            null,
 
-        districtId ||
-          null,
+          districtId ||
+            null,
 
-        mandalId ||
-          null,
+          mandalId ||
+            null,
 
-        village ||
-          null,
+          village ||
+            null,
 
-        address ||
-          null,
+          address ||
+            null,
 
-        managerName ||
-          null,
+          managerName ||
+            null,
 
-        managerPhone ||
-          null,
+          managerPhone ||
+            null,
 
-        capacity,
+          capacity,
 
-        openingTime,
+          openingTime,
 
-        closingTime,
+          closingTime,
 
-        active,
+          active,
 
-        centerId,
+          centerId,
 
+        ]
       );
 
 
       const updated =
-        db.prepare(`
-          SELECT *
-          FROM centers
-          WHERE id = ?
-        `).get(
-          centerId
+        await get(
+          `
+            SELECT *
+            FROM centers
+            WHERE id = $1
+          `,
+          [
+            centerId,
+          ]
         );
 
 
@@ -2903,7 +2686,7 @@ app.patch(
 
 app.get(
   "/api/bookings",
-  (
+  async (
     req,
     res
   ) => {
@@ -2911,42 +2694,42 @@ app.get(
     try {
 
       const bookings =
-        db.prepare(`
-          SELECT
-            b.*,
+        await all(
+          `
+            SELECT
+              b.*,
 
-            f.name AS farmer_name,
-            f.phone AS farmer_phone,
-            f.village AS farmer_village,
+              f.name AS farmer_name,
+              f.phone AS farmer_phone,
+              f.village AS farmer_village,
 
-            p.amount AS payment_amount,
-            p.method AS payment_method,
-            p.reference AS payment_reference,
-            p.status AS payment_status,
-            p.rate_per_kg AS payment_rate_per_kg,
-            p.notes AS payment_notes,
-            p.updated_at AS payment_updated_at,
-            p.sms_status AS payment_sms_status,
-            p.sms_sent_at AS payment_sms_sent_at
+              p.amount AS payment_amount,
+              p.method AS payment_method,
+              p.reference AS payment_reference,
+              p.status AS payment_status,
+              p.rate_per_kg AS payment_rate_per_kg,
+              p.notes AS payment_notes,
+              p.updated_at AS payment_updated_at,
+              p.sms_status AS payment_sms_status,
+              p.sms_sent_at AS payment_sms_sent_at
 
-          FROM bookings b
+            FROM bookings b
 
-          LEFT JOIN farmers f
-            ON f.id = b.farmer_id
+            LEFT JOIN farmers f
+              ON f.id = b.farmer_id
 
-          LEFT JOIN payments p
-            ON p.id = (
-              SELECT MAX(p2.id)
-              FROM payments p2
-              WHERE p2.booking_id = b.id
-            )
+            LEFT JOIN payments p
+              ON p.id = (
+                SELECT MAX(p2.id)
+                FROM payments p2
+                WHERE p2.booking_id = b.id
+              )
 
-          ORDER BY
-            datetime(
-              b.created_at
-            ) DESC,
-            b.id DESC
-        `).all();
+            ORDER BY
+              b.created_at DESC,
+              b.id DESC
+          `
+        );
 
 
       res.json({
@@ -3073,12 +2856,15 @@ app.post(
 
 
       const existingBooking =
-        db.prepare(`
-          SELECT *
-          FROM bookings
-          WHERE id = ?
-        `).get(
-          id
+        await get(
+          `
+            SELECT *
+            FROM bookings
+            WHERE id = $1
+          `,
+          [
+            id,
+          ]
         );
 
 
@@ -3092,9 +2878,7 @@ app.post(
             true,
 
           booking:
-            getBookingById(
-              id
-            ),
+            existingBooking,
 
           alreadyExists:
             true,
@@ -3108,7 +2892,7 @@ app.post(
 
 
       const farmer =
-        resolveFarmer({
+        await resolveFarmer({
 
           farmerId:
             suppliedFarmerId,
@@ -3175,7 +2959,7 @@ app.post(
 
 
       const settings =
-        getSettings();
+        await getSettings();
 
 
       if (
@@ -3284,7 +3068,6 @@ app.post(
       const today =
         new Date();
 
-
       today.setHours(
         0,
         0,
@@ -3375,12 +3158,15 @@ app.post(
 
 
       const center =
-        db.prepare(`
-          SELECT *
-          FROM centers
-          WHERE id = ?
-        `).get(
-          centerId
+        await get(
+          `
+            SELECT *
+            FROM centers
+            WHERE id = $1
+          `,
+          [
+            centerId,
+          ]
         );
 
 
@@ -3432,7 +3218,6 @@ app.post(
       const capacity =
         Number(
           center.capacity ||
-          center.capacity_per_slot ||
           settings.defaultCapacity ||
           20
         );
@@ -3462,25 +3247,28 @@ app.post(
 
 
       const slotConflict =
-        db.prepare(`
-          SELECT COUNT(*) AS count
-          FROM bookings
-          WHERE
-            center_id = ?
-            AND date = ?
-            AND slot_start = ?
-            AND slot_end = ?
-            AND status != 'PAYMENT_SENT'
-        `).get(
+        await get(
+          `
+            SELECT COUNT(*)::int AS count
+            FROM bookings
+            WHERE
+              center_id = $1
+              AND date = $2
+              AND slot_start = $3
+              AND slot_end = $4
+              AND status != 'PAYMENT_SENT'
+          `,
+          [
 
-          centerId,
+            centerId,
 
-          date,
+            date,
 
-          slotStart,
+            slotStart,
 
-          slotEnd
+            slotEnd,
 
+          ]
         );
 
 
@@ -3507,11 +3295,13 @@ app.post(
       }
 
 
-      const transaction =
-        db.transaction(
-          () => {
+      await transaction(
+        async (
+          client
+        ) => {
 
-            db.prepare(`
+          await client.query(
+            `
               INSERT INTO bookings (
                 id,
                 token,
@@ -3527,20 +3317,21 @@ app.post(
                 quality
               )
               VALUES (
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
-                ?,
+                $1,
+                $2,
+                $3,
+                $4,
+                $5,
+                $6,
                 NULL,
-                ?,
-                ?,
-                ?,
+                $7,
+                $8,
+                $9,
                 'CONFIRMED',
                 NULL
               )
-            `).run(
+            `,
+            [
 
               id,
 
@@ -3558,29 +3349,30 @@ app.post(
 
               slotStart,
 
-              slotEnd
+              slotEnd,
 
-            );
+            ]
+          );
 
 
-            db.prepare(`
+          await client.query(
+            `
               INSERT INTO status_events (
                 booking_id,
                 status
               )
               VALUES (
-                ?,
+                $1,
                 'CONFIRMED'
               )
-            `).run(
-              id
-            );
+            `,
+            [
+              id,
+            ]
+          );
 
-          }
-        );
-
-
-      transaction();
+        }
+      );
 
 
       console.log(
@@ -3590,7 +3382,7 @@ app.post(
 
 
       const settingsAfterInsert =
-        getSettings();
+        await getSettings();
 
 
       const shouldSendBookingSms =
@@ -3633,10 +3425,6 @@ app.post(
       );
 
 
-      /*
-         SMS failure can never break this request.
-      */
-
       const notification =
         await createNotification({
 
@@ -3665,7 +3453,7 @@ app.post(
 
 
       const created =
-        getBookingById(
+        await getBookingById(
           id
         );
 
@@ -3706,7 +3494,7 @@ app.post(
 
       if (
         error?.code ===
-        "SQLITE_CONSTRAINT_UNIQUE"
+        "23505"
       ) {
 
         return res
@@ -3748,7 +3536,7 @@ app.post(
 
 app.get(
   "/api/bookings/:id",
-  (
+  async (
     req,
     res
   ) => {
@@ -3756,7 +3544,7 @@ app.get(
     try {
 
       const booking =
-        getBookingById(
+        await getBookingById(
           req.params.id
         );
 
@@ -3781,19 +3569,22 @@ app.get(
 
 
       const statusEvents =
-        db.prepare(`
-          SELECT
-            id,
-            booking_id,
-            status,
-            created_at
-          FROM status_events
-          WHERE booking_id = ?
-          ORDER BY
-            datetime(created_at) ASC,
-            id ASC
-        `).all(
-          req.params.id
+        await all(
+          `
+            SELECT
+              id,
+              booking_id,
+              status,
+              created_at
+            FROM status_events
+            WHERE booking_id = $1
+            ORDER BY
+              created_at ASC,
+              id ASC
+          `,
+          [
+            req.params.id,
+          ]
         );
 
 
@@ -3883,16 +3674,19 @@ app.patch(
 
 
       const booking =
-        db.prepare(`
-          SELECT
-            b.*,
-            f.phone AS farmer_phone
-          FROM bookings b
-          LEFT JOIN farmers f
-            ON f.id = b.farmer_id
-          WHERE b.id = ?
-        `).get(
-          bookingId
+        await get(
+          `
+            SELECT
+              b.*,
+              f.phone AS farmer_phone
+            FROM bookings b
+            LEFT JOIN farmers f
+              ON f.id = b.farmer_id
+            WHERE b.id = $1
+          `,
+          [
+            bookingId,
+          ]
         );
 
 
@@ -3934,7 +3728,7 @@ app.patch(
             "Booking is already in this status.",
 
           booking:
-            getBookingById(
+            await getBookingById(
               bookingId
             ),
 
@@ -3997,36 +3791,50 @@ app.patch(
       }
 
 
-      db.prepare(`
-        UPDATE bookings
-        SET status = ?
-        WHERE id = ?
-      `).run(
+      await transaction(
+        async (
+          client
+        ) => {
 
-        nextStatus,
+          await client.query(
+            `
+              UPDATE bookings
+              SET status = $1
+              WHERE id = $2
+            `,
+            [
 
-        bookingId
+              nextStatus,
 
-      );
+              bookingId,
+
+            ]
+          );
 
 
-      db.prepare(`
-        INSERT INTO status_events (
-          booking_id,
-          status
-        )
-        VALUES (?, ?)
-      `).run(
+          await client.query(
+            `
+              INSERT INTO status_events (
+                booking_id,
+                status
+              )
+              VALUES ($1, $2)
+            `,
+            [
 
-        bookingId,
+              bookingId,
 
-        nextStatus
+              nextStatus,
 
+            ]
+          );
+
+        }
       );
 
 
       const settings =
-        getSettings();
+        await getSettings();
 
 
       const shouldSendSms =
@@ -4081,7 +3889,7 @@ app.patch(
           "Booking status updated.",
 
         booking:
-          getBookingById(
+          await getBookingById(
             bookingId
           ),
 
@@ -4174,16 +3982,19 @@ app.patch(
 
 
       const booking =
-        db.prepare(`
-          SELECT
-            b.*,
-            f.phone AS farmer_phone
-          FROM bookings b
-          LEFT JOIN farmers f
-            ON f.id = b.farmer_id
-          WHERE b.id = ?
-        `).get(
-          req.params.id
+        await get(
+          `
+            SELECT
+              b.*,
+              f.phone AS farmer_phone
+            FROM bookings b
+            LEFT JOIN farmers f
+              ON f.id = b.farmer_id
+            WHERE b.id = $1
+          `,
+          [
+            req.params.id,
+          ]
         );
 
 
@@ -4231,37 +4042,54 @@ app.patch(
       }
 
 
-      db.prepare(`
-        UPDATE bookings
-        SET
-          actual_quantity = ?,
-          quality = ?,
-          status = 'WEIGHING'
-        WHERE id = ?
-      `).run(
+      await transaction(
+        async (
+          client
+        ) => {
 
-        actualQuantity,
+          await client.query(
+            `
+              UPDATE bookings
+              SET
+                actual_quantity = $1,
+                quality = $2,
+                status = 'WEIGHING'
+              WHERE id = $3
+            `,
+            [
 
-        quality,
+              actualQuantity,
 
-        req.params.id
+              quality,
 
-      );
+              req.params.id,
+
+            ]
+          );
 
 
-      db.prepare(`
-        INSERT INTO status_events (
-          booking_id,
-          status
-        )
-        VALUES (?, 'WEIGHING')
-      `).run(
-        req.params.id
+          await client.query(
+            `
+              INSERT INTO status_events (
+                booking_id,
+                status
+              )
+              VALUES (
+                $1,
+                'WEIGHING'
+              )
+            `,
+            [
+              req.params.id,
+            ]
+          );
+
+        }
       );
 
 
       const settings =
-        getSettings();
+        await getSettings();
 
 
       const shouldSendSms =
@@ -4310,7 +4138,7 @@ app.patch(
           "Weight recorded.",
 
         booking:
-          getBookingById(
+          await getBookingById(
             req.params.id
           ),
 
@@ -4364,16 +4192,19 @@ app.patch(
     try {
 
       const booking =
-        db.prepare(`
-          SELECT
-            b.*,
-            f.phone AS farmer_phone
-          FROM bookings b
-          LEFT JOIN farmers f
-            ON f.id = b.farmer_id
-          WHERE b.id = ?
-        `).get(
-          req.params.id
+        await get(
+          `
+            SELECT
+              b.*,
+              f.phone AS farmer_phone
+            FROM bookings b
+            LEFT JOIN farmers f
+              ON f.id = b.farmer_id
+            WHERE b.id = $1
+          `,
+          [
+            req.params.id,
+          ]
         );
 
 
@@ -4539,20 +4370,25 @@ app.patch(
       }
 
 
-      const transaction =
-        db.transaction(
-          () => {
+      await transaction(
+        async (
+          client
+        ) => {
 
-            db.prepare(`
+          await client.query(
+            `
               UPDATE bookings
               SET status = 'PAYMENT_PENDING'
-              WHERE id = ?
-            `).run(
-              req.params.id
-            );
+              WHERE id = $1
+            `,
+            [
+              req.params.id,
+            ]
+          );
 
 
-            db.prepare(`
+          await client.query(
+            `
               INSERT INTO payments (
                 booking_id,
                 amount,
@@ -4566,18 +4402,19 @@ app.patch(
                 sms_sent_at
               )
               VALUES (
-                ?,
-                ?,
+                $1,
+                $2,
                 NULL,
                 NULL,
                 'PAYMENT_PENDING',
-                ?,
-                ?,
+                $3,
+                $4,
                 CURRENT_TIMESTAMP,
                 'NOT_SENT',
                 NULL
               )
-            `).run(
+            `,
+            [
 
               req.params.id,
 
@@ -4586,41 +4423,51 @@ app.patch(
               rate,
 
               notes ||
-                `Procurement rate: ₹${rate}/kg. Adjustment: ₹${adjustment}.`
+                `Procurement rate: ₹${rate}/kg. Adjustment: ₹${adjustment}.`,
 
-            );
+            ]
+          );
 
 
-            db.prepare(`
+          await client.query(
+            `
               INSERT INTO status_events (
                 booking_id,
                 status
               )
-              VALUES (?, 'PROCURED')
-            `).run(
-              req.params.id
-            );
+              VALUES (
+                $1,
+                'PROCURED'
+              )
+            `,
+            [
+              req.params.id,
+            ]
+          );
 
 
-            db.prepare(`
+          await client.query(
+            `
               INSERT INTO status_events (
                 booking_id,
                 status
               )
-              VALUES (?, 'PAYMENT_PENDING')
-            `).run(
-              req.params.id
-            );
+              VALUES (
+                $1,
+                'PAYMENT_PENDING'
+              )
+            `,
+            [
+              req.params.id,
+            ]
+          );
 
-          }
-        );
-
-
-      transaction();
+        }
+      );
 
 
       const settings =
-        getSettings();
+        await getSettings();
 
 
       const shouldSendSms =
@@ -4671,7 +4518,7 @@ app.patch(
           "Procurement completed.",
 
         booking:
-          getBookingById(
+          await getBookingById(
             req.params.id
           ),
 
@@ -4792,17 +4639,20 @@ app.patch(
 
 
       const booking =
-        db.prepare(`
-          SELECT
-            b.*,
-            f.name AS farmer_name,
-            f.phone AS farmer_phone
-          FROM bookings b
-          LEFT JOIN farmers f
-            ON f.id = b.farmer_id
-          WHERE b.id = ?
-        `).get(
-          req.params.id
+        await get(
+          `
+            SELECT
+              b.*,
+              f.name AS farmer_name,
+              f.phone AS farmer_phone
+            FROM bookings b
+            LEFT JOIN farmers f
+              ON f.id = b.farmer_id
+            WHERE b.id = $1
+          `,
+          [
+            req.params.id,
+          ]
         );
 
 
@@ -4870,14 +4720,17 @@ app.patch(
 
 
       const existingPayment =
-        db.prepare(`
-          SELECT *
-          FROM payments
-          WHERE booking_id = ?
-          ORDER BY id DESC
-          LIMIT 1
-        `).get(
-          req.params.id
+        await get(
+          `
+            SELECT *
+            FROM payments
+            WHERE booking_id = $1
+            ORDER BY id DESC
+            LIMIT 1
+          `,
+          [
+            req.params.id,
+          ]
         );
 
 
@@ -4901,25 +4754,28 @@ app.patch(
       }
 
 
-      const transaction =
-        db.transaction(
-          () => {
+      await transaction(
+        async (
+          client
+        ) => {
 
-            if (
-              existingPayment
-            ) {
+          if (
+            existingPayment
+          ) {
 
-              db.prepare(`
+            await client.query(
+              `
                 UPDATE payments
                 SET
-                  amount = ?,
-                  method = ?,
-                  reference = ?,
+                  amount = $1,
+                  method = $2,
+                  reference = $3,
                   status = 'PAYMENT_SENT',
-                  notes = ?,
+                  notes = $4,
                   updated_at = CURRENT_TIMESTAMP
-                WHERE id = ?
-              `).run(
+                WHERE id = $5
+              `,
+              [
 
                 amount,
 
@@ -4930,13 +4786,15 @@ app.patch(
                 notes ||
                   null,
 
-                existingPayment.id
+                existingPayment.id,
 
-              );
+              ]
+            );
 
-            } else {
+          } else {
 
-              db.prepare(`
+            await client.query(
+              `
                 INSERT INTO payments (
                   booking_id,
                   amount,
@@ -4950,18 +4808,19 @@ app.patch(
                   sms_sent_at
                 )
                 VALUES (
-                  ?,
-                  ?,
-                  ?,
-                  ?,
+                  $1,
+                  $2,
+                  $3,
+                  $4,
                   'PAYMENT_SENT',
                   NULL,
-                  ?,
+                  $5,
                   CURRENT_TIMESTAMP,
                   'NOT_SENT',
                   NULL
                 )
-              `).run(
+              `,
+              [
 
                 req.params.id,
 
@@ -4972,41 +4831,48 @@ app.patch(
                 reference,
 
                 notes ||
-                  null
+                  null,
 
-              );
-
-            }
-
-
-            db.prepare(`
-              UPDATE bookings
-              SET status = 'PAYMENT_SENT'
-              WHERE id = ?
-            `).run(
-              req.params.id
+              ]
             );
 
+          }
 
-            db.prepare(`
+
+          await client.query(
+            `
+              UPDATE bookings
+              SET status = 'PAYMENT_SENT'
+              WHERE id = $1
+            `,
+            [
+              req.params.id,
+            ]
+          );
+
+
+          await client.query(
+            `
               INSERT INTO status_events (
                 booking_id,
                 status
               )
-              VALUES (?, 'PAYMENT_SENT')
-            `).run(
-              req.params.id
-            );
+              VALUES (
+                $1,
+                'PAYMENT_SENT'
+              )
+            `,
+            [
+              req.params.id,
+            ]
+          );
 
-          }
-        );
-
-
-      transaction();
+        }
+      );
 
 
       const settings =
-        getSettings();
+        await getSettings();
 
 
       const shouldSendSms =
@@ -5021,42 +4887,8 @@ app.patch(
         );
 
 
-      /*
-         This message is kept for
-         KrishiSetu notification storage.
-
-         It is NOT passed to Twilio.
-      */
-
       const paymentMessage =
         `KrishiSetu payment of ₹${amount} for token ${booking.token} has been sent. Reference: ${reference}.`;
-
-
-      console.log(
-        "PAYMENT SMS PREPARATION:",
-        {
-
-          bookingId:
-            req.params.id,
-
-          farmerId:
-            booking.farmer_id,
-
-          phone:
-            booking.farmer_phone,
-
-          paymentSmsSetting:
-            settings.paymentSms,
-
-          smsEnabled:
-            settings.smsEnabled,
-
-          SMS_ENABLED,
-
-          shouldSendSms,
-
-        }
-      );
 
 
       const notification =
@@ -5087,14 +4919,17 @@ app.patch(
 
 
       const savedPaymentBeforeSmsUpdate =
-        db.prepare(`
-          SELECT *
-          FROM payments
-          WHERE booking_id = ?
-          ORDER BY id DESC
-          LIMIT 1
-        `).get(
-          req.params.id
+        await get(
+          `
+            SELECT *
+            FROM payments
+            WHERE booking_id = $1
+            ORDER BY id DESC
+            LIMIT 1
+          `,
+          [
+            req.params.id,
+          ]
         );
 
 
@@ -5102,35 +4937,41 @@ app.patch(
         savedPaymentBeforeSmsUpdate
       ) {
 
-        db.prepare(`
-          UPDATE payments
-          SET
-            sms_status = ?,
-            sms_sent_at = ?,
-            updated_at = CURRENT_TIMESTAMP
-          WHERE id = ?
-        `).run(
+        await query(
+          `
+            UPDATE payments
+            SET
+              sms_status = $1,
+              sms_sent_at = $2,
+              updated_at = CURRENT_TIMESTAMP
+            WHERE id = $3
+          `,
+          [
 
-          notification.status,
+            notification.status,
 
-          notification.sentAt,
+            notification.sentAt,
 
-          savedPaymentBeforeSmsUpdate.id
+            savedPaymentBeforeSmsUpdate.id,
 
+          ]
         );
 
       }
 
 
       const savedPayment =
-        db.prepare(`
-          SELECT *
-          FROM payments
-          WHERE booking_id = ?
-          ORDER BY id DESC
-          LIMIT 1
-        `).get(
-          req.params.id
+        await get(
+          `
+            SELECT *
+            FROM payments
+            WHERE booking_id = $1
+            ORDER BY id DESC
+            LIMIT 1
+          `,
+          [
+            req.params.id,
+          ]
         );
 
 
@@ -5188,7 +5029,7 @@ app.patch(
 
 app.get(
   "/api/bookings/:id/payments",
-  (
+  async (
     req,
     res
   ) => {
@@ -5196,12 +5037,15 @@ app.get(
     try {
 
       const booking =
-        db.prepare(`
-          SELECT id
-          FROM bookings
-          WHERE id = ?
-        `).get(
-          req.params.id
+        await get(
+          `
+            SELECT id
+            FROM bookings
+            WHERE id = $1
+          `,
+          [
+            req.params.id,
+          ]
         );
 
 
@@ -5225,13 +5069,16 @@ app.get(
 
 
       const payments =
-        db.prepare(`
-          SELECT *
-          FROM payments
-          WHERE booking_id = ?
-          ORDER BY id DESC
-        `).all(
-          req.params.id
+        await all(
+          `
+            SELECT *
+            FROM payments
+            WHERE booking_id = $1
+            ORDER BY id DESC
+          `,
+          [
+            req.params.id,
+          ]
         );
 
 
@@ -5276,7 +5123,7 @@ app.get(
 
 app.get(
   "/api/bookings/:id/status-history",
-  (
+  async (
     req,
     res
   ) => {
@@ -5284,12 +5131,15 @@ app.get(
     try {
 
       const booking =
-        db.prepare(`
-          SELECT id
-          FROM bookings
-          WHERE id = ?
-        `).get(
-          req.params.id
+        await get(
+          `
+            SELECT id
+            FROM bookings
+            WHERE id = $1
+          `,
+          [
+            req.params.id,
+          ]
         );
 
 
@@ -5313,19 +5163,22 @@ app.get(
 
 
       const events =
-        db.prepare(`
-          SELECT
-            id,
-            booking_id,
-            status,
-            created_at
-          FROM status_events
-          WHERE booking_id = ?
-          ORDER BY
-            datetime(created_at) ASC,
-            id ASC
-        `).all(
-          req.params.id
+        await all(
+          `
+            SELECT
+              id,
+              booking_id,
+              status,
+              created_at
+            FROM status_events
+            WHERE booking_id = $1
+            ORDER BY
+              created_at ASC,
+              id ASC
+          `,
+          [
+            req.params.id,
+          ]
         );
 
 
@@ -5370,7 +5223,7 @@ app.get(
 
 app.post(
   "/api/payment-issues",
-  (
+  async (
     req,
     res
   ) => {
@@ -5440,7 +5293,7 @@ app.post(
 
 
       const farmer =
-        resolveFarmer({
+        await resolveFarmer({
 
           farmerId,
 
@@ -5471,16 +5324,19 @@ app.post(
 
 
       const booking =
-        db.prepare(`
-          SELECT
-            id,
-            farmer_id,
-            token,
-            status
-          FROM bookings
-          WHERE id = ?
-        `).get(
-          bookingId
+        await get(
+          `
+            SELECT
+              id,
+              farmer_id,
+              token,
+              status
+            FROM bookings
+            WHERE id = $1
+          `,
+          [
+            bookingId,
+          ]
         );
 
 
@@ -5527,28 +5383,37 @@ app.post(
       }
 
 
-      const result =
-        db.prepare(`
-          INSERT INTO payment_issues (
-            farmer_id,
-            booking_id,
+      const issue =
+        await get(
+          `
+            INSERT INTO payment_issues (
+              farmer_id,
+              booking_id,
+              message,
+              status
+            )
+            VALUES (
+              $1,
+              $2,
+              $3,
+              'OPEN'
+            )
+            RETURNING
+              id,
+              farmer_id,
+              booking_id,
+              message,
+              status
+          `,
+          [
+
+            farmer.id,
+
+            bookingId,
+
             message,
-            status
-          )
-          VALUES (
-            ?,
-            ?,
-            ?,
-            'OPEN'
-          )
-        `).run(
 
-          farmer.id,
-
-          bookingId,
-
-          message
-
+          ]
         );
 
 
@@ -5563,15 +5428,16 @@ app.post(
         issue: {
 
           id:
-            result.lastInsertRowid,
+            issue.id,
 
           farmerId:
-            farmer.id,
+            issue.farmer_id,
 
-          bookingId,
+          bookingId:
+            issue.booking_id,
 
           status:
-            "OPEN",
+            issue.status,
 
         },
 
@@ -5609,7 +5475,7 @@ app.post(
 
 app.get(
   "/api/payment-issues",
-  (
+  async (
     req,
     res
   ) => {
@@ -5617,52 +5483,52 @@ app.get(
     try {
 
       const issues =
-        db.prepare(`
-          SELECT
-            pi.id,
-            pi.farmer_id,
-            pi.booking_id,
-            pi.message,
-            pi.status,
-            pi.created_at,
+        await all(
+          `
+            SELECT
+              pi.id,
+              pi.farmer_id,
+              pi.booking_id,
+              pi.message,
+              pi.status,
+              pi.created_at,
 
-            b.token,
-            b.status AS booking_status,
+              b.token,
+              b.status AS booking_status,
 
-            p.amount AS payment_amount,
-            p.reference AS payment_reference,
+              p.amount AS payment_amount,
+              p.reference AS payment_reference,
 
-            f.name AS farmer_name,
-            f.phone AS farmer_phone
+              f.name AS farmer_name,
+              f.phone AS farmer_phone
 
-          FROM payment_issues pi
+            FROM payment_issues pi
 
-          LEFT JOIN bookings b
-            ON b.id = pi.booking_id
+            LEFT JOIN bookings b
+              ON b.id = pi.booking_id
 
-          LEFT JOIN farmers f
-            ON f.id = pi.farmer_id
+            LEFT JOIN farmers f
+              ON f.id = pi.farmer_id
 
-          LEFT JOIN payments p
-            ON p.id = (
-              SELECT MAX(p2.id)
-              FROM payments p2
-              WHERE p2.booking_id = pi.booking_id
-            )
+            LEFT JOIN payments p
+              ON p.id = (
+                SELECT MAX(p2.id)
+                FROM payments p2
+                WHERE p2.booking_id = pi.booking_id
+              )
 
-          ORDER BY
-            CASE
-              WHEN pi.status = 'OPEN'
-              THEN 0
-              ELSE 1
-            END,
+            ORDER BY
+              CASE
+                WHEN pi.status = 'OPEN'
+                THEN 0
+                ELSE 1
+              END,
 
-            datetime(
-              pi.created_at
-            ) DESC,
+              pi.created_at DESC,
 
-            pi.id DESC
-        `).all();
+              pi.id DESC
+          `
+        );
 
 
       res.json({
@@ -5706,7 +5572,7 @@ app.get(
 
 app.patch(
   "/api/payment-issues/:id",
-  (
+  async (
     req,
     res
   ) => {
@@ -5774,12 +5640,15 @@ app.patch(
 
 
       const issue =
-        db.prepare(`
-          SELECT *
-          FROM payment_issues
-          WHERE id = ?
-        `).get(
-          issueId
+        await get(
+          `
+            SELECT *
+            FROM payment_issues
+            WHERE id = $1
+          `,
+          [
+            issueId,
+          ]
         );
 
 
@@ -5802,56 +5671,62 @@ app.patch(
       }
 
 
-      db.prepare(`
-        UPDATE payment_issues
-        SET status = ?
-        WHERE id = ?
-      `).run(
+      await query(
+        `
+          UPDATE payment_issues
+          SET status = $1
+          WHERE id = $2
+        `,
+        [
 
-        status,
+          status,
 
-        issueId
+          issueId,
 
+        ]
       );
 
 
       const updated =
-        db.prepare(`
-          SELECT
-            pi.id,
-            pi.farmer_id,
-            pi.booking_id,
-            pi.message,
-            pi.status,
-            pi.created_at,
+        await get(
+          `
+            SELECT
+              pi.id,
+              pi.farmer_id,
+              pi.booking_id,
+              pi.message,
+              pi.status,
+              pi.created_at,
 
-            b.token,
-            b.status AS booking_status,
+              b.token,
+              b.status AS booking_status,
 
-            p.amount AS payment_amount,
-            p.reference AS payment_reference,
+              p.amount AS payment_amount,
+              p.reference AS payment_reference,
 
-            f.name AS farmer_name,
-            f.phone AS farmer_phone
+              f.name AS farmer_name,
+              f.phone AS farmer_phone
 
-          FROM payment_issues pi
+            FROM payment_issues pi
 
-          LEFT JOIN bookings b
-            ON b.id = pi.booking_id
+            LEFT JOIN bookings b
+              ON b.id = pi.booking_id
 
-          LEFT JOIN farmers f
-            ON f.id = pi.farmer_id
+            LEFT JOIN farmers f
+              ON f.id = pi.farmer_id
 
-          LEFT JOIN payments p
-            ON p.id = (
-              SELECT MAX(p2.id)
-              FROM payments p2
-              WHERE p2.booking_id = pi.booking_id
-            )
+            LEFT JOIN payments p
+              ON p.id = (
+                SELECT MAX(p2.id)
+                FROM payments p2
+                WHERE p2.booking_id = pi.booking_id
+              )
 
-          WHERE pi.id = ?
-        `).get(
-          issueId
+            WHERE pi.id = $1
+          `,
+          [
+            issueId,
+          ]
         );
 
 
@@ -5903,7 +5778,7 @@ app.patch(
 
 app.get(
   "/api/dashboard/summary",
-  (
+  async (
     req,
     res
   ) => {
@@ -5911,102 +5786,124 @@ app.get(
     try {
 
       const total =
-        db.prepare(`
-          SELECT COUNT(*) AS count
-          FROM bookings
-        `).get().count;
+        await get(
+          `
+            SELECT COUNT(*)::int AS count
+            FROM bookings
+          `
+        );
 
 
       const confirmed =
-        db.prepare(`
-          SELECT COUNT(*) AS count
-          FROM bookings
-          WHERE status = 'CONFIRMED'
-        `).get().count;
+        await get(
+          `
+            SELECT COUNT(*)::int AS count
+            FROM bookings
+            WHERE status = 'CONFIRMED'
+          `
+        );
 
 
       const arrived =
-        db.prepare(`
-          SELECT COUNT(*) AS count
-          FROM bookings
-          WHERE status = 'ARRIVED'
-        `).get().count;
+        await get(
+          `
+            SELECT COUNT(*)::int AS count
+            FROM bookings
+            WHERE status = 'ARRIVED'
+          `
+        );
 
 
       const late =
-        db.prepare(`
-          SELECT COUNT(*) AS count
-          FROM bookings
-          WHERE status = 'LATE'
-        `).get().count;
+        await get(
+          `
+            SELECT COUNT(*)::int AS count
+            FROM bookings
+            WHERE status = 'LATE'
+          `
+        );
 
 
       const weighing =
-        db.prepare(`
-          SELECT COUNT(*) AS count
-          FROM bookings
-          WHERE status = 'WEIGHING'
-        `).get().count;
+        await get(
+          `
+            SELECT COUNT(*)::int AS count
+            FROM bookings
+            WHERE status = 'WEIGHING'
+          `
+        );
 
 
       const procured =
-        db.prepare(`
-          SELECT COUNT(*) AS count
-          FROM bookings
-          WHERE status IN (
-            'PROCURED',
-            'PAYMENT_PENDING',
-            'PAYMENT_SENT'
-          )
-        `).get().count;
+        await get(
+          `
+            SELECT COUNT(*)::int AS count
+            FROM bookings
+            WHERE status IN (
+              'PROCURED',
+              'PAYMENT_PENDING',
+              'PAYMENT_SENT'
+            )
+          `
+        );
 
 
       const paymentPending =
-        db.prepare(`
-          SELECT COUNT(*) AS count
-          FROM bookings
-          WHERE status = 'PAYMENT_PENDING'
-        `).get().count;
+        await get(
+          `
+            SELECT COUNT(*)::int AS count
+            FROM bookings
+            WHERE status = 'PAYMENT_PENDING'
+          `
+        );
 
 
       const paymentSent =
-        db.prepare(`
-          SELECT COUNT(*) AS count
-          FROM bookings
-          WHERE status = 'PAYMENT_SENT'
-        `).get().count;
+        await get(
+          `
+            SELECT COUNT(*)::int AS count
+            FROM bookings
+            WHERE status = 'PAYMENT_SENT'
+          `
+        );
 
 
       const totalPaid =
-        db.prepare(`
-          SELECT
-            COALESCE(
-              SUM(amount),
-              0
-            ) AS amount
-          FROM payments
-          WHERE status = 'PAYMENT_SENT'
-        `).get().amount;
+        await get(
+          `
+            SELECT
+              COALESCE(
+                SUM(amount),
+                0
+              ) AS amount
+            FROM payments
+            WHERE status = 'PAYMENT_SENT'
+          `
+        );
 
 
       const pendingAmount =
-        db.prepare(`
-          SELECT
-            COALESCE(
-              SUM(amount),
-              0
-            ) AS amount
-          FROM payments
-          WHERE status = 'PAYMENT_PENDING'
-        `).get().amount;
+        await get(
+          `
+            SELECT
+              COALESCE(
+                SUM(amount),
+                0
+              ) AS amount
+            FROM payments
+            WHERE status = 'PAYMENT_PENDING'
+          `
+        );
 
 
       const openPaymentIssues =
-        db.prepare(`
-          SELECT COUNT(*) AS count
-          FROM payment_issues
-          WHERE status = 'OPEN'
-        `).get().count;
+        await get(
+          `
+            SELECT COUNT(*)::int AS count
+            FROM payment_issues
+            WHERE status = 'OPEN'
+          `
+        );
 
 
       res.json({
@@ -6016,27 +5913,71 @@ app.get(
 
         summary: {
 
-          total,
+          total:
+            Number(
+              total?.count ||
+              0
+            ),
 
-          confirmed,
+          confirmed:
+            Number(
+              confirmed?.count ||
+              0
+            ),
 
-          arrived,
+          arrived:
+            Number(
+              arrived?.count ||
+              0
+            ),
 
-          late,
+          late:
+            Number(
+              late?.count ||
+              0
+            ),
 
-          weighing,
+          weighing:
+            Number(
+              weighing?.count ||
+              0
+            ),
 
-          procured,
+          procured:
+            Number(
+              procured?.count ||
+              0
+            ),
 
-          paymentPending,
+          paymentPending:
+            Number(
+              paymentPending?.count ||
+              0
+            ),
 
-          paymentSent,
+          paymentSent:
+            Number(
+              paymentSent?.count ||
+              0
+            ),
 
-          totalPaid,
+          totalPaid:
+            Number(
+              totalPaid?.amount ||
+              0
+            ),
 
-          pendingAmount,
+          pendingAmount:
+            Number(
+              pendingAmount?.amount ||
+              0
+            ),
 
-          openPaymentIssues,
+          openPaymentIssues:
+            Number(
+              openPaymentIssues?.count ||
+              0
+            ),
 
         },
 
@@ -6074,7 +6015,7 @@ app.get(
 
 app.get(
   "/api/settings",
-  (
+  async (
     req,
     res
   ) => {
@@ -6087,7 +6028,7 @@ app.get(
           true,
 
         settings:
-          getSettings(),
+          await getSettings(),
 
       });
 
@@ -6119,7 +6060,7 @@ app.get(
 
 app.patch(
   "/api/settings",
-  (
+  async (
     req,
     res
   ) => {
@@ -6127,7 +6068,7 @@ app.patch(
     try {
 
       const current =
-        getSettings();
+        await getSettings();
 
 
       const next = {
@@ -6314,7 +6255,7 @@ app.patch(
       }
 
 
-      saveSettings(
+      await saveSettings(
         next
       );
 
@@ -6328,7 +6269,7 @@ app.patch(
           "System settings saved.",
 
         settings:
-          getSettings(),
+          await getSettings(),
 
       });
 
@@ -6364,14 +6305,14 @@ app.patch(
 
 app.post(
   "/api/settings/reset",
-  (
+  async (
     req,
     res
   ) => {
 
     try {
 
-      saveSettings(
+      await saveSettings(
         DEFAULT_SETTINGS
       );
 
@@ -6385,7 +6326,7 @@ app.post(
           "System settings reset to defaults.",
 
         settings:
-          getSettings(),
+          await getSettings(),
 
       });
 
@@ -6421,7 +6362,7 @@ app.post(
 
 app.get(
   "/api/activity-log",
-  (
+  async (
     req,
     res
   ) => {
@@ -6429,37 +6370,37 @@ app.get(
     try {
 
       const events =
-        db.prepare(`
-          SELECT
-            se.id,
-            se.booking_id,
-            se.status,
-            se.created_at,
+        await all(
+          `
+            SELECT
+              se.id,
+              se.booking_id,
+              se.status,
+              se.created_at,
 
-            b.token,
+              b.token,
 
-            f.name AS farmer_name,
-            f.phone AS farmer_phone,
+              f.name AS farmer_name,
+              f.phone AS farmer_phone,
 
-            NULL AS actor_type,
-            NULL AS actor_id,
-            NULL AS note,
-            NULL AS changed_fields
+              NULL AS actor_type,
+              NULL AS actor_id,
+              NULL AS note,
+              NULL AS changed_fields
 
-          FROM status_events se
+            FROM status_events se
 
-          LEFT JOIN bookings b
-            ON b.id = se.booking_id
+            LEFT JOIN bookings b
+              ON b.id = se.booking_id
 
-          LEFT JOIN farmers f
-            ON f.id = b.farmer_id
+            LEFT JOIN farmers f
+              ON f.id = b.farmer_id
 
-          ORDER BY
-            datetime(
-              se.created_at
-            ) DESC,
-            se.id DESC
-        `).all();
+            ORDER BY
+              se.created_at DESC,
+              se.id DESC
+          `
+        );
 
 
       res.json({
@@ -6503,7 +6444,7 @@ app.get(
 
 app.get(
   "/api/farmers/:id/notifications",
-  (
+  async (
     req,
     res
   ) => {
@@ -6518,7 +6459,7 @@ app.get(
 
 
       let farmer =
-        findFarmerById(
+        await findFarmerById(
           requestedId
         );
 
@@ -6535,7 +6476,7 @@ app.get(
 
 
         farmer =
-          findFarmerByPhone(
+          await findFarmerByPhone(
             possiblePhone
           );
 
@@ -6560,17 +6501,18 @@ app.get(
 
 
       const notifications =
-        db.prepare(`
-          SELECT *
-          FROM notifications
-          WHERE farmer_id = ?
-          ORDER BY
-            datetime(
-              created_at
-            ) DESC,
-            id DESC
-        `).all(
-          farmer.id
+        await all(
+          `
+            SELECT *
+            FROM notifications
+            WHERE farmer_id = $1
+            ORDER BY
+              created_at DESC,
+              id DESC
+          `,
+          [
+            farmer.id,
+          ]
         );
 
 
@@ -6615,7 +6557,7 @@ app.get(
 
 app.patch(
   "/api/notifications/:id/read",
-  (
+  async (
     req,
     res
   ) => {
@@ -6623,12 +6565,15 @@ app.patch(
     try {
 
       const result =
-        db.prepare(`
-          UPDATE notifications
-          SET read_at = CURRENT_TIMESTAMP
-          WHERE id = ?
-        `).run(
-          req.params.id
+        await query(
+          `
+            UPDATE notifications
+            SET read_at = CURRENT_TIMESTAMP
+            WHERE id = $1
+          `,
+          [
+            req.params.id,
+          ]
         );
 
 
@@ -6638,7 +6583,7 @@ app.patch(
           true,
 
         updated:
-          result.changes >
+          result.rowCount >
           0,
 
       });
@@ -6733,85 +6678,110 @@ app.use(
    START SERVER
 ========================================================= */
 
-app.listen(
-  PORT,
-  () => {
+async function startServer() {
 
-    console.log(
-      ""
+  try {
+
+    await initializeDatabase();
+
+
+    await db.query(
+      "SELECT 1"
     );
 
 
-    console.log(
-      "=========================================="
+    app.listen(
+      PORT,
+      () => {
+
+        console.log(
+          ""
+        );
+
+        console.log(
+          "=========================================="
+        );
+
+        console.log(
+          "        KRISHISETU BACKEND STARTED"
+        );
+
+        console.log(
+          "=========================================="
+        );
+
+        console.log(
+          `Backend port: ${PORT}`
+        );
+
+        console.log(
+          `SMS mode: ${
+            SMS_ENABLED
+              ? "ENABLED"
+              : "DEMO / DISABLED"
+          }`
+        );
+
+        console.log(
+          "Database: PostgreSQL"
+        );
+
+        console.log(
+          "Twilio Account configured:",
+          Boolean(
+            process.env.TWILIO_ACCOUNT_SID
+          )
+        );
+
+        console.log(
+          "Twilio API key configured:",
+          Boolean(
+            process.env.TWILIO_API_KEY
+          )
+        );
+
+        console.log(
+          "Twilio API secret configured:",
+          Boolean(
+            process.env.TWILIO_API_SECRET
+          )
+        );
+
+        console.log(
+          "Twilio sender configured:",
+          Boolean(
+            process.env.TWILIO_PHONE_NUMBER
+          )
+        );
+
+        console.log(
+          "Twilio trial template:",
+          TWILIO_TRIAL_TEMPLATE
+        );
+
+        console.log(
+          "=========================================="
+        );
+
+      }
     );
 
+  } catch (
+    error
+  ) {
 
-    console.log(
-      "        KRISHISETU BACKEND STARTED"
+    console.error(
+      "Failed to start KrishiSetu backend:",
+      error
     );
 
-
-    console.log(
-      "=========================================="
-    );
-
-
-    console.log(
-      `Backend port: ${PORT}`
-    );
-
-
-    console.log(
-      `SMS mode: ${
-        SMS_ENABLED
-          ? "ENABLED"
-          : "DEMO / DISABLED"
-      }`
-    );
-
-
-    console.log(
-      "Twilio Account configured:",
-      Boolean(
-        process.env.TWILIO_ACCOUNT_SID
-      )
-    );
-
-
-    console.log(
-      "Twilio API key configured:",
-      Boolean(
-        process.env.TWILIO_API_KEY
-      )
-    );
-
-
-    console.log(
-      "Twilio API secret configured:",
-      Boolean(
-        process.env.TWILIO_API_SECRET
-      )
-    );
-
-
-    console.log(
-      "Twilio sender configured:",
-      Boolean(
-        process.env.TWILIO_PHONE_NUMBER
-      )
-    );
-
-
-    console.log(
-      "Twilio trial template:",
-      TWILIO_TRIAL_TEMPLATE
-    );
-
-
-    console.log(
-      "=========================================="
+    process.exit(
+      1
     );
 
   }
-);
+
+}
+
+
+startServer();
