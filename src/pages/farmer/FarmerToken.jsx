@@ -330,8 +330,7 @@ function FarmerToken() {
   const loadFarmerHistory =
     useCallback(
       async (
-        farmerId,
-        isRefresh = false
+        farmerId
       ) => {
 
         if (
@@ -662,6 +661,28 @@ function FarmerToken() {
 
   /*
    * ========================================================
+   * LIVE QUEUE POSITION
+   * ========================================================
+   */
+
+  const queuePosition =
+    useMemo(
+      () =>
+        getQueuePosition(
+          booking,
+          farmerBookings,
+          currentTime
+        ),
+      [
+        booking,
+        farmerBookings,
+        currentTime,
+      ]
+    );
+
+
+  /*
+   * ========================================================
    * AUTOMATIC PAYMENT VOICE NOTIFICATION
    * ========================================================
    */
@@ -680,7 +701,10 @@ function FarmerToken() {
     if (
       typeof window ===
         "undefined" ||
-      !("speechSynthesis" in window)
+      !(
+        "speechSynthesis" in
+        window
+      )
     ) {
 
       return;
@@ -1458,7 +1482,7 @@ function FarmerToken() {
         qrDataUrl,
         "PNG",
         136,
-        42,
+        47,
         52,
         48
       );
@@ -1744,7 +1768,8 @@ function FarmerToken() {
             `Amount: ₹${paymentAmount.toLocaleString(
               "en-IN",
               {
-                maximumFractionDigits: 2,
+                maximumFractionDigits:
+                  2,
               }
             )}`,
             18,
@@ -2009,10 +2034,6 @@ function FarmerToken() {
         pdf.internal.pageSize.getHeight();
 
 
-      /*
-       * HEADER
-       */
-
       pdf.setFillColor(
         27,
         83,
@@ -2116,10 +2137,6 @@ function FarmerToken() {
       );
 
 
-      /*
-       * RECEIPT NUMBER
-       */
-
       pdf.setTextColor(
         35,
         55,
@@ -2194,10 +2211,6 @@ function FarmerToken() {
       );
 
 
-      /*
-       * QR CODE
-       */
-
       pdf.addImage(
         receiptQrUrl,
         "PNG",
@@ -2236,10 +2249,6 @@ function FarmerToken() {
         }
       );
 
-
-      /*
-       * FARMER / BOOKING
-       */
 
       let y =
         83;
@@ -2381,10 +2390,6 @@ function FarmerToken() {
       );
 
 
-      /*
-       * PROCUREMENT DETAILS
-       */
-
       y += 54;
 
 
@@ -2515,10 +2520,6 @@ function FarmerToken() {
         }
       );
 
-
-      /*
-       * PAYMENT BOX
-       */
 
       y += 5;
 
@@ -2681,10 +2682,6 @@ function FarmerToken() {
       );
 
 
-      /*
-       * TOTAL PAID
-       */
-
       y += 67;
 
 
@@ -2762,10 +2759,6 @@ function FarmerToken() {
       );
 
 
-      /*
-       * PAYMENT CONFIRMATION
-       */
-
       y += 14;
 
 
@@ -2837,10 +2830,6 @@ function FarmerToken() {
         }
       );
 
-
-      /*
-       * FOOTER
-       */
 
       pdf.setTextColor(
         125,
@@ -4053,6 +4042,125 @@ function FarmerToken() {
                   </p>
 
                 </div>
+
+              </div>
+
+
+              {/* =================================================
+                  LIVE QUEUE POSITION
+              ================================================= */}
+
+              <div className="token-queue-position-card">
+
+                <div className="token-queue-position-icon">
+
+                  <Clock3
+                    size={19}
+                  />
+
+                </div>
+
+
+                <div className="token-queue-position-content">
+
+                  <span>
+
+                    {getText(
+                      language,
+                      "LIVE QUEUE POSITION",
+                      "लाइव कतार स्थिति",
+                      "లైవ్ క్యూ స్థానం"
+                    )}
+
+                  </span>
+
+
+                  <strong>
+
+                    {
+                      queuePosition.isCompleted
+                        ? getText(
+                            language,
+                            "Queue completed",
+                            "कतार पूरी हो गई",
+                            "క్యూ పూర్తైంది"
+                          )
+                        : queuePosition.position > 0
+                          ? `#${queuePosition.position}`
+                          : getText(
+                              language,
+                              "Calculating...",
+                              "गणना हो रही है...",
+                              "లెక్కిస్తోంది..."
+                            )
+                    }
+
+                  </strong>
+
+
+                  <p>
+
+                    {
+                      queuePosition.isCompleted
+                        ? getText(
+                            language,
+                            "Your procurement processing is complete.",
+                            "आपकी खरीद प्रक्रिया पूरी हो गई है।",
+                            "మీ కొనుగోలు ప్రక్రియ పూర్తైంది."
+                          )
+                        : queuePosition.ahead > 0
+                          ? getText(
+                              language,
+                              `${queuePosition.ahead} farmers are ahead of you.`,
+                              `आपसे ${queuePosition.ahead} किसान आगे हैं।`,
+                              `మీ ముందుగా ${queuePosition.ahead} మంది రైతులు ఉన్నారు.`
+                            )
+                          : getText(
+                              language,
+                              "You are next in line.",
+                              "आप कतार में अगले हैं।",
+                              "మీరు క్యూ‌లో తదుపరి ఉన్నారు."
+                            )
+                    }
+
+                  </p>
+
+                </div>
+
+
+                {
+                  !queuePosition.isCompleted &&
+                  queuePosition.position > 0 && (
+
+                    <div className="token-queue-wait">
+
+                      <span>
+
+                        {getText(
+                          language,
+                          "Estimated wait",
+                          "अनुमानित प्रतीक्षा",
+                          "అంచనా వేచి ఉండే సమయం"
+                        )}
+
+                      </span>
+
+
+                      <strong>
+
+                        {
+                          formatWaitTime(
+                            queuePosition.waitMinutes,
+                            language
+                          )
+                        }
+
+                      </strong>
+
+                    </div>
+
+                  )
+                }
 
               </div>
 
@@ -6252,7 +6360,578 @@ function TokenMonthlyStat({
 
 
 /* =========================================================
-   NEW VOICE HELPERS
+   QUEUE POSITION
+========================================================= */
+
+function getQueuePosition(
+  booking,
+  bookings,
+  currentTime
+) {
+
+  if (
+    !booking ||
+    !Array.isArray(
+      bookings
+    )
+  ) {
+
+    return {
+
+      position:
+        0,
+
+      ahead:
+        0,
+
+      waitMinutes:
+        0,
+
+      isCompleted:
+        false,
+
+    };
+
+  }
+
+
+  const completedStatuses = [
+    "PROCURED",
+    "PAYMENT_PENDING",
+    "PAYMENT_SENT",
+  ];
+
+
+  if (
+    completedStatuses.includes(
+      booking.status
+    )
+  ) {
+
+    return {
+
+      position:
+        0,
+
+      ahead:
+        0,
+
+      waitMinutes:
+        0,
+
+      isCompleted:
+        true,
+
+    };
+
+  }
+
+
+  const relevantStatuses = [
+    "CONFIRMED",
+    "ARRIVED",
+    "LATE",
+    "WEIGHING",
+  ];
+
+
+  const bookingDate =
+    String(
+      booking?.date ||
+      ""
+    );
+
+
+  const bookingCenterId =
+    String(
+      booking?.center_id ??
+      booking?.centerId ??
+      ""
+    );
+
+
+  if (
+    !bookingDate ||
+    !bookingCenterId
+  ) {
+
+    return {
+
+      position:
+        0,
+
+      ahead:
+        0,
+
+      waitMinutes:
+        0,
+
+      isCompleted:
+        false,
+
+    };
+
+  }
+
+
+  const currentStart =
+    parseQueueDateTime(
+      booking.date,
+      booking.slot_start ||
+      booking.slotStart
+    );
+
+
+  if (
+    !currentStart
+  ) {
+
+    return {
+
+      position:
+        0,
+
+      ahead:
+        0,
+
+      waitMinutes:
+        0,
+
+      isCompleted:
+        false,
+
+    };
+
+  }
+
+
+  const currentStartTime =
+    currentStart.getTime();
+
+
+  const sameQueueBookings =
+    bookings.filter(
+      item => {
+
+        if (
+          String(
+            item?.id
+          ) ===
+          String(
+            booking.id
+          )
+        ) {
+
+          return false;
+
+        }
+
+
+        if (
+          String(
+            item?.date ||
+            ""
+          ) !==
+          bookingDate
+        ) {
+
+          return false;
+
+        }
+
+
+        const itemCenterId =
+          String(
+            item?.center_id ??
+            item?.centerId ??
+            ""
+          );
+
+
+        if (
+          itemCenterId !==
+          bookingCenterId
+        ) {
+
+          return false;
+
+        }
+
+
+        if (
+          !relevantStatuses.includes(
+            item?.status
+          )
+        ) {
+
+          return false;
+
+        }
+
+
+        return true;
+
+      }
+    );
+
+
+  const aheadRows =
+    sameQueueBookings.filter(
+      item => {
+
+        const itemStatus =
+          item?.status;
+
+
+        /*
+         * Farmers already at the center
+         * or actively weighing should be
+         * considered ahead.
+         */
+
+        if (
+          itemStatus ===
+            "ARRIVED" ||
+          itemStatus ===
+            "LATE" ||
+          itemStatus ===
+            "WEIGHING"
+        ) {
+
+          return true;
+
+        }
+
+
+        const itemDateTime =
+          parseQueueDateTime(
+            item.date,
+            item.slot_start ||
+            item.slotStart
+          );
+
+
+        if (
+          !itemDateTime
+        ) {
+
+          return false;
+
+        }
+
+
+        return (
+          itemDateTime.getTime() <=
+          currentStartTime
+        );
+
+      }
+    );
+
+
+  const ahead =
+    aheadRows.length;
+
+
+  const position =
+    ahead +
+    1;
+
+
+  /*
+   * Demo/prototype estimate.
+   * This is intentionally conservative.
+   */
+
+  const averageMinutesPerFarmer =
+    15;
+
+
+  let waitMinutes =
+    ahead *
+    averageMinutesPerFarmer;
+
+
+  if (
+    currentTime instanceof Date
+  ) {
+
+    const now =
+      currentTime.getTime();
+
+
+    if (
+      now >
+      currentStartTime
+    ) {
+
+      const elapsedMinutes =
+        Math.floor(
+          (
+            now -
+            currentStartTime
+          ) /
+          60000
+        );
+
+
+      waitMinutes =
+        Math.max(
+          5,
+          waitMinutes -
+          elapsedMinutes
+        );
+
+    }
+
+  }
+
+
+  return {
+
+    position,
+
+    ahead,
+
+    waitMinutes,
+
+    isCompleted:
+      false,
+
+  };
+
+}
+
+
+function parseQueueDateTime(
+  date,
+  time
+) {
+
+  if (
+    !date ||
+    !time
+  ) {
+
+    return null;
+
+  }
+
+
+  const value =
+    String(
+      time
+    )
+      .trim()
+      .toUpperCase();
+
+
+  const match =
+    value.match(
+      /^(\d{1,2}):(\d{2})\s*(AM|PM)?$/
+    );
+
+
+  if (
+    !match
+  ) {
+
+    return null;
+
+  }
+
+
+  let hour =
+    Number(
+      match[1]
+    );
+
+
+  const minute =
+    Number(
+      match[2]
+    );
+
+
+  const period =
+    match[3];
+
+
+  if (
+    !Number.isFinite(
+      hour
+    ) ||
+    !Number.isFinite(
+      minute
+    ) ||
+    minute <
+      0 ||
+    minute >
+      59
+  ) {
+
+    return null;
+
+  }
+
+
+  if (
+    period ===
+    "AM"
+  ) {
+
+    if (
+      hour ===
+      12
+    ) {
+
+      hour =
+        0;
+
+    }
+
+  } else if (
+    period ===
+    "PM"
+  ) {
+
+    if (
+      hour !==
+      12
+    ) {
+
+      hour +=
+        12;
+
+    }
+
+  }
+
+
+  if (
+    hour <
+      0 ||
+    hour >
+      23
+  ) {
+
+    return null;
+
+  }
+
+
+  const result =
+    new Date(
+      `${date}T00:00:00`
+    );
+
+
+  if (
+    Number.isNaN(
+      result.getTime()
+    )
+  ) {
+
+    return null;
+
+  }
+
+
+  result.setHours(
+    hour,
+    minute,
+    0,
+    0
+  );
+
+
+  return result;
+
+}
+
+
+function formatWaitTime(
+  minutes,
+  language
+) {
+
+  const safeMinutes =
+    Math.max(
+      0,
+      Math.round(
+        Number(
+          minutes
+        ) || 0
+      )
+    );
+
+
+  const hours =
+    Math.floor(
+      safeMinutes /
+      60
+    );
+
+
+  const remainingMinutes =
+    safeMinutes %
+    60;
+
+
+  if (
+    language ===
+    "hi"
+  ) {
+
+    if (
+      hours > 0
+    ) {
+
+      return `${hours} घंटे ${remainingMinutes} मिनट`;
+
+    }
+
+
+    return `${remainingMinutes} मिनट`;
+
+  }
+
+
+  if (
+    language ===
+    "te"
+  ) {
+
+    if (
+      hours > 0
+    ) {
+
+      return `${hours} గంటలు ${remainingMinutes} నిమిషాలు`;
+
+    }
+
+
+    return `${remainingMinutes} నిమిషాలు`;
+
+  }
+
+
+  if (
+    hours > 0
+  ) {
+
+    return `${hours}h ${remainingMinutes}m`;
+
+  }
+
+
+  return `${remainingMinutes} min`;
+
+}
+
+
+/* =========================================================
+   VOICE
 ========================================================= */
 
 function getPaymentVoiceMessage(
@@ -6299,7 +6978,10 @@ function speakPaymentMessage(
   if (
     typeof window ===
       "undefined" ||
-    !("speechSynthesis" in window)
+    !(
+      "speechSynthesis" in
+      window
+    )
   ) {
 
     return;
@@ -6966,7 +7648,7 @@ function formatDuration(
       hours > 0
     ) {
 
-      return `${hours} గంటలు ${minutes} నిమిషాలు`;
+      return `${hours} घंटలు ${minutes} నిమిషాలు`;
 
     }
 
