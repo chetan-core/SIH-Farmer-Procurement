@@ -28,6 +28,47 @@ import Logo from "../components/Logo";
 
 
 function Landing() {
+  const [
+  isMobile,
+  setIsMobile,
+] = useState(
+  () =>
+    typeof window !== "undefined" &&
+    window.matchMedia(
+      "(max-width: 700px)"
+    ).matches
+);
+
+useEffect(() => {
+
+  const mediaQuery =
+    window.matchMedia(
+      "(max-width: 700px)"
+    );
+
+  function handleChange(event) {
+
+    setIsMobile(
+      event.matches
+    );
+
+  }
+
+  mediaQuery.addEventListener(
+    "change",
+    handleChange
+  );
+
+  return () => {
+
+    mediaQuery.removeEventListener(
+      "change",
+      handleChange
+    );
+
+  };
+
+}, []);
 
   const [
     mobileMenuOpen,
@@ -323,11 +364,17 @@ function Landing() {
               KEPT UNCHANGED
           ==================================================== */}
 
-          <div className="landing-hero-visual">
+          {
+  !isMobile && (
 
-  <LiveProcurementVisual />
+    <div className="landing-hero-visual">
 
-</div>
+      <LiveProcurementVisual />
+
+    </div>
+
+  )
+}
 
         </section>
 
