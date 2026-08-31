@@ -7,11 +7,13 @@ import {
   ChevronRight,
   Clock3,
   Coins,
+  Copy,
   HelpCircle,
   Info,
   MapPin,
   RefreshCw,
   Scale,
+  Share2,
   ShieldCheck,
   Wheat,
   X,
@@ -174,6 +176,29 @@ function FarmerToken() {
     useState("");
 
 
+  const [
+    copiedToken,
+    setCopiedToken,
+  ] =
+    useState(false);
+
+
+  const [
+    lastUpdated,
+    setLastUpdated,
+  ] =
+    useState(null);
+
+
+  const [
+    currentTime,
+    setCurrentTime,
+  ] =
+    useState(
+      new Date()
+    );
+
+
   const loadBooking =
     useCallback(
       async (
@@ -252,6 +277,10 @@ function FarmerToken() {
 
           setBooking(
             data.booking
+          );
+
+          setLastUpdated(
+            new Date()
           );
 
           setError("");
@@ -432,6 +461,29 @@ function FarmerToken() {
   ]);
 
 
+  useEffect(() => {
+
+    const timer =
+      setInterval(
+        () =>
+          setCurrentTime(
+            new Date()
+          ),
+        1000
+      );
+
+
+    return () => {
+
+      clearInterval(
+        timer
+      );
+
+    };
+
+  }, []);
+
+
   const currentStatus =
     booking?.status ||
     "CONFIRMED";
@@ -566,6 +618,23 @@ function FarmerToken() {
         100;
 
 
+  const arrivalCountdown =
+    getArrivalCountdown(
+      booking?.date,
+      booking?.slot_start,
+      booking?.slot_end,
+      currentTime,
+      language
+    );
+
+
+  const nextAction =
+    getNextAction(
+      currentStatus,
+      language
+    );
+
+
   useEffect(() => {
 
     if (
@@ -673,6 +742,164 @@ function FarmerToken() {
     center.name,
     statusLabel,
   ]);
+
+
+  async function copyToken() {
+
+    const token =
+      booking?.token ||
+      booking?.id ||
+      "";
+
+
+    if (
+      !token
+    ) {
+
+      return;
+
+    }
+
+
+    try {
+
+      await navigator.clipboard.writeText(
+        token
+      );
+
+      setCopiedToken(
+        true
+      );
+
+
+      setTimeout(
+        () =>
+          setCopiedToken(
+            false
+          ),
+        1800
+      );
+
+    } catch (
+      copyError
+    ) {
+
+      console.error(
+        "Copy token failed:",
+        copyError
+      );
+
+    }
+
+  }
+
+
+  async function shareBooking() {
+
+    if (
+      !booking
+    ) {
+
+      return;
+
+    }
+
+
+    const shareText =
+      `${getText(
+        language,
+        "KrishiSetu booking",
+        "KrishiSetu बुकिंग",
+        "KrishiSetu బుకింగ్"
+      )}\n\n` +
+      `${getText(
+        language,
+        "Token",
+        "टोकन",
+        "టోకెన్"
+      )}: #${booking.token || booking.id}\n` +
+      `${getText(
+        language,
+        "Crop",
+        "फसल",
+        "పంట"
+      )}: ${cropName}\n` +
+      `${getText(
+        language,
+        "Center",
+        "केंद्र",
+        "కేంద్రం"
+      )}: ${center.name}\n` +
+      `${getText(
+        language,
+        "Date",
+        "तारीख",
+        "తేదీ"
+      )}: ${formatDate(
+        booking.date,
+        language
+      )}\n` +
+      `${getText(
+        language,
+        "Arrival",
+        "आने का समय",
+        "రాక సమయం"
+      )}: ${formatTime(
+        booking.slot_start,
+        booking.slot_end
+      )}`;
+
+
+    try {
+
+      if (
+        navigator.share
+      ) {
+
+        await navigator.share({
+          title:
+            "KrishiSetu Booking",
+
+          text:
+            shareText,
+
+        });
+
+        return;
+
+      }
+
+
+      await navigator.clipboard.writeText(
+        shareText
+      );
+
+
+      setCopiedToken(
+        true
+      );
+
+
+      setTimeout(
+        () =>
+          setCopiedToken(
+            false
+          ),
+        1800
+      );
+
+    } catch (
+      shareError
+    ) {
+
+      console.error(
+        "Share booking failed:",
+        shareError
+      );
+
+    }
+
+  }
 
 
   const monthlyData =
@@ -1862,6 +2089,42 @@ function FarmerToken() {
 
             </p>
 
+            <div className="token-live-meta">
+
+              <span>
+
+                ●{" "}
+
+                {getText(
+                  language,
+                  "Live sync",
+                  "लाइव सिंक",
+                  "లైవ్ సింక్"
+                )}
+
+              </span>
+
+
+              <span>
+
+                {getText(
+                  language,
+                  "Last updated",
+                  "अंतिम अपडेट",
+                  "చివరి అప్‌డేట్"
+                )}{" "}
+
+                {lastUpdated
+                  ? formatUpdatedTime(
+                      lastUpdated,
+                      language
+                    )
+                  : "—"}
+
+              </span>
+
+            </div>
+
           </div>
 
 
@@ -2321,6 +2584,71 @@ function FarmerToken() {
 
                   </div>
 
+
+                  <div className="token-action-row">
+
+                    <button
+                      type="button"
+                      className="token-inline-action"
+                      onClick={
+                        copyToken
+                      }
+                    >
+
+                      {
+                        copiedToken ? (
+                          <Check
+                            size={15}
+                          />
+                        ) : (
+                          <Copy
+                            size={15}
+                          />
+                        )
+                      }
+
+                      {
+                        copiedToken
+                          ? getText(
+                              language,
+                              "Copied",
+                              "कॉपी हुआ",
+                              "కాపీ అయింది"
+                            )
+                          : getText(
+                              language,
+                              "Copy token",
+                              "टोकन कॉपी करें",
+                              "టోకెన్ కాపీ చేయండి"
+                            )
+                      }
+
+                    </button>
+
+
+                    <button
+                      type="button"
+                      className="token-inline-action"
+                      onClick={
+                        shareBooking
+                      }
+                    >
+
+                      <Share2
+                        size={15}
+                      />
+
+                      {getText(
+                        language,
+                        "Share",
+                        "शेयर करें",
+                        "షేర్ చేయండి"
+                      )}
+
+                    </button>
+
+                  </div>
+
                 </div>
 
 
@@ -2397,7 +2725,6 @@ function FarmerToken() {
                   value={
                     center.name
                   }
-
                 />
 
               </div>
@@ -2456,6 +2783,78 @@ function FarmerToken() {
                     }
 
                   </span>
+
+                </div>
+
+              </div>
+
+
+              <div className="token-next-action-card">
+
+                <div className="token-next-action-icon">
+
+                  <ArrowRight
+                    size={17}
+                  />
+
+                </div>
+
+
+                <div>
+
+                  <span>
+
+                    {getText(
+                      language,
+                      "WHAT HAPPENS NEXT",
+                      "अब आगे क्या होगा",
+                      "తర్వాత ఏమి జరుగుతుంది"
+                    )}
+
+                  </span>
+
+
+                  <strong>
+                    {nextAction.title}
+                  </strong>
+
+
+                  <p>
+                    {nextAction.text}
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              <div
+                className={
+                  `token-arrival-countdown ${
+                    arrivalCountdown.tone
+                  }`
+                }
+              >
+
+                <Clock3
+                  size={17}
+                />
+
+
+                <div>
+
+                  <span>
+
+                    {arrivalCountdown.label}
+
+                  </span>
+
+
+                  <strong>
+
+                    {arrivalCountdown.value}
+
+                  </strong>
 
                 </div>
 
@@ -3038,9 +3437,7 @@ function FarmerToken() {
 
 
 
-            {/* =================================================
-                PAYMENT HISTORY
-            ================================================= */}
+            {/* PAYMENT HISTORY */}
 
             <section className="token-history-card">
 
@@ -3300,9 +3697,7 @@ function FarmerToken() {
 
 
 
-            {/* =================================================
-                THIS MONTH
-            ================================================= */}
+            {/* THIS MONTH */}
 
             <section className="token-month-card">
 
@@ -3534,9 +3929,7 @@ function FarmerToken() {
 
 
 
-          {/* =================================================
-              SIDE COLUMN
-          ================================================= */}
+          {/* SIDE COLUMN */}
 
           <aside className="token-side-column">
 
@@ -3994,9 +4387,7 @@ function FarmerToken() {
 
 
 
-        {/* =================================================
-            BOTTOM ACTIONS
-        ================================================= */}
+        {/* BOTTOM ACTIONS */}
 
         <section className="token-bottom-actions">
 
@@ -4043,9 +4434,7 @@ function FarmerToken() {
 
 
 
-      {/* =================================================
-          PAYMENT ISSUE MODAL
-      ================================================= */}
+      {/* PAYMENT ISSUE MODAL */}
 
       {showPaymentIssue && (
 
@@ -4501,7 +4890,635 @@ function TokenMonthlyStat({
 
 
 /* =========================================================
-   HELPERS
+   NEW SMALL HELPERS
+========================================================= */
+
+function getNextAction(
+  status,
+  language
+) {
+
+  const actions = {
+
+    CONFIRMED: {
+
+      en: {
+        title:
+          "Prepare for your arrival",
+        text:
+          "Keep your token ready and reach the procurement center during your assigned window.",
+      },
+
+      hi: {
+        title:
+          "आने की तैयारी करें",
+        text:
+          "अपना टोकन तैयार रखें और निर्धारित समय पर खरीद केंद्र पहुंचें।",
+      },
+
+      te: {
+        title:
+          "రాకకు సిద్ధం అవ్వండి",
+        text:
+          "మీ టోకెన్ సిద్ధంగా ఉంచుకుని కేటాయించిన సమయంలో కేంద్రానికి చేరుకోండి.",
+      },
+
+    },
+
+    ARRIVED: {
+
+      en: {
+        title:
+          "Wait for the weighing stage",
+        text:
+          "Your arrival has been recorded. The center team will move your booking into weighing.",
+      },
+
+      hi: {
+        title:
+          "वजन प्रक्रिया की प्रतीक्षा करें",
+        text:
+          "आपकी पहुंच दर्ज हो गई है। केंद्र टीम आपकी बुकिंग को वजन प्रक्रिया में भेजेगी।",
+      },
+
+      te: {
+        title:
+          "తూకం దశ కోసం వేచి ఉండండి",
+        text:
+          "మీ రాక నమోదు అయింది. కేంద్ర బృందం మీ బుకింగ్‌ను తూకం దశకు పంపుతుంది.",
+      },
+
+    },
+
+    LATE: {
+
+      en: {
+        title:
+          "Speak with the center team",
+        text:
+          "Your booking is marked late. Contact the center team for guidance on the next available position.",
+      },
+
+      hi: {
+        title:
+          "केंद्र टीम से बात करें",
+        text:
+          "आपकी बुकिंग देर से दर्ज हुई है। अगली उपलब्ध प्रक्रिया के लिए केंद्र टीम से बात करें।",
+      },
+
+      te: {
+        title:
+          "కేంద్ర బృందంతో మాట్లాడండి",
+        text:
+          "మీ బుకింగ్ ఆలస్యంగా నమోదు అయింది. తదుపరి అందుబాటులో ఉన్న స్థానానికి కేంద్ర బృందాన్ని సంప్రదించండి.",
+      },
+
+    },
+
+    WEIGHING: {
+
+      en: {
+        title:
+          "Your produce is being weighed",
+        text:
+          "The operator is recording your actual quantity and checking the produce.",
+      },
+
+      hi: {
+        title:
+          "आपकी उपज का वजन हो रहा है",
+        text:
+          "ऑपरेटर आपकी वास्तविक मात्रा दर्ज कर रहा है और उपज की जांच कर रहा है।",
+      },
+
+      te: {
+        title:
+          "మీ పంట తూకం జరుగుతోంది",
+        text:
+          "ఆపరేటర్ మీ వాస్తవ పరిమాణాన్ని నమోదు చేసి పంటను తనిఖీ చేస్తున్నారు.",
+      },
+
+    },
+
+    PROCURED: {
+
+      en: {
+        title:
+          "Payment is the next stage",
+        text:
+          "Your produce has been procured. The booking can now move through payment processing.",
+      },
+
+      hi: {
+        title:
+          "अगला चरण भुगतान है",
+        text:
+          "आपकी उपज की खरीद पूरी हो गई है। अब बुकिंग भुगतान प्रक्रिया में जाएगी।",
+      },
+
+      te: {
+        title:
+          "తదుపరి దశ చెల్లింపు",
+        text:
+          "మీ పంట కొనుగోలు పూర్తైంది. ఇప్పుడు బుకింగ్ చెల్లింపు ప్రక్రియలోకి వెళుతుంది.",
+      },
+
+    },
+
+    PAYMENT_PENDING: {
+
+      en: {
+        title:
+          "Payment is being processed",
+        text:
+          "No action is required right now. Check your payment status again later.",
+      },
+
+      hi: {
+        title:
+          "भुगतान प्रक्रिया में है",
+        text:
+          "अभी किसी कार्रवाई की जरूरत नहीं है। बाद में भुगतान की स्थिति जांचें।",
+      },
+
+      te: {
+        title:
+          "చెల్లింపు ప్రాసెస్ అవుతోంది",
+        text:
+          "ప్రస్తుతం ఎలాంటి చర్య అవసరం లేదు. కొంతసేపటి తర్వాత చెల్లింపు స్థితిని చూడండి.",
+      },
+
+    },
+
+    PAYMENT_SENT: {
+
+      en: {
+        title:
+          "No further action required",
+        text:
+          "Your payment has been sent. Keep your payment reference for your records.",
+      },
+
+      hi: {
+        title:
+          "अब किसी कार्रवाई की जरूरत नहीं",
+        text:
+          "आपका भुगतान भेज दिया गया है। अपने रिकॉर्ड के लिए भुगतान संदर्भ सुरक्षित रखें।",
+      },
+
+      te: {
+        title:
+          "ఇక చర్య అవసరం లేదు",
+        text:
+          "మీ చెల్లింపు పంపబడింది. మీ రికార్డుల కోసం చెల్లింపు రిఫరెన్స్‌ను ఉంచుకోండి.",
+      },
+
+    },
+
+  };
+
+
+  const item =
+    actions[
+      status
+    ] ||
+    actions.CONFIRMED;
+
+
+  return (
+    item[
+      language
+    ] ||
+    item.en
+  );
+
+}
+
+
+function getArrivalCountdown(
+  date,
+  start,
+  end,
+  currentTime,
+  language
+) {
+
+  if (
+    !date ||
+    !start
+  ) {
+
+    return {
+
+      label:
+        getText(
+          language,
+          "ARRIVAL WINDOW",
+          "आने का समय",
+          "రాక సమయం"
+        ),
+
+      value:
+        "—",
+
+      tone:
+        "neutral",
+
+    };
+
+  }
+
+
+  const startValue =
+    parseBookingDateTime(
+      date,
+      start
+    );
+
+
+  const endValue =
+    end
+      ? parseBookingDateTime(
+          date,
+          end
+        )
+      : null;
+
+
+  if (
+    !startValue
+  ) {
+
+    return {
+
+      label:
+        getText(
+          language,
+          "ARRIVAL WINDOW",
+          "आने का समय",
+          "రాక సమయం"
+        ),
+
+      value:
+        "—",
+
+      tone:
+        "neutral",
+
+    };
+
+  }
+
+
+  const now =
+    currentTime.getTime();
+
+
+  const startTime =
+    startValue.getTime();
+
+
+  const endTime =
+    endValue
+      ? endValue.getTime()
+      : startTime;
+
+
+  if (
+    now <
+    startTime
+  ) {
+
+    return {
+
+      label:
+        getText(
+          language,
+          "ARRIVAL WINDOW",
+          "आने का समय",
+          "రాక సమయం"
+        ),
+
+      value:
+        formatDuration(
+          startTime -
+          now,
+          language
+        ),
+
+      tone:
+        "upcoming",
+
+    };
+
+  }
+
+
+  if (
+    now >=
+    startTime &&
+    now <=
+    endTime
+  ) {
+
+    return {
+
+      label:
+        getText(
+          language,
+          "WINDOW ACTIVE",
+          "समय सक्रिय है",
+          "సమయ విండో యాక్టివ్"
+        ),
+
+      value:
+        endValue
+          ? getText(
+              language,
+              `${formatDuration(
+                endTime - now,
+                language
+              )} remaining`,
+              `${formatDuration(
+                endTime - now,
+                language
+              )} शेष`,
+              `${formatDuration(
+                endTime - now,
+                language
+              )} మిగిలి ఉంది`
+            )
+          : getText(
+              language,
+              "Active now",
+              "अभी सक्रिय",
+              "ప్రస్తుతం యాక్టివ్"
+            ),
+
+      tone:
+        "active",
+
+    };
+
+  }
+
+
+  return {
+
+    label:
+      getText(
+        language,
+        "ARRIVAL WINDOW",
+        "आने का समय",
+        "రాక సమయం"
+      ),
+
+    value:
+      getText(
+        language,
+        "Window passed",
+        "समय बीत गया",
+        "సమయం ముగిసింది"
+      ),
+
+    tone:
+      "passed",
+
+  };
+
+}
+
+
+function parseBookingDateTime(
+  date,
+  time
+) {
+
+  const value =
+    String(
+      time
+    )
+      .trim()
+      .toUpperCase();
+
+
+  const match =
+    value.match(
+      /^(\d{1,2}):(\d{2})\s*(AM|PM)?$/
+    );
+
+
+  if (
+    !match
+  ) {
+
+    return null;
+
+  }
+
+
+  let hour =
+    Number(
+      match[1]
+    );
+
+
+  const minute =
+    Number(
+      match[2]
+    );
+
+
+  const period =
+    match[3];
+
+
+  if (
+    period ===
+    "AM"
+  ) {
+
+    if (
+      hour ===
+      12
+    ) {
+
+      hour =
+        0;
+
+    }
+
+  } else if (
+    period ===
+    "PM"
+  ) {
+
+    if (
+      hour !==
+      12
+    ) {
+
+      hour +=
+        12;
+
+    }
+
+  }
+
+
+  const result =
+    new Date(
+      `${date}T00:00:00`
+    );
+
+
+  if (
+    Number.isNaN(
+      result.getTime()
+    )
+  ) {
+
+    return null;
+
+  }
+
+
+  result.setHours(
+    hour,
+    minute,
+    0,
+    0
+  );
+
+
+  return result;
+
+}
+
+
+function formatDuration(
+  milliseconds,
+  language
+) {
+
+  const totalMinutes =
+    Math.max(
+      0,
+      Math.ceil(
+        milliseconds /
+        60000
+      )
+    );
+
+
+  const hours =
+    Math.floor(
+      totalMinutes /
+      60
+    );
+
+
+  const minutes =
+    totalMinutes %
+    60;
+
+
+  if (
+    language ===
+    "hi"
+  ) {
+
+    if (
+      hours > 0
+    ) {
+
+      return `${hours} घंटे ${minutes} मिनट`;
+
+    }
+
+
+    return `${minutes} मिनट`;
+
+  }
+
+
+  if (
+    language ===
+    "te"
+  ) {
+
+    if (
+      hours > 0
+    ) {
+
+      return `${hours} గంటలు ${minutes} నిమిషాలు`;
+
+    }
+
+
+    return `${minutes} నిమిషాలు`;
+
+  }
+
+
+  if (
+    hours > 0
+  ) {
+
+    return `${hours}h ${minutes}m`;
+
+  }
+
+
+  return `${minutes} min`;
+
+}
+
+
+function formatUpdatedTime(
+  value,
+  language
+) {
+
+  if (
+    !value
+  ) {
+
+    return "—";
+
+  }
+
+
+  const locale =
+    language ===
+      "hi"
+      ? "hi-IN"
+      : language ===
+          "te"
+        ? "te-IN"
+        : "en-IN";
+
+
+  return value.toLocaleTimeString(
+    locale,
+    {
+      hour:
+        "numeric",
+
+      minute:
+        "2-digit",
+
+      second:
+        "2-digit",
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   EXISTING HELPERS
 ========================================================= */
 
 function getText(

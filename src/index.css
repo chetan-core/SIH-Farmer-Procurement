@@ -133874,3 +133874,107 @@ body,
   transform:
     translateY(0);
 }
+
+.token-live-meta {
+  display: flex;
+  gap: 14px;
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.token-action-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.token-inline-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 11px;
+  border: 1px solid var(--theme-border, #d8e0db);
+  border-radius: 9px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.token-next-action-card {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--theme-surface-2, #f1f4f2);
+}
+
+.token-next-action-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--theme-primary-soft, #dcefe4);
+  color: var(--theme-primary, #247b52);
+}
+
+.token-next-action-card span,
+.token-arrival-countdown span {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  opacity: 0.75;
+}
+
+.token-next-action-card strong {
+  display: block;
+  margin-top: 3px;
+}
+
+.token-next-action-card p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.token-arrival-countdown {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--theme-surface-2, #f1f4f2);
+}
+
+.token-arrival-countdown strong {
+  display: block;
+  margin-top: 2px;
+}
+
+.token-arrival-countdown.upcoming {
+  color: var(--theme-primary, #247b52);
+}
+
+.token-arrival-countdown.active {
+  color: var(--theme-success, #287c53);
+}
+
+.token-arrival-countdown.passed {
+  color: var(--theme-muted, #71857b);
+}
+
+.token-arrival-countdown.neutral {
+  color: var(--theme-muted, #71857b);
+}
+
+[data-theme="dark"] .token-quick-qr-frame,
+[data-theme="forest"] .token-quick-qr-frame,
+[data-theme="midnight"] .token-quick-qr-frame {
+  background: #ffffff;
+}
