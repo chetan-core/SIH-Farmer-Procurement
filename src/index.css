@@ -119364,3 +119364,228 @@ html[data-theme="midnight"] .help-guide-card:hover,
 html[data-theme="midnight"] .help-checklist-card:hover {
   color: inherit !important;
 }
+
+/* =========================================================
+   FINAL FIX — HELP PAGE STATIC COLORED BLOCKS
+========================================================= */
+
+/* QUICK HELP / TOPIC CARDS */
+html[data-theme="forest"] .help-topic-card,
+html[data-theme="midnight"] .help-topic-card {
+  background: linear-gradient(
+    135deg,
+    var(--theme-card-start, #123d29),
+    var(--theme-card-end, #0b2419)
+  ) !important;
+
+  color: #e8fff0 !important;
+}
+
+
+/* Individual Quick Help color variants */
+html[data-theme="forest"] .help-topic-card.green,
+html[data-theme="midnight"] .help-topic-card.green {
+  background: linear-gradient(
+    135deg,
+    #14532d,
+    #0b2f1b
+  ) !important;
+  color: #e8fff0 !important;
+}
+
+html[data-theme="forest"] .help-topic-card.blue,
+html[data-theme="midnight"] .help-topic-card.blue {
+  background: linear-gradient(
+    135deg,
+    #173f75,
+    #0b2348
+  ) !important;
+  color: #e5efff !important;
+}
+
+html[data-theme="forest"] .help-topic-card.orange,
+html[data-theme="midnight"] .help-topic-card.orange {
+  background: linear-gradient(
+    135deg,
+    #713414,
+    #381b0a
+  ) !important;
+  color: #fff0e3 !important;
+}
+
+html[data-theme="forest"] .help-topic-card.purple,
+html[data-theme="midnight"] .help-topic-card.purple {
+  background: linear-gradient(
+    135deg,
+    #4c237b,
+    #281341
+  ) !important;
+  color: #f3e8ff !important;
+}
+
+html[data-theme="forest"] .help-topic-card.gold,
+html[data-theme="midnight"] .help-topic-card.gold {
+  background: linear-gradient(
+    135deg,
+    #70500b,
+    #392906
+  ) !important;
+  color: #fff4c7 !important;
+}
+
+html[data-theme="forest"] .help-topic-card.teal,
+html[data-theme="midnight"] .help-topic-card.teal {
+  background: linear-gradient(
+    135deg,
+    #105e57,
+    #07332f
+  ) !important;
+  color: #dffffb !important;
+}
+
+
+/* =========================================================
+   QUICK HELP — FORCE ALL INNER TEXT + ICONS
+========================================================= */
+
+html[data-theme="forest"] .help-topic-card strong,
+html[data-theme="forest"] .help-topic-card p,
+html[data-theme="forest"] .help-topic-card svg,
+
+html[data-theme="midnight"] .help-topic-card strong,
+html[data-theme="midnight"] .help-topic-card p,
+html[data-theme="midnight"] .help-topic-card svg {
+  color: inherit !important;
+}
+
+
+/* =========================================================
+   CONTACT THE CENTER
+========================================================= */
+
+html[data-theme="forest"] .help-center-card,
+html[data-theme="midnight"] .help-center-card {
+  background:
+    linear-gradient(
+      135deg,
+      #123d29 0%,
+      #0d2d20 48%,
+      #092016 100%
+    ) !important;
+
+  color: #eafff1 !important;
+}
+
+
+html[data-theme="forest"] .help-center-card *,
+html[data-theme="midnight"] .help-center-card * {
+  color: inherit !important;
+}
+
+
+/* Contact-center icon */
+html[data-theme="forest"] .help-center-icon,
+html[data-theme="midnight"] .help-center-icon {
+  background:
+    linear-gradient(
+      135deg,
+      #1f7a46,
+      #0d4128
+    ) !important;
+
+  color: #eafff1 !important;
+}
+
+
+/* Contact-center button */
+html[data-theme="forest"] .help-call-button,
+html[data-theme="midnight"] .help-call-button {
+  background:
+    linear-gradient(
+      135deg,
+      #19945a,
+      #0d613b
+    ) !important;
+
+  color: #ffffff !important;
+}
+
+
+html[data-theme="forest"] .help-call-button *,
+html[data-theme="midnight"] .help-call-button * {
+  color: #ffffff !important;
+}
+
+
+/* =========================================================
+   CONTACT CENTER RIGHT-SIDE STATIC BOX
+========================================================= */
+
+html[data-theme="forest"] .help-contact-use-card,
+html[data-theme="midnight"] .help-contact-use-card {
+  background:
+    linear-gradient(
+      135deg,
+      #102f24,
+      #081d16
+    ) !important;
+
+  color: #e7fff0 !important;
+}
+
+html[data-theme="forest"] .help-contact-use-card *,
+html[data-theme="midnight"] .help-contact-use-card * {
+  color: inherit !important;
+}
+
+
+/* =========================================================
+   "A SITUATION NEEDS OPERATOR GUIDANCE"
+========================================================= */
+
+html[data-theme="forest"] .help-contact-use-card h3,
+html[data-theme="forest"] .help-contact-use-card span,
+html[data-theme="forest"] .help-contact-use-card strong,
+
+html[data-theme="midnight"] .help-contact-use-card h3,
+html[data-theme="midnight"] .help-contact-use-card span,
+html[data-theme="midnight"] .help-contact-use-card strong {
+  color: #edfff4 !important;
+}
+
+
+/* =========================================================
+   CONTACT REASONS
+========================================================= */
+
+html[data-theme="forest"] .help-contact-reasons div,
+html[data-theme="midnight"] .help-contact-reasons div {
+  color: #d9fbe7 !important;
+}
+
+html[data-theme="forest"] .help-contact-reasons svg,
+html[data-theme="midnight"] .help-contact-reasons svg {
+  color: #56e69a !important;
+}
+
+
+/* =========================================================
+   EMERGENCY NOTE
+========================================================= */
+
+html[data-theme="forest"] .help-emergency-note,
+html[data-theme="midnight"] .help-emergency-note {
+  background:
+    linear-gradient(
+      135deg,
+      #163a2a,
+      #0b2419
+    ) !important;
+
+  color: #e3fff0 !important;
+}
+
+html[data-theme="forest"] .help-emergency-note *,
+html[data-theme="midnight"] .help-emergency-note * {
+  color: inherit !important;
+}
