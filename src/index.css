@@ -107026,3 +107026,430 @@ html.dark .farmer-notification-mark-all:hover:not(:disabled),
 .language-option.active {
   color: #111827;
 }
+
+/* =========================================================
+   GLOBAL DARK THEME
+   ========================================================= */
+
+html.dark,
+body.dark,
+[data-theme="dark"] {
+
+  color-scheme: dark;
+
+  --dark-bg:
+    #0d1117;
+
+  --dark-surface:
+    #151a21;
+
+  --dark-surface-2:
+    #1c222b;
+
+  --dark-surface-3:
+    #252c36;
+
+  --dark-border:
+    #343c48;
+
+  --dark-text:
+    #f5f7fa;
+
+  --dark-text-secondary:
+    #d2d7df;
+
+  --dark-text-muted:
+    #a8b0bc;
+
+  --dark-placeholder:
+    #7f8997;
+
+}
+
+
+/* =========================================================
+   PAGE / CONTAINER BACKGROUNDS
+   ========================================================= */
+
+html.dark body,
+body.dark,
+[data-theme="dark"] body {
+
+  background:
+    var(--dark-bg);
+
+  color:
+    var(--dark-text);
+
+}
+
+
+/* =========================================================
+   DEFAULT TEXT
+   ========================================================= */
+
+html.dark *,
+body.dark *,
+[data-theme="dark"] * {
+
+  border-color:
+    var(--dark-border);
+
+}
+
+
+/* Text elements that commonly inherit bad light-theme colors */
+
+html.dark p,
+html.dark span,
+html.dark label,
+html.dark small,
+html.dark strong,
+html.dark b,
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6,
+
+body.dark p,
+body.dark span,
+body.dark label,
+body.dark small,
+body.dark strong,
+body.dark b,
+body.dark h1,
+body.dark h2,
+body.dark h3,
+body.dark h4,
+body.dark h5,
+body.dark h6,
+
+[data-theme="dark"] p,
+[data-theme="dark"] span,
+[data-theme="dark"] label,
+[data-theme="dark"] small,
+[data-theme="dark"] strong,
+[data-theme="dark"] b,
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+
+  color:
+    var(--dark-text);
+
+}
+
+
+/* Secondary/supporting text */
+
+html.dark .muted,
+html.dark .secondary,
+html.dark .subtitle,
+html.dark .description,
+html.dark .field-help,
+html.dark .help-text,
+
+body.dark .muted,
+body.dark .secondary,
+body.dark .subtitle,
+body.dark .description,
+body.dark .field-help,
+body.dark .help-text,
+
+[data-theme="dark"] .muted,
+[data-theme="dark"] .secondary,
+[data-theme="dark"] .subtitle,
+[data-theme="dark"] .description,
+[data-theme="dark"] .field-help,
+[data-theme="dark"] .help-text {
+
+  color:
+    var(--dark-text-secondary);
+
+}
+
+
+/* =========================================================
+   INPUTS / SELECTS / TEXTAREAS
+   ========================================================= */
+
+html.dark input,
+html.dark textarea,
+html.dark select,
+
+body.dark input,
+body.dark textarea,
+body.dark select,
+
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+
+  color:
+    var(--dark-text);
+
+  background:
+    var(--dark-surface);
+
+  border-color:
+    var(--dark-border);
+
+}
+
+
+html.dark input::placeholder,
+html.dark textarea::placeholder,
+
+body.dark input::placeholder,
+body.dark textarea::placeholder,
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+
+  color:
+    var(--dark-placeholder);
+
+}
+
+
+html.dark option,
+body.dark option,
+[data-theme="dark"] option {
+
+  color:
+    var(--dark-text);
+
+  background:
+    var(--dark-surface);
+
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+html.dark button,
+body.dark button,
+[data-theme="dark"] button {
+
+  border-color:
+    var(--dark-border);
+
+}
+
+
+/* Don't make buttons universally white;
+   preserve buttons that already have explicit colors. */
+
+html.dark button:not(.home-primary-action):not(.admin-center-add-button),
+body.dark button:not(.home-primary-action):not(.admin-center-add-button),
+[data-theme="dark"] button:not(.home-primary-action):not(.admin-center-add-button) {
+
+  color:
+    var(--dark-text);
+
+}
+
+
+/* =========================================================
+   LINKS
+   ========================================================= */
+
+html.dark a,
+body.dark a,
+[data-theme="dark"] a {
+
+  color:
+    inherit;
+
+}
+
+
+/* =========================================================
+   COMMON LIGHT SURFACES
+   ========================================================= */
+
+html.dark .card,
+html.dark .panel,
+html.dark .modal,
+html.dark .dropdown,
+html.dark .select-menu,
+html.dark .language-dropdown,
+
+body.dark .card,
+body.dark .panel,
+body.dark .modal,
+body.dark .dropdown,
+body.dark .select-menu,
+body.dark .language-dropdown,
+
+[data-theme="dark"] .card,
+[data-theme="dark"] .panel,
+[data-theme="dark"] .modal,
+[data-theme="dark"] .dropdown,
+[data-theme="dark"] .select-menu,
+[data-theme="dark"] .language-dropdown {
+
+  background:
+    var(--dark-surface);
+
+  border-color:
+    var(--dark-border);
+
+}
+
+
+/* =========================================================
+   LANGUAGE DROPDOWN
+   ========================================================= */
+
+html.dark .language-dropdown,
+body.dark .language-dropdown,
+[data-theme="dark"] .language-dropdown {
+
+  color:
+    var(--dark-text);
+
+  background:
+    var(--dark-surface);
+
+}
+
+
+html.dark .language-dropdown-heading span,
+body.dark .language-dropdown-heading span,
+[data-theme="dark"] .language-dropdown-heading span {
+
+  color:
+    var(--dark-text-muted);
+
+}
+
+
+html.dark .language-option,
+body.dark .language-option,
+[data-theme="dark"] .language-option {
+
+  color:
+    var(--dark-text);
+
+  background:
+    transparent;
+
+}
+
+
+html.dark .language-option-text strong,
+body.dark .language-option-text strong,
+[data-theme="dark"] .language-option-text strong {
+
+  color:
+    var(--dark-text);
+
+}
+
+
+html.dark .language-option-text span,
+body.dark .language-option-text span,
+[data-theme="dark"] .language-option-text span {
+
+  color:
+    var(--dark-text-secondary);
+
+}
+
+
+html.dark .language-option:hover,
+body.dark .language-option:hover,
+[data-theme="dark"] .language-option:hover {
+
+  background:
+    var(--dark-surface-3);
+
+}
+
+
+html.dark .language-option-code,
+body.dark .language-option-code,
+[data-theme="dark"] .language-option-code {
+
+  color:
+    var(--dark-text-secondary);
+
+}
+
+
+/* =========================================================
+   DISABLED CONTROLS
+   ========================================================= */
+
+html.dark button:disabled,
+html.dark input:disabled,
+html.dark select:disabled,
+html.dark textarea:disabled,
+
+body.dark button:disabled,
+body.dark input:disabled,
+body.dark select:disabled,
+body.dark textarea:disabled,
+
+[data-theme="dark"] button:disabled,
+[data-theme="dark"] input:disabled,
+[data-theme="dark"] select:disabled,
+[data-theme="dark"] textarea:disabled {
+
+  color:
+    #7f8997;
+
+  opacity:
+    0.75;
+
+}
+
+
+/* =========================================================
+   TABLES
+   ========================================================= */
+
+html.dark table,
+body.dark table,
+[data-theme="dark"] table {
+
+  color:
+    var(--dark-text);
+
+}
+
+
+html.dark th,
+html.dark td,
+body.dark th,
+body.dark td,
+[data-theme="dark"] th,
+[data-theme="dark"] td {
+
+  border-color:
+    var(--dark-border);
+
+}
+
+
+/* =========================================================
+   SCROLLBARS
+   ========================================================= */
+
+html.dark,
+body.dark,
+[data-theme="dark"] {
+
+  scrollbar-color:
+    #4b5563
+    var(--dark-bg);
+
+}
