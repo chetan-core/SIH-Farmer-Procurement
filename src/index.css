@@ -133978,3 +133978,500 @@ body,
 [data-theme="midnight"] .token-quick-qr-frame {
   background: #ffffff;
 }
+
+
+/* =========================================================
+   ADMIN DASHBOARD — NEW POLISH
+========================================================= */
+
+.admin-dashboard-live-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.admin-dashboard-live-meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-dashboard-sync-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 4px rgba(70, 150, 105, 0.12);
+}
+
+
+/* =========================================================
+   TODAY SUMMARY
+========================================================= */
+
+.admin-dashboard-today-summary {
+  padding: 20px;
+  border-radius: 18px;
+  border: 1px solid var(--theme-border, rgba(120, 140, 130, 0.18));
+  background: var(--theme-surface, #ffffff);
+}
+
+.admin-dashboard-summary-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+
+.admin-dashboard-summary-progress {
+  min-width: 180px;
+  text-align: right;
+}
+
+.admin-dashboard-summary-progress > span {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.72;
+}
+
+.admin-dashboard-summary-progress > div {
+  width: 180px;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--theme-surface-3, rgba(100, 120, 110, 0.12));
+}
+
+.admin-dashboard-summary-progress > div > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--theme-primary, #287b52);
+}
+
+.admin-dashboard-today-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.admin-dashboard-today-item {
+  padding: 14px;
+  border-radius: 13px;
+  background: var(--theme-surface-2, #f3f5f3);
+}
+
+.admin-dashboard-today-item span {
+  display: block;
+  font-size: 11px;
+  opacity: 0.72;
+}
+
+.admin-dashboard-today-item strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 21px;
+  line-height: 1.1;
+}
+
+.admin-dashboard-today-item.blue strong {
+  color: var(--theme-blue, #3b78b5);
+}
+
+.admin-dashboard-today-item.purple strong {
+  color: var(--theme-purple, #7b62ad);
+}
+
+.admin-dashboard-today-item.gold strong {
+  color: var(--theme-gold, #a97a2c);
+}
+
+.admin-dashboard-today-item.green strong {
+  color: var(--theme-primary, #287b52);
+}
+
+.admin-dashboard-today-item.orange strong {
+  color: var(--theme-orange, #b66e37);
+}
+
+.admin-dashboard-today-item.teal strong {
+  color: var(--theme-teal, #2a7f83);
+}
+
+
+/* =========================================================
+   CENTER STATUS
+========================================================= */
+
+.admin-dashboard-center-status {
+  display: inline-block;
+  margin-top: 5px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.admin-dashboard-center-status.normal {
+  opacity: 0.65;
+}
+
+.admin-dashboard-center-status.medium {
+  color: var(--theme-gold, #a97a2c);
+}
+
+.admin-dashboard-center-status.high {
+  color: var(--theme-orange, #b66e37);
+}
+
+.admin-dashboard-center-status.full {
+  color: var(--theme-danger, #b34b48);
+}
+
+
+/* =========================================================
+   RECENT BOOKING META
+========================================================= */
+
+.admin-dashboard-booking-meta {
+  min-width: 125px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-dashboard-urgency {
+  display: inline-flex;
+  width: fit-content;
+  padding: 4px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.admin-dashboard-urgency.normal {
+  background: var(--theme-surface-2, #f1f3f1);
+}
+
+.admin-dashboard-urgency.soon {
+  background: rgba(195, 142, 55, 0.12);
+  color: var(--theme-gold, #a97a2c);
+}
+
+.admin-dashboard-urgency.active {
+  background: rgba(49, 126, 87, 0.12);
+  color: var(--theme-primary, #287b52);
+}
+
+.admin-dashboard-urgency.urgent {
+  background: rgba(185, 125, 55, 0.13);
+  color: var(--theme-orange, #b66e37);
+}
+
+.admin-dashboard-urgency.late {
+  background: rgba(179, 75, 72, 0.12);
+  color: var(--theme-danger, #b34b48);
+}
+
+.admin-dashboard-booking-meta small {
+  font-size: 10px;
+  line-height: 1.35;
+  opacity: 0.68;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .admin-dashboard-today-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+}
+
+
+@media (max-width: 640px) {
+
+  .admin-dashboard-summary-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admin-dashboard-summary-progress {
+    width: 100%;
+    text-align: left;
+  }
+
+  .admin-dashboard-summary-progress > div {
+    width: 100%;
+  }
+
+  .admin-dashboard-today-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-dashboard-live-meta {
+    flex-wrap: wrap;
+  }
+
+}
+
+/* =========================================================
+   ADMIN QUEUE — NEW POLISH
+========================================================= */
+
+.admin-queue-live-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.admin-queue-live-meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-queue-sync-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 4px rgba(70, 150, 105, 0.12);
+}
+
+
+/* =========================================================
+   QUEUE HEALTH
+========================================================= */
+
+.admin-queue-health {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 18px 20px;
+  border: 1px solid var(--theme-border, rgba(120, 140, 130, 0.18));
+  border-radius: 18px;
+  background: var(--theme-surface, #ffffff);
+}
+
+.admin-queue-health-main {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+}
+
+.admin-queue-health-icon {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--theme-surface-2, #f0f4f1);
+  color: var(--theme-primary, #2d7c54);
+}
+
+.admin-queue-health-main strong {
+  display: block;
+  margin-top: 3px;
+}
+
+.admin-queue-health-main p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  opacity: 0.7;
+}
+
+.admin-queue-health-metrics {
+  display: flex;
+  gap: 22px;
+}
+
+.admin-queue-health-metrics > div {
+  min-width: 90px;
+}
+
+.admin-queue-health-metrics span {
+  display: block;
+  font-size: 10px;
+  opacity: 0.65;
+}
+
+.admin-queue-health-metrics strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 20px;
+}
+
+
+/* =========================================================
+   HEADER META
+========================================================= */
+
+.admin-queue-table-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-queue-total-load {
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  background: var(--theme-surface-2, #f0f3f1);
+}
+
+
+/* =========================================================
+   SCHEDULE DETAILS
+========================================================= */
+
+.admin-full-schedule-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.admin-full-schedule-cell .admin-queue-waiting {
+  width: fit-content;
+  margin-top: 2px;
+}
+
+.admin-queue-waiting {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 3px 6px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.admin-queue-waiting.normal {
+  background: var(--theme-surface-2, #f0f3f1);
+}
+
+.admin-queue-waiting.active {
+  background: rgba(45, 124, 84, 0.11);
+  color: var(--theme-primary, #2d7c54);
+}
+
+.admin-queue-waiting.waiting {
+  background: rgba(187, 122, 46, 0.12);
+  color: var(--theme-orange, #b67832);
+}
+
+.admin-queue-waiting.complete {
+  background: rgba(45, 124, 84, 0.10);
+  color: var(--theme-primary, #2d7c54);
+}
+
+.admin-queue-waiting.payment {
+  background: rgba(170, 125, 49, 0.12);
+  color: var(--theme-gold, #aa7d31);
+}
+
+
+/* =========================================================
+   URGENCY
+========================================================= */
+
+.admin-full-status-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.admin-queue-urgency {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 3px 6px;
+  border-radius: 999px;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.admin-queue-urgency.normal {
+  background: var(--theme-surface-2, #f0f3f1);
+  color: inherit;
+  opacity: 0.68;
+}
+
+.admin-queue-urgency.soon {
+  background: rgba(185, 138, 57, 0.12);
+  color: var(--theme-gold, #aa7d31);
+}
+
+.admin-queue-urgency.active {
+  background: rgba(45, 124, 84, 0.11);
+  color: var(--theme-primary, #2d7c54);
+}
+
+.admin-queue-urgency.urgent {
+  background: rgba(182, 111, 49, 0.13);
+  color: var(--theme-orange, #b66f31);
+}
+
+.admin-queue-urgency.late {
+  background: rgba(179, 75, 72, 0.12);
+  color: var(--theme-danger, #b34b48);
+}
+
+
+/* =========================================================
+   DRAWER PRIORITY
+========================================================= */
+
+.admin-drawer-priority-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px 18px;
+  border-top: 1px solid var(--theme-border, rgba(120, 140, 130, 0.14));
+  border-bottom: 1px solid var(--theme-border, rgba(120, 140, 130, 0.14));
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 760px) {
+
+  .admin-queue-live-meta {
+    flex-wrap: wrap;
+  }
+
+  .admin-queue-health {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admin-queue-health-metrics {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .admin-queue-table-meta {
+    flex-wrap: wrap;
+  }
+
+}

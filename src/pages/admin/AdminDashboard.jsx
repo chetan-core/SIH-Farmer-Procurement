@@ -88,10 +88,26 @@ function AdminDashboard() {
     useState("");
 
 
+  const [
+    lastUpdated,
+    setLastUpdated,
+  ] =
+    useState(null);
+
+
+  const [
+    currentTime,
+    setCurrentTime,
+  ] =
+    useState(
+      new Date()
+    );
+
+
   const {
-  language,
-} =
-  useLanguage();
+    language,
+  } =
+    useLanguage();
 
 
   const text =
@@ -251,6 +267,11 @@ function AdminDashboard() {
           );
 
 
+          setLastUpdated(
+            new Date()
+          );
+
+
           setError("");
 
 
@@ -289,31 +310,55 @@ function AdminDashboard() {
 
   useEffect(() => {
 
-  loadDashboard();
+    loadDashboard();
 
 
-  const timer =
-    setInterval(
-      () =>
-        loadDashboard(),
-      10000
-    );
+    const timer =
+      setInterval(
+        () =>
+          loadDashboard(),
+        10000
+      );
 
 
-  return () => {
+    return () => {
 
-    clearInterval(
-      timer
-    );
+      clearInterval(
+        timer
+      );
 
-  };
+    };
 
-}, [
-  loadDashboard,
-]);
+  }, [
+    loadDashboard,
+  ]);
+
+
+  useEffect(() => {
+
+    const timer =
+      setInterval(
+        () =>
+          setCurrentTime(
+            new Date()
+          ),
+        1000
+      );
+
+
+    return () => {
+
+      clearInterval(
+        timer
+      );
+
+    };
+
+  }, []);
+
 
   const today =
-    new Date();
+    currentTime;
 
 
   const todayString =
@@ -430,6 +475,12 @@ function AdminDashboard() {
     );
 
 
+  const workflowProgress =
+    getWorkflowProgress(
+      stats
+    );
+
+
   return (
 
     <AdminLayout
@@ -471,6 +522,37 @@ function AdminDashboard() {
               {text.description}
 
             </p>
+
+
+            <div className="admin-dashboard-live-meta">
+
+              <span>
+
+                <span className="admin-dashboard-sync-dot" />
+
+                {text.liveSync}
+
+              </span>
+
+
+              <span>
+
+                {text.lastUpdated}
+
+                {" "}
+
+                {
+                  lastUpdated
+                    ? formatUpdatedTime(
+                        lastUpdated,
+                        language
+                      )
+                    : "—"
+                }
+
+              </span>
+
+            </div>
 
           </div>
 
@@ -661,6 +743,126 @@ function AdminDashboard() {
 
 
         {/* =====================================================
+            TODAY SUMMARY
+        ====================================================== */}
+
+        <section className="admin-dashboard-today-summary">
+
+          <div className="admin-dashboard-summary-heading">
+
+            <div>
+
+              <span className="admin-page-eyebrow">
+
+                {text.todayOverview}
+
+              </span>
+
+
+              <h3>
+                {text.operationSnapshot}
+              </h3>
+
+            </div>
+
+
+            <div className="admin-dashboard-summary-progress">
+
+              <span>
+                {workflowProgress}% {text.completedToday}
+              </span>
+
+
+              <div>
+
+                <span
+                  style={{
+                    width:
+                      `${workflowProgress}%`,
+                  }}
+                />
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div className="admin-dashboard-today-grid">
+
+            <TodaySummaryItem
+              label={
+                text.confirmed
+              }
+              value={
+                stats.confirmed
+              }
+              tone="blue"
+            />
+
+
+            <TodaySummaryItem
+              label={
+                text.arrived
+              }
+              value={
+                stats.arrivals
+              }
+              tone="purple"
+            />
+
+
+            <TodaySummaryItem
+              label={
+                text.weighing
+              }
+              value={
+                stats.weighing
+              }
+              tone="gold"
+            />
+
+
+            <TodaySummaryItem
+              label={
+                text.procured
+              }
+              value={
+                stats.procured
+              }
+              tone="green"
+            />
+
+
+            <TodaySummaryItem
+              label={
+                text.paymentPending
+              }
+              value={
+                stats.pendingPayments
+              }
+              tone="orange"
+            />
+
+
+            <TodaySummaryItem
+              label={
+                text.paymentSent
+              }
+              value={
+                stats.paymentSent
+              }
+              tone="teal"
+            />
+
+          </div>
+
+        </section>
+
+
+
+        {/* =====================================================
             ALERTS
         ====================================================== */}
 
@@ -772,7 +974,6 @@ function AdminDashboard() {
                 }
 
               </div>
-
             )
           }
 
@@ -980,6 +1181,19 @@ function AdminDashboard() {
                                 />
 
                               </div>
+
+
+                              <small
+                                className={
+                                  `admin-dashboard-center-status ${row.tone}`
+                                }
+                              >
+
+                                {
+                                  row.status
+                                }
+
+                              </small>
 
                             </div>
 
@@ -1302,7 +1516,9 @@ function AdminDashboard() {
 
 
 
-        {/* RECENT ACTIVITY */}
+        {/* =====================================================
+            RECENT ACTIVITY
+        ====================================================== */}
 
         <section className="admin-dashboard-panel admin-dashboard-recent-panel">
 
@@ -1360,126 +1576,171 @@ function AdminDashboard() {
                   recentBookings.map(
                     (
                       booking
-                    ) => (
+                    ) => {
 
-                      <div
-                        key={
-                          booking.id
-                        }
-                        className="admin-dashboard-recent-row"
-                      >
+                      const urgency =
+                        getBookingUrgency(
+                          booking,
+                          currentTime,
+                          language
+                        );
 
-                        <div className="admin-dashboard-recent-token">
 
-                          #
-                          {
-                            booking.token ||
+                      const nextAction =
+                        getBookingNextAction(
+                          booking.status,
+                          language
+                        );
+
+
+                      return (
+
+                        <div
+                          key={
                             booking.id
                           }
+                          className={
+                            "admin-dashboard-recent-row"
+                          }
+                        >
+
+                          <div className="admin-dashboard-recent-token">
+
+                            #
+                            {
+                              booking.token ||
+                              booking.id
+                            }
+
+                          </div>
+
+
+                          <div className="admin-dashboard-recent-farmer">
+
+                            <strong>
+
+                              {
+                                booking.farmer_name ||
+                                text.unknownFarmer
+                              }
+
+                            </strong>
+
+
+                            <span>
+
+                              {
+                                booking.farmer_village ||
+                                "—"
+                              }
+
+                            </span>
+
+                          </div>
+
+
+                          <div className="admin-dashboard-recent-crop">
+
+                            <Wheat
+                              size={13}
+                            />
+
+
+                            <span>
+
+                              {
+                                getCropName(
+                                  booking.crop,
+                                  language
+                                )
+                              }
+
+                            </span>
+
+                          </div>
+
+
+                          <div>
+
+                            <strong>
+
+                              {
+                                Number(
+                                  booking.actual_quantity ??
+                                  booking.estimated_quantity ??
+                                  0
+                                ).toLocaleString()
+                              }
+
+                              {" kg"}
+
+                            </strong>
+
+
+                            <span>
+
+                              {
+                                booking.actual_quantity !=
+                                null
+                                  ? text.actual
+                                  : text.estimated
+                              }
+
+                            </span>
+
+                          </div>
+
+
+                          <div>
+
+                            <span
+                              className={
+                                `admin-dashboard-status ${getStatusTone(
+                                  booking.status
+                                )}`
+                              }
+                            >
+
+                              {
+                                getStatusLabel(
+                                  booking.status,
+                                  language
+                                )
+                              }
+
+                            </span>
+
+                          </div>
+
+
+                          <div className="admin-dashboard-booking-meta">
+
+                            <span
+                              className={
+                                `admin-dashboard-urgency ${urgency.tone}`
+                              }
+                            >
+
+                              {urgency.label}
+
+                            </span>
+
+
+                            <small>
+
+                              {
+                                nextAction
+                              }
+
+                            </small>
+
+                          </div>
 
                         </div>
 
+                      );
 
-                        <div className="admin-dashboard-recent-farmer">
-
-                          <strong>
-
-                            {
-                              booking.farmer_name ||
-                              text.unknownFarmer
-                            }
-
-                          </strong>
-
-
-                          <span>
-
-                            {
-                              booking.farmer_village ||
-                              "—"
-                            }
-
-                          </span>
-
-                        </div>
-
-
-                        <div className="admin-dashboard-recent-crop">
-
-                          <Wheat
-                            size={13}
-                          />
-
-
-                          <span>
-
-                            {
-                              getCropName(
-                                booking.crop,
-                                language
-                              )
-                            }
-
-                          </span>
-
-                        </div>
-
-
-                        <div>
-
-                          <strong>
-
-                            {
-                              Number(
-                                booking.actual_quantity ??
-                                booking.estimated_quantity ??
-                                0
-                              ).toLocaleString()
-                            }
-
-                            {" kg"}
-
-                          </strong>
-
-
-                          <span>
-
-                            {
-                              booking.actual_quantity !=
-                              null
-                                ? text.actual
-                                : text.estimated
-                            }
-
-                          </span>
-
-                        </div>
-
-
-                        <div>
-
-                          <span
-                            className={
-                              `admin-dashboard-status ${getStatusTone(
-                                booking.status
-                              )}`
-                            }
-                          >
-
-                            {
-                              getStatusLabel(
-                                booking.status,
-                                language
-                              )
-                            }
-
-                          </span>
-
-                        </div>
-
-                      </div>
-
-                    )
+                    }
                   )
                 }
 
@@ -1591,6 +1852,40 @@ function DashboardKpi({
     </div>
 
   );
+}
+
+
+/* =========================================================
+   TODAY SUMMARY
+========================================================= */
+
+function TodaySummaryItem({
+  label,
+  value,
+  tone,
+}) {
+
+  return (
+
+    <div
+      className={
+        `admin-dashboard-today-item ${tone}`
+      }
+    >
+
+      <span>
+        {label}
+      </span>
+
+
+      <strong>
+        {value}
+      </strong>
+
+    </div>
+
+  );
+
 }
 
 
@@ -1958,6 +2253,545 @@ function getDashboardStats(
 
 
 /* =========================================================
+   WORKFLOW PROGRESS
+========================================================= */
+
+function getWorkflowProgress(
+  stats
+) {
+
+  const total =
+    stats.todayBookings;
+
+
+  if (
+    total <= 0
+  ) {
+
+    return 0;
+
+  }
+
+
+  return Math.min(
+    100,
+    Math.round(
+      (
+        stats.procured /
+        total
+      ) *
+      100
+    )
+  );
+
+}
+
+
+/* =========================================================
+   BOOKING URGENCY
+========================================================= */
+
+function getBookingUrgency(
+  booking,
+  currentTime,
+  language
+) {
+
+  if (
+    booking.status ===
+    "LATE"
+  ) {
+
+    return {
+
+      label:
+        language === "hi"
+          ? "देर से"
+          : language === "te"
+            ? "ఆలస్యం"
+            : "Late",
+
+      tone:
+        "late",
+
+    };
+
+  }
+
+
+  if (
+    [
+      "PROCURED",
+      "PAYMENT_PENDING",
+      "PAYMENT_SENT",
+    ].includes(
+      booking.status
+    )
+  ) {
+
+    return {
+
+      label:
+        language === "hi"
+          ? "प्रक्रिया में"
+          : language === "te"
+            ? "ప్రాసెస్‌లో"
+            : "Processed",
+
+      tone:
+        "normal",
+
+    };
+
+  }
+
+
+  if (
+    booking.status ===
+    "WEIGHING"
+  ) {
+
+    return {
+
+      label:
+        language === "hi"
+          ? "तत्काल"
+          : language === "te"
+            ? "తక్షణం"
+            : "Needs action",
+
+      tone:
+        "urgent",
+
+    };
+
+  }
+
+
+  if (
+    booking.status !==
+    "CONFIRMED"
+  ) {
+
+    return {
+
+      label:
+        language === "hi"
+          ? "सक्रिय"
+          : language === "te"
+            ? "యాక్టివ్"
+            : "Active",
+
+      tone:
+        "normal",
+
+    };
+
+  }
+
+
+  if (
+    !booking.date ||
+    !booking.slot_start
+  ) {
+
+    return {
+
+      label:
+        language === "hi"
+          ? "पुष्ट"
+          : language === "te"
+            ? "నిర్ధారితం"
+            : "Confirmed",
+
+      tone:
+        "normal",
+
+    };
+
+  }
+
+
+  const start =
+    parseBookingDateTime(
+      booking.date,
+      booking.slot_start
+    );
+
+
+  const end =
+    booking.slot_end
+      ? parseBookingDateTime(
+          booking.date,
+          booking.slot_end
+        )
+      : null;
+
+
+  if (
+    !start
+  ) {
+
+    return {
+
+      label:
+        "Confirmed",
+
+      tone:
+        "normal",
+
+    };
+
+  }
+
+
+  const now =
+    currentTime.getTime();
+
+
+  const startTime =
+    start.getTime();
+
+
+  const endTime =
+    end
+      ? end.getTime()
+      : startTime;
+
+
+  if (
+    now >=
+      startTime &&
+    now <=
+      endTime
+  ) {
+
+    return {
+
+      label:
+        language === "hi"
+          ? "समय सक्रिय"
+          : language === "te"
+            ? "విండో యాక్టివ్"
+            : "Window active",
+
+      tone:
+        "active",
+
+    };
+
+  }
+
+
+  if (
+    startTime >
+    now
+  ) {
+
+    const minutes =
+      Math.ceil(
+        (
+          startTime -
+          now
+        ) /
+        60000
+      );
+
+
+    if (
+      minutes <=
+      30
+    ) {
+
+      return {
+
+        label:
+          language === "hi"
+            ? `${minutes} मिनट में`
+            : language === "te"
+              ? `${minutes} నిమిషాల్లో`
+              : `In ${minutes} min`,
+
+        tone:
+          "soon",
+
+      };
+
+    }
+
+  }
+
+
+  return {
+
+    label:
+      language === "hi"
+        ? "पुष्ट"
+        : language === "te"
+          ? "నిర్ధారితం"
+          : "Confirmed",
+
+    tone:
+      "normal",
+
+  };
+
+}
+
+
+/* =========================================================
+   NEXT ACTION
+========================================================= */
+
+function getBookingNextAction(
+  status,
+  language
+) {
+
+  const actions = {
+
+    CONFIRMED: {
+
+      en:
+        "Await farmer arrival",
+
+      hi:
+        "किसान के आने की प्रतीक्षा",
+
+      te:
+        "రైతు రాక కోసం వేచి ఉండండి",
+
+    },
+
+    ARRIVED: {
+
+      en:
+        "Start weighing",
+
+      hi:
+        "वजन शुरू करें",
+
+      te:
+        "తూకం ప్రారంభించండి",
+
+    },
+
+    LATE: {
+
+      en:
+        "Review late arrival",
+
+      hi:
+        "देर से पहुंचने की समीक्षा",
+
+      te:
+        "ఆలస్య రాకను సమీక్షించండి",
+
+    },
+
+    WEIGHING: {
+
+      en:
+        "Record / complete weighing",
+
+      hi:
+        "वजन दर्ज / पूरा करें",
+
+      te:
+        "తూకం నమోదు / పూర్తి చేయండి",
+
+    },
+
+    PROCURED: {
+
+      en:
+        "Process payment",
+
+      hi:
+        "भुगतान प्रक्रिया करें",
+
+      te:
+        "చెల్లింపు ప్రాసెస్ చేయండి",
+
+    },
+
+    PAYMENT_PENDING: {
+
+      en:
+        "Send payment",
+
+      hi:
+        "भुगतान भेजें",
+
+      te:
+        "చెల్లింపు పంపండి",
+
+    },
+
+    PAYMENT_SENT: {
+
+      en:
+        "No action required",
+
+      hi:
+        "कोई कार्रवाई आवश्यक नहीं",
+
+      te:
+        "చర్య అవసరం లేదు",
+
+    },
+
+  };
+
+
+  return (
+    actions[
+      status
+    ]?.[
+      language
+    ] ||
+    actions[
+      status
+    ]?.en ||
+    "Review booking"
+  );
+
+}
+
+
+/* =========================================================
+   CENTER ROWS
+========================================================= */
+
+function getCenterRows(
+  centers,
+  bookings
+) {
+
+  return centers.map(
+    (
+      center
+    ) => {
+
+      const centerBookings =
+        bookings.filter(
+          (
+            booking
+          ) =>
+            String(
+              booking.center_id
+            ) ===
+            String(
+              center.id
+            )
+        );
+
+
+      const activeBookings =
+        centerBookings.filter(
+          (
+            booking
+          ) =>
+            booking.status !==
+            "PAYMENT_SENT"
+        );
+
+
+      const capacity =
+        Number(
+          center.capacity ||
+          20
+        );
+
+
+      const utilization =
+        capacity > 0
+          ? Math.min(
+              100,
+              Math.round(
+                (
+                  activeBookings.length /
+                  capacity
+                ) *
+                100
+              )
+            )
+          : 0;
+
+
+      let tone =
+        "normal";
+
+
+      let status =
+        "Normal load";
+
+
+      if (
+        utilization >=
+        100
+      ) {
+
+        tone =
+          "full";
+
+        status =
+          "At capacity";
+
+      } else if (
+        utilization >=
+        80
+      ) {
+
+        tone =
+          "high";
+
+        status =
+          "High load";
+
+      } else if (
+        utilization >=
+        50
+      ) {
+
+        tone =
+          "medium";
+
+        status =
+          "Moderate load";
+
+      }
+
+
+      return {
+
+        id:
+          center.id,
+
+        name:
+          center.name ||
+          "Procurement Center",
+
+        capacity,
+
+        activeBookings:
+          activeBookings.length,
+
+        utilization,
+
+        tone,
+
+        status,
+
+      };
+
+    }
+  );
+
+}
+
+
+/* =========================================================
    ALERTS
 ========================================================= */
 
@@ -2243,90 +3077,6 @@ function getDashboardAlerts(
 
 
 /* =========================================================
-   CENTER ROWS
-========================================================= */
-
-function getCenterRows(
-  centers,
-  bookings
-) {
-
-  return centers.map(
-    (
-      center
-    ) => {
-
-      const centerBookings =
-        bookings.filter(
-          (
-            booking
-          ) =>
-            String(
-              booking.center_id
-            ) ===
-            String(
-              center.id
-            )
-        );
-
-
-      const activeBookings =
-        centerBookings.filter(
-          (
-            booking
-          ) =>
-            booking.status !==
-            "PAYMENT_SENT"
-        );
-
-
-      const capacity =
-        Number(
-          center.capacity ||
-          20
-        );
-
-
-      const utilization =
-        capacity > 0
-          ? Math.min(
-              100,
-              Math.round(
-                (
-                  activeBookings.length /
-                  capacity
-                ) *
-                100
-              )
-            )
-          : 0;
-
-
-      return {
-
-        id:
-          center.id,
-
-        name:
-          center.name ||
-          "Procurement Center",
-
-        capacity,
-
-        activeBookings:
-          activeBookings.length,
-
-        utilization,
-
-      };
-
-    }
-  );
-
-}
-
-
-/* =========================================================
    HELPERS
 ========================================================= */
 
@@ -2600,6 +3350,160 @@ function formatCurrency(
 }
 
 
+function formatUpdatedTime(
+  value,
+  language
+) {
+
+  const locale =
+    language ===
+      "hi"
+      ? "hi-IN"
+      : language ===
+          "te"
+        ? "te-IN"
+        : "en-IN";
+
+
+  return value.toLocaleTimeString(
+    locale,
+    {
+      hour:
+        "numeric",
+
+      minute:
+        "2-digit",
+
+      second:
+        "2-digit",
+
+    }
+  );
+
+}
+
+
+function parseBookingDateTime(
+  date,
+  time
+) {
+
+  if (
+    !date ||
+    !time
+  ) {
+
+    return null;
+
+  }
+
+
+  const value =
+    String(
+      time
+    )
+      .trim()
+      .toUpperCase();
+
+
+  const match =
+    value.match(
+      /^(\d{1,2}):(\d{2})\s*(AM|PM)?$/
+    );
+
+
+  if (
+    !match
+  ) {
+
+    return null;
+
+  }
+
+
+  let hour =
+    Number(
+      match[1]
+    );
+
+
+  const minute =
+    Number(
+      match[2]
+    );
+
+
+  const period =
+    match[3];
+
+
+  if (
+    period ===
+    "AM"
+  ) {
+
+    if (
+      hour ===
+      12
+    ) {
+
+      hour =
+        0;
+
+    }
+
+  } else if (
+    period ===
+    "PM"
+  ) {
+
+    if (
+      hour !==
+      12
+    ) {
+
+      hour +=
+        12;
+
+    }
+
+  }
+
+
+  const result =
+    new Date(
+      `${date}T00:00:00`
+    );
+
+
+  if (
+    Number.isNaN(
+      result.getTime()
+    )
+  ) {
+
+    return null;
+
+  }
+
+
+  result.setHours(
+    hour,
+    minute,
+    0,
+    0
+  );
+
+
+  return result;
+
+}
+
+
+/* =========================================================
+   ALERT COPY
+========================================================= */
+
 function getAlertCopy(
   key,
   language
@@ -2766,6 +3670,12 @@ function getDashboardCopy(
       live:
         "LIVE",
 
+      liveSync:
+        "Live sync active",
+
+      lastUpdated:
+        "Last updated",
+
       refreshing:
         "Refreshing...",
 
@@ -2792,6 +3702,15 @@ function getDashboardCopy(
 
       paymentIssues:
         "Payment issues",
+
+      todayOverview:
+        "TODAY AT A GLANCE",
+
+      operationSnapshot:
+        "Operational snapshot",
+
+      completedToday:
+        "completed",
 
       attention:
         "ATTENTION",
@@ -2960,6 +3879,12 @@ function getDashboardCopy(
       live:
         "लाइव",
 
+      liveSync:
+        "लाइव सिंक सक्रिय",
+
+      lastUpdated:
+        "अंतिम अपडेट",
+
       refreshing:
         "रीफ्रेश हो रहा है...",
 
@@ -2986,6 +3911,15 @@ function getDashboardCopy(
 
       paymentIssues:
         "भुगतान समस्याएं",
+
+      todayOverview:
+        "आज की स्थिति",
+
+      operationSnapshot:
+        "ऑपरेशन सारांश",
+
+      completedToday:
+        "पूरा हुआ",
 
       attention:
         "ध्यान दें",
@@ -3154,6 +4088,12 @@ function getDashboardCopy(
       live:
         "లైవ్",
 
+      liveSync:
+        "లైవ్ సింక్ యాక్టివ్",
+
+      lastUpdated:
+        "చివరి అప్‌డేట్",
+
       refreshing:
         "రిఫ్రెష్ చేస్తోంది...",
 
@@ -3180,6 +4120,15 @@ function getDashboardCopy(
 
       paymentIssues:
         "చెల్లింపు సమస్యలు",
+
+      todayOverview:
+        "ఈరోజు స్థితి",
+
+      operationSnapshot:
+        "ఆపరేషనల్ సారాంశం",
+
+      completedToday:
+        "పూర్తైంది",
 
       attention:
         "శ్రద్ధ",

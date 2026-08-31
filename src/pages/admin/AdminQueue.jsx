@@ -76,10 +76,24 @@ function AdminQueue() {
   ] = useState("");
 
 
-const {
-  language,
-} =
-  useLanguage();
+  const [
+    lastUpdated,
+    setLastUpdated,
+  ] = useState(null);
+
+
+  const [
+    currentTime,
+    setCurrentTime,
+  ] = useState(
+    new Date()
+  );
+
+
+  const {
+    language,
+  } =
+    useLanguage();
 
 
   const [
@@ -189,6 +203,11 @@ const {
           );
 
 
+          setLastUpdated(
+            new Date()
+          );
+
+
           setError("");
 
 
@@ -226,51 +245,74 @@ const {
     );
 
 
- useEffect(() => {
+  useEffect(() => {
 
-  loadBookings();
-
-
-  function handleExternalRefresh() {
-
-    loadBookings(
-      true
-    );
-
-  }
+    loadBookings();
 
 
-  window.addEventListener(
-    "krishisetu-admin-refresh",
-    handleExternalRefresh
-  );
+    function handleExternalRefresh() {
+
+      loadBookings(
+        true
+      );
+
+    }
 
 
-  const timer =
-    setInterval(
-      () =>
-        loadBookings(false),
-      5000
-    );
-
-
-  return () => {
-
-    clearInterval(
-      timer
-    );
-
-
-    window.removeEventListener(
+    window.addEventListener(
       "krishisetu-admin-refresh",
       handleExternalRefresh
     );
 
-  };
 
-}, [
-  loadBookings,
-]);
+    const timer =
+      setInterval(
+        () =>
+          loadBookings(false),
+        5000
+      );
+
+
+    return () => {
+
+      clearInterval(
+        timer
+      );
+
+
+      window.removeEventListener(
+        "krishisetu-admin-refresh",
+        handleExternalRefresh
+      );
+
+    };
+
+  }, [
+    loadBookings,
+  ]);
+
+
+  useEffect(() => {
+
+    const timer =
+      setInterval(
+        () =>
+          setCurrentTime(
+            new Date()
+          ),
+        1000
+      );
+
+
+    return () => {
+
+      clearInterval(
+        timer
+      );
+
+    };
+
+  }, []);
 
 
   const stats =
@@ -463,11 +505,6 @@ const {
     }
 
 
-    /*
-     * Payment transitions belong to
-     * Admin Payments, not Queue.
-     */
-
     if (
       [
         "PAYMENT_PENDING",
@@ -613,6 +650,37 @@ const {
             <p>
               {text.description}
             </p>
+
+
+            <div className="admin-queue-live-meta">
+
+              <span>
+
+                <span className="admin-queue-sync-dot" />
+
+                {text.liveSync}
+
+              </span>
+
+
+              <span>
+
+                {text.lastUpdated}
+
+                {" "}
+
+                {
+                  lastUpdated
+                    ? formatUpdatedTime(
+                        lastUpdated,
+                        language
+                      )
+                    : "—"
+                }
+
+              </span>
+
+            </div>
 
           </div>
 
@@ -881,6 +949,104 @@ const {
               )
             }
           />
+
+        </section>
+
+
+
+        {/* =====================================================
+            QUEUE HEALTH
+        ====================================================== */}
+
+        <section className="admin-queue-health">
+
+          <div className="admin-queue-health-main">
+
+            <div className="admin-queue-health-icon">
+
+              <Clock3
+                size={19}
+              />
+
+            </div>
+
+
+            <div>
+
+              <span className="admin-page-eyebrow">
+
+                {text.queueHealth}
+
+              </span>
+
+
+              <strong>
+
+                {
+                  getQueueHealthLabel(
+                    stats,
+                    language
+                  )
+                }
+
+              </strong>
+
+
+              <p>
+
+                {
+                  getQueueHealthDescription(
+                    stats,
+                    language
+                  )
+                }
+
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div className="admin-queue-health-metrics">
+
+            <div>
+
+              <span>
+                {text.actionRequired}
+              </span>
+
+
+              <strong>
+                {
+                  stats.late +
+                  stats.arrived +
+                  stats.weighing
+                }
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <span>
+                {text.activeRecords}
+              </span>
+
+
+              <strong>
+                {
+                  stats.confirmed +
+                  stats.arrived +
+                  stats.late +
+                  stats.weighing
+                }
+              </strong>
+
+            </div>
+
+          </div>
 
         </section>
 
@@ -1212,11 +1378,26 @@ const {
             </div>
 
 
-            <span className="admin-queue-result-note">
+            <div className="admin-queue-table-meta">
 
-              {text.liveDatabase}
+              <span className="admin-queue-result-note">
 
-            </span>
+                {text.liveDatabase}
+
+              </span>
+
+
+              <span className="admin-queue-total-load">
+
+                {stats.totalActive}
+
+                {" "}
+
+                {text.active}
+
+              </span>
+
+            </div>
 
           </div>
 
@@ -1330,6 +1511,9 @@ const {
                     text={
                       text
                     }
+                    currentTime={
+                      currentTime
+                    }
                     updating={
                       updatingId ===
                       booking.id
@@ -1342,6 +1526,7 @@ const {
                     onStatusChange={
                       updateStatus
                     }
+
                   />
 
                 )
@@ -1420,6 +1605,9 @@ const {
             }
             text={
               text
+            }
+            currentTime={
+              currentTime
             }
             updating={
               updatingId ===
@@ -1502,54 +1690,11 @@ function QueueStat({
 
   );
 }
-function getStatusTone(
-  status
-) {
 
-  if (
-    status ===
-    "ARRIVED"
-  ) {
-    return "blue";
-  }
 
-  if (
-    status ===
-    "LATE"
-  ) {
-    return "orange";
-  }
-
-  if (
-    status ===
-    "WEIGHING"
-  ) {
-    return "purple";
-  }
-
-  if (
-    status ===
-    "PAYMENT_PENDING"
-  ) {
-    return "gold";
-  }
-
-  if (
-    status ===
-    "PAYMENT_SENT"
-  ) {
-    return "teal";
-  }
-
-  if (
-    status ===
-    "PROCURED"
-  ) {
-    return "green";
-  }
-
-  return "blue";
-}
+/* =========================================================
+   STATUS PILL
+========================================================= */
 
 function StatusPill({
   status,
@@ -1557,10 +1702,13 @@ function StatusPill({
 }) {
 
   return (
+
     <span
       className={
         `admin-status-pill ${
-          getStatusTone(status)
+          getStatusTone(
+            status
+          )
         }`
       }
     >
@@ -1575,9 +1723,12 @@ function StatusPill({
       }
 
     </span>
+
   );
 
 }
+
+
 /* =========================================================
    ROW
 ========================================================= */
@@ -1586,6 +1737,7 @@ function QueueTableRow({
   booking,
   language,
   text,
+  currentTime,
   updating,
   onOpen,
   onStatusChange,
@@ -1608,6 +1760,22 @@ function QueueTableRow({
       "PAYMENT_SENT",
     ].includes(
       status
+    );
+
+
+  const urgency =
+    getBookingUrgency(
+      booking,
+      currentTime,
+      language
+    );
+
+
+  const waitingInfo =
+    getWaitingInfo(
+      booking,
+      currentTime,
+      language
     );
 
 
@@ -1767,6 +1935,19 @@ function QueueTableRow({
 
         </span>
 
+
+        <small
+          className={
+            `admin-queue-waiting ${waitingInfo.tone}`
+          }
+        >
+
+          {
+            waitingInfo.label
+          }
+
+        </small>
+
       </div>
 
 
@@ -1780,7 +1961,21 @@ function QueueTableRow({
           language={
             language
           }
+
+
         />
+
+        <span
+          className={
+            `admin-queue-urgency ${urgency.tone}`
+          }
+        >
+
+          {
+            urgency.label
+          }
+
+        </span>
 
       </div>
 
@@ -1864,6 +2059,28 @@ function QueueTableRow({
 
           </button>
 
+        ) : status ===
+          "WEIGHING" ? (
+
+          <Link
+            to={
+              `/admin/weighing?booking=${encodeURIComponent(
+                booking.id
+              )}`
+            }
+            className="admin-row-action-button purple"
+          >
+
+            <Scale
+              size={13}
+            />
+
+            <span>
+              {text.openWeighing}
+            </span>
+
+          </Link>
+
         ) : null}
 
       </div>
@@ -1882,6 +2099,7 @@ function BookingDrawer({
   booking,
   language,
   text,
+  currentTime,
   updating,
   onClose,
   onStatusChange,
@@ -1913,6 +2131,22 @@ function BookingDrawer({
         status
       ),
       0
+    );
+
+
+  const urgency =
+    getBookingUrgency(
+      booking,
+      currentTime,
+      language
+    );
+
+
+  const waitingInfo =
+    getWaitingInfo(
+      booking,
+      currentTime,
+      language
     );
 
 
@@ -1992,6 +2226,37 @@ function BookingDrawer({
                 status,
                 language
               )
+            }
+
+          </span>
+
+        </div>
+
+
+
+        <div className="admin-drawer-priority-row">
+
+          <span
+            className={
+              `admin-queue-urgency ${urgency.tone}`
+            }
+          >
+
+            {
+              urgency.label
+            }
+
+          </span>
+
+
+          <span
+            className={
+              `admin-queue-waiting ${waitingInfo.tone}`
+            }
+          >
+
+            {
+              waitingInfo.label
             }
 
           </span>
@@ -2285,7 +2550,7 @@ function BookingDrawer({
 
             </div>
 
-          ) : nextAction && (
+          ) : nextAction ? (
 
             <div className="admin-drawer-action-card">
 
@@ -2371,6 +2636,49 @@ function BookingDrawer({
                 )}
 
               </button>
+
+            </div>
+
+          ) : status ===
+            "WEIGHING" && (
+
+            <div className="admin-drawer-action-card">
+
+              <span>
+                {text.nextAction}
+              </span>
+
+
+              <strong>
+                {text.openWeighing}
+              </strong>
+
+
+              <p>
+                {text.weighingActionText}
+              </p>
+
+
+              <Link
+                to={
+                  `/admin/weighing?booking=${encodeURIComponent(
+                    booking.id
+                  )}`
+                }
+                className="admin-drawer-action purple"
+              >
+
+                <Scale
+                  size={15}
+                />
+
+                {text.openWeighing}
+
+                <ArrowRight
+                  size={15}
+                />
+
+              </Link>
 
             </div>
 
@@ -2578,6 +2886,808 @@ function QueueLoadingRows() {
 
 
 /* =========================================================
+   QUEUE HEALTH
+========================================================= */
+
+function getQueueHealthLabel(
+  stats,
+  language
+) {
+
+  const active =
+    stats.confirmed +
+    stats.arrived +
+    stats.late +
+    stats.weighing;
+
+
+  if (
+    active ===
+    0
+  ) {
+
+    return language ===
+      "hi"
+      ? "कतार शांत है"
+      : language ===
+          "te"
+        ? "క్యూ ప్రశాంతంగా ఉంది"
+        : "Queue is clear";
+
+  }
+
+
+  if (
+    stats.late >=
+    3 ||
+    stats.weighing >=
+    4
+  ) {
+
+    return language ===
+      "hi"
+      ? "उच्च ऑपरेशनल दबाव"
+      : language ===
+          "te"
+        ? "అధిక ఆపరేషనల్ ఒత్తిడి"
+        : "High operational pressure";
+
+  }
+
+
+  if (
+    stats.late > 0 ||
+    stats.weighing > 0 ||
+    stats.arrived > 0
+  ) {
+
+    return language ===
+      "hi"
+      ? "कतार सक्रिय है"
+      : language ===
+          "te"
+        ? "క్యూ యాక్టివ్‌గా ఉంది"
+        : "Queue is active";
+
+  }
+
+
+  return language ===
+    "hi"
+    ? "कतार स्थिर है"
+    : language ===
+        "te"
+      ? "క్యూ స్థిరంగా ఉంది"
+      : "Queue is stable";
+
+}
+
+
+function getQueueHealthDescription(
+  stats,
+  language
+) {
+
+  const active =
+    stats.confirmed +
+    stats.arrived +
+    stats.late +
+    stats.weighing;
+
+
+  if (
+    active ===
+    0
+  ) {
+
+    return language ===
+      "hi"
+      ? "इस समय किसी सक्रिय किसान की कार्रवाई बाकी नहीं है।"
+      : language ===
+          "te"
+        ? "ప్రస్తుతం యాక్టివ్ రైతు చర్య అవసరం లేదు."
+        : "There are no active farmer records requiring operator action.";
+
+  }
+
+
+  if (
+    stats.late > 0
+  ) {
+
+    return language ===
+      "hi"
+      ? "देर से आए किसानों और वजन प्रक्रिया पर सबसे पहले ध्यान दें।"
+      : language ===
+          "te"
+        ? "ఆలస్యంగా వచ్చిన రైతులు మరియు తూకం దశపై ముందుగా శ్రద్ధ పెట్టండి."
+        : "Prioritize late arrivals and bookings currently waiting at weighing.";
+
+  }
+
+
+  return language ===
+    "hi"
+    ? `${active} सक्रिय रिकॉर्ड प्रक्रिया में हैं।`
+    : language ===
+        "te"
+      ? `${active} యాక్టివ్ రికార్డులు ప్రాసెస్‌లో ఉన్నాయి.`
+      : `${active} active records are currently moving through operations.`;
+
+}
+
+
+/* =========================================================
+   BOOKING URGENCY
+========================================================= */
+
+function getBookingUrgency(
+  booking,
+  currentTime,
+  language
+) {
+
+  const status =
+    booking.status ||
+    "CONFIRMED";
+
+
+  if (
+    status ===
+    "LATE"
+  ) {
+
+    return {
+
+      label:
+        language ===
+          "hi"
+          ? "देर से"
+          : language ===
+              "te"
+            ? "ఆలస్యం"
+            : "Late",
+
+      tone:
+        "late",
+
+    };
+
+  }
+
+
+  if (
+    status ===
+    "WEIGHING"
+  ) {
+
+    return {
+
+      label:
+        language ===
+          "hi"
+          ? "तत्काल कार्रवाई"
+          : language ===
+              "te"
+            ? "తక్షణ చర్య"
+            : "Action now",
+
+      tone:
+        "urgent",
+
+    };
+
+  }
+
+
+  if (
+    status ===
+    "ARRIVED"
+  ) {
+
+    return {
+
+      label:
+        language ===
+          "hi"
+          ? "अभी कार्रवाई"
+          : language ===
+              "te"
+            ? "ఇప్పుడే చర్య"
+            : "Action now",
+
+      tone:
+        "active",
+
+    };
+
+  }
+
+
+  if (
+    [
+      "PROCURED",
+      "PAYMENT_PENDING",
+      "PAYMENT_SENT",
+    ].includes(
+      status
+    )
+  ) {
+
+    return {
+
+      label:
+        language ===
+          "hi"
+          ? "प्रक्रिया जारी"
+          : language ===
+              "te"
+            ? "ప్రాసెస్‌లో"
+            : "Processed",
+
+      tone:
+        "normal",
+
+    };
+
+  }
+
+
+  if (
+    !booking.date ||
+    !booking.slot_start
+  ) {
+
+    return {
+
+      label:
+        language ===
+          "hi"
+          ? "पुष्ट"
+          : language ===
+              "te"
+            ? "నిర్ధారితం"
+            : "Confirmed",
+
+      tone:
+        "normal",
+
+    };
+
+  }
+
+
+  const start =
+    parseBookingDateTime(
+      booking.date,
+      booking.slot_start
+    );
+
+
+  const end =
+    booking.slot_end
+      ? parseBookingDateTime(
+          booking.date,
+          booking.slot_end
+        )
+      : null;
+
+
+  if (
+    !start
+  ) {
+
+    return {
+
+      label:
+        language ===
+          "hi"
+          ? "पुष्ट"
+          : language ===
+              "te"
+            ? "నిర్ధారితం"
+            : "Confirmed",
+
+      tone:
+        "normal",
+
+    };
+
+  }
+
+
+  const now =
+    currentTime.getTime();
+
+
+  const startTime =
+    start.getTime();
+
+
+  const endTime =
+    end
+      ? end.getTime()
+      : startTime;
+
+
+  if (
+    now >=
+      startTime &&
+    now <=
+      endTime
+  ) {
+
+    return {
+
+      label:
+        language ===
+          "hi"
+          ? "समय सक्रिय"
+          : language ===
+              "te"
+            ? "విండో యాక్టివ్"
+            : "Window active",
+
+      tone:
+        "active",
+
+    };
+
+  }
+
+
+  if (
+    startTime >
+    now
+  ) {
+
+    const minutes =
+      Math.ceil(
+        (
+          startTime -
+          now
+        ) /
+        60000
+      );
+
+
+    if (
+      minutes <=
+      30
+    ) {
+
+      return {
+
+        label:
+          language ===
+            "hi"
+            ? `${minutes} मिनट में`
+            : language ===
+                "te"
+              ? `${minutes} నిమిషాల్లో`
+              : `In ${minutes} min`,
+
+        tone:
+          "soon",
+
+      };
+
+    }
+
+  }
+
+
+  return {
+
+    label:
+      language ===
+        "hi"
+        ? "निर्धारित"
+        : language ===
+            "te"
+          ? "షెడ్యూల్‌లో"
+          : "Scheduled",
+
+    tone:
+      "normal",
+
+  };
+
+}
+
+
+/* =========================================================
+   WAITING INFO
+========================================================= */
+
+function getWaitingInfo(
+  booking,
+  currentTime,
+  language
+) {
+
+  const status =
+    booking.status ||
+    "CONFIRMED";
+
+
+  if (
+    status ===
+    "PAYMENT_SENT"
+  ) {
+
+    return {
+
+      label:
+        language ===
+          "hi"
+          ? "पूरा"
+          : language ===
+              "te"
+            ? "పూర్తైంది"
+            : "Complete",
+
+      tone:
+        "complete",
+
+    };
+
+  }
+
+
+  if (
+    status ===
+    "PAYMENT_PENDING"
+  ) {
+
+    return {
+
+      label:
+        language ===
+          "hi"
+          ? "भुगतान बाकी"
+          : language ===
+              "te"
+            ? "చెల్లింపు పెండింగ్"
+            : "Payment pending",
+
+      tone:
+        "payment",
+
+    };
+
+  }
+
+
+  if (
+    status ===
+      "ARRIVED" ||
+    status ===
+      "LATE" ||
+    status ===
+      "WEIGHING"
+  ) {
+
+    if (
+      !booking.date ||
+      !booking.slot_start
+    ) {
+
+      return {
+
+        label:
+          language ===
+            "hi"
+            ? "सक्रिय"
+            : language ===
+                "te"
+              ? "యాక్టివ్"
+              : "Active",
+
+        tone:
+          "active",
+
+      };
+
+    }
+
+
+    const start =
+      parseBookingDateTime(
+        booking.date,
+        booking.slot_start
+      );
+
+
+    if (
+      !start
+    ) {
+
+      return {
+
+        label:
+          language ===
+            "hi"
+            ? "सक्रिय"
+            : language ===
+                "te"
+              ? "యాక్టివ్"
+              : "Active",
+
+        tone:
+          "active",
+
+      };
+
+    }
+
+
+    const elapsed =
+      Math.max(
+        0,
+        Math.floor(
+          (
+            currentTime.getTime() -
+            start.getTime()
+          ) /
+          60000
+        )
+      );
+
+
+    if (
+      elapsed <=
+      0
+    ) {
+
+      return {
+
+        label:
+          language ===
+            "hi"
+            ? "अभी"
+            : language ===
+                "te"
+              ? "ఇప్పుడు"
+              : "Just arrived",
+
+        tone:
+          "active",
+
+      };
+
+    }
+
+
+    return {
+
+      label:
+        language ===
+          "hi"
+          ? `${elapsed} मिनट से`
+          : language ===
+              "te"
+            ? `${elapsed} నిమిషాలుగా`
+            : `${elapsed} min active`,
+
+      tone:
+        elapsed >=
+          30
+          ? "waiting"
+          : "active",
+
+    };
+
+  }
+
+
+  if (
+    status ===
+    "CONFIRMED"
+  ) {
+
+    return {
+
+      label:
+        language ===
+          "hi"
+          ? "आगमन बाकी"
+          : language ===
+              "te"
+            ? "రాక పెండింగ్"
+            : "Awaiting arrival",
+
+      tone:
+        "normal",
+
+    };
+
+  }
+
+
+  return {
+
+    label:
+      language ===
+        "hi"
+        ? "सक्रिय"
+        : language ===
+            "te"
+          ? "యాక్టివ్"
+          : "Active",
+
+    tone:
+      "active",
+
+  };
+
+}
+
+
+/* =========================================================
+   DATE / TIME HELPERS
+========================================================= */
+
+function parseBookingDateTime(
+  date,
+  time
+) {
+
+  if (
+    !date ||
+    !time
+  ) {
+
+    return null;
+
+  }
+
+
+  const value =
+    String(
+      time
+    )
+      .trim()
+      .toUpperCase();
+
+
+  const match =
+    value.match(
+      /^(\d{1,2}):(\d{2})\s*(AM|PM)?$/
+    );
+
+
+  if (
+    !match
+  ) {
+
+    return null;
+
+  }
+
+
+  let hour =
+    Number(
+      match[1]
+    );
+
+
+  const minute =
+    Number(
+      match[2]
+    );
+
+
+  const period =
+    match[3];
+
+
+  if (
+    period ===
+    "AM"
+  ) {
+
+    if (
+      hour ===
+      12
+    ) {
+
+      hour =
+        0;
+
+    }
+
+  } else if (
+    period ===
+    "PM"
+  ) {
+
+    if (
+      hour !==
+      12
+    ) {
+
+      hour +=
+        12;
+
+    }
+
+  }
+
+
+  const result =
+    new Date(
+      `${date}T00:00:00`
+    );
+
+
+  if (
+    Number.isNaN(
+      result.getTime()
+    )
+  ) {
+
+    return null;
+
+  }
+
+
+  result.setHours(
+    hour,
+    minute,
+    0,
+    0
+  );
+
+
+  return result;
+
+}
+
+
+function formatUpdatedTime(
+  value,
+  language
+) {
+
+  if (
+    !value
+  ) {
+
+    return "—";
+
+  }
+
+
+  const locale =
+    language ===
+      "hi"
+      ? "hi-IN"
+      : language ===
+          "te"
+        ? "te-IN"
+        : "en-IN";
+
+
+  return value.toLocaleTimeString(
+    locale,
+    {
+      hour:
+        "numeric",
+
+      minute:
+        "2-digit",
+
+      second:
+        "2-digit",
+
+    }
+  );
+
+}
+
+
+/* =========================================================
    DATA HELPERS
 ========================================================= */
 
@@ -2585,63 +3695,90 @@ function getQueueStats(
   bookings
 ) {
 
+  const confirmed =
+    bookings.filter(
+      (
+        booking
+      ) =>
+        booking.status ===
+        "CONFIRMED"
+    ).length;
+
+
+  const arrived =
+    bookings.filter(
+      (
+        booking
+      ) =>
+        booking.status ===
+        "ARRIVED"
+    ).length;
+
+
+  const late =
+    bookings.filter(
+      (
+        booking
+      ) =>
+        booking.status ===
+        "LATE"
+    ).length;
+
+
+  const weighing =
+    bookings.filter(
+      (
+        booking
+      ) =>
+        booking.status ===
+        "WEIGHING"
+    ).length;
+
+
+  const paymentPending =
+    bookings.filter(
+      (
+        booking
+      ) =>
+        booking.status ===
+        "PAYMENT_PENDING"
+    ).length;
+
+
+  const completed =
+    bookings.filter(
+      (
+        booking
+      ) =>
+        booking.status ===
+          "PROCURED" ||
+        booking.status ===
+          "PAYMENT_SENT"
+    ).length;
+
+
+  const totalActive =
+    confirmed +
+    arrived +
+    late +
+    weighing;
+
+
   return {
 
-    confirmed:
-      bookings.filter(
-        (
-          booking
-        ) =>
-          booking.status ===
-          "CONFIRMED"
-      ).length,
+    confirmed,
 
-    arrived:
-      bookings.filter(
-        (
-          booking
-        ) =>
-          booking.status ===
-          "ARRIVED"
-      ).length,
+    arrived,
 
-    late:
-      bookings.filter(
-        (
-          booking
-        ) =>
-          booking.status ===
-          "LATE"
-      ).length,
+    late,
 
-    weighing:
-      bookings.filter(
-        (
-          booking
-        ) =>
-          booking.status ===
-          "WEIGHING"
-      ).length,
+    weighing,
 
-    paymentPending:
-      bookings.filter(
-        (
-          booking
-        ) =>
-          booking.status ===
-          "PAYMENT_PENDING"
-      ).length,
+    paymentPending,
 
-    completed:
-      bookings.filter(
-        (
-          booking
-        ) =>
-          booking.status ===
-            "PROCURED" ||
-          booking.status ===
-            "PAYMENT_SENT"
-      ).length,
+    completed,
+
+    totalActive,
 
   };
 
@@ -2807,6 +3944,10 @@ function sortBookings(
 }
 
 
+/* =========================================================
+   ACTIONS
+========================================================= */
+
 function getNextAction(
   status
 ) {
@@ -2855,16 +3996,6 @@ function getNextAction(
         />,
 
     };
-
-  }
-
-
-  if (
-    status ===
-    "WEIGHING"
-  ) {
-
-    return null;
 
   }
 
@@ -2972,6 +4103,75 @@ function getActionDescription(
 /* =========================================================
    STATUS
 ========================================================= */
+
+function getStatusTone(
+  status
+) {
+
+  if (
+    status ===
+    "ARRIVED"
+  ) {
+
+    return "blue";
+
+  }
+
+
+  if (
+    status ===
+    "LATE"
+  ) {
+
+    return "orange";
+
+  }
+
+
+  if (
+    status ===
+    "WEIGHING"
+  ) {
+
+    return "purple";
+
+  }
+
+
+  if (
+    status ===
+    "PAYMENT_PENDING"
+  ) {
+
+    return "gold";
+
+  }
+
+
+  if (
+    status ===
+    "PAYMENT_SENT"
+  ) {
+
+    return "teal";
+
+  }
+
+
+  if (
+    status ===
+    "PROCURED"
+  ) {
+
+    return "green";
+
+  }
+
+
+  return "blue";
+
+}
+
 
 function getStatusLabel(
   status,
@@ -3412,6 +4612,12 @@ function getQueueCopy(
       liveUpdating:
         "LIVE UPDATING",
 
+      liveSync:
+        "Live sync active",
+
+      lastUpdated:
+        "Last updated",
+
       refreshing:
         "Refreshing...",
 
@@ -3469,11 +4675,23 @@ function getQueueCopy(
       clear:
         "Clear",
 
+      queueHealth:
+        "QUEUE HEALTH",
+
+      actionRequired:
+        "Action required",
+
+      activeRecords:
+        "Active records",
+
       currentQueue:
         "CURRENT QUEUE",
 
       records:
         "records",
+
+      active:
+        "active",
 
       liveDatabase:
         "Live database",
@@ -3505,8 +4723,14 @@ function getQueueCopy(
       openPayments:
         "Open Payments",
 
+      openWeighing:
+        "Open Weighing",
+
       paymentActionText:
         "This booking is ready for payment processing. Continue in the Payments page.",
+
+      weighingActionText:
+        "Record the actual quantity, verify quality and continue procurement from the weighing desk.",
 
       noMatchingBookings:
         "No matching bookings",
@@ -3630,6 +4854,12 @@ function getQueueCopy(
       liveUpdating:
         "लाइव अपडेट",
 
+      liveSync:
+        "लाइव सिंक सक्रिय",
+
+      lastUpdated:
+        "अंतिम अपडेट",
+
       refreshing:
         "रीफ्रेश हो रहा है...",
 
@@ -3687,11 +4917,23 @@ function getQueueCopy(
       clear:
         "साफ करें",
 
+      queueHealth:
+        "कतार स्थिति",
+
+      actionRequired:
+        "कार्रवाई जरूरी",
+
+      activeRecords:
+        "सक्रिय रिकॉर्ड",
+
       currentQueue:
         "वर्तमान कतार",
 
       records:
         "रिकॉर्ड",
+
+      active:
+        "सक्रिय",
 
       liveDatabase:
         "लाइव डेटाबेस",
@@ -3723,8 +4965,14 @@ function getQueueCopy(
       openPayments:
         "भुगतान खोलें",
 
+      openWeighing:
+        "वजन खोलें",
+
       paymentActionText:
         "यह बुकिंग भुगतान के लिए तैयार है। भुगतान पेज पर जाएं।",
+
+      weighingActionText:
+        "वास्तविक मात्रा दर्ज करें, गुणवत्ता सत्यापित करें और वजन डेस्क से खरीद आगे बढ़ाएं।",
 
       noMatchingBookings:
         "कोई मिलती बुकिंग नहीं",
@@ -3848,6 +5096,12 @@ function getQueueCopy(
       liveUpdating:
         "లైవ్ అప్‌డేటింగ్",
 
+      liveSync:
+        "లైవ్ సింక్ యాక్టివ్",
+
+      lastUpdated:
+        "చివరి అప్‌డేట్",
+
       refreshing:
         "రిఫ్రెష్ చేస్తోంది...",
 
@@ -3905,11 +5159,23 @@ function getQueueCopy(
       clear:
         "క్లియర్",
 
+      queueHealth:
+        "క్యూ స్థితి",
+
+      actionRequired:
+        "చర్య అవసరం",
+
+      activeRecords:
+        "యాక్టివ్ రికార్డులు",
+
       currentQueue:
         "ప్రస్తుత క్యూ",
 
       records:
         "రికార్డులు",
+
+      active:
+        "యాక్టివ్",
 
       liveDatabase:
         "లైవ్ డేటాబేస్",
@@ -3941,8 +5207,14 @@ function getQueueCopy(
       openPayments:
         "చెల్లింపులు తెరవండి",
 
+      openWeighing:
+        "తూకం తెరవండి",
+
       paymentActionText:
         "ఈ బుకింగ్ చెల్లింపుకు సిద్ధంగా ఉంది. చెల్లింపు పేజీకి వెళ్లండి.",
+
+      weighingActionText:
+        "వాస్తవ పరిమాణాన్ని నమోదు చేసి, నాణ్యతను ధృవీకరించి, తూకం డెస్క్ నుండి కొనుగోలును కొనసాగించండి.",
 
       noMatchingBookings:
         "సరిపోలే బుకింగ్‌లు లేవు",
