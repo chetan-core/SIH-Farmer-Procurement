@@ -106991,3 +106991,38 @@ html.dark .farmer-notification-mark-all:hover:not(:disabled),
   right: 0;
   z-index: 9999;
 }
+
+.language-dropdown {
+  color: #1f2937;
+  background: #ffffff;
+}
+
+.language-dropdown-heading span {
+  color: #6b7280;
+}
+
+.language-option {
+  color: #1f2937;
+  background: transparent;
+}
+
+.language-option-text strong {
+  color: #111827;
+}
+
+.language-option-text span {
+  color: #6b7280;
+}
+
+.language-option-code {
+  color: #374151;
+}
+
+.language-option:hover {
+  color: #111827;
+  background: #f3f4f6;
+}
+
+.language-option.active {
+  color: #111827;
+}
