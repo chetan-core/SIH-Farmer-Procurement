@@ -8,6 +8,7 @@ import {
   Clock3,
   Coins,
   Copy,
+  FileText,
   HelpCircle,
   Info,
   MapPin,
@@ -518,6 +519,30 @@ function FarmerToken() {
         );
 
 
+  const paymentRatePerKg =
+    booking?.payment_rate_per_kg ===
+      null ||
+    booking?.payment_rate_per_kg ===
+      undefined
+      ? null
+      : Number(
+          booking.payment_rate_per_kg
+        );
+
+
+  const calculatedRatePerKg =
+    paymentRatePerKg !== null
+      ? paymentRatePerKg
+      : (
+          paymentAmount !== null &&
+          actualQuantity !== null &&
+          actualQuantity > 0
+        )
+        ? paymentAmount /
+          actualQuantity
+        : null;
+
+
   const paymentReference =
     booking?.payment_reference ||
     "—";
@@ -673,12 +698,6 @@ function FarmerToken() {
       );
 
 
-    /*
-     * First load is stored silently.
-     * This prevents the farmer hearing the announcement
-     * every time the token page is opened/refreshed.
-     */
-
     if (
       !previousStatus
     ) {
@@ -692,11 +711,6 @@ function FarmerToken() {
 
     }
 
-
-    /*
-     * Speak only when the status actually changes
-     * from something else to PAYMENT_SENT.
-     */
 
     if (
       previousStatus !==
@@ -1444,9 +1458,9 @@ function FarmerToken() {
         qrDataUrl,
         "PNG",
         136,
-        47,
+        42,
         52,
-        52
+        48
       );
 
 
@@ -1881,6 +1895,1021 @@ function FarmerToken() {
       console.error(
         "Booking pass download failed:",
         downloadError
+      );
+
+    }
+
+  }
+
+
+  /*
+   * ========================================================
+   * FINAL PROCUREMENT RECEIPT
+   * ========================================================
+   */
+
+  async function downloadProcurementReceipt() {
+
+    if (
+      !booking ||
+      !paymentSent
+    ) {
+
+      return;
+
+    }
+
+
+    try {
+
+      const receiptQrData =
+        JSON.stringify({
+
+          type:
+            "KRISHISETU_PROCUREMENT_RECEIPT",
+
+          receipt:
+            booking.payment_reference ||
+            booking.id,
+
+          token:
+            booking.token ||
+            booking.id,
+
+          bookingId:
+            booking.id,
+
+          farmer:
+            farmerName,
+
+          crop:
+            cropName,
+
+          actualQuantity:
+            actualQuantity,
+
+          ratePerKg:
+            calculatedRatePerKg,
+
+          amount:
+            paymentAmount,
+
+          paymentMethod:
+            paymentMethod,
+
+          paymentReference:
+            paymentReference,
+
+          center:
+            center.name,
+
+          date:
+            booking.date,
+
+          status:
+            "PAYMENT_SENT",
+
+        });
+
+
+      const receiptQrUrl =
+        await QRCode.toDataURL(
+          receiptQrData,
+          {
+            width:
+              500,
+
+            margin:
+              2,
+
+            errorCorrectionLevel:
+              "M",
+          }
+        );
+
+
+      const pdf =
+        new jsPDF({
+          orientation:
+            "portrait",
+
+          unit:
+            "mm",
+
+          format:
+            "a4",
+        });
+
+
+      const pageWidth =
+        pdf.internal.pageSize.getWidth();
+
+
+      const pageHeight =
+        pdf.internal.pageSize.getHeight();
+
+
+      /*
+       * HEADER
+       */
+
+      pdf.setFillColor(
+        27,
+        83,
+        56
+      );
+
+
+      pdf.rect(
+        0,
+        0,
+        pageWidth,
+        38,
+        "F"
+      );
+
+
+      pdf.setTextColor(
+        255,
+        255,
+        255
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "bold"
+      );
+
+
+      pdf.setFontSize(
+        22
+      );
+
+
+      pdf.text(
+        "KrishiSetu",
+        18,
+        15
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "normal"
+      );
+
+
+      pdf.setFontSize(
+        9
+      );
+
+
+      pdf.text(
+        "Smart Agricultural Procurement",
+        18,
+        23
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "bold"
+      );
+
+
+      pdf.setFontSize(
+        8
+      );
+
+
+      pdf.text(
+        "OFFICIAL PROCUREMENT RECEIPT",
+        pageWidth - 18,
+        15,
+        {
+          align:
+            "right",
+        }
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "normal"
+      );
+
+
+      pdf.setFontSize(
+        8
+      );
+
+
+      pdf.text(
+        "PAYMENT COMPLETED",
+        pageWidth - 18,
+        23,
+        {
+          align:
+            "right",
+        }
+      );
+
+
+      /*
+       * RECEIPT NUMBER
+       */
+
+      pdf.setTextColor(
+        35,
+        55,
+        45
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "bold"
+      );
+
+
+      pdf.setFontSize(
+        10
+      );
+
+
+      pdf.text(
+        "RECEIPT DETAILS",
+        18,
+        52
+      );
+
+
+      pdf.setFontSize(
+        9
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "normal"
+      );
+
+
+      pdf.setTextColor(
+        90,
+        105,
+        97
+      );
+
+
+      pdf.text(
+        "Receipt / Payment Reference",
+        18,
+        61
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "bold"
+      );
+
+
+      pdf.setTextColor(
+        35,
+        55,
+        45
+      );
+
+
+      pdf.text(
+        String(
+          paymentReference !== "—"
+            ? paymentReference
+            : booking.id
+        ),
+        18,
+        67
+      );
+
+
+      /*
+       * QR CODE
+       */
+
+      pdf.addImage(
+        receiptQrUrl,
+        "PNG",
+        pageWidth - 66,
+        46,
+        44,
+        44
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "normal"
+      );
+
+
+      pdf.setFontSize(
+        7
+      );
+
+
+      pdf.setTextColor(
+        105,
+        120,
+        112
+      );
+
+
+      pdf.text(
+        "Scan to verify receipt data",
+        pageWidth - 44,
+        94,
+        {
+          align:
+            "center",
+        }
+      );
+
+
+      /*
+       * FARMER / BOOKING
+       */
+
+      let y =
+        83;
+
+
+      pdf.setFillColor(
+        247,
+        250,
+        248
+      );
+
+
+      pdf.roundedRect(
+        18,
+        y,
+        pageWidth - 36,
+        42,
+        4,
+        4,
+        "F"
+      );
+
+
+      pdf.setTextColor(
+        35,
+        55,
+        45
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "bold"
+      );
+
+
+      pdf.setFontSize(
+        12
+      );
+
+
+      pdf.text(
+        "Farmer & Booking",
+        24,
+        y + 9
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "normal"
+      );
+
+
+      pdf.setFontSize(
+        9
+      );
+
+
+      pdf.setTextColor(
+        95,
+        110,
+        102
+      );
+
+
+      pdf.text(
+        "Farmer",
+        24,
+        y + 19
+      );
+
+
+      pdf.text(
+        "Token",
+        105,
+        y + 19
+      );
+
+
+      pdf.text(
+        "Booking Reference",
+        24,
+        y + 31
+      );
+
+
+      pdf.text(
+        "Procurement Center",
+        105,
+        y + 31
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "bold"
+      );
+
+
+      pdf.setTextColor(
+        35,
+        55,
+        45
+      );
+
+
+      pdf.text(
+        String(
+          farmerName
+        ),
+        24,
+        y + 25
+      );
+
+
+      pdf.text(
+        `#${booking.token || booking.id}`,
+        105,
+        y + 25
+      );
+
+
+      pdf.text(
+        String(
+          booking.id
+        ),
+        24,
+        y + 37
+      );
+
+
+      pdf.text(
+        String(
+          center.name
+        ),
+        105,
+        y + 37
+      );
+
+
+      /*
+       * PROCUREMENT DETAILS
+       */
+
+      y += 54;
+
+
+      pdf.setFont(
+        "helvetica",
+        "bold"
+      );
+
+
+      pdf.setFontSize(
+        12
+      );
+
+
+      pdf.setTextColor(
+        35,
+        55,
+        45
+      );
+
+
+      pdf.text(
+        "Procurement Summary",
+        18,
+        y
+      );
+
+
+      y += 10;
+
+
+      const procurementRows = [
+
+        [
+          "Crop",
+          cropName,
+        ],
+
+        [
+          "Procurement Date",
+          formatDate(
+            booking.date,
+            language
+          ),
+        ],
+
+        [
+          "Actual Quantity",
+          actualQuantity === null
+            ? "Not recorded"
+            : `${actualQuantity.toLocaleString()} kg`,
+        ],
+
+        [
+          "Quality",
+          booking.quality ||
+          "Not recorded",
+        ],
+
+        [
+          "Arrival Window",
+          formatTime(
+            booking.slot_start,
+            booking.slot_end
+          ),
+        ],
+
+      ];
+
+
+      pdf.setFontSize(
+        9
+      );
+
+
+      procurementRows.forEach(
+        (
+          [
+            label,
+            value,
+          ]
+        ) => {
+
+          pdf.setFont(
+            "helvetica",
+            "normal"
+          );
+
+
+          pdf.setTextColor(
+            95,
+            110,
+            102
+          );
+
+
+          pdf.text(
+            label,
+            18,
+            y
+          );
+
+
+          pdf.setFont(
+            "helvetica",
+            "bold"
+          );
+
+
+          pdf.setTextColor(
+            35,
+            55,
+            45
+          );
+
+
+          pdf.text(
+            String(
+              value || "—"
+            ),
+            78,
+            y
+          );
+
+
+          y += 8;
+
+        }
+      );
+
+
+      /*
+       * PAYMENT BOX
+       */
+
+      y += 5;
+
+
+      pdf.setFillColor(
+        239,
+        246,
+        241
+      );
+
+
+      pdf.roundedRect(
+        18,
+        y,
+        pageWidth - 36,
+        55,
+        4,
+        4,
+        "F"
+      );
+
+
+      pdf.setTextColor(
+        45,
+        85,
+        63
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "bold"
+      );
+
+
+      pdf.setFontSize(
+        12
+      );
+
+
+      pdf.text(
+        "Payment Details",
+        24,
+        y + 10
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "normal"
+      );
+
+
+      pdf.setFontSize(
+        9
+      );
+
+
+      pdf.setTextColor(
+        90,
+        105,
+        97
+      );
+
+
+      pdf.text(
+        "Actual quantity",
+        24,
+        y + 21
+      );
+
+
+      pdf.text(
+        "Rate",
+        24,
+        y + 30
+      );
+
+
+      pdf.text(
+        "Payment method",
+        24,
+        y + 39
+      );
+
+
+      pdf.text(
+        "Payment reference",
+        105,
+        y + 21
+      );
+
+
+      pdf.text(
+        "Payment status",
+        105,
+        y + 30
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "bold"
+      );
+
+
+      pdf.setTextColor(
+        35,
+        55,
+        45
+      );
+
+
+      pdf.text(
+        actualQuantity === null
+          ? "—"
+          : `${actualQuantity.toLocaleString()} kg`,
+        65,
+        y + 21
+      );
+
+
+      pdf.text(
+        calculatedRatePerKg !== null
+          ? `₹${calculatedRatePerKg.toLocaleString(
+              "en-IN",
+              {
+                maximumFractionDigits:
+                  2,
+              }
+            )} / kg`
+          : "—",
+        65,
+        y + 30
+      );
+
+
+      pdf.text(
+        String(
+          paymentMethod
+        ),
+        65,
+        y + 39
+      );
+
+
+      pdf.text(
+        String(
+          paymentReference
+        ),
+        145,
+        y + 21
+      );
+
+
+      pdf.text(
+        "PAID",
+        145,
+        y + 30
+      );
+
+
+      /*
+       * TOTAL PAID
+       */
+
+      y += 67;
+
+
+      pdf.setDrawColor(
+        210,
+        220,
+        214
+      );
+
+
+      pdf.line(
+        18,
+        y,
+        pageWidth - 18,
+        y
+      );
+
+
+      y += 13;
+
+
+      pdf.setFont(
+        "helvetica",
+        "bold"
+      );
+
+
+      pdf.setFontSize(
+        11
+      );
+
+
+      pdf.setTextColor(
+        90,
+        105,
+        97
+      );
+
+
+      pdf.text(
+        "TOTAL PAID",
+        18,
+        y
+      );
+
+
+      pdf.setFontSize(
+        21
+      );
+
+
+      pdf.setTextColor(
+        27,
+        83,
+        56
+      );
+
+
+      pdf.text(
+        paymentAmount !== null
+          ? `₹${paymentAmount.toLocaleString(
+              "en-IN",
+              {
+                maximumFractionDigits:
+                  2,
+              }
+            )}`
+          : "—",
+        pageWidth - 18,
+        y + 1,
+        {
+          align:
+            "right",
+        }
+      );
+
+
+      /*
+       * PAYMENT CONFIRMATION
+       */
+
+      y += 14;
+
+
+      pdf.setFillColor(
+        27,
+        83,
+        56
+      );
+
+
+      pdf.roundedRect(
+        18,
+        y,
+        pageWidth - 36,
+        20,
+        4,
+        4,
+        "F"
+      );
+
+
+      pdf.setTextColor(
+        255,
+        255,
+        255
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "bold"
+      );
+
+
+      pdf.setFontSize(
+        10
+      );
+
+
+      pdf.text(
+        "Payment successfully recorded in KrishiSetu",
+        pageWidth / 2,
+        y + 8,
+        {
+          align:
+            "center",
+        }
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "normal"
+      );
+
+
+      pdf.setFontSize(
+        7
+      );
+
+
+      pdf.text(
+        "This receipt is generated from the procurement booking record.",
+        pageWidth / 2,
+        y + 14,
+        {
+          align:
+            "center",
+        }
+      );
+
+
+      /*
+       * FOOTER
+       */
+
+      pdf.setTextColor(
+        125,
+        135,
+        130
+      );
+
+
+      pdf.setFont(
+        "helvetica",
+        "normal"
+      );
+
+
+      pdf.setFontSize(
+        7
+      );
+
+
+      pdf.text(
+        `Generated ${new Date().toLocaleString(
+          "en-IN",
+          {
+            dateStyle:
+              "medium",
+            timeStyle:
+              "short",
+          }
+        )}`,
+        18,
+        pageHeight - 12
+      );
+
+
+      pdf.text(
+        "KrishiSetu · Smart Agricultural Procurement",
+        pageWidth - 18,
+        pageHeight - 12,
+        {
+          align:
+            "right",
+        }
+      );
+
+
+      const safeReceipt =
+        String(
+          booking.payment_reference ||
+          booking.token ||
+          booking.id ||
+          "receipt"
+        ).replace(
+          /[^a-zA-Z0-9-_]/g,
+          "-"
+        );
+
+
+      pdf.save(
+        `KrishiSetu-${safeReceipt}-Procurement-Receipt.pdf`
+      );
+
+
+    } catch (
+      receiptError
+    ) {
+
+      console.error(
+        "Procurement receipt download failed:",
+        receiptError
       );
 
     }
@@ -2553,7 +3582,7 @@ function FarmerToken() {
                             language,
                             "Payment recorded without SMS delivery.",
                             "भुगतान दर्ज हो गया, लेकिन SMS नहीं भेजा गया।",
-                            "చెల్లింపు నమోదు అయింది, కానీ SMS పంపబడలేదు."
+                            "చెల్లింపు సమాచారం లభ్యంగా ఉంది."
                           )
                   }
 
@@ -2649,6 +3678,32 @@ function FarmerToken() {
                 />
 
               </Link>
+
+            </div>
+
+
+            <div className="token-completion-receipt-actions">
+
+              <button
+                type="button"
+                className="token-receipt-download-button"
+                onClick={
+                  downloadProcurementReceipt
+                }
+              >
+
+                <FileText
+                  size={16}
+                />
+
+                {getText(
+                  language,
+                  "Download Procurement Receipt",
+                  "खरीद रसीद डाउनलोड करें",
+                  "కొనుగోలు రసీదు డౌన్‌లోడ్ చేయండి"
+                )}
+
+              </button>
 
             </div>
 
@@ -2898,6 +3953,7 @@ function FarmerToken() {
                   value={
                     center.name
                   }
+
                 />
 
               </div>
@@ -3413,6 +4469,75 @@ function FarmerToken() {
 
 
                   {
+                    paymentSent && (
+
+                      <div className="token-payment-receipt-inline">
+
+                        <div className="token-payment-receipt-inline-icon">
+
+                          <FileText
+                            size={17}
+                          />
+
+                        </div>
+
+
+                        <div>
+
+                          <strong>
+
+                            {getText(
+                              language,
+                              "Official procurement receipt",
+                              "आधिकारिक खरीद रसीद",
+                              "అధికారిక కొనుగోలు రసీదు"
+                            )}
+
+                          </strong>
+
+
+                          <span>
+
+                            {getText(
+                              language,
+                              "Download a permanent PDF record of this completed transaction.",
+                              "इस पूरी हुई लेनदेन की स्थायी PDF रसीद डाउनलोड करें।",
+                              "ఈ పూర్తయిన లావాదేవీకి శాశ్వత PDF రికార్డును డౌన్‌లోడ్ చేయండి."
+                            )}
+
+                          </span>
+
+                        </div>
+
+
+                        <button
+                          type="button"
+                          onClick={
+                            downloadProcurementReceipt
+                          }
+                          className="token-receipt-inline-button"
+                        >
+
+                          <FileText
+                            size={14}
+                          />
+
+                          {getText(
+                            language,
+                            "Receipt",
+                            "रसीद",
+                            "రసీదు"
+                          )}
+
+                        </button>
+
+                      </div>
+
+                    )
+                  }
+
+
+                  {
                     paymentPending && (
 
                       <div className="token-payment-pending-message">
@@ -3543,6 +4668,38 @@ function FarmerToken() {
                       : `${actualQuantity.toLocaleString()} kg`
                   }
                 />
+
+
+                {
+                  paymentSent && (
+
+                    <TokenDetail
+                      icon={
+                        <Coins
+                          size={18}
+                        />
+                      }
+                      label={getText(
+                        language,
+                        "Rate per kg",
+                        "प्रति किलो दर",
+                        "కిలోకు ధర"
+                      )}
+                      value={
+                        calculatedRatePerKg !== null
+                          ? `₹${calculatedRatePerKg.toLocaleString(
+                              "en-IN",
+                              {
+                                maximumFractionDigits:
+                                  2,
+                              }
+                            )}`
+                          : "—"
+                      }
+                    />
+
+                  )
+                }
 
 
                 <TokenDetail
@@ -4241,6 +5398,32 @@ function FarmerToken() {
                 )}
 
               </button>
+
+
+              {paymentSent && (
+
+                <button
+                  type="button"
+                  className="token-receipt-side-button"
+                  onClick={
+                    downloadProcurementReceipt
+                  }
+                >
+
+                  <FileText
+                    size={16}
+                  />
+
+                  {getText(
+                    language,
+                    "Download Receipt",
+                    "रसीद डाउनलोड करें",
+                    "రసీదు డౌన్‌లోడ్ చేయండి"
+                  )}
+
+                </button>
+
+              )}
 
             </div>
 

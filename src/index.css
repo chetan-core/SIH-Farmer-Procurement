@@ -135513,3 +135513,327 @@ body,
   }
 
 }
+
+/* =========================================================
+   FINAL PROCUREMENT RECEIPT
+========================================================= */
+
+.token-completion-receipt-actions {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+
+.token-receipt-download-button {
+  width: 100%;
+  min-height: 48px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  border: 1px solid rgba(27, 83, 56, 0.18);
+  border-radius: 12px;
+
+  background: #f4f8f5;
+  color: #1b5338;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+
+.token-receipt-download-button:hover {
+  background: #eaf3ed;
+  border-color: rgba(27, 83, 56, 0.3);
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 7px 18px rgba(27, 83, 56, 0.08);
+}
+
+
+.token-receipt-download-button:active {
+  transform: translateY(0);
+}
+
+
+.token-receipt-download-button svg {
+  flex-shrink: 0;
+}
+
+
+
+/* =========================================================
+   PAYMENT RECEIPT INLINE CARD
+========================================================= */
+
+.token-payment-receipt-inline {
+  width: 100%;
+
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 13px;
+
+  margin-top: 16px;
+  padding: 14px 15px;
+
+  border: 1px solid rgba(27, 83, 56, 0.14);
+  border-radius: 14px;
+
+  background: #f7faf8;
+}
+
+
+.token-payment-receipt-inline-icon {
+  width: 38px;
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background: #e2efe6;
+  color: #1b5338;
+
+  flex-shrink: 0;
+}
+
+
+.token-payment-receipt-inline > div:nth-child(2) {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+
+.token-payment-receipt-inline strong {
+  color: #21392c;
+
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+
+.token-payment-receipt-inline span {
+  color: #728078;
+
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+
+.token-receipt-inline-button {
+  min-height: 38px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  padding: 0 13px;
+
+  border: 1px solid rgba(27, 83, 56, 0.18);
+  border-radius: 9px;
+
+  background: #ffffff;
+  color: #1b5338;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  white-space: nowrap;
+
+  cursor: pointer;
+
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+
+.token-receipt-inline-button:hover {
+  background: #eef6f1;
+  border-color: rgba(27, 83, 56, 0.28);
+
+  transform: translateY(-1px);
+}
+
+
+.token-receipt-inline-button:active {
+  transform: translateY(0);
+}
+
+
+
+/* =========================================================
+   SIDE RECEIPT BUTTON
+========================================================= */
+
+.token-receipt-side-button {
+  width: 100%;
+  min-height: 43px;
+
+  margin-top: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  border: 1px solid rgba(27, 83, 56, 0.2);
+  border-radius: 11px;
+
+  background: #ffffff;
+  color: #1b5338;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+
+.token-receipt-side-button:hover {
+  background: #eef6f1;
+  border-color: rgba(27, 83, 56, 0.3);
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 6px 16px rgba(27, 83, 56, 0.07);
+}
+
+
+.token-receipt-side-button:active {
+  transform: translateY(0);
+}
+
+
+.token-receipt-side-button svg {
+  flex-shrink: 0;
+}
+
+
+
+/* =========================================================
+   COMPLETED CARD SPACING
+========================================================= */
+
+.token-completed-card
+  .token-completion-actions {
+  margin-bottom: 2px;
+}
+
+
+.token-completed-card
+  .token-payment-issue-button {
+  margin-top: 12px;
+}
+
+
+
+/* =========================================================
+   DISABLED STATES
+========================================================= */
+
+.token-receipt-download-button:disabled,
+.token-receipt-inline-button:disabled,
+.token-receipt-side-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+  .token-payment-receipt-inline {
+    grid-template-columns: auto 1fr;
+  }
+
+
+  .token-receipt-inline-button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+
+  .token-receipt-download-button {
+    min-height: 50px;
+
+    font-size: 13px;
+  }
+
+
+  .token-receipt-side-button {
+    min-height: 46px;
+  }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+
+  .token-payment-receipt-inline {
+    gap: 10px;
+
+    padding: 12px;
+  }
+
+
+  .token-payment-receipt-inline-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+
+  .token-payment-receipt-inline strong {
+    font-size: 12px;
+  }
+
+
+  .token-payment-receipt-inline span {
+    font-size: 11px;
+  }
+
+
+  .token-receipt-download-button {
+    padding: 0 12px;
+  }
+
+}
