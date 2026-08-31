@@ -107453,3 +107453,1154 @@ body.dark,
     var(--dark-bg);
 
 }
+
+/* =========================================================
+   DARK THEME — GLOBAL CONTRAST FIX
+   Add this at the VERY END of your global CSS
+   ========================================================= */
+
+html.dark,
+body.dark,
+[data-theme="dark"] {
+  --dark-readable-text: #f1f3f5;
+  --dark-readable-secondary: #c8ced6;
+  --dark-readable-muted: #9da6b2;
+  --dark-surface: #15191f;
+  --dark-surface-hover: #20262e;
+  --dark-border: #353d47;
+}
+
+
+/* =========================================================
+   DARK THEME SURFACE OVERRIDE
+   Prevent light/brown surfaces from becoming too bright
+   ========================================================= */
+
+html.dark .card,
+html.dark .panel,
+html.dark .modal,
+html.dark .dropdown,
+html.dark .select-menu,
+html.dark .language-dropdown,
+
+body.dark .card,
+body.dark .panel,
+body.dark .modal,
+body.dark .dropdown,
+body.dark .select-menu,
+body.dark .language-dropdown,
+
+[data-theme="dark"] .card,
+[data-theme="dark"] .panel,
+[data-theme="dark"] .modal,
+[data-theme="dark"] .dropdown,
+[data-theme="dark"] .select-menu,
+[data-theme="dark"] .language-dropdown {
+
+  background:
+    var(--dark-surface);
+
+  color:
+    var(--dark-readable-text);
+
+  border-color:
+    var(--dark-border);
+
+}
+
+
+/* =========================================================
+   GLOBAL DARK TEXT
+   ========================================================= */
+
+html.dark p,
+html.dark span,
+html.dark label,
+html.dark small,
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6,
+
+body.dark p,
+body.dark span,
+body.dark label,
+body.dark small,
+body.dark h1,
+body.dark h2,
+body.dark h3,
+body.dark h4,
+body.dark h5,
+body.dark h6,
+
+[data-theme="dark"] p,
+[data-theme="dark"] span,
+[data-theme="dark"] label,
+[data-theme="dark"] small,
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+
+  color:
+    var(--dark-readable-text);
+
+}
+
+
+/* =========================================================
+   BUTTON HOVER FIX
+   Prevent hover effects from turning buttons white
+   ========================================================= */
+
+html.dark button:hover,
+body.dark button:hover,
+[data-theme="dark"] button:hover {
+
+  color:
+    var(--dark-readable-text);
+
+}
+
+
+/* Buttons whose existing design uses a light background */
+html.dark button:hover,
+body.dark button:hover,
+[data-theme="dark"] button:hover {
+
+  background-color:
+    var(--dark-surface-hover);
+
+}
+
+
+/* =========================================================
+   HEADER / LANGUAGE DROPDOWN
+   ========================================================= */
+
+html.dark .language-selector-button,
+html.dark .language-option,
+
+body.dark .language-selector-button,
+body.dark .language-option,
+
+[data-theme="dark"] .language-selector-button,
+[data-theme="dark"] .language-option {
+
+  color:
+    var(--dark-readable-text);
+
+}
+
+
+html.dark .language-option:hover,
+body.dark .language-option:hover,
+[data-theme="dark"] .language-option:hover {
+
+  background:
+    var(--dark-surface-hover);
+
+  color:
+    var(--dark-readable-text);
+
+}
+
+
+html.dark .language-option-text strong,
+body.dark .language-option-text strong,
+[data-theme="dark"] .language-option-text strong {
+
+  color:
+    var(--dark-readable-text);
+
+}
+
+
+html.dark .language-option-text span,
+body.dark .language-option-text span,
+[data-theme="dark"] .language-option-text span {
+
+  color:
+    var(--dark-readable-secondary);
+
+}
+
+
+/* =========================================================
+   INPUT / SELECT / TEXTAREA
+   ========================================================= */
+
+html.dark input,
+html.dark select,
+html.dark textarea,
+
+body.dark input,
+body.dark select,
+body.dark textarea,
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+
+  background:
+    var(--dark-surface);
+
+  color:
+    var(--dark-readable-text);
+
+  border-color:
+    var(--dark-border);
+
+}
+
+
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus,
+
+body.dark input:focus,
+body.dark select:focus,
+body.dark textarea:focus,
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus {
+
+  background:
+    var(--dark-surface);
+
+  color:
+    var(--dark-readable-text);
+
+}
+
+
+/* =========================================================
+   LINK / NAVIGATION HOVER
+   ========================================================= */
+
+html.dark a:hover,
+body.dark a:hover,
+[data-theme="dark"] a:hover {
+
+  color:
+    var(--dark-readable-text);
+
+}
+
+
+/* =========================================================
+   DISABLED ELEMENTS
+   ========================================================= */
+
+html.dark button:disabled,
+html.dark input:disabled,
+html.dark select:disabled,
+
+body.dark button:disabled,
+body.dark input:disabled,
+body.dark select:disabled,
+
+[data-theme="dark"] button:disabled,
+[data-theme="dark"] input:disabled,
+[data-theme="dark"] select:disabled {
+
+  color:
+    var(--dark-readable-muted);
+
+}
+
+
+/* =========================================================
+   COMMON LIGHT-BACKGROUND COMPONENTS
+   Catch components whose original light theme is beige,
+   cream, white, etc.
+   ========================================================= */
+
+html.dark .booking-panel,
+html.dark .booking-summary-card,
+html.dark .booking-help-card,
+html.dark .booking-info-bar,
+html.dark .booking-check-card,
+html.dark .booking-availability-section,
+html.dark .booking-confirm-section,
+html.dark .booking-bottom-card,
+
+html.dark .home-feature-card,
+html.dark .home-month-summary-card,
+html.dark .home-dashboard-section,
+html.dark .home-center-card,
+html.dark .home-arrival-check-card,
+html.dark .home-sms-card,
+
+html.dark .admin-center-card,
+html.dark .admin-center-form-modal,
+html.dark .admin-center-drawer,
+
+body.dark .booking-panel,
+body.dark .booking-summary-card,
+body.dark .booking-help-card,
+body.dark .booking-info-bar,
+body.dark .booking-check-card,
+body.dark .booking-availability-section,
+body.dark .booking-confirm-section,
+body.dark .booking-bottom-card,
+
+body.dark .home-feature-card,
+body.dark .home-month-summary-card,
+body.dark .home-dashboard-section,
+body.dark .home-center-card,
+body.dark .home-arrival-check-card,
+body.dark .home-sms-card,
+
+body.dark .admin-center-card,
+body.dark .admin-center-form-modal,
+body.dark .admin-center-drawer,
+
+[data-theme="dark"] .booking-panel,
+[data-theme="dark"] .booking-summary-card,
+[data-theme="dark"] .booking-help-card,
+[data-theme="dark"] .booking-info-bar,
+[data-theme="dark"] .booking-check-card,
+[data-theme="dark"] .booking-availability-section,
+[data-theme="dark"] .booking-confirm-section,
+[data-theme="dark"] .booking-bottom-card,
+
+[data-theme="dark"] .home-feature-card,
+[data-theme="dark"] .home-month-summary-card,
+[data-theme="dark"] .home-dashboard-section,
+[data-theme="dark"] .home-center-card,
+[data-theme="dark"] .home-arrival-check-card,
+[data-theme="dark"] .home-sms-card,
+
+[data-theme="dark"] .admin-center-card,
+[data-theme="dark"] .admin-center-form-modal,
+[data-theme="dark"] .admin-center-drawer {
+
+  color:
+    var(--dark-readable-text);
+
+}
+
+
+/* =========================================================
+   IMPORTANT:
+   Preserve intentionally colored primary buttons.
+   Their existing background/color stays intact.
+   ========================================================= */
+
+html.dark .home-primary-action:hover,
+html.dark .admin-center-add-button:hover,
+
+body.dark .home-primary-action:hover,
+body.dark .admin-center-add-button:hover,
+
+[data-theme="dark"] .home-primary-action:hover,
+[data-theme="dark"] .admin-center-add-button:hover {
+
+  color:
+    #ffffff;
+
+}
+
+
+/* =========================================================
+   ICONS
+   ========================================================= */
+
+html.dark svg,
+body.dark svg,
+[data-theme="dark"] svg {
+
+  stroke:
+    currentColor;
+
+}
+
+
+/* =========================================================
+   KRISHISETU — GLOBAL DARK THEME HIGH-CONTRAST SYSTEM
+   Put this at the VERY END of your main/global CSS file.
+   ========================================================= */
+
+
+/* =========================================================
+   DARK THEME VARIABLES
+   ========================================================= */
+
+html.dark,
+body.dark,
+[data-theme="dark"] {
+
+  --dark-bg:
+    #0a0f14;
+
+  --dark-surface:
+    #111820;
+
+  --dark-surface-2:
+    #17212b;
+
+  --dark-surface-3:
+    #1d2935;
+
+  --dark-hover:
+    #263442;
+
+  --dark-border:
+    #344454;
+
+  --dark-text:
+    #ffffff;
+
+  --dark-text-strong:
+    #ffffff;
+
+  --dark-text-secondary:
+    #d9e2eb;
+
+  --dark-text-muted:
+    #aebbc8;
+
+}
+
+
+/* =========================================================
+   PAGE BACKGROUND
+   ========================================================= */
+
+html.dark,
+body.dark,
+[data-theme="dark"] {
+
+  background:
+    var(--dark-bg) !important;
+
+  color:
+    var(--dark-text) !important;
+
+}
+
+
+/* =========================================================
+   GLOBAL TEXT
+   ========================================================= */
+
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6,
+html.dark p,
+html.dark span,
+html.dark strong,
+html.dark label,
+html.dark small,
+html.dark li,
+
+body.dark h1,
+body.dark h2,
+body.dark h3,
+body.dark h4,
+body.dark h5,
+body.dark h6,
+body.dark p,
+body.dark span,
+body.dark strong,
+body.dark label,
+body.dark small,
+body.dark li,
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6,
+[data-theme="dark"] p,
+[data-theme="dark"] span,
+[data-theme="dark"] strong,
+[data-theme="dark"] label,
+[data-theme="dark"] small,
+[data-theme="dark"] li {
+
+  color:
+    var(--dark-text) !important;
+
+}
+
+
+/* Secondary/muted text */
+
+html.dark p,
+html.dark small,
+html.dark label,
+html.dark .field-help,
+html.dark .card-eyebrow,
+html.dark .page-eyebrow,
+
+body.dark p,
+body.dark small,
+body.dark label,
+body.dark .field-help,
+body.dark .card-eyebrow,
+body.dark .page-eyebrow,
+
+[data-theme="dark"] p,
+[data-theme="dark"] small,
+[data-theme="dark"] label,
+[data-theme="dark"] .field-help,
+[data-theme="dark"] .card-eyebrow,
+[data-theme="dark"] .page-eyebrow {
+
+  color:
+    var(--dark-text-secondary) !important;
+
+}
+
+
+/* =========================================================
+   ALL COMMON CARD / PANEL SURFACES
+   This is the most important section.
+   ========================================================= */
+
+html.dark .booking-panel,
+html.dark .booking-summary-card,
+html.dark .booking-help-card,
+html.dark .booking-info-bar,
+html.dark .booking-check-card,
+html.dark .booking-availability-section,
+html.dark .booking-confirm-section,
+html.dark .booking-bottom-information,
+html.dark .booking-bottom-card,
+html.dark .booking-tip-card,
+html.dark .booking-check-copy,
+
+html.dark .home-feature-card,
+html.dark .home-month-summary-card,
+html.dark .home-dashboard-section,
+html.dark .home-center-card,
+html.dark .home-arrival-check-card,
+html.dark .home-sms-card,
+html.dark .next-booking-card,
+html.dark .empty-state-card,
+html.dark .home-recent-list,
+html.dark .home-payment-list,
+html.dark .home-upcoming-list,
+
+html.dark .admin-center-card,
+html.dark .admin-center-kpi,
+html.dark .admin-centers-filter-panel,
+html.dark .admin-center-drawer,
+html.dark .admin-center-form-modal,
+
+html.dark .modal,
+html.dark .card,
+html.dark .panel,
+html.dark .dropdown,
+html.dark .select-menu,
+html.dark .language-dropdown,
+
+body.dark .booking-panel,
+body.dark .booking-summary-card,
+body.dark .booking-help-card,
+body.dark .booking-info-bar,
+body.dark .booking-check-card,
+body.dark .booking-availability-section,
+body.dark .booking-confirm-section,
+body.dark .booking-bottom-information,
+body.dark .booking-bottom-card,
+body.dark .booking-tip-card,
+body.dark .booking-check-copy,
+
+body.dark .home-feature-card,
+body.dark .home-month-summary-card,
+body.dark .home-dashboard-section,
+body.dark .home-center-card,
+body.dark .home-arrival-check-card,
+body.dark .home-sms-card,
+body.dark .next-booking-card,
+body.dark .empty-state-card,
+body.dark .home-recent-list,
+body.dark .home-payment-list,
+body.dark .home-upcoming-list,
+
+body.dark .admin-center-card,
+body.dark .admin-center-kpi,
+body.dark .admin-centers-filter-panel,
+body.dark .admin-center-drawer,
+body.dark .admin-center-form-modal,
+
+body.dark .modal,
+body.dark .card,
+body.dark .panel,
+body.dark .dropdown,
+body.dark .select-menu,
+body.dark .language-dropdown,
+
+[data-theme="dark"] .booking-panel,
+[data-theme="dark"] .booking-summary-card,
+[data-theme="dark"] .booking-help-card,
+[data-theme="dark"] .booking-info-bar,
+[data-theme="dark"] .booking-check-card,
+[data-theme="dark"] .booking-availability-section,
+[data-theme="dark"] .booking-confirm-section,
+[data-theme="dark"] .booking-bottom-information,
+[data-theme="dark"] .booking-bottom-card,
+[data-theme="dark"] .booking-tip-card,
+[data-theme="dark"] .booking-check-copy,
+
+[data-theme="dark"] .home-feature-card,
+[data-theme="dark"] .home-month-summary-card,
+[data-theme="dark"] .home-dashboard-section,
+[data-theme="dark"] .home-center-card,
+[data-theme="dark"] .home-arrival-check-card,
+[data-theme="dark"] .home-sms-card,
+[data-theme="dark"] .next-booking-card,
+[data-theme="dark"] .empty-state-card,
+[data-theme="dark"] .home-recent-list,
+[data-theme="dark"] .home-payment-list,
+[data-theme="dark"] .home-upcoming-list,
+
+[data-theme="dark"] .admin-center-card,
+[data-theme="dark"] .admin-center-kpi,
+[data-theme="dark"] .admin-centers-filter-panel,
+[data-theme="dark"] .admin-center-drawer,
+[data-theme="dark"] .admin-center-form-modal,
+
+[data-theme="dark"] .modal,
+[data-theme="dark"] .card,
+[data-theme="dark"] .panel,
+[data-theme="dark"] .dropdown,
+[data-theme="dark"] .select-menu,
+[data-theme="dark"] .language-dropdown {
+
+  background:
+    var(--dark-surface) !important;
+
+  color:
+    var(--dark-text) !important;
+
+  border-color:
+    var(--dark-border) !important;
+
+}
+
+
+/* =========================================================
+   NESTED LIGHT SURFACES
+   Catch inner boxes which previously stayed white/cream.
+   ========================================================= */
+
+html.dark [class*="card"],
+html.dark [class*="panel"],
+html.dark [class*="box"],
+html.dark [class*="row"],
+html.dark [class*="banner"],
+html.dark [class*="summary"],
+html.dark [class*="detail"],
+html.dark [class*="notice"],
+html.dark [class*="option"],
+html.dark [class*="item"],
+
+body.dark [class*="card"],
+body.dark [class*="panel"],
+body.dark [class*="box"],
+body.dark [class*="row"],
+body.dark [class*="banner"],
+body.dark [class*="summary"],
+body.dark [class*="detail"],
+body.dark [class*="notice"],
+body.dark [class*="option"],
+body.dark [class*="item"],
+
+[data-theme="dark"] [class*="card"],
+[data-theme="dark"] [class*="panel"],
+[data-theme="dark"] [class*="box"],
+[data-theme="dark"] [class*="row"],
+[data-theme="dark"] [class*="banner"],
+[data-theme="dark"] [class*="summary"],
+[data-theme="dark"] [class*="detail"],
+[data-theme="dark"] [class*="notice"],
+[data-theme="dark"] [class*="option"],
+[data-theme="dark"] [class*="item"] {
+
+  color:
+    var(--dark-text);
+
+}
+
+
+/* =========================================================
+   INPUTS / SELECTS / TEXTAREAS
+   ========================================================= */
+
+html.dark input,
+html.dark select,
+html.dark textarea,
+
+body.dark input,
+body.dark select,
+body.dark textarea,
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+
+  background:
+    var(--dark-surface-2) !important;
+
+  color:
+    #ffffff !important;
+
+  border-color:
+    var(--dark-border) !important;
+
+}
+
+
+/* Placeholder */
+
+html.dark input::placeholder,
+html.dark textarea::placeholder,
+
+body.dark input::placeholder,
+body.dark textarea::placeholder,
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+
+  color:
+    #aebbc8 !important;
+
+  opacity:
+    1 !important;
+
+}
+
+
+/* Focus */
+
+html.dark input:focus,
+html.dark select:focus,
+html.dark textarea:focus,
+
+body.dark input:focus,
+body.dark select:focus,
+body.dark textarea:focus,
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus {
+
+  background:
+    var(--dark-surface-3) !important;
+
+  color:
+    #ffffff !important;
+
+  border-color:
+    #607487 !important;
+
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+html.dark button,
+body.dark button,
+[data-theme="dark"] button {
+
+  color:
+    #ffffff;
+
+}
+
+
+/* Neutral buttons */
+
+html.dark button:not(.home-primary-action):not(.admin-center-add-button):not(.admin-center-form-save),
+body.dark button:not(.home-primary-action):not(.admin-center-add-button):not(.admin-center-form-save),
+[data-theme="dark"] button:not(.home-primary-action):not(.admin-center-add-button):not(.admin-center-form-save) {
+
+  background-color:
+    var(--dark-surface-2);
+
+  border-color:
+    var(--dark-border);
+
+  color:
+    #ffffff;
+
+}
+
+
+/* Universal hover */
+
+html.dark button:hover,
+body.dark button:hover,
+[data-theme="dark"] button:hover {
+
+  background-color:
+    var(--dark-hover) !important;
+
+  color:
+    #ffffff !important;
+
+  border-color:
+    #4b5e70 !important;
+
+}
+
+
+/* Active / selected */
+
+html.dark button:active,
+html.dark button.active,
+html.dark button.selected,
+
+body.dark button:active,
+body.dark button.active,
+body.dark button.selected,
+
+[data-theme="dark"] button:active,
+[data-theme="dark"] button.active,
+[data-theme="dark"] button.selected {
+
+  background-color:
+    var(--dark-surface-3) !important;
+
+  color:
+    #ffffff !important;
+
+}
+
+
+/* =========================================================
+   LINKS
+   ========================================================= */
+
+html.dark a,
+body.dark a,
+[data-theme="dark"] a {
+
+  color:
+    #f4f7fa;
+
+}
+
+
+html.dark a:hover,
+body.dark a:hover,
+[data-theme="dark"] a:hover {
+
+  color:
+    #ffffff !important;
+
+}
+
+
+/* =========================================================
+   LANGUAGE DROPDOWN
+   ========================================================= */
+
+html.dark .language-selector-button,
+html.dark .language-dropdown,
+html.dark .language-option,
+
+body.dark .language-selector-button,
+body.dark .language-dropdown,
+body.dark .language-option,
+
+[data-theme="dark"] .language-selector-button,
+[data-theme="dark"] .language-dropdown,
+[data-theme="dark"] .language-option {
+
+  background:
+    var(--dark-surface) !important;
+
+  color:
+    #ffffff !important;
+
+  border-color:
+    var(--dark-border) !important;
+
+}
+
+
+html.dark .language-option:hover,
+body.dark .language-option:hover,
+[data-theme="dark"] .language-option:hover {
+
+  background:
+    var(--dark-hover) !important;
+
+  color:
+    #ffffff !important;
+
+}
+
+
+/* =========================================================
+   SELECT MENU OPTIONS
+   ========================================================= */
+
+html.dark .select-option,
+html.dark .center-option,
+html.dark .date-option,
+html.dark .slot-card,
+
+body.dark .select-option,
+body.dark .center-option,
+body.dark .date-option,
+body.dark .slot-card,
+
+[data-theme="dark"] .select-option,
+[data-theme="dark"] .center-option,
+[data-theme="dark"] .date-option,
+[data-theme="dark"] .slot-card {
+
+  background:
+    var(--dark-surface-2) !important;
+
+  color:
+    #ffffff !important;
+
+  border-color:
+    var(--dark-border) !important;
+
+}
+
+
+html.dark .select-option:hover,
+html.dark .center-option:hover,
+html.dark .date-option:hover,
+html.dark .slot-card:hover,
+
+body.dark .select-option:hover,
+body.dark .center-option:hover,
+body.dark .date-option:hover,
+body.dark .slot-card:hover,
+
+[data-theme="dark"] .select-option:hover,
+[data-theme="dark"] .center-option:hover,
+[data-theme="dark"] .date-option:hover,
+[data-theme="dark"] .slot-card:hover {
+
+  background:
+    var(--dark-hover) !important;
+
+  color:
+    #ffffff !important;
+
+}
+
+
+/* =========================================================
+   TABLES
+   ========================================================= */
+
+html.dark table,
+html.dark thead,
+html.dark tbody,
+html.dark tr,
+html.dark td,
+html.dark th,
+
+body.dark table,
+body.dark thead,
+body.dark tbody,
+body.dark tr,
+body.dark td,
+body.dark th,
+
+[data-theme="dark"] table,
+[data-theme="dark"] thead,
+[data-theme="dark"] tbody,
+[data-theme="dark"] tr,
+[data-theme="dark"] td,
+[data-theme="dark"] th {
+
+  background:
+    var(--dark-surface) !important;
+
+  color:
+    #ffffff !important;
+
+  border-color:
+    var(--dark-border) !important;
+
+}
+
+
+/* =========================================================
+   COMMON WHITE / CREAM ELEMENTS
+   Force them dark in dark mode.
+   ========================================================= */
+
+html.dark [style*="background: white"],
+html.dark [style*="background:white"],
+html.dark [style*="background-color: white"],
+html.dark [style*="background-color:white"],
+html.dark .white,
+html.dark .bg-white,
+html.dark .cream,
+
+body.dark [style*="background: white"],
+body.dark [style*="background:white"],
+body.dark [style*="background-color: white"],
+body.dark [style*="background-color:white"],
+body.dark .white,
+body.dark .bg-white,
+body.dark .cream,
+
+[data-theme="dark"] [style*="background: white"],
+[data-theme="dark"] [style*="background:white"],
+[data-theme="dark"] [style*="background-color: white"],
+[data-theme="dark"] [style*="background-color:white"],
+[data-theme="dark"] .white,
+[data-theme="dark"] .bg-white,
+[data-theme="dark"] .cream {
+
+  background:
+    var(--dark-surface) !important;
+
+  color:
+    #ffffff !important;
+
+}
+
+
+/* =========================================================
+   COMMON SECONDARY TEXT
+   ========================================================= */
+
+html.dark .muted,
+html.dark .secondary,
+html.dark .subtitle,
+html.dark .description,
+html.dark .helper,
+html.dark .hint,
+
+body.dark .muted,
+body.dark .secondary,
+body.dark .subtitle,
+body.dark .description,
+body.dark .helper,
+body.dark .hint,
+
+[data-theme="dark"] .muted,
+[data-theme="dark"] .secondary,
+[data-theme="dark"] .subtitle,
+[data-theme="dark"] .description,
+[data-theme="dark"] .helper,
+[data-theme="dark"] .hint {
+
+  color:
+    var(--dark-text-secondary) !important;
+
+}
+
+
+/* =========================================================
+   DISABLED
+   ========================================================= */
+
+html.dark button:disabled,
+html.dark input:disabled,
+html.dark select:disabled,
+html.dark textarea:disabled,
+
+body.dark button:disabled,
+body.dark input:disabled,
+body.dark select:disabled,
+body.dark textarea:disabled,
+
+[data-theme="dark"] button:disabled,
+[data-theme="dark"] input:disabled,
+[data-theme="dark"] select:disabled,
+[data-theme="dark"] textarea:disabled {
+
+  background:
+    #151b22 !important;
+
+  color:
+    #7f8b97 !important;
+
+  border-color:
+    #29333d !important;
+
+  opacity:
+    1 !important;
+
+}
+
+
+/* =========================================================
+   HOVER FOR LINKS / CARDS
+   ========================================================= */
+
+html.dark .home-feature-card:hover,
+html.dark .home-dashboard-section:hover,
+html.dark .home-center-card:hover,
+html.dark .admin-center-card:hover,
+
+body.dark .home-feature-card:hover,
+body.dark .home-dashboard-section:hover,
+body.dark .home-center-card:hover,
+body.dark .admin-center-card:hover,
+
+[data-theme="dark"] .home-feature-card:hover,
+[data-theme="dark"] .home-dashboard-section:hover,
+[data-theme="dark"] .home-center-card:hover,
+[data-theme="dark"] .admin-center-card:hover {
+
+  background:
+    var(--dark-surface-2) !important;
+
+  color:
+    #ffffff !important;
+
+}
+
+
+/* =========================================================
+   ICONS
+   ========================================================= */
+
+html.dark svg,
+body.dark svg,
+[data-theme="dark"] svg {
+
+  color:
+    currentColor;
+
+}
+
+
+/* =========================================================
+   FINAL SAFETY NET
+   Prevent light text on light surfaces from surviving
+   through inline/component rules.
+   ========================================================= */
+
+html.dark .text-dark,
+html.dark .text-black,
+
+body.dark .text-dark,
+body.dark .text-black,
+
+[data-theme="dark"] .text-dark,
+[data-theme="dark"] .text-black {
+
+  color:
+    #ffffff !important;
+
+}
