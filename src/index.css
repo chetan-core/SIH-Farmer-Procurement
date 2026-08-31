@@ -106966,3 +106966,28 @@ html.dark .farmer-notification-mark-all:hover:not(:disabled),
 
   color: #f0d77a;
 }
+
+.app-header {
+  position: relative;
+  z-index: 1000;
+  overflow: visible;
+}
+
+.app-header-actions {
+  position: relative;
+  z-index: 1001;
+  overflow: visible;
+}
+
+.language-selector {
+  position: relative;
+  z-index: 1100;
+  overflow: visible;
+}
+
+.language-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 9999;
+}
