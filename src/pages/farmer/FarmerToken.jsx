@@ -635,6 +635,124 @@ function FarmerToken() {
     );
 
 
+  /*
+   * ========================================================
+   * AUTOMATIC PAYMENT VOICE NOTIFICATION
+   * ========================================================
+   */
+
+  useEffect(() => {
+
+    if (
+      !booking?.id
+    ) {
+
+      return;
+
+    }
+
+
+    if (
+      typeof window ===
+        "undefined" ||
+      !("speechSynthesis" in window)
+    ) {
+
+      return;
+
+    }
+
+
+    const storageKey =
+      `krishisetu-payment-status-${booking.id}`;
+
+
+    const previousStatus =
+      sessionStorage.getItem(
+        storageKey
+      );
+
+
+    /*
+     * First load is stored silently.
+     * This prevents the farmer hearing the announcement
+     * every time the token page is opened/refreshed.
+     */
+
+    if (
+      !previousStatus
+    ) {
+
+      sessionStorage.setItem(
+        storageKey,
+        currentStatus
+      );
+
+      return;
+
+    }
+
+
+    /*
+     * Speak only when the status actually changes
+     * from something else to PAYMENT_SENT.
+     */
+
+    if (
+      previousStatus !==
+        "PAYMENT_SENT" &&
+      currentStatus ===
+        "PAYMENT_SENT"
+    ) {
+
+      const amountText =
+        paymentAmount !==
+          null
+          ? paymentAmount.toLocaleString(
+              "en-IN",
+              {
+                maximumFractionDigits:
+                  2,
+              }
+            )
+          : "";
+
+
+      const message =
+        getPaymentVoiceMessage(
+          language,
+          amountText
+        );
+
+
+      speakPaymentMessage(
+        message,
+        language
+      );
+
+    }
+
+
+    sessionStorage.setItem(
+      storageKey,
+      currentStatus
+    );
+
+
+  }, [
+    booking?.id,
+    currentStatus,
+    paymentAmount,
+    language,
+  ]);
+
+
+  /*
+   * ========================================================
+   * QR CODE
+   * ========================================================
+   */
+
   useEffect(() => {
 
     if (
@@ -744,6 +862,12 @@ function FarmerToken() {
   ]);
 
 
+  /*
+   * ========================================================
+   * COPY TOKEN
+   * ========================================================
+   */
+
   async function copyToken() {
 
     const token =
@@ -793,6 +917,12 @@ function FarmerToken() {
 
   }
 
+
+  /*
+   * ========================================================
+   * SHARE BOOKING
+   * ========================================================
+   */
 
   async function shareBooking() {
 
@@ -901,6 +1031,12 @@ function FarmerToken() {
 
   }
 
+
+  /*
+   * ========================================================
+   * MONTHLY DATA
+   * ========================================================
+   */
 
   const monthlyData =
     useMemo(
@@ -1080,6 +1216,12 @@ function FarmerToken() {
     );
 
 
+  /*
+   * ========================================================
+   * PAYMENT HISTORY
+   * ========================================================
+   */
+
   const paymentHistory =
     useMemo(
       () =>
@@ -1113,6 +1255,12 @@ function FarmerToken() {
       ]
     );
 
+
+  /*
+   * ========================================================
+   * DOWNLOAD OFFLINE BOOKING PASS
+   * ========================================================
+   */
 
   async function downloadBookingPass() {
 
@@ -1182,6 +1330,7 @@ function FarmerToken() {
 
             errorCorrectionLevel:
               "M",
+
           }
         );
 
@@ -1581,8 +1730,7 @@ function FarmerToken() {
             `Amount: ₹${paymentAmount.toLocaleString(
               "en-IN",
               {
-                maximumFractionDigits:
-                  2,
+                maximumFractionDigits: 2,
               }
             )}`,
             18,
@@ -1740,6 +1888,12 @@ function FarmerToken() {
   }
 
 
+  /*
+   * ========================================================
+   * PAYMENT ISSUE
+   * ========================================================
+   */
+
   async function handleIssueSubmit(
     event
   ) {
@@ -1832,6 +1986,12 @@ function FarmerToken() {
   }
 
 
+  /*
+   * ========================================================
+   * LOADING
+   * ========================================================
+   */
+
   if (
     loading
   ) {
@@ -1895,6 +2055,12 @@ function FarmerToken() {
 
   }
 
+
+  /*
+   * ========================================================
+   * ERROR
+   * ========================================================
+   */
 
   if (
     !booking
@@ -1999,6 +2165,12 @@ function FarmerToken() {
   }
 
 
+  /*
+   * ========================================================
+   * MAIN PAGE
+   * ========================================================
+   */
+
   return (
 
     <div className="farmer-token-page">
@@ -2088,6 +2260,7 @@ function FarmerToken() {
               )}
 
             </p>
+
 
             <div className="token-live-meta">
 
@@ -3929,7 +4102,9 @@ function FarmerToken() {
 
 
 
-          {/* SIDE COLUMN */}
+          {/* =================================================
+              SIDE COLUMN
+          ================================================= */}
 
           <aside className="token-side-column">
 
@@ -4387,7 +4562,9 @@ function FarmerToken() {
 
 
 
-        {/* BOTTOM ACTIONS */}
+        {/* =================================================
+            BOTTOM ACTIONS
+        ================================================= */}
 
         <section className="token-bottom-actions">
 
@@ -4434,7 +4611,9 @@ function FarmerToken() {
 
 
 
-      {/* PAYMENT ISSUE MODAL */}
+      {/* =================================================
+          PAYMENT ISSUE MODAL
+      ================================================= */}
 
       {showPaymentIssue && (
 
@@ -4890,7 +5069,152 @@ function TokenMonthlyStat({
 
 
 /* =========================================================
-   NEW SMALL HELPERS
+   NEW VOICE HELPERS
+========================================================= */
+
+function getPaymentVoiceMessage(
+  language,
+  amountText
+) {
+
+  if (
+    language ===
+    "hi"
+  ) {
+
+    return amountText
+      ? `आपका ${amountText} रुपये का भुगतान सफलतापूर्वक भेज दिया गया है।`
+      : "आपका भुगतान सफलतापूर्वक भेज दिया गया है।";
+
+  }
+
+
+  if (
+    language ===
+    "te"
+  ) {
+
+    return amountText
+      ? `మీ ${amountText} రూపాయల చెల్లింపు విజయవంతంగా పంపబడింది.`
+      : "మీ చెల్లింపు విజయవంతంగా పంపబడింది.";
+
+  }
+
+
+  return amountText
+    ? `Your payment of ${amountText} rupees has been successfully sent.`
+    : "Your payment has been successfully sent.";
+
+}
+
+
+function speakPaymentMessage(
+  message,
+  language
+) {
+
+  if (
+    typeof window ===
+      "undefined" ||
+    !("speechSynthesis" in window)
+  ) {
+
+    return;
+
+  }
+
+
+  try {
+
+    window.speechSynthesis.cancel();
+
+
+    const utterance =
+      new SpeechSynthesisUtterance(
+        message
+      );
+
+
+    const voiceLanguage =
+      language ===
+        "hi"
+        ? "hi-IN"
+        : language ===
+            "te"
+          ? "te-IN"
+          : "en-IN";
+
+
+    utterance.lang =
+      voiceLanguage;
+
+
+    utterance.rate =
+      0.9;
+
+
+    utterance.pitch =
+      1;
+
+
+    utterance.volume =
+      1;
+
+
+    const voices =
+      window.speechSynthesis.getVoices();
+
+
+    const matchingVoice =
+      voices.find(
+        voice =>
+          String(
+            voice.lang
+          )
+            .toLowerCase()
+            .startsWith(
+              language ===
+                "hi"
+                ? "hi"
+                : language ===
+                    "te"
+                  ? "te"
+                  : "en"
+            )
+      );
+
+
+    if (
+      matchingVoice
+    ) {
+
+      utterance.voice =
+        matchingVoice;
+
+    }
+
+
+    window.speechSynthesis.speak(
+      utterance
+    );
+
+
+  } catch (
+    speechError
+  ) {
+
+    console.error(
+      "Payment voice notification failed:",
+      speechError
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   NEXT ACTION
 ========================================================= */
 
 function getNextAction(
@@ -5095,6 +5419,10 @@ function getNextAction(
 }
 
 
+/* =========================================================
+   ARRIVAL COUNTDOWN
+========================================================= */
+
 function getArrivalCountdown(
   date,
   start,
@@ -5288,6 +5616,10 @@ function getArrivalCountdown(
 
 }
 
+
+/* =========================================================
+   DATE/TIME
+========================================================= */
 
 function parseBookingDateTime(
   date,
@@ -5517,8 +5849,268 @@ function formatUpdatedTime(
 }
 
 
+function formatDate(
+  value,
+  language
+) {
+
+  if (
+    !value
+  ) {
+
+    return "—";
+
+  }
+
+
+  const date =
+    new Date(
+      `${value}T00:00:00`
+    );
+
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+
+    return value;
+
+  }
+
+
+  const locale =
+    language === "hi"
+      ? "hi-IN"
+      : language === "te"
+        ? "te-IN"
+        : "en-IN";
+
+
+  return date.toLocaleDateString(
+    locale,
+    {
+      day:
+        "numeric",
+
+      month:
+        "short",
+
+      year:
+        "numeric",
+
+    }
+  );
+
+}
+
+
+function formatCurrentMonth(
+  language
+) {
+
+  const locale =
+    language ===
+      "hi"
+      ? "hi-IN"
+      : language ===
+          "te"
+        ? "te-IN"
+        : "en-IN";
+
+
+  return new Date().toLocaleDateString(
+    locale,
+    {
+      month:
+        "long",
+
+      year:
+        "numeric",
+
+    }
+  );
+
+}
+
+
+function formatNotificationDate(
+  value,
+  language
+) {
+
+  if (
+    !value
+  ) {
+
+    return "";
+
+  }
+
+
+  const date =
+    new Date(
+      value
+    );
+
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+
+    return "";
+
+  }
+
+
+  const locale =
+    language === "hi"
+      ? "hi-IN"
+      : language === "te"
+        ? "te-IN"
+        : "en-IN";
+
+
+  return date.toLocaleString(
+    locale,
+    {
+      day:
+        "numeric",
+
+      month:
+        "short",
+
+      hour:
+        "numeric",
+
+      minute:
+        "2-digit",
+
+    }
+  );
+
+}
+
+
+function formatTime(
+  start,
+  end
+) {
+
+  if (
+    !start
+  ) {
+
+    return "—";
+
+  }
+
+
+  function convert(
+    value
+  ) {
+
+    const text =
+      String(
+        value
+      )
+        .trim()
+        .toUpperCase();
+
+
+    const match =
+      text.match(
+        /^(\d{1,2}):(\d{2})\s*(AM|PM)?$/
+      );
+
+
+    if (
+      !match
+    ) {
+
+      return value;
+
+    }
+
+
+    let hour =
+      Number(
+        match[1]
+      );
+
+
+    const minute =
+      match[2];
+
+
+    const period =
+      match[3];
+
+
+    if (
+      period ===
+      "AM"
+    ) {
+
+      if (
+        hour ===
+        12
+      ) {
+
+        hour = 0;
+
+      }
+
+    } else if (
+      period ===
+      "PM"
+    ) {
+
+      if (
+        hour !==
+        12
+      ) {
+
+        hour +=
+          12;
+
+      }
+
+    }
+
+
+    const suffix =
+      hour >=
+      12
+        ? "PM"
+        : "AM";
+
+
+    const displayHour =
+      hour %
+        12 ||
+      12;
+
+
+    return (
+      `${displayHour}:${minute} ${suffix}`
+    );
+
+  }
+
+
+  return end
+    ? `${convert(start)} – ${convert(end)}`
+    : convert(start);
+
+}
+
+
 /* =========================================================
-   EXISTING HELPERS
+   STATUS
 ========================================================= */
 
 function getText(
@@ -5928,266 +6520,6 @@ function getTimelineIndex(
     index,
     0
   );
-
-}
-
-
-function formatDate(
-  value,
-  language
-) {
-
-  if (
-    !value
-  ) {
-
-    return "—";
-
-  }
-
-
-  const date =
-    new Date(
-      `${value}T00:00:00`
-    );
-
-
-  if (
-    Number.isNaN(
-      date.getTime()
-    )
-  ) {
-
-    return value;
-
-  }
-
-
-  const locale =
-    language === "hi"
-      ? "hi-IN"
-      : language === "te"
-        ? "te-IN"
-        : "en-IN";
-
-
-  return date.toLocaleDateString(
-    locale,
-    {
-      day:
-        "numeric",
-
-      month:
-        "short",
-
-      year:
-        "numeric",
-
-    }
-  );
-
-}
-
-
-function formatCurrentMonth(
-  language
-) {
-
-  const locale =
-    language ===
-      "hi"
-      ? "hi-IN"
-      : language ===
-          "te"
-        ? "te-IN"
-        : "en-IN";
-
-
-  return new Date().toLocaleDateString(
-    locale,
-    {
-      month:
-        "long",
-
-      year:
-        "numeric",
-
-    }
-  );
-
-}
-
-
-function formatNotificationDate(
-  value,
-  language
-) {
-
-  if (
-    !value
-  ) {
-
-    return "";
-
-  }
-
-
-  const date =
-    new Date(
-      value
-    );
-
-
-  if (
-    Number.isNaN(
-      date.getTime()
-    )
-  ) {
-
-    return "";
-
-  }
-
-
-  const locale =
-    language === "hi"
-      ? "hi-IN"
-      : language === "te"
-        ? "te-IN"
-        : "en-IN";
-
-
-  return date.toLocaleString(
-    locale,
-    {
-      day:
-        "numeric",
-
-      month:
-        "short",
-
-      hour:
-        "numeric",
-
-      minute:
-        "2-digit",
-
-    }
-  );
-
-}
-
-
-function formatTime(
-  start,
-  end
-) {
-
-  if (
-    !start
-  ) {
-
-    return "—";
-
-  }
-
-
-  function convert(
-    value
-  ) {
-
-    const text =
-      String(
-        value
-      )
-        .trim()
-        .toUpperCase();
-
-
-    const match =
-      text.match(
-        /^(\d{1,2}):(\d{2})\s*(AM|PM)?$/
-      );
-
-
-    if (
-      !match
-    ) {
-
-      return value;
-
-    }
-
-
-    let hour =
-      Number(
-        match[1]
-      );
-
-
-    const minute =
-      match[2];
-
-
-    const period =
-      match[3];
-
-
-    if (
-      period ===
-      "AM"
-    ) {
-
-      if (
-        hour ===
-        12
-      ) {
-
-        hour = 0;
-
-      }
-
-    } else if (
-      period ===
-      "PM"
-    ) {
-
-      if (
-        hour !==
-        12
-      ) {
-
-        hour +=
-          12;
-
-      }
-
-    }
-
-
-    const suffix =
-      hour >=
-      12
-        ? "PM"
-        : "AM";
-
-
-    const displayHour =
-      hour %
-        12 ||
-      12;
-
-
-    return (
-      `${displayHour}:${minute} ${suffix}`
-    );
-
-  }
-
-
-  return end
-    ? `${convert(start)} – ${convert(end)}`
-    : convert(start);
 
 }
 
