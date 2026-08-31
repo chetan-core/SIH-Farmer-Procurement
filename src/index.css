@@ -130312,3 +130312,15 @@ html[data-theme="midnight"] .admin-login-page > * {
   font-size: 14px;
   line-height: 1.6;
 }
+
+/* =========================================================
+   ADMIN SIDEBAR — TALLER VERTICALLY
+   No other styling changes
+========================================================= */
+
+.admin-sidebar {
+  min-height: 101vh !important;
+  height: 101vh !important;
+
+  box-sizing: border-box;
+}
