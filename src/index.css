@@ -137231,3 +137231,294 @@ body,
   }
 
 }
+
+/* =========================================================
+   FARMER BOOKING — MOBILE CONFIRM BUTTON FIX
+========================================================= */
+
+@media (max-width: 700px) {
+
+  /* Make the final confirmation section fully usable */
+  .booking-confirm-section {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: visible;
+    padding: 18px 14px 20px;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+
+  /* Prevent the heading/badge combination from becoming too wide */
+  .confirm-section-heading {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+
+  .confirm-section-heading > div {
+    width: 100%;
+    min-width: 0;
+  }
+
+
+  .confirm-section-heading h2 {
+    font-size: 21px;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+
+
+  .confirm-section-heading p {
+    font-size: 13px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+  }
+
+
+  .confirm-ready-pill {
+    align-self: flex-start;
+    max-width: 100%;
+    box-sizing: border-box;
+    white-space: normal;
+  }
+
+
+  /* Review cards must stack cleanly */
+  .confirm-review-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+
+  .confirm-review-card {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+
+  .confirm-review-card > div:last-child {
+    min-width: 0;
+  }
+
+
+  .confirm-review-card strong,
+  .confirm-review-card small {
+    overflow-wrap: anywhere;
+  }
+
+
+  /* Notice must not push the action outside the viewport */
+  .confirm-notice {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+
+  .confirm-notice > div:last-child {
+    min-width: 0;
+  }
+
+
+  .confirm-notice p {
+    overflow-wrap: anywhere;
+  }
+
+
+  /* =======================================================
+     CRITICAL: CONFIRM ACTION AREA
+  ======================================================= */
+
+  .confirm-bottom {
+    width: 100%;
+    box-sizing: border-box;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: stretch;
+    justify-content: flex-start;
+
+    gap: 14px;
+
+    margin-top: 18px;
+  }
+
+
+  .confirm-arrival-reminder {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+  }
+
+
+  .confirm-arrival-reminder span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+
+  /* Force the Button wrapper itself to occupy full width */
+  .confirm-bottom > button,
+  .confirm-bottom > a {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+    flex: none;
+  }
+
+
+  /*
+   * Your custom Button component may render a <button>
+   * inside a wrapper. Cover both possibilities.
+   */
+  .confirm-bottom button {
+    width: 100% !important;
+    min-height: 52px;
+    box-sizing: border-box;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    padding: 14px 18px;
+
+    font-size: 15px;
+    line-height: 1.2;
+
+    white-space: normal;
+    text-align: center;
+
+    overflow: visible;
+    flex-shrink: 0;
+  }
+
+
+  .confirm-bottom button svg {
+    flex-shrink: 0;
+  }
+
+
+  /* =======================================================
+     ERROR MESSAGE ABOVE BUTTON
+  ======================================================= */
+
+  .booking-confirm-section .booking-error {
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 12px;
+    margin-bottom: 0;
+
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+  }
+
+
+  .booking-confirm-section .booking-error span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    line-height: 1.45;
+  }
+
+
+  /* =======================================================
+     PREVENT HORIZONTAL OVERFLOW
+  ======================================================= */
+
+  .booking-confirm-section *,
+  .confirm-review-grid *,
+  .confirm-notice *,
+  .confirm-bottom * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+}
+
+
+/* =========================================================
+   EXTRA SMALL PHONES
+========================================================= */
+
+@media (max-width: 420px) {
+
+  .booking-confirm-section {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+
+  .confirm-section-heading h2 {
+    font-size: 19px;
+  }
+
+
+  .confirm-section-heading p {
+    font-size: 12.5px;
+  }
+
+
+  .confirm-bottom button {
+    min-height: 54px;
+    padding: 15px 14px;
+    font-size: 14px;
+  }
+
+
+  .confirm-arrival-reminder span {
+    font-size: 12.5px;
+  }
+
+
+  .confirm-ready-pill {
+    font-size: 11px;
+  }
+
+}
+
+
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
+
+@media (max-width: 360px) {
+
+  .booking-confirm-section {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+
+  .confirm-bottom {
+    gap: 12px;
+  }
+
+
+  .confirm-bottom button {
+    min-height: 56px;
+    font-size: 13.5px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+}
