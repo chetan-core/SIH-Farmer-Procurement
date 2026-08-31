@@ -112913,3 +112913,913 @@ body[data-theme="dark"] .farmer-login-card [class*="icon"],
 body[data-theme="dark"] .farmer-login-card [class*="button"] {
   text-shadow: none !important;
 }
+
+/* =========================================================
+   DARK THEME — BRIGHTER / HIGH-CONTRAST ACCENT COLORS
+   ========================================================= */
+
+/* ---------- Green accent surfaces ---------- */
+
+html.dark [class*="green"],
+body.dark [class*="green"],
+html[data-theme="dark"] [class*="green"],
+body[data-theme="dark"] [class*="green"] {
+  color: #eafff4 !important;
+}
+
+html.dark .green,
+body.dark .green,
+html[data-theme="dark"] .green,
+body[data-theme="dark"] .green {
+  background: #123b2b !important;
+  border-color: #28b978 !important;
+}
+
+
+/* ---------- Blue accent surfaces ---------- */
+
+html.dark .blue,
+body.dark .blue,
+html[data-theme="dark"] .blue,
+body[data-theme="dark"] .blue {
+  background: #132f46 !important;
+  border-color: #3aa9ef !important;
+  color: #e8f6ff !important;
+}
+
+
+/* ---------- Yellow / Gold accent surfaces ---------- */
+
+html.dark .gold,
+body.dark .gold,
+html[data-theme="dark"] .gold,
+body[data-theme="dark"] .gold {
+  background: #403314 !important;
+  border-color: #e4b43b !important;
+  color: #fff5d1 !important;
+}
+
+
+/* ---------- Orange accent surfaces ---------- */
+
+html.dark .orange,
+body.dark .orange,
+html[data-theme="dark"] .orange,
+body[data-theme="dark"] .orange {
+  background: #432513 !important;
+  border-color: #f39a3d !important;
+  color: #fff0dd !important;
+}
+
+
+/* ---------- Purple accent surfaces ---------- */
+
+html.dark .purple,
+body.dark .purple,
+html[data-theme="dark"] .purple,
+body[data-theme="dark"] .purple {
+  background: #30204b !important;
+  border-color: #aa7cff !important;
+  color: #f5efff !important;
+}
+
+
+/* ---------- Teal accent surfaces ---------- */
+
+html.dark .teal,
+body.dark .teal,
+html[data-theme="dark"] .teal,
+body[data-theme="dark"] .teal {
+  background: #123b40 !important;
+  border-color: #42c7d1 !important;
+  color: #e7ffff !important;
+}
+
+
+/* =========================================================
+   DARK THEME — FORCE TEXT INSIDE ACCENT CARDS
+   ========================================================= */
+
+html.dark .green *,
+body.dark .green *,
+html[data-theme="dark"] .green *,
+body[data-theme="dark"] .green * {
+  color: #eafff4 !important;
+}
+
+html.dark .blue *,
+body.dark .blue *,
+html[data-theme="dark"] .blue *,
+body[data-theme="dark"] .blue * {
+  color: #e8f6ff !important;
+}
+
+html.dark .gold *,
+body.dark .gold *,
+html[data-theme="dark"] .gold *,
+body[data-theme="dark"] .gold * {
+  color: #fff5d1 !important;
+}
+
+html.dark .orange *,
+body.dark .orange *,
+html[data-theme="dark"] .orange *,
+body[data-theme="dark"] .orange * {
+  color: #fff0dd !important;
+}
+
+html.dark .purple *,
+body.dark .purple *,
+html[data-theme="dark"] .purple *,
+body[data-theme="dark"] .purple * {
+  color: #f5efff !important;
+}
+
+html.dark .teal *,
+body.dark .teal *,
+html[data-theme="dark"] .teal *,
+body[data-theme="dark"] .teal * {
+  color: #e7ffff !important;
+}
+
+
+/* =========================================================
+   DARK THEME — ICONS
+   ========================================================= */
+
+html.dark [class*="green"] svg,
+body.dark [class*="green"] svg,
+html[data-theme="dark"] [class*="green"] svg,
+body[data-theme="dark"] [class*="green"] svg {
+  color: #35d98a !important;
+  stroke: #35d98a !important;
+}
+
+html.dark [class*="blue"] svg,
+body.dark [class*="blue"] svg,
+html[data-theme="dark"] [class*="blue"] svg,
+body[data-theme="dark"] [class*="blue"] svg {
+  color: #55bfff !important;
+  stroke: #55bfff !important;
+}
+
+html.dark [class*="gold"] svg,
+body.dark [class*="gold"] svg,
+html[data-theme="dark"] [class*="gold"] svg,
+body[data-theme="dark"] [class*="gold"] svg {
+  color: #ffd75a !important;
+  stroke: #ffd75a !important;
+}
+
+html.dark [class*="orange"] svg,
+body.dark [class*="orange"] svg,
+html[data-theme="dark"] [class*="orange"] svg,
+body[data-theme="dark"] [class*="orange"] svg {
+  color: #ffae52 !important;
+  stroke: #ffae52 !important;
+}
+
+html.dark [class*="purple"] svg,
+body.dark [class*="purple"] svg,
+html[data-theme="dark"] [class*="purple"] svg,
+body[data-theme="dark"] [class*="purple"] svg {
+  color: #bb91ff !important;
+  stroke: #bb91ff !important;
+}
+
+html.dark [class*="teal"] svg,
+body.dark [class*="teal"] svg,
+html[data-theme="dark"] [class*="teal"] svg,
+body[data-theme="dark"] [class*="teal"] svg {
+  color: #50e1e8 !important;
+  stroke: #50e1e8 !important;
+}
+
+
+/* =========================================================
+   DARK THEME — VERY LIGHT CARD SURFACES
+   Prevent accidental white/pastel cards
+   ========================================================= */
+
+html.dark .help-check-row,
+html.dark .help-contact-reasons > div,
+html.dark .help-guide-item,
+html.dark .help-checklist-card,
+html.dark .help-language-option,
+html.dark .help-topic-card,
+body.dark .help-check-row,
+body.dark .help-contact-reasons > div,
+body.dark .help-guide-item,
+body.dark .help-checklist-card,
+body.dark .help-language-option,
+body.dark .help-topic-card,
+html[data-theme="dark"] .help-check-row,
+html[data-theme="dark"] .help-contact-reasons > div,
+html[data-theme="dark"] .help-guide-item,
+html[data-theme="dark"] .help-checklist-card,
+html[data-theme="dark"] .help-language-option,
+html[data-theme="dark"] .help-topic-card,
+body[data-theme="dark"] .help-check-row,
+body[data-theme="dark"] .help-contact-reasons > div,
+body[data-theme="dark"] .help-guide-item,
+body[data-theme="dark"] .help-checklist-card,
+body[data-theme="dark"] .help-language-option,
+body[data-theme="dark"] .help-topic-card {
+  background: #18232d !important;
+  border-color: #3b5263 !important;
+  color: #f3f8fb !important;
+}
+
+
+/* Text inside those cards */
+
+html.dark .help-check-row *,
+html.dark .help-contact-reasons > div *,
+html.dark .help-guide-item *,
+html.dark .help-checklist-card *,
+html.dark .help-language-option *,
+html.dark .help-topic-card *,
+
+body.dark .help-check-row *,
+body.dark .help-contact-reasons > div *,
+body.dark .help-guide-item *,
+body.dark .help-checklist-card *,
+body.dark .help-language-option *,
+body.dark .help-topic-card *,
+
+html[data-theme="dark"] .help-check-row *,
+html[data-theme="dark"] .help-contact-reasons > div *,
+html[data-theme="dark"] .help-guide-item *,
+html[data-theme="dark"] .help-checklist-card *,
+html[data-theme="dark"] .help-language-option *,
+html[data-theme="dark"] .help-topic-card *,
+
+body[data-theme="dark"] .help-check-row *,
+body[data-theme="dark"] .help-contact-reasons > div *,
+body[data-theme="dark"] .help-guide-item *,
+body[data-theme="dark"] .help-checklist-card *,
+body[data-theme="dark"] .help-language-option *,
+body[data-theme="dark"] .help-topic-card * {
+  color: #eef5f8 !important;
+}
+
+
+/* =========================================================
+   DARK THEME — BUTTONS
+   ========================================================= */
+
+html.dark button:hover,
+body.dark button:hover,
+html[data-theme="dark"] button:hover,
+body[data-theme="dark"] button:hover {
+  filter: none !important;
+}
+
+
+html.dark .help-secondary-action:hover,
+html.dark .home-secondary-action:hover,
+html.dark .admin-center-edit-button:hover,
+body.dark .help-secondary-action:hover,
+body.dark .home-secondary-action:hover,
+body.dark .admin-center-edit-button:hover,
+html[data-theme="dark"] .help-secondary-action:hover,
+html[data-theme="dark"] .home-secondary-action:hover,
+html[data-theme="dark"] .admin-center-edit-button:hover,
+body[data-theme="dark"] .help-secondary-action:hover,
+body[data-theme="dark"] .home-secondary-action:hover,
+body[data-theme="dark"] .admin-center-edit-button:hover {
+  background: #263946 !important;
+  color: #ffffff !important;
+  border-color: #6d8a9e !important;
+}
+
+
+/* =========================================================
+   DARK THEME — INPUTS
+   ========================================================= */
+
+html.dark input,
+html.dark select,
+html.dark textarea,
+body.dark input,
+body.dark select,
+body.dark textarea,
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea,
+body[data-theme="dark"] input,
+body[data-theme="dark"] select,
+body[data-theme="dark"] textarea {
+  background: #17232d !important;
+  color: #f5f9fb !important;
+  -webkit-text-fill-color: #f5f9fb !important;
+  border-color: #50697b !important;
+}
+
+
+html.dark input::placeholder,
+html.dark textarea::placeholder,
+body.dark input::placeholder,
+body.dark textarea::placeholder,
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder,
+body[data-theme="dark"] input::placeholder,
+body[data-theme="dark"] textarea::placeholder {
+  color: #aebfcb !important;
+  opacity: 1 !important;
+}
+
+
+/* =========================================================
+   DARK THEME — REMOVE PASTEL "WHITE BOX" EFFECT
+   ========================================================= */
+
+html.dark [class*="card"],
+html.dark [class*="box"],
+body.dark [class*="card"],
+body.dark [class*="box"],
+html[data-theme="dark"] [class*="card"],
+html[data-theme="dark"] [class*="box"],
+body[data-theme="dark"] [class*="card"],
+body[data-theme="dark"] [class*="box"] {
+  color: #edf5f8;
+}
+
+
+/* Prevent completely white backgrounds */
+html.dark [class*="card"][style*="background: white"],
+html.dark [class*="card"][style*="background:#fff"],
+body.dark [class*="card"][style*="background: white"],
+body.dark [class*="card"][style*="background:#fff"],
+html[data-theme="dark"] [class*="card"][style*="background: white"],
+html[data-theme="dark"] [class*="card"][style*="background:#fff"],
+body[data-theme="dark"] [class*="card"][style*="background: white"],
+body[data-theme="dark"] [class*="card"][style*="background:#fff"] {
+  background: #18232d !important;
+}
+
+
+/* =========================================================
+   DARK THEME — HIGH CONTRAST BORDER
+   ========================================================= */
+
+html.dark [class*="card"],
+html.dark [class*="box"],
+body.dark [class*="card"],
+body.dark [class*="box"],
+html[data-theme="dark"] [class*="card"],
+html[data-theme="dark"] [class*="box"],
+body[data-theme="dark"] [class*="card"],
+body[data-theme="dark"] [class*="box"] {
+  border-color: #3d5567 !important;
+}
+
+/* =========================================================
+   DARK MODE — FIX PALE BLUE SURFACES GLOBALLY
+   ========================================================= */
+
+/*
+   These surfaces are intentionally kept DARK in dark mode.
+   Their text/icons are kept BRIGHT and readable.
+*/
+
+
+/* ---------------------------------------------------------
+   PALE BLUE / LIGHT BLUE SURFACES
+--------------------------------------------------------- */
+
+html.dark
+  .help-secondary-action,
+html.dark
+  .help-check-row,
+html.dark
+  .help-contact-reasons > div,
+html.dark
+  .help-emergency-note,
+html.dark
+  .help-language-option,
+html.dark
+  .help-guide-item,
+html.dark
+  .help-checklist-card,
+html.dark
+  .help-topic-card,
+html.dark
+  .home-center-card,
+html.dark
+  .home-sms-card,
+html.dark
+  .booking-info-bar,
+html.dark
+  .booking-check-card,
+html.dark
+  .booking-bottom-card,
+html.dark
+  .admin-demo-box,
+html.dark
+  .admin-security-row,
+html.dark
+  .admin-login-input,
+html.dark
+  .admin-login-submit:not(:disabled),
+
+body.dark
+  .help-secondary-action,
+body.dark
+  .help-check-row,
+body.dark
+  .help-contact-reasons > div,
+body.dark
+  .help-emergency-note,
+body.dark
+  .help-language-option,
+body.dark
+  .help-guide-item,
+body.dark
+  .help-checklist-card,
+body.dark
+  .help-topic-card,
+body.dark
+  .home-center-card,
+body.dark
+  .home-sms-card,
+body.dark
+  .booking-info-bar,
+body.dark
+  .booking-check-card,
+body.dark
+  .booking-bottom-card,
+body.dark
+  .admin-demo-box,
+body.dark
+  .admin-security-row,
+body.dark
+  .admin-login-input,
+body.dark
+  .admin-login-submit:not(:disabled),
+
+html[data-theme="dark"]
+  .help-secondary-action,
+html[data-theme="dark"]
+  .help-check-row,
+html[data-theme="dark"]
+  .help-contact-reasons > div,
+html[data-theme="dark"]
+  .help-emergency-note,
+html[data-theme="dark"]
+  .help-language-option,
+html[data-theme="dark"]
+  .help-guide-item,
+html[data-theme="dark"]
+  .help-checklist-card,
+html[data-theme="dark"]
+  .help-topic-card,
+html[data-theme="dark"]
+  .home-center-card,
+html[data-theme="dark"]
+  .home-sms-card,
+html[data-theme="dark"]
+  .booking-info-bar,
+html[data-theme="dark"]
+  .booking-check-card,
+html[data-theme="dark"]
+  .booking-bottom-card,
+html[data-theme="dark"]
+  .admin-demo-box,
+html[data-theme="dark"]
+  .admin-security-row,
+html[data-theme="dark"]
+  .admin-login-input,
+html[data-theme="dark"]
+  .admin-login-submit:not(:disabled),
+
+body[data-theme="dark"]
+  .help-secondary-action,
+body[data-theme="dark"]
+  .help-check-row,
+body[data-theme="dark"]
+  .help-contact-reasons > div,
+body[data-theme="dark"]
+  .help-emergency-note,
+body[data-theme="dark"]
+  .help-language-option,
+body[data-theme="dark"]
+  .help-guide-item,
+body[data-theme="dark"]
+  .help-checklist-card,
+body[data-theme="dark"]
+  .help-topic-card,
+body[data-theme="dark"]
+  .home-center-card,
+body[data-theme="dark"]
+  .home-sms-card,
+body[data-theme="dark"]
+  .booking-info-bar,
+body[data-theme="dark"]
+  .booking-check-card,
+body[data-theme="dark"]
+  .booking-bottom-card,
+body[data-theme="dark"]
+  .admin-demo-box,
+body[data-theme="dark"]
+  .admin-security-row,
+body[data-theme="dark"]
+  .admin-login-input,
+body[data-theme="dark"]
+  .admin-login-submit:not(:disabled) {
+  background: #182b38 !important;
+  border-color: #426277 !important;
+  color: #f4f9fc !important;
+}
+
+
+/* ---------------------------------------------------------
+   TEXT INSIDE THESE SURFACES
+--------------------------------------------------------- */
+
+html.dark
+  .help-secondary-action *,
+html.dark
+  .help-check-row *,
+html.dark
+  .help-contact-reasons > div *,
+html.dark
+  .help-emergency-note *,
+html.dark
+  .help-language-option *,
+html.dark
+  .help-guide-item *,
+html.dark
+  .help-checklist-card *,
+html.dark
+  .help-topic-card *,
+html.dark
+  .home-center-card *,
+html.dark
+  .home-sms-card *,
+html.dark
+  .booking-info-bar *,
+html.dark
+  .booking-check-card *,
+html.dark
+  .booking-bottom-card *,
+html.dark
+  .admin-demo-box *,
+html.dark
+  .admin-security-row *,
+html.dark
+  .admin-login-input *,
+html.dark
+  .admin-login-submit:not(:disabled) *,
+
+body.dark
+  .help-secondary-action *,
+body.dark
+  .help-check-row *,
+body.dark
+  .help-contact-reasons > div *,
+body.dark
+  .help-emergency-note *,
+body.dark
+  .help-language-option *,
+body.dark
+  .help-guide-item *,
+body.dark
+  .help-checklist-card *,
+body.dark
+  .help-topic-card *,
+body.dark
+  .home-center-card *,
+body.dark
+  .home-sms-card *,
+body.dark
+  .booking-info-bar *,
+body.dark
+  .booking-check-card *,
+body.dark
+  .booking-bottom-card *,
+body.dark
+  .admin-demo-box *,
+body.dark
+  .admin-security-row *,
+body.dark
+  .admin-login-input *,
+body.dark
+  .admin-login-submit:not(:disabled) *,
+
+html[data-theme="dark"]
+  .help-secondary-action *,
+html[data-theme="dark"]
+  .help-check-row *,
+html[data-theme="dark"]
+  .help-contact-reasons > div *,
+html[data-theme="dark"]
+  .help-emergency-note *,
+html[data-theme="dark"]
+  .help-language-option *,
+html[data-theme="dark"]
+  .help-guide-item *,
+html[data-theme="dark"]
+  .help-checklist-card *,
+html[data-theme="dark"]
+  .help-topic-card *,
+html[data-theme="dark"]
+  .home-center-card *,
+html[data-theme="dark"]
+  .home-sms-card *,
+html[data-theme="dark"]
+  .booking-info-bar *,
+html[data-theme="dark"]
+  .booking-check-card *,
+html[data-theme="dark"]
+  .booking-bottom-card *,
+html[data-theme="dark"]
+  .admin-demo-box *,
+html[data-theme="dark"]
+  .admin-security-row *,
+html[data-theme="dark"]
+  .admin-login-input *,
+html[data-theme="dark"]
+  .admin-login-submit:not(:disabled) *,
+
+body[data-theme="dark"]
+  .help-secondary-action *,
+body[data-theme="dark"]
+  .help-check-row *,
+body[data-theme="dark"]
+  .help-contact-reasons > div *,
+body[data-theme="dark"]
+  .help-emergency-note *,
+body[data-theme="dark"]
+  .help-language-option *,
+body[data-theme="dark"]
+  .help-guide-item *,
+body[data-theme="dark"]
+  .help-checklist-card *,
+body[data-theme="dark"]
+  .help-topic-card *,
+body[data-theme="dark"]
+  .home-center-card *,
+body[data-theme="dark"]
+  .home-sms-card *,
+body[data-theme="dark"]
+  .booking-info-bar *,
+body[data-theme="dark"]
+  .booking-check-card *,
+body[data-theme="dark"]
+  .booking-bottom-card *,
+body[data-theme="dark"]
+  .admin-demo-box *,
+body[data-theme="dark"]
+  .admin-security-row *,
+body[data-theme="dark"]
+  .admin-login-input *,
+body[data-theme="dark"]
+  .admin-login-submit:not(:disabled) * {
+  color: #f4f9fc !important;
+}
+
+
+/* ---------------------------------------------------------
+   ICONS — BRIGHT BUT NOT WHITE
+--------------------------------------------------------- */
+
+html.dark
+  .help-secondary-action svg,
+html.dark
+  .help-check-row svg,
+html.dark
+  .help-contact-reasons > div svg,
+html.dark
+  .help-emergency-note svg,
+html.dark
+  .help-language-option svg,
+html.dark
+  .help-guide-item svg,
+html.dark
+  .help-checklist-card svg,
+html.dark
+  .help-topic-card svg,
+html.dark
+  .home-center-card svg,
+html.dark
+  .home-sms-card svg,
+html.dark
+  .booking-info-bar svg,
+html.dark
+  .booking-check-card svg,
+html.dark
+  .booking-bottom-card svg,
+html.dark
+  .admin-demo-box svg,
+html.dark
+  .admin-security-row svg,
+html.dark
+  .admin-login-input svg,
+
+body.dark
+  .help-secondary-action svg,
+body.dark
+  .help-check-row svg,
+body.dark
+  .help-contact-reasons > div svg,
+body.dark
+  .help-emergency-note svg,
+body.dark
+  .help-language-option svg,
+body.dark
+  .help-guide-item svg,
+body.dark
+  .help-checklist-card svg,
+body.dark
+  .help-topic-card svg,
+body.dark
+  .home-center-card svg,
+body.dark
+  .home-sms-card svg,
+body.dark
+  .booking-info-bar svg,
+body.dark
+  .booking-check-card svg,
+body.dark
+  .booking-bottom-card svg,
+body.dark
+  .admin-demo-box svg,
+body.dark
+  .admin-security-row svg,
+body.dark
+  .admin-login-input svg,
+
+html[data-theme="dark"]
+  .help-secondary-action svg,
+html[data-theme="dark"]
+  .help-check-row svg,
+html[data-theme="dark"]
+  .help-contact-reasons > div svg,
+html[data-theme="dark"]
+  .help-emergency-note svg,
+html[data-theme="dark"]
+  .help-language-option svg,
+html[data-theme="dark"]
+  .help-guide-item svg,
+html[data-theme="dark"]
+  .help-checklist-card svg,
+html[data-theme="dark"]
+  .help-topic-card svg,
+html[data-theme="dark"]
+  .home-center-card svg,
+html[data-theme="dark"]
+  .home-sms-card svg,
+html[data-theme="dark"]
+  .booking-info-bar svg,
+html[data-theme="dark"]
+  .booking-check-card svg,
+html[data-theme="dark"]
+  .booking-bottom-card svg,
+html[data-theme="dark"]
+  .admin-demo-box svg,
+html[data-theme="dark"]
+  .admin-security-row svg,
+html[data-theme="dark"]
+  .admin-login-input svg,
+
+body[data-theme="dark"]
+  .help-secondary-action svg,
+body[data-theme="dark"]
+  .help-check-row svg,
+body[data-theme="dark"]
+  .help-contact-reasons > div svg,
+body[data-theme="dark"]
+  .help-emergency-note svg,
+body[data-theme="dark"]
+  .help-language-option svg,
+body[data-theme="dark"]
+  .help-guide-item svg,
+body[data-theme="dark"]
+  .help-checklist-card svg,
+body[data-theme="dark"]
+  .help-topic-card svg,
+body[data-theme="dark"]
+  .home-center-card svg,
+body[data-theme="dark"]
+  .home-sms-card svg,
+body[data-theme="dark"]
+  .booking-info-bar svg,
+body[data-theme="dark"]
+  .booking-check-card svg,
+body[data-theme="dark"]
+  .booking-bottom-card svg,
+body[data-theme="dark"]
+  .admin-demo-box svg,
+body[data-theme="dark"]
+  .admin-security-row svg,
+body[data-theme="dark"]
+  .admin-login-input svg {
+  color: #63c7ff !important;
+  stroke: #63c7ff !important;
+}
+
+
+/* ---------------------------------------------------------
+   PALE BLUE BUTTONS — DARK MODE
+--------------------------------------------------------- */
+
+html.dark
+  .help-secondary-action:hover,
+html.dark
+  .admin-login-submit:hover,
+body.dark
+  .help-secondary-action:hover,
+body.dark
+  .admin-login-submit:hover,
+html[data-theme="dark"]
+  .help-secondary-action:hover,
+html[data-theme="dark"]
+  .admin-login-submit:hover,
+body[data-theme="dark"]
+  .help-secondary-action:hover,
+body[data-theme="dark"]
+  .admin-login-submit:hover {
+  background: #21445a !important;
+  border-color: #63c7ff !important;
+  color: #ffffff !important;
+}
+
+
+/* ---------------------------------------------------------
+   VERY PALE BLUE ICON BOXES
+--------------------------------------------------------- */
+
+html.dark
+  .admin-login-lock,
+html.dark
+  .help-hero-card-icon,
+html.dark
+  .help-center-icon,
+html.dark
+  .help-language-icon,
+html.dark
+  .admin-demo-icon,
+
+body.dark
+  .admin-login-lock,
+body.dark
+  .help-hero-card-icon,
+body.dark
+  .help-center-icon,
+body.dark
+  .help-language-icon,
+body.dark
+  .admin-demo-icon,
+
+html[data-theme="dark"]
+  .admin-login-lock,
+html[data-theme="dark"]
+  .help-hero-card-icon,
+html[data-theme="dark"]
+  .help-center-icon,
+html[data-theme="dark"]
+  .help-language-icon,
+html[data-theme="dark"]
+  .admin-demo-icon,
+
+body[data-theme="dark"]
+  .admin-login-lock,
+body[data-theme="dark"]
+  .help-hero-card-icon,
+body[data-theme="dark"]
+  .help-center-icon,
+body[data-theme="dark"]
+  .help-language-icon,
+body[data-theme="dark"]
+  .admin-demo-icon {
+  background: #163b50 !important;
+  border-color: #4aaee0 !important;
+  color: #63c7ff !important;
+}
+
+
+/* ---------------------------------------------------------
+   IMPORTANT:
+   NEVER TURN THESE PALE BLUE SURFACES WHITE
+--------------------------------------------------------- */
+
+html.dark
+  [class*="light-blue"],
+html.dark
+  [class*="pale-blue"],
+body.dark
+  [class*="light-blue"],
+body.dark
+  [class*="pale-blue"],
+html[data-theme="dark"]
+  [class*="light-blue"],
+html[data-theme="dark"]
+  [class*="pale-blue"],
+body[data-theme="dark"]
+  [class*="light-blue"],
+body[data-theme="dark"]
+  [class*="pale-blue"] {
+  background: #182b38 !important;
+  color: #f4f9fc !important;
+}
