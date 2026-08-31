@@ -120501,3 +120501,9483 @@ html[data-theme="midnight"] .admin-login-page > * {
   background-color: transparent;
 }
 
+
+/* =========================================================
+   LANDING PAGE — USE FULL VIEWPORT WIDTH
+========================================================= */
+
+.landing-page {
+  width: 100%;
+  min-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+
+/* Remove accidental width limits from the main landing area */
+.landing-page > main {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+
+/* Hero must use the complete viewport */
+.landing-hero {
+  width: 100%;
+  max-width: none;
+
+  margin-left: 0;
+  margin-right: 0;
+}
+
+
+/* Prevent common global container rules from narrowing
+   only the landing hero */
+.landing-hero,
+.landing-hero-content,
+.landing-hero-visual {
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   REMOVE SIDE GAPS CAUSED BY GLOBAL CONTAINERS
+========================================================= */
+
+.landing-hero {
+  margin-inline: 0 !important;
+}
+
+
+/* If the hero content itself has artificial side padding,
+   keep a controlled edge instead of the large empty strips */
+.landing-hero-content {
+  margin-left: 0;
+}
+
+
+/* =========================================================
+   FULL-WIDTH HERO SPACE
+========================================================= */
+
+@media (min-width: 1001px) {
+
+  .landing-hero {
+    display: grid;
+
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(
+        520px,
+        0.95fr
+      );
+
+    width: 100%;
+
+    max-width: none;
+
+    padding-left: clamp(
+      28px,
+      4vw,
+      90px
+    );
+
+    padding-right: clamp(
+      20px,
+      3vw,
+      60px
+    );
+
+    box-sizing: border-box;
+  }
+
+
+  .landing-hero-content {
+
+    grid-column: 1;
+
+    width: 100%;
+
+    max-width: 760px;
+
+    margin: 0;
+
+    position: relative;
+
+    z-index: 5;
+  }
+
+
+  .landing-hero-visual {
+
+    grid-column: 2;
+
+    width: 100% !important;
+
+    height: 100% !important;
+
+    position: relative !important;
+
+    inset: auto !important;
+
+    transform: none !important;
+
+    display: flex !important;
+
+    align-items: center !important;
+
+    justify-content: center !important;
+  }
+
+}
+
+/* =========================================================
+   LANDING RADAR — CLEAN RESET
+========================================================= */
+
+.landing-hero-visual {
+  position: relative !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  overflow: visible !important;
+
+  z-index: 2 !important;
+}
+
+
+/* =========================================================
+   RADAR
+========================================================= */
+
+.procurement-radar {
+  position: relative !important;
+
+  width: 620px !important;
+  height: 620px !important;
+
+  max-width: 100%;
+  max-height: 100%;
+
+  flex-shrink: 0;
+
+  isolation: isolate;
+}
+
+
+/* =========================================================
+   GLOW
+========================================================= */
+
+.procurement-radar-glow {
+  position: absolute;
+
+  left: 8%;
+  right: 8%;
+  top: 8%;
+  bottom: 8%;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(45, 170, 100, 0.18),
+      rgba(45, 170, 100, 0.06) 42%,
+      transparent 72%
+    );
+
+  filter: blur(24px);
+
+  z-index: -2;
+}
+
+
+/* =========================================================
+   ORBITS
+========================================================= */
+
+.procurement-radar-orbit {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  border-radius: 50%;
+
+  transform: translate(-50%, -50%);
+
+  pointer-events: none;
+}
+
+
+.procurement-radar-orbit-outer {
+  width: 90%;
+  height: 90%;
+
+  border: 1px solid rgba(36, 140, 82, 0.22);
+
+  animation:
+    radar-spin-outer
+    32s
+    linear
+    infinite;
+}
+
+
+.procurement-radar-orbit-middle {
+  width: 69%;
+  height: 69%;
+
+  border: 1px dashed rgba(36, 140, 82, 0.20);
+
+  animation:
+    radar-spin-middle
+    22s
+    linear
+    infinite reverse;
+}
+
+
+.procurement-radar-orbit-inner {
+  width: 47%;
+  height: 47%;
+
+  border: 1px solid rgba(36, 140, 82, 0.14);
+}
+
+
+/* =========================================================
+   SWEEP
+========================================================= */
+
+.procurement-radar-sweep {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 45%;
+  height: 45%;
+
+  transform-origin: 0 100%;
+
+  background:
+    conic-gradient(
+      from 0deg,
+      transparent,
+      rgba(36, 168, 94, 0.16),
+      transparent 65%
+    );
+
+  clip-path:
+    polygon(
+      100% 100%,
+      100% 0,
+      0 0
+    );
+
+  animation:
+    radar-sweep
+    5s
+    linear
+    infinite;
+
+  pointer-events: none;
+}
+
+
+/* =========================================================
+   CENTER
+========================================================= */
+
+.procurement-radar-center {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 30%;
+  height: 30%;
+
+  transform: translate(-50%, -50%);
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  z-index: 6;
+}
+
+
+.procurement-radar-center-ring {
+  width: 100%;
+  height: 100%;
+
+  border-radius: 50%;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border: 2px solid rgba(26, 134, 77, 0.24);
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.70
+    );
+
+  box-shadow:
+    0 20px 50px
+    rgba(
+      28,
+      104,
+      68,
+      0.16
+    );
+
+  backdrop-filter: blur(10px);
+}
+
+
+/* =========================================================
+   CLOCK
+========================================================= */
+
+.procurement-radar-clock {
+  position: relative;
+
+  width: 72%;
+  height: 72%;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle at 35% 30%,
+      #ffffff,
+      #f0f8f3 100%
+    );
+
+  border:
+    2px solid
+    rgba(
+      29,
+      126,
+      75,
+      0.25
+    );
+
+  box-shadow:
+    inset 0 0 0 7px
+    rgba(
+      255,
+      255,
+      255,
+      0.55
+    );
+}
+
+
+/* =========================================================
+   CLOCK HANDS
+========================================================= */
+
+.clock-hand {
+  position: absolute;
+
+  left: 50%;
+  bottom: 50%;
+
+  transform-origin: 50% 100%;
+
+  border-radius: 999px;
+}
+
+
+.clock-hour {
+  width: 4px;
+  height: 25%;
+
+  background: #174b34;
+}
+
+
+.clock-minute {
+  width: 3px;
+  height: 34%;
+
+  background: #168650;
+}
+
+
+.clock-second {
+  width: 2px;
+  height: 40%;
+
+  background: #e39a20;
+}
+
+
+.clock-center-dot {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 10px;
+  height: 10px;
+
+  transform: translate(-50%, -50%);
+
+  border-radius: 50%;
+
+  background: #168650;
+
+  border: 2px solid white;
+}
+
+
+/* =========================================================
+   CLOCK NUMBERS
+========================================================= */
+
+.clock-number {
+  position: absolute;
+
+  width: 18px;
+  height: 18px;
+
+  left: 50%;
+  top: 50%;
+
+  margin-left: -9px;
+  margin-top: -9px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  font-size: 9px;
+  font-weight: 800;
+
+  color: #285942;
+}
+
+
+/* =========================================================
+   NODES
+========================================================= */
+
+.procurement-radar-node {
+  position: absolute;
+
+  width: 28%;
+
+  min-height: 62px;
+
+  padding: 10px 12px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 9px;
+
+  border:
+    1px solid
+    rgba(
+      36,
+      126,
+      81,
+      0.16
+    );
+
+  border-radius: 17px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.92
+    );
+
+  color: #174b35;
+
+  box-shadow:
+    0 16px 35px
+    rgba(
+      28,
+      90,
+      61,
+      0.11
+    );
+
+  backdrop-filter: blur(12px);
+
+  cursor: pointer;
+
+  text-align: left;
+
+  z-index: 10;
+
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+}
+
+
+.procurement-radar-node:hover,
+.procurement-radar-node.active,
+.procurement-radar-node:focus-visible {
+  transform:
+    translateY(-5px)
+    scale(1.025);
+
+  border-color:
+    rgba(
+      24,
+      145,
+      83,
+      0.35
+    );
+
+  box-shadow:
+    0 24px 44px
+    rgba(
+      28,
+      104,
+      68,
+      0.18
+    );
+
+  outline: none;
+}
+
+
+/* =========================================================
+   NODE ICON
+========================================================= */
+
+.procurement-radar-node-icon {
+  width: 38px;
+  height: 38px;
+
+  flex: 0 0 38px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 11px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #eff9f3,
+      #d9eee2
+    );
+
+  color: #178751;
+}
+
+
+/* =========================================================
+   NODE TEXT
+========================================================= */
+
+.procurement-radar-node-copy {
+  min-width: 0;
+}
+
+
+.procurement-radar-node-copy span {
+  display: block;
+
+  font-size: 8px;
+
+  font-weight: 900;
+
+  letter-spacing: 0.14em;
+
+  color: #6f9280;
+}
+
+
+.procurement-radar-node-copy strong {
+  display: block;
+
+  margin-top: 2px;
+
+  font-size: 13px;
+
+  font-weight: 800;
+
+  color: #194d38;
+}
+
+
+.procurement-radar-node-detail {
+  margin-left: auto;
+
+  white-space: nowrap;
+
+  font-size: 10px;
+
+  font-weight: 900;
+
+  color: #208050;
+}
+
+
+/* =========================================================
+   NODE POSITIONS
+========================================================= */
+
+.radar-node-1 {
+  left: 50%;
+  top: 4%;
+
+  transform: translateX(-50%);
+}
+
+
+.radar-node-2 {
+  right: 0;
+  top: 25%;
+}
+
+
+.radar-node-3 {
+  right: 0;
+  bottom: 13%;
+}
+
+
+.radar-node-4 {
+  left: 0;
+  bottom: 13%;
+}
+
+
+.radar-node-5 {
+  left: 0;
+  top: 25%;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.procurement-radar-status {
+  position: absolute;
+
+  left: 50%;
+  bottom: 0;
+
+  transform: translateX(-50%);
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  padding: 8px 13px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.78
+    );
+
+  color: #36715a;
+
+  font-size: 8px;
+
+  font-weight: 900;
+
+  letter-spacing: 0.15em;
+
+  white-space: nowrap;
+
+  z-index: 12;
+}
+
+
+.procurement-radar-status-dot {
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background: #19ad60;
+
+  animation:
+    radar-pulse
+    1.8s
+    ease-in-out
+    infinite;
+}
+
+
+/* =========================================================
+   TIME
+========================================================= */
+
+.procurement-radar-time {
+  position: absolute;
+
+  right: 5%;
+  bottom: 4%;
+
+  padding: 5px 9px;
+
+  border-radius: 8px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.70
+    );
+
+  color: #517968;
+
+  font-size: 9px;
+
+  font-weight: 800;
+}
+
+
+/* =========================================================
+   ANIMATIONS
+========================================================= */
+
+@keyframes radar-spin-outer {
+
+  from {
+    transform:
+      translate(-50%, -50%)
+      rotate(0deg);
+  }
+
+  to {
+    transform:
+      translate(-50%, -50%)
+      rotate(360deg);
+  }
+
+}
+
+
+@keyframes radar-spin-middle {
+
+  from {
+    transform:
+      translate(-50%, -50%)
+      rotate(0deg);
+  }
+
+  to {
+    transform:
+      translate(-50%, -50%)
+      rotate(-360deg);
+  }
+
+}
+
+
+@keyframes radar-sweep {
+
+  from {
+    transform:
+      translate(-100%, 0)
+      rotate(0deg);
+  }
+
+  to {
+    transform:
+      translate(-100%, 0)
+      rotate(360deg);
+  }
+
+}
+
+
+@keyframes radar-pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.65;
+  }
+
+  50% {
+    transform: scale(1.35);
+    opacity: 1;
+  }
+
+}
+
+
+/* =========================================================
+   LAPTOP
+========================================================= */
+
+@media (max-width: 1200px) {
+
+  .procurement-radar {
+    width: 540px !important;
+    height: 540px !important;
+  }
+
+  .procurement-radar-node {
+    width: 31%;
+  }
+
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 850px) {
+
+  .landing-hero {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .landing-hero-visual {
+    width: 100% !important;
+    height: 600px !important;
+
+    margin-top: 30px;
+  }
+
+  .procurement-radar {
+    width: 540px !important;
+    height: 540px !important;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+  .landing-hero-visual {
+    height: 480px !important;
+  }
+
+  .procurement-radar {
+    width: 440px !important;
+    height: 440px !important;
+  }
+
+  .procurement-radar-node {
+    width: 37%;
+    min-height: 54px;
+    padding: 8px;
+  }
+
+  .procurement-radar-node-detail {
+    display: none;
+  }
+
+  .procurement-radar-node-icon {
+    width: 31px;
+    height: 31px;
+    flex-basis: 31px;
+  }
+
+  .procurement-radar-node-copy strong {
+    font-size: 11px;
+  }
+
+  .procurement-radar-time {
+    display: none;
+  }
+
+}
+
+/* =========================================================
+   RADAR SIZE
+========================================================= */
+
+.procurement-radar {
+  position: relative !important;
+
+  width: 500px !important;
+  height: 400px !important;
+
+  max-width: 90%;
+
+  flex-shrink: 0;
+
+  isolation: isolate;
+}
+
+
+/* =========================================================
+   SOFT GLOW
+========================================================= */
+
+.procurement-radar-glow {
+  position: absolute;
+
+  left: 8%;
+  right: 8%;
+  top: 10%;
+  bottom: 10%;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(45, 170, 100, 0.16),
+      rgba(45, 170, 100, 0.05) 48%,
+      transparent 75%
+    );
+
+  filter: blur(24px);
+
+  z-index: -2;
+}
+
+
+/* =========================================================
+   OVAL ORBITS
+========================================================= */
+
+.procurement-radar-orbit {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  border-radius: 50%;
+
+  transform:
+    translate(-50%, -50%);
+
+  pointer-events: none;
+}
+
+
+.procurement-radar-orbit-outer {
+  width: 96%;
+  height: 78%;
+
+  border:
+    1px solid
+    rgba(
+      36,
+      140,
+      82,
+      0.23
+    );
+
+  animation:
+    radar-spin-outer
+    30s
+    linear
+    infinite;
+}
+
+
+.procurement-radar-orbit-middle {
+  width: 77%;
+  height: 60%;
+
+  border:
+    1px dashed
+    rgba(
+      36,
+      140,
+      82,
+      0.19
+    );
+
+  animation:
+    radar-spin-middle
+    21s
+    linear
+    infinite reverse;
+}
+
+
+.procurement-radar-orbit-inner {
+  width: 58%;
+  height: 44%;
+
+  border:
+    1px solid
+    rgba(
+      36,
+      140,
+      82,
+      0.13
+    );
+}
+
+
+/* =========================================================
+   SWEEP
+========================================================= */
+
+.procurement-radar-sweep {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 48%;
+  height: 42%;
+
+  transform-origin:
+    0 100%;
+
+  background:
+    conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      rgba(
+        36,
+        168,
+        94,
+        0.14
+      ) 35deg,
+      transparent 75deg
+    );
+
+  clip-path:
+    polygon(
+      100% 100%,
+      100% 0,
+      0 0
+    );
+
+  animation:
+    radar-sweep
+    5s
+    linear
+    infinite;
+
+  pointer-events: none;
+}
+
+
+/* =========================================================
+   CLOCK HUB
+   IMPORTANT: clock stays perfectly circular
+========================================================= */
+
+.procurement-radar-center {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 155px;
+  height: 155px;
+
+  transform:
+    translate(-50%, -50%);
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  z-index: 6;
+}
+
+
+.procurement-radar-center-ring {
+  width: 100%;
+  height: 100%;
+
+  border-radius: 50%;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.72
+    );
+
+  border:
+    2px solid
+    rgba(
+      26,
+      134,
+      77,
+      0.23
+    );
+
+  box-shadow:
+    0 22px 50px
+    rgba(
+      28,
+      104,
+      68,
+      0.15
+    );
+
+  backdrop-filter:
+    blur(10px);
+}
+
+
+/* =========================================================
+   CLOCK
+========================================================= */
+
+.procurement-radar-clock {
+  position: relative;
+
+  width: 112px;
+  height: 112px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle at 35% 30%,
+      #ffffff,
+      #edf7f1 100%
+    );
+
+  border:
+    2px solid
+    rgba(
+      29,
+      126,
+      75,
+      0.25
+    );
+
+  box-shadow:
+    inset 0 0 0 6px
+    rgba(
+      255,
+      255,
+      255,
+      0.58
+    );
+}
+
+
+/* =========================================================
+   CLOCK HANDS
+========================================================= */
+
+.clock-hand {
+  position: absolute;
+
+  left: 50%;
+  bottom: 50%;
+
+  transform-origin:
+    50% 100%;
+
+  border-radius: 999px;
+}
+
+
+.clock-hour {
+  width: 4px;
+  height: 25%;
+
+  background:
+    #174b34;
+}
+
+
+.clock-minute {
+  width: 3px;
+  height: 34%;
+
+  background:
+    #168650;
+}
+
+
+.clock-second {
+  width: 2px;
+  height: 40%;
+
+  background:
+    #e39a20;
+}
+
+
+.clock-center-dot {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 10px;
+  height: 10px;
+
+  transform:
+    translate(-50%, -50%);
+
+  border-radius: 50%;
+
+  background:
+    #168650;
+
+  border:
+    2px solid white;
+}
+
+/* =========================================================
+   LIVE PROCUREMENT VISUAL
+   Large organic orbital composition
+========================================================= */
+
+.procurement-radar {
+  position: relative !important;
+
+  width: 620px !important;
+  height: 520px !important;
+
+  max-width: 94%;
+  flex-shrink: 0;
+
+  isolation: isolate;
+}
+
+
+/* =========================================================
+   SOFT GLOW
+========================================================= */
+
+.procurement-radar-glow {
+  position: absolute;
+
+  left: 7%;
+  right: 7%;
+  top: 9%;
+  bottom: 9%;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(41, 171, 99, 0.16) 0%,
+      rgba(41, 171, 99, 0.07) 42%,
+      transparent 74%
+    );
+
+  filter: blur(28px);
+
+  z-index: -3;
+}
+
+
+/* =========================================================
+   ORGANIC ORBITS
+   Almost circular, but intentionally elongated
+========================================================= */
+
+.procurement-radar-orbit {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  border-radius: 50%;
+
+  transform:
+    translate(-50%, -50%);
+
+  pointer-events: none;
+}
+
+
+/* Main large orbit */
+
+.procurement-radar-orbit-outer {
+  width: 94%;
+  height: 76%;
+
+  border:
+    1px solid
+    rgba(30, 137, 80, 0.23);
+
+  transform:
+    translate(-50%, -50%)
+    rotate(-7deg);
+
+  animation:
+    radar-spin-outer
+    34s
+    linear
+    infinite;
+}
+
+
+/* Secondary orbit */
+
+.procurement-radar-orbit-middle {
+  width: 76%;
+  height: 63%;
+
+  border:
+    1px dashed
+    rgba(30, 137, 80, 0.19);
+
+  transform:
+    translate(-50%, -50%)
+    rotate(11deg);
+
+  animation:
+    radar-spin-middle
+    23s
+    linear
+    infinite reverse;
+}
+
+
+/* Inner orbit */
+
+.procurement-radar-orbit-inner {
+  width: 56%;
+  height: 47%;
+
+  border:
+    1px solid
+    rgba(30, 137, 80, 0.13);
+
+  transform:
+    translate(-50%, -50%)
+    rotate(-4deg);
+}
+
+
+/* =========================================================
+   RADAR SWEEP
+========================================================= */
+
+.procurement-radar-sweep {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 46%;
+  height: 42%;
+
+  transform-origin:
+    0 100%;
+
+  background:
+    conic-gradient(
+      from 0deg,
+      transparent 0deg,
+      rgba(34, 164, 91, 0.14) 34deg,
+      transparent 76deg
+    );
+
+  clip-path:
+    polygon(
+      100% 100%,
+      100% 0,
+      0 0
+    );
+
+  animation:
+    radar-sweep
+    5s
+    linear
+    infinite;
+
+  pointer-events: none;
+}
+
+
+/* =========================================================
+   SMALL CENTRAL CLOCK
+========================================================= */
+
+.procurement-radar-center {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 118px;
+  height: 118px;
+
+  transform:
+    translate(-50%, -50%);
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  z-index: 7;
+}
+
+
+.procurement-radar-center-ring {
+  width: 100%;
+  height: 100%;
+
+  border-radius: 50%;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.78
+    );
+
+  border:
+    2px solid
+    rgba(
+      28,
+      131,
+      77,
+      0.23
+    );
+
+  box-shadow:
+    0 18px 42px
+    rgba(
+      27,
+      100,
+      66,
+      0.15
+    );
+
+  backdrop-filter:
+    blur(12px);
+}
+
+
+/* =========================================================
+   CLOCK FACE
+========================================================= */
+
+.procurement-radar-clock {
+  position: relative;
+
+  width: 82px;
+  height: 82px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle at 35% 30%,
+      #ffffff,
+      #edf7f1 100%
+    );
+
+  border:
+    2px solid
+    rgba(
+      29,
+      126,
+      75,
+      0.23
+    );
+
+  box-shadow:
+    inset 0 0 0 5px
+    rgba(
+      255,
+      255,
+      255,
+      0.62
+    );
+}
+
+
+/* =========================================================
+   CLOCK HANDS
+========================================================= */
+
+.clock-hand {
+  position: absolute;
+
+  left: 50%;
+  bottom: 50%;
+
+  transform-origin:
+    50% 100%;
+
+  border-radius: 999px;
+}
+
+
+.clock-hour {
+  width: 4px;
+  height: 25%;
+
+  background:
+    #174b34;
+}
+
+
+.clock-minute {
+  width: 3px;
+  height: 34%;
+
+  background:
+    #168650;
+}
+
+
+.clock-second {
+  width: 2px;
+  height: 40%;
+
+  background:
+    #e39a20;
+}
+
+
+.clock-center-dot {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 8px;
+  height: 8px;
+
+  transform:
+    translate(-50%, -50%);
+
+  border-radius: 50%;
+
+  background:
+    #168650;
+
+  border:
+    2px solid white;
+}
+
+
+/* =========================================================
+   CLOCK NUMBERS
+========================================================= */
+
+.clock-number {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 14px;
+  height: 14px;
+
+  margin:
+    -7px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  font-size:
+    7px;
+
+  font-weight:
+    800;
+
+  color:
+    #315d48;
+}
+
+
+/* =========================================================
+   INFORMATION CARDS
+   Slightly irregular placement on purpose
+========================================================= */
+
+.procurement-radar-node {
+  position: absolute;
+
+  width: 150px;
+
+  min-height: 58px;
+
+  padding: 9px 10px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap: 9px;
+
+  border:
+    1px solid
+    rgba(
+      38,
+      126,
+      83,
+      0.16
+    );
+
+  border-radius:
+    16px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.92
+    );
+
+  backdrop-filter:
+    blur(13px);
+
+  -webkit-backdrop-filter:
+    blur(13px);
+
+  box-shadow:
+    0 16px 36px
+    rgba(
+      31,
+      91,
+      62,
+      0.11
+    );
+
+  color:
+    #174d37;
+
+  text-align:
+    left;
+
+  cursor:
+    pointer;
+
+  pointer-events:
+    auto;
+
+  z-index:
+    10;
+
+  transition:
+    transform
+    0.25s ease,
+    box-shadow
+    0.25s ease,
+    border-color
+    0.25s ease;
+}
+
+
+/* icon */
+
+.procurement-radar-node-icon {
+  width:
+    34px;
+
+  height:
+    34px;
+
+  flex:
+    0 0 34px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  border-radius:
+    11px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #eff9f3,
+      #d9eee2
+    );
+
+  color:
+    #188653;
+}
+
+
+/* node text */
+
+.procurement-radar-node-copy {
+  min-width:
+    0;
+}
+
+
+.procurement-radar-node-copy span {
+  display:
+    block;
+
+  font-size:
+    7px;
+
+  font-weight:
+    900;
+
+  letter-spacing:
+    0.14em;
+
+  color:
+    #759687;
+}
+
+
+.procurement-radar-node-copy strong {
+  display:
+    block;
+
+  margin-top:
+    2px;
+
+  font-size:
+    12px;
+
+  font-weight:
+    800;
+
+  color:
+    #194d38;
+}
+
+
+.procurement-radar-node-detail {
+  margin-left:
+    auto;
+
+  white-space:
+    nowrap;
+
+  font-size:
+    9px;
+
+  font-weight:
+    900;
+
+  color:
+    #208050;
+}
+
+
+/* =========================================================
+   IRREGULAR CARD PLACEMENT
+========================================================= */
+
+.radar-node-1 {
+  top: 4%;
+  left: 43%;
+
+  transform:
+    translateX(-50%)
+    rotate(-2deg);
+}
+
+
+.radar-node-2 {
+  top: 19%;
+  right: -1%;
+
+  transform:
+    rotate(3deg);
+}
+
+
+.radar-node-3 {
+  right: 3%;
+  bottom: 8%;
+
+  transform:
+    rotate(-2deg);
+}
+
+
+.radar-node-4 {
+  left: -1%;
+  bottom: 13%;
+
+  transform:
+    rotate(2.5deg);
+}
+
+
+.radar-node-5 {
+  left: 1%;
+  top: 27%;
+
+  transform:
+    rotate(-3deg);
+}
+
+
+/* =========================================================
+   HOVER
+========================================================= */
+
+.procurement-radar-node:hover,
+.procurement-radar-node:focus-visible,
+.procurement-radar-node.active {
+  transform:
+    translateY(-6px)
+    scale(1.04)
+    rotate(0deg);
+
+  border-color:
+    rgba(
+      24,
+      145,
+      83,
+      0.34
+    );
+
+  box-shadow:
+    0 25px 48px
+    rgba(
+      28,
+      106,
+      69,
+      0.18
+    );
+
+  outline:
+    none;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.procurement-radar-status {
+  position:
+    absolute;
+
+  left:
+    50%;
+
+  bottom:
+    -2%;
+
+  transform:
+    translateX(-50%);
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    7px;
+
+  padding:
+    7px 12px;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.76
+    );
+
+  border:
+    1px solid
+    rgba(
+      35,
+      122,
+      80,
+      0.13
+    );
+
+  color:
+    #3c735b;
+
+  font-size:
+    7px;
+
+  font-weight:
+    900;
+
+  letter-spacing:
+    0.15em;
+
+  white-space:
+    nowrap;
+}
+
+
+.procurement-radar-status-dot {
+  width:
+    6px;
+
+  height:
+    6px;
+
+  border-radius:
+    50%;
+
+  background:
+    #18ad60;
+
+  animation:
+    radar-pulse
+    1.8s
+    ease-in-out
+    infinite;
+}
+
+
+/* =========================================================
+   DIGITAL TIME
+========================================================= */
+
+.procurement-radar-time {
+  position:
+    absolute;
+
+  right:
+    9%;
+
+  bottom:
+    3%;
+
+  padding:
+    4px 8px;
+
+  border-radius:
+    8px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.64
+    );
+
+  color:
+    #54786a;
+
+  font-size:
+    8px;
+
+  font-weight:
+    800;
+}
+
+
+/* =========================================================
+   OVAL ROTATION
+========================================================= */
+
+@keyframes radar-spin-outer {
+
+  from {
+    transform:
+      translate(-50%, -50%)
+      rotate(-7deg)
+      rotate(0deg);
+  }
+
+  to {
+    transform:
+      translate(-50%, -50%)
+      rotate(-7deg)
+      rotate(360deg);
+  }
+
+}
+
+
+@keyframes radar-spin-middle {
+
+  from {
+    transform:
+      translate(-50%, -50%)
+      rotate(11deg)
+      rotate(0deg);
+  }
+
+  to {
+    transform:
+      translate(-50%, -50%)
+      rotate(11deg)
+      rotate(-360deg);
+  }
+
+}
+
+
+@keyframes radar-sweep {
+
+  from {
+    transform:
+      translate(-100%, 0)
+      rotate(0deg);
+  }
+
+  to {
+    transform:
+      translate(-100%, 0)
+      rotate(360deg);
+  }
+
+}
+
+
+@keyframes radar-pulse {
+
+  0%,
+  100% {
+    transform:
+      scale(1);
+
+    opacity:
+      0.65;
+  }
+
+  50% {
+    transform:
+      scale(1.35);
+
+    opacity:
+      1;
+  }
+
+}
+
+
+/* =========================================================
+   LAPTOP
+========================================================= */
+
+@media (max-width: 1200px) {
+
+  .procurement-radar {
+    width:
+      540px !important;
+
+    height:
+      450px !important;
+  }
+
+  .procurement-radar-node {
+    width:
+      135px;
+  }
+
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 850px) {
+
+  .procurement-radar {
+    width:
+      500px !important;
+
+    height:
+      420px !important;
+
+    max-width:
+      94vw;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+  .procurement-radar {
+    width:
+      430px !important;
+
+    height:
+      350px !important;
+  }
+
+  .procurement-radar-node {
+    width:
+      118px;
+
+    min-height:
+      52px;
+
+    padding:
+      7px;
+  }
+
+  .procurement-radar-node-detail {
+    display:
+      none;
+  }
+
+  .procurement-radar-node-copy strong {
+    font-size:
+      10px;
+  }
+
+  .procurement-radar-time {
+    display:
+      none;
+  }
+
+}
+
+/* =========================================================
+   LARGE, ALMOST-CIRCULAR ORBITS
+========================================================= */
+
+.procurement-radar {
+  position: relative !important;
+
+  width: 680px !important;
+  height: 560px !important;
+
+  max-width: 96%;
+  flex-shrink: 0;
+}
+
+
+.procurement-radar-glow {
+  position: absolute;
+
+  left: 5%;
+  right: 5%;
+  top: 6%;
+  bottom: 6%;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(45, 170, 100, 0.15),
+      rgba(45, 170, 100, 0.05) 48%,
+      transparent 76%
+    );
+
+  filter: blur(32px);
+
+  z-index: -2;
+}
+
+
+/* =========================================================
+   ORBITS
+========================================================= */
+
+.procurement-radar-orbit {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  border-radius: 50%;
+
+  transform:
+    translate(-50%, -50%);
+
+  pointer-events: none;
+}
+
+
+/* largest */
+.procurement-radar-orbit-outer {
+  width: 91%;
+  height: 87%;
+
+  border:
+    1px solid
+    rgba(
+      33,
+      137,
+      79,
+      0.22
+    );
+
+  transform:
+    translate(-50%, -50%)
+    rotate(-4deg);
+
+  animation:
+    orbit-outer
+    32s
+    linear
+    infinite;
+}
+
+
+/* middle */
+.procurement-radar-orbit-middle {
+  width: 76%;
+  height: 71%;
+
+  border:
+    1px dashed
+    rgba(
+      33,
+      137,
+      79,
+      0.17
+    );
+
+  transform:
+    translate(-50%, -50%)
+    rotate(6deg);
+
+  animation:
+    orbit-middle
+    25s
+    linear
+    infinite reverse;
+}
+
+
+/* smallest */
+.procurement-radar-orbit-inner {
+  width: 59%;
+  height: 55%;
+
+  border:
+    1px solid
+    rgba(
+      33,
+      137,
+      79,
+      0.11
+    );
+
+  transform:
+    translate(-50%, -50%)
+    rotate(-3deg);
+}
+
+/* =========================================================
+   KRISHISETU — PREMIUM HERO VISUAL
+   Self-contained illustration
+========================================================= */
+
+/* ---------------------------------------------------------
+   VISUAL STAGE
+--------------------------------------------------------- */
+
+.landing-hero-visual {
+  position: relative !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  overflow: visible !important;
+
+  pointer-events: none;
+
+  z-index: 2;
+}
+
+
+/* ---------------------------------------------------------
+   MAIN CANVAS
+--------------------------------------------------------- */
+
+.procurement-radar {
+  --green-deep: #124b36;
+  --green-main: #198755;
+  --green-bright: #35b875;
+  --green-soft: #bfe8cf;
+
+  position: relative;
+
+  width: 680px;
+  height: 560px;
+
+  max-width: 96%;
+  max-height: 96%;
+
+  flex-shrink: 0;
+
+  isolation: isolate;
+
+  pointer-events: none;
+}
+
+
+/* ---------------------------------------------------------
+   AMBIENT LIGHT
+--------------------------------------------------------- */
+
+.procurement-radar-glow {
+  position: absolute;
+
+  width: 72%;
+  height: 72%;
+
+  left: 14%;
+  top: 14%;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(47, 183, 111, 0.17) 0%,
+      rgba(47, 183, 111, 0.08) 35%,
+      rgba(47, 183, 111, 0.025) 58%,
+      transparent 76%
+    );
+
+  filter: blur(34px);
+
+  animation:
+    hero-glow-breathe
+    6s
+    ease-in-out
+    infinite;
+
+  z-index: -5;
+}
+
+
+/* ---------------------------------------------------------
+   ORBIT GROUP
+--------------------------------------------------------- */
+
+.procurement-radar-orbit {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  border-radius: 50%;
+
+  pointer-events: none;
+
+  transform:
+    translate(-50%, -50%);
+}
+
+
+/* outer orbital shell */
+
+.procurement-radar-orbit-outer {
+
+  width: 92%;
+  height: 84%;
+
+  border:
+    1px solid
+    rgba(
+      24,
+      133,
+      81,
+      0.16
+    );
+
+  transform:
+    translate(-50%, -50%)
+    rotate(-7deg);
+
+  box-shadow:
+    0 0 0 1px
+      rgba(
+        255,
+        255,
+        255,
+        0.18
+      )
+      inset;
+
+  animation:
+    premium-orbit-one
+    34s
+    linear
+    infinite;
+}
+
+
+/* middle orbital shell */
+
+.procurement-radar-orbit-middle {
+
+  width: 74%;
+  height: 67%;
+
+  border:
+    1px solid
+    rgba(
+      30,
+      151,
+      92,
+      0.13
+    );
+
+  transform:
+    translate(-50%, -50%)
+    rotate(9deg);
+
+  animation:
+    premium-orbit-two
+    25s
+    linear
+    infinite
+    reverse;
+}
+
+
+/* inner orbital shell */
+
+.procurement-radar-orbit-inner {
+
+  width: 54%;
+  height: 48%;
+
+  border:
+    1px dashed
+    rgba(
+      30,
+      151,
+      92,
+      0.13
+    );
+
+  transform:
+    translate(-50%, -50%)
+    rotate(-4deg);
+
+}
+
+
+/* ---------------------------------------------------------
+   ORBIT ACCENT LIGHTS
+--------------------------------------------------------- */
+
+.procurement-radar-orbit-outer::before,
+.procurement-radar-orbit-outer::after {
+
+  content: "";
+
+  position: absolute;
+
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background:
+    var(--green-bright);
+
+  box-shadow:
+    0 0 0 5px
+      rgba(
+        53,
+        184,
+        117,
+        0.08
+      ),
+    0 0 20px
+      rgba(
+        53,
+        184,
+        117,
+        0.45
+      );
+
+}
+
+
+/* deliberately asymmetric positions */
+
+.procurement-radar-orbit-outer::before {
+
+  left: 16%;
+  top: 3%;
+
+}
+
+
+.procurement-radar-orbit-outer::after {
+
+  right: 10%;
+  bottom: 7%;
+
+}
+
+
+/* ---------------------------------------------------------
+   CONNECTION LINES
+--------------------------------------------------------- */
+
+.procurement-radar::before {
+
+  content: "";
+
+  position: absolute;
+
+  left: 15%;
+  right: 15%;
+
+  top: 50%;
+
+  height: 1px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(
+        26,
+        145,
+        87,
+        0.13
+      ),
+      rgba(
+        26,
+        145,
+        87,
+        0.28
+      ),
+      rgba(
+        26,
+        145,
+        87,
+        0.13
+      ),
+      transparent
+    );
+
+  transform:
+    rotate(
+      -9deg
+    );
+
+  opacity:
+    0.75;
+
+  z-index:
+    0;
+
+}
+
+
+/* ---------------------------------------------------------
+   CENTER HUB
+--------------------------------------------------------- */
+
+.procurement-radar-center {
+
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 122px;
+  height: 122px;
+
+  transform:
+    translate(-50%, -50%);
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  z-index:
+    10;
+
+}
+
+
+/* outer hub halo */
+
+.procurement-radar-center::before {
+
+  content: "";
+
+  position: absolute;
+
+  inset: -13px;
+
+  border-radius: 50%;
+
+  border:
+    1px solid
+    rgba(
+      31,
+      152,
+      91,
+      0.13
+    );
+
+  box-shadow:
+    0 0 0 8px
+      rgba(
+        31,
+        152,
+        91,
+        0.025
+      );
+
+  animation:
+    hub-breathe
+    3.5s
+    ease-in-out
+    infinite;
+
+}
+
+
+/* glass hub */
+
+.procurement-radar-center-ring {
+
+  width: 100%;
+  height: 100%;
+
+  border-radius: 50%;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  background:
+    radial-gradient(
+      circle at 30% 25%,
+      rgba(
+        255,
+        255,
+        255,
+        0.98
+      ),
+      rgba(
+        247,
+        252,
+        249,
+        0.94
+      ) 56%,
+      rgba(
+        222,
+        241,
+        230,
+        0.92
+      )
+    );
+
+  border:
+    1px solid
+    rgba(
+      25,
+      130,
+      78,
+      0.24
+    );
+
+  box-shadow:
+    0 28px 70px
+      rgba(
+        30,
+        101,
+        66,
+        0.16
+      ),
+    0 8px 22px
+      rgba(
+        30,
+        101,
+        66,
+        0.10
+      ),
+    inset 0 1px 0
+      rgba(
+        255,
+        255,
+        255,
+        0.9
+      );
+
+  backdrop-filter:
+    blur(15px);
+
+  -webkit-backdrop-filter:
+    blur(15px);
+
+}
+
+
+/* ---------------------------------------------------------
+   CLOCK
+--------------------------------------------------------- */
+
+.procurement-radar-clock {
+
+  position: relative;
+
+  width: 79px;
+  height: 79px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle at 35% 28%,
+      #ffffff 0%,
+      #f7fbf8 54%,
+      #e8f4ec 100%
+    );
+
+  border:
+    2px solid
+    rgba(
+      21,
+      116,
+      71,
+      0.19
+    );
+
+  box-shadow:
+    inset 0 0 0 5px
+      rgba(
+        255,
+        255,
+        255,
+        0.72
+      ),
+    0 7px 18px
+      rgba(
+        32,
+        108,
+        69,
+        0.10
+      );
+
+}
+
+
+/* clock inner markings */
+
+.procurement-radar-clock::before {
+
+  content: "";
+
+  position: absolute;
+
+  inset: 9px;
+
+  border-radius: 50%;
+
+  border:
+    1px solid
+    rgba(
+      22,
+      112,
+      70,
+      0.10
+    );
+
+}
+
+
+/* clock hands */
+
+.clock-hand {
+
+  position: absolute;
+
+  left: 50%;
+  bottom: 50%;
+
+  transform-origin:
+    50% 100%;
+
+  border-radius:
+    999px;
+
+  z-index:
+    2;
+
+}
+
+
+.clock-hour {
+
+  width: 4px;
+  height: 24px;
+
+  background:
+    var(--green-deep);
+
+}
+
+
+.clock-minute {
+
+  width: 3px;
+  height: 30px;
+
+  background:
+    var(--green-main);
+
+}
+
+
+.clock-second {
+
+  width: 1.5px;
+  height: 33px;
+
+  background:
+    #dc941c;
+
+}
+
+
+.clock-center-dot {
+
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 9px;
+  height: 9px;
+
+  transform:
+    translate(-50%, -50%);
+
+  border-radius: 50%;
+
+  background:
+    var(--green-bright);
+
+  border:
+    2px solid
+    #ffffff;
+
+  box-shadow:
+    0 0 0 3px
+      rgba(
+        53,
+        184,
+        117,
+        0.12
+      );
+
+  z-index:
+    3;
+
+}
+
+
+/* ---------------------------------------------------------
+   CLOCK NUMBERS
+--------------------------------------------------------- */
+
+.clock-number {
+
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 14px;
+  height: 14px;
+
+  margin:
+    -7px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  font-size:
+    7px;
+
+  font-weight:
+    800;
+
+  color:
+    #355f4c;
+
+}
+
+
+/* ---------------------------------------------------------
+   CENTER STATUS
+--------------------------------------------------------- */
+
+.clock-live-label {
+
+  position: absolute;
+
+  left: 50%;
+
+  bottom: -16px;
+
+  transform:
+    translateX(-50%);
+
+  padding:
+    4px 9px;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.80
+    );
+
+  border:
+    1px solid
+    rgba(
+      29,
+      133,
+      80,
+      0.12
+    );
+
+  color:
+    #218053;
+
+  font-size:
+    7px;
+
+  font-weight:
+    900;
+
+  letter-spacing:
+    0.18em;
+
+}
+
+
+/* ---------------------------------------------------------
+   INFORMATION CARDS
+--------------------------------------------------------- */
+
+.procurement-radar-node {
+
+  position: absolute;
+
+  width: 154px;
+
+  min-height: 60px;
+
+  padding:
+    9px 11px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    9px;
+
+  border:
+    1px solid
+    rgba(
+      37,
+      123,
+      81,
+      0.14
+    );
+
+  border-radius:
+    17px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(
+        255,
+        255,
+        255,
+        0.94
+      ),
+      rgba(
+        246,
+        251,
+        248,
+        0.88
+      )
+    );
+
+  backdrop-filter:
+    blur(18px);
+
+  -webkit-backdrop-filter:
+    blur(18px);
+
+  box-shadow:
+    0 18px 38px
+      rgba(
+        27,
+        91,
+        60,
+        0.10
+      ),
+    inset 0 1px 0
+      rgba(
+        255,
+        255,
+        255,
+        0.86
+      );
+
+  color:
+    var(--green-deep);
+
+  cursor:
+    pointer;
+
+  text-align:
+    left;
+
+  pointer-events:
+    auto;
+
+  z-index:
+    12;
+
+  transition:
+    transform
+    0.28s
+    cubic-bezier(
+      0.2,
+      0.8,
+      0.2,
+      1
+    ),
+    box-shadow
+    0.28s ease,
+    border-color
+    0.28s ease,
+    background
+    0.28s ease;
+
+}
+
+
+/* tiny card light */
+
+.procurement-radar-node::before {
+
+  content: "";
+
+  position: absolute;
+
+  left: 12px;
+  right: 12px;
+  top: 0;
+
+  height: 1px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(
+        255,
+        255,
+        255,
+        0.95
+      ),
+      transparent
+    );
+
+}
+
+
+/* ---------------------------------------------------------
+   CARD ICON
+--------------------------------------------------------- */
+
+.procurement-radar-node-icon {
+
+  width:
+    36px;
+
+  height:
+    36px;
+
+  flex:
+    0 0 36px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  border-radius:
+    12px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #f1faf4,
+      #dcefe4
+    );
+
+  color:
+    #158653;
+
+  box-shadow:
+    inset 0 1px 0
+      rgba(
+        255,
+        255,
+        255,
+        0.85
+      );
+
+}
+
+
+/* ---------------------------------------------------------
+   CARD TEXT
+--------------------------------------------------------- */
+
+.procurement-radar-node-copy {
+
+  min-width:
+    0;
+
+}
+
+
+.procurement-radar-node-copy span {
+
+  display:
+    block;
+
+  margin-bottom:
+    2px;
+
+  font-size:
+    7px;
+
+  font-weight:
+    900;
+
+  letter-spacing:
+    0.15em;
+
+  color:
+    #78988a;
+
+}
+
+
+.procurement-radar-node-copy strong {
+
+  display:
+    block;
+
+  font-size:
+    12px;
+
+  line-height:
+    1.2;
+
+  font-weight:
+    850;
+
+  color:
+    #174d38;
+
+}
+
+
+.procurement-radar-node-detail {
+
+  margin-left:
+    auto;
+
+  white-space:
+    nowrap;
+
+  font-size:
+    9px;
+
+  font-weight:
+    900;
+
+  color:
+    #198251;
+
+}
+
+
+/* ---------------------------------------------------------
+   CARD HOVER
+--------------------------------------------------------- */
+
+.procurement-radar-node:hover,
+.procurement-radar-node:focus-visible,
+.procurement-radar-node.active {
+
+  transform:
+    translateY(-8px)
+    scale(1.045);
+
+  border-color:
+    rgba(
+      27,
+      146,
+      85,
+      0.30
+    );
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(
+        255,
+        255,
+        255,
+        0.98
+      ),
+      rgba(
+        247,
+        252,
+        249,
+        0.96
+      )
+    );
+
+  box-shadow:
+    0 28px 55px
+      rgba(
+        28,
+        108,
+        69,
+        0.16
+      ),
+    0 0 0 4px
+      rgba(
+        37,
+        167,
+        101,
+        0.035
+      );
+
+  outline:
+    none;
+
+}
+
+
+/* ---------------------------------------------------------
+   INTENTIONALLY IRREGULAR CARD POSITIONS
+--------------------------------------------------------- */
+
+.radar-node-1 {
+
+  top:
+    1%;
+
+  left:
+    39%;
+
+  transform:
+    translateX(-50%)
+    rotate(-1.8deg);
+
+}
+
+
+.radar-node-2 {
+
+  top:
+    17%;
+
+  right:
+    -2%;
+
+  transform:
+    rotate(2.8deg);
+
+}
+
+
+.radar-node-3 {
+
+  right:
+    0%;
+
+  bottom:
+    9%;
+
+  transform:
+    rotate(-2.4deg);
+
+}
+
+
+.radar-node-4 {
+
+  left:
+    -2%;
+
+  bottom:
+    12%;
+
+  transform:
+    rotate(2.6deg);
+
+}
+
+
+.radar-node-5 {
+
+  left:
+    0%;
+
+  top:
+    31%;
+
+  transform:
+    rotate(-3deg);
+
+}
+
+
+/* ---------------------------------------------------------
+   LIVE STATUS
+--------------------------------------------------------- */
+
+.procurement-radar-status {
+
+  position:
+    absolute;
+
+  left:
+    50%;
+
+  bottom:
+    -1%;
+
+  transform:
+    translateX(-50%);
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    7px;
+
+  padding:
+    7px 12px;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.74
+    );
+
+  border:
+    1px solid
+    rgba(
+      34,
+      121,
+      78,
+      0.13
+    );
+
+  box-shadow:
+    0 10px 25px
+      rgba(
+        28,
+        92,
+        61,
+        0.08
+      );
+
+  color:
+    #39715a;
+
+  font-size:
+    7px;
+
+  font-weight:
+    900;
+
+  letter-spacing:
+    0.15em;
+
+  white-space:
+    nowrap;
+
+}
+
+
+.procurement-radar-status-dot {
+
+  width:
+    6px;
+
+  height:
+    6px;
+
+  border-radius:
+    50%;
+
+  background:
+    #1bb467;
+
+  box-shadow:
+    0 0 0 4px
+      rgba(
+        27,
+        180,
+        103,
+        0.10
+      );
+
+  animation:
+    status-pulse
+    1.7s
+    ease-in-out
+    infinite;
+
+}
+
+
+/* ---------------------------------------------------------
+   LIVE TIME
+--------------------------------------------------------- */
+
+.procurement-radar-time {
+
+  position:
+    absolute;
+
+  right:
+    6%;
+
+  bottom:
+    2.5%;
+
+  padding:
+    5px 8px;
+
+  border-radius:
+    9px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.62
+    );
+
+  border:
+    1px solid
+    rgba(
+      34,
+      115,
+      76,
+      0.09
+    );
+
+  color:
+    #5a7d6d;
+
+  font-size:
+    8px;
+
+  font-weight:
+    800;
+
+  letter-spacing:
+    0.06em;
+
+}
+
+
+/* ---------------------------------------------------------
+   ANIMATIONS
+--------------------------------------------------------- */
+
+@keyframes premium-orbit-one {
+
+  from {
+
+    transform:
+      translate(-50%, -50%)
+      rotate(-7deg)
+      rotate(0deg);
+
+  }
+
+  to {
+
+    transform:
+      translate(-50%, -50%)
+      rotate(-7deg)
+      rotate(360deg);
+
+  }
+
+}
+
+
+@keyframes premium-orbit-two {
+
+  from {
+
+    transform:
+      translate(-50%, -50%)
+      rotate(9deg)
+      rotate(0deg);
+
+  }
+
+  to {
+
+    transform:
+      translate(-50%, -50%)
+      rotate(9deg)
+      rotate(-360deg);
+
+  }
+
+}
+
+
+@keyframes hero-glow-breathe {
+
+  0%,
+  100% {
+
+    opacity:
+      0.65;
+
+    transform:
+      scale(0.96);
+
+  }
+
+  50% {
+
+    opacity:
+      1;
+
+    transform:
+      scale(1.05);
+
+  }
+
+}
+
+
+@keyframes hub-breathe {
+
+  0%,
+  100% {
+
+    transform:
+      scale(1);
+
+    opacity:
+      0.70;
+
+  }
+
+  50% {
+
+    transform:
+      scale(1.08);
+
+    opacity:
+      1;
+
+  }
+
+}
+
+
+@keyframes status-pulse {
+
+  0%,
+  100% {
+
+    transform:
+      scale(1);
+
+    opacity:
+      0.62;
+
+  }
+
+  50% {
+
+    transform:
+      scale(1.35);
+
+    opacity:
+      1;
+
+  }
+
+}
+
+
+/* ---------------------------------------------------------
+   RESPONSIVE
+--------------------------------------------------------- */
+
+@media (max-width: 1200px) {
+
+  .procurement-radar {
+
+    width:
+      560px;
+
+    height:
+      470px;
+
+  }
+
+
+  .procurement-radar-node {
+
+    width:
+      140px;
+
+  }
+
+}
+
+
+@media (max-width: 900px) {
+
+  .landing-hero-visual {
+
+    position:
+      relative !important;
+
+    inset:
+      auto !important;
+
+    width:
+      100% !important;
+
+    height:
+      auto !important;
+
+    margin-top:
+      35px;
+
+  }
+
+
+  .procurement-radar {
+
+    width:
+      520px;
+
+    height:
+      440px;
+
+    max-width:
+      94vw;
+
+  }
+
+}
+
+
+@media (max-width: 600px) {
+
+  .procurement-radar {
+
+    width:
+      440px;
+
+    height:
+      370px;
+
+  }
+
+
+  .procurement-radar-node {
+
+    width:
+      118px;
+
+    min-height:
+      53px;
+
+    padding:
+      7px;
+
+  }
+
+
+  .procurement-radar-node-icon {
+
+    width:
+      30px;
+
+    height:
+      30px;
+
+    flex-basis:
+      30px;
+
+  }
+
+
+  .procurement-radar-node-copy strong {
+
+    font-size:
+      10px;
+
+  }
+
+
+  .procurement-radar-node-detail {
+
+    display:
+      none;
+
+  }
+
+
+  .procurement-radar-time {
+
+    display:
+      none;
+
+  }
+
+}
+
+.procurement-radar-center {
+  width: 142px !important;
+  height: 142px !important;
+}
+
+.procurement-radar-clock {
+  width: 104px !important;
+  height: 104px !important;
+}
+
+.radar-node-1 {
+  top: 5%;
+  left: 42%;
+  transform:
+    translateX(-50%)
+    rotate(-1deg);
+}
+
+.radar-node-2 {
+  top: 25%;
+  right: 6%;
+  transform:
+    rotate(1.5deg);
+}
+
+.radar-node-3 {
+  right: 7%;
+  bottom: 16%;
+  transform:
+    rotate(-1deg);
+}
+
+.radar-node-4 {
+  left: 7%;
+  bottom: 17%;
+  transform:
+    rotate(1deg);
+}
+
+.radar-node-5 {
+  left: 6%;
+  top: 27%;
+  transform:
+    rotate(-1.5deg);
+}
+
+.procurement-radar-node:hover,
+.procurement-radar-node:focus-visible,
+.procurement-radar-node.active {
+  transform:
+    translateY(-3px)
+    scale(1.015);
+
+  border-color:
+    rgba(
+      27,
+      146,
+      85,
+      0.30
+    );
+
+  box-shadow:
+    0 22px 42px
+    rgba(
+      28,
+      108,
+      69,
+      0.14
+    );
+
+  outline: none;
+}
+
+.procurement-radar-node {
+  transition:
+    transform
+    0.35s
+    cubic-bezier(
+      0.22,
+      1,
+      0.36,
+      1
+    ),
+    box-shadow
+    0.35s ease,
+    border-color
+    0.35s ease,
+    background
+    0.35s ease;
+}
+
+/* =========================================================
+   LARGE TRANSPARENT CLOCK BACKDROP
+========================================================= */
+
+.procurement-radar-center {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 330px !important;
+  height: 330px !important;
+
+  transform:
+    translate(-50%, -50%);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 2;
+
+  pointer-events: none;
+}
+
+
+/* transparent glass clock */
+
+.procurement-radar-center-ring {
+  width: 100%;
+  height: 100%;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.10) 0%,
+      rgba(255, 255, 255, 0.035) 54%,
+      transparent 74%
+    );
+
+  border:
+    1px solid
+    rgba(
+      28,
+      137,
+      82,
+      0.18
+    );
+
+  box-shadow:
+    inset 0 0 70px
+      rgba(
+        42,
+        171,
+        103,
+        0.045
+      ),
+    0 0 80px
+      rgba(
+        42,
+        171,
+        103,
+        0.06
+      );
+
+  backdrop-filter:
+    blur(2px);
+
+  -webkit-backdrop-filter:
+    blur(2px);
+}
+
+
+/* =========================================================
+   CLOCK FACE
+========================================================= */
+
+.procurement-radar-clock {
+  position: relative;
+
+  width: 270px !important;
+  height: 270px !important;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.025),
+      transparent 72%
+    );
+
+  border:
+    1px solid
+    rgba(
+      25,
+      132,
+      79,
+      0.16
+    );
+
+  box-shadow:
+    inset 0 0 45px
+      rgba(
+        33,
+        159,
+        96,
+        0.035
+      );
+
+}
+
+
+/* inner clock ring */
+
+.procurement-radar-clock::before {
+
+  content: "";
+
+  position: absolute;
+
+  inset: 15px;
+
+  border-radius: 50%;
+
+  border:
+    1px solid
+    rgba(
+      32,
+      145,
+      86,
+      0.10
+    );
+
+}
+
+
+/* second inner ring */
+
+.procurement-radar-clock::after {
+
+  content: "";
+
+  position: absolute;
+
+  inset: 34px;
+
+  border-radius: 50%;
+
+  border:
+    1px dashed
+    rgba(
+      32,
+      145,
+      86,
+      0.08
+    );
+
+}
+
+
+/* =========================================================
+   CLOCK NUMBERS
+========================================================= */
+
+.clock-number {
+
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 20px;
+  height: 20px;
+
+  margin:
+    -10px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  font-size: 10px;
+
+  font-weight: 800;
+
+  color:
+    rgba(
+      31,
+      111,
+      72,
+      0.38
+    );
+
+}
+
+
+/* =========================================================
+   CLOCK HANDS
+========================================================= */
+
+.clock-hand {
+
+  position: absolute;
+
+  left: 50%;
+  bottom: 50%;
+
+  transform-origin:
+    50% 100%;
+
+  border-radius:
+    999px;
+
+}
+
+
+/* hour */
+
+.clock-hour {
+
+  width: 5px;
+  height: 29%;
+
+  background:
+    rgba(
+      17,
+      91,
+      56,
+      0.72
+    );
+
+}
+
+
+/* minute */
+
+.clock-minute {
+
+  width: 3px;
+  height: 39%;
+
+  background:
+    rgba(
+      23,
+      143,
+      82,
+      0.78
+    );
+
+}
+
+
+/* second */
+
+.clock-second {
+
+  width: 2px;
+  height: 44%;
+
+  background:
+    rgba(
+      224,
+      151,
+      28,
+      0.84
+    );
+
+  box-shadow:
+    0 0 10px
+    rgba(
+      224,
+      151,
+      28,
+      0.20
+    );
+
+}
+
+
+/* center */
+
+.clock-center-dot {
+
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 12px;
+  height: 12px;
+
+  transform:
+    translate(
+      -50%,
+      -50%
+    );
+
+  border-radius:
+    50%;
+
+  background:
+    rgba(
+      27,
+      143,
+      83,
+      0.85
+    );
+
+  border:
+    2px solid
+    rgba(
+      255,
+      255,
+      255,
+      0.75
+    );
+
+  box-shadow:
+    0 0 0 5px
+      rgba(
+        27,
+        143,
+        83,
+        0.06
+      );
+
+}
+
+
+/* =========================================================
+   KEEP INFORMATION CARDS ABOVE CLOCK
+========================================================= */
+
+.procurement-radar-node {
+  z-index:
+    10 !important;
+}
+
+
+/* =========================================================
+   REMOVE CLOCK LIVE LABEL
+========================================================= */
+
+.clock-live-label {
+  display:
+    none !important;
+}
+
+/* Remove decorative rings from the clock face */
+
+.procurement-radar-clock::before,
+.procurement-radar-clock::after {
+  display: none !important;
+}
+
+/* Remove the visible circular boundaries around the clock */
+
+.procurement-radar-center-ring {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.procurement-radar-clock {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.procurement-radar-clock::before,
+.procurement-radar-clock::after {
+  display: none !important;
+}
+
+/* =========================================================
+   KRISHISETU — FULL SCREEN ORBITAL HERO VISUAL
+========================================================= */
+
+
+/* =========================================================
+   VISUAL WRAPPER
+========================================================= */
+
+.landing-hero-visual {
+  position: absolute;
+
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  overflow: hidden;
+
+  pointer-events: none;
+
+  z-index: 1;
+}
+
+
+.landing-hero-visual > * {
+  pointer-events: auto;
+}
+
+
+/* =========================================================
+   MAIN ORBITAL VISUAL
+========================================================= */
+
+.landing-orbital-visual {
+  position: absolute;
+
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  overflow: hidden;
+
+  pointer-events: none;
+
+  isolation: isolate;
+}
+
+
+/* =========================================================
+   ORBITAL FIELD
+========================================================= */
+
+.orbital-field {
+  position: absolute;
+
+  inset: -45%;
+
+  width: 190%;
+  height: 190%;
+
+  pointer-events: none;
+
+  transform:
+    translate(
+      12%,
+      -8%
+    )
+    rotate(-7deg);
+}
+
+
+/* =========================================================
+   HUGE ORBITAL RINGS
+========================================================= */
+
+.orbital-ring {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  border-radius: 50%;
+
+  transform:
+    translate(-50%, -50%);
+
+  pointer-events: none;
+
+  will-change:
+    transform;
+}
+
+
+/* largest */
+
+.ring-one {
+  width: 92%;
+  height: 58%;
+
+  border:
+    1px solid
+    rgba(
+      39,
+      145,
+      87,
+      0.12
+    );
+
+  animation:
+    orbital-drift-one
+    38s
+    linear
+    infinite;
+
+}
+
+
+/* second */
+
+.ring-two {
+  width: 76%;
+  height: 48%;
+
+  border:
+    1px solid
+    rgba(
+      39,
+      145,
+      87,
+      0.085
+    );
+
+  transform:
+    translate(-50%, -50%)
+    rotate(19deg);
+
+  animation:
+    orbital-drift-two
+    31s
+    linear
+    infinite
+    reverse;
+
+}
+
+
+/* third */
+
+.ring-three {
+  width: 60%;
+  height: 39%;
+
+  border:
+    1px dashed
+    rgba(
+      39,
+      145,
+      87,
+      0.08
+    );
+
+  transform:
+    translate(-50%, -50%)
+    rotate(-13deg);
+
+  animation:
+    orbital-drift-three
+    27s
+    linear
+    infinite;
+
+}
+
+
+/* fourth */
+
+.ring-four {
+  width: 45%;
+  height: 30%;
+
+  border:
+    1px solid
+    rgba(
+      39,
+      145,
+      87,
+      0.065
+    );
+
+  transform:
+    translate(-50%, -50%)
+    rotate(27deg);
+
+  animation:
+    orbital-drift-four
+    24s
+    linear
+    infinite
+    reverse;
+
+}
+
+
+/* fifth */
+
+.ring-five {
+  width: 112%;
+  height: 72%;
+
+  border:
+    1px solid
+    rgba(
+      39,
+      145,
+      87,
+      0.055
+    );
+
+  transform:
+    translate(-50%, -50%)
+    rotate(-21deg);
+
+  animation:
+    orbital-drift-five
+    50s
+    linear
+    infinite;
+}
+
+
+/* =========================================================
+   SOFT COLOR BLOOMS
+========================================================= */
+
+.orbital-glow {
+  position: absolute;
+
+  border-radius: 50%;
+
+  pointer-events: none;
+
+  filter:
+    blur(50px);
+
+  opacity:
+    0.55;
+}
+
+
+.glow-one {
+  width: 420px;
+  height: 300px;
+
+  left: 56%;
+  top: 25%;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(
+        43,
+        177,
+        104,
+        0.12
+      ),
+      transparent 70%
+    );
+
+  animation:
+    orbital-glow-one
+    8s
+    ease-in-out
+    infinite;
+}
+
+
+.glow-two {
+  width: 360px;
+  height: 260px;
+
+  left: 67%;
+  top: 57%;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(
+        68,
+        135,
+        205,
+        0.07
+      ),
+      transparent 70%
+    );
+
+  animation:
+    orbital-glow-two
+    11s
+    ease-in-out
+    infinite
+    reverse;
+}
+
+
+.glow-three {
+  width: 320px;
+  height: 230px;
+
+  left: 38%;
+  top: 68%;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(
+        217,
+        162,
+        47,
+        0.055
+      ),
+      transparent 70%
+    );
+
+  animation:
+    orbital-glow-three
+    13s
+    ease-in-out
+    infinite;
+}
+
+
+/* =========================================================
+   MOVING PARTICLES
+========================================================= */
+
+.orbital-particle {
+  position: absolute;
+
+  width: 6px;
+  height: 6px;
+
+  border-radius: 50%;
+
+  background:
+    #39b978;
+
+  box-shadow:
+    0 0 0 5px
+      rgba(
+        57,
+        185,
+        120,
+        0.07
+      ),
+    0 0 18px
+      rgba(
+        57,
+        185,
+        120,
+        0.38
+      );
+
+  pointer-events: none;
+
+  z-index: 2;
+}
+
+
+.particle-one {
+  left: 66%;
+  top: 19%;
+
+  animation:
+    particle-float-one
+    9s
+    ease-in-out
+    infinite;
+}
+
+
+.particle-two {
+  left: 82%;
+  top: 38%;
+
+  width: 4px;
+  height: 4px;
+
+  animation:
+    particle-float-two
+    12s
+    ease-in-out
+    infinite;
+}
+
+
+.particle-three {
+  left: 62%;
+  top: 70%;
+
+  width: 5px;
+  height: 5px;
+
+  animation:
+    particle-float-three
+    11s
+    ease-in-out
+    infinite;
+}
+
+
+.particle-four {
+  left: 42%;
+  top: 31%;
+
+  width: 4px;
+  height: 4px;
+
+  animation:
+    particle-float-four
+    14s
+    ease-in-out
+    infinite;
+}
+
+
+.particle-five {
+  left: 91%;
+  top: 65%;
+
+  width: 5px;
+  height: 5px;
+
+  animation:
+    particle-float-five
+    10s
+    ease-in-out
+    infinite;
+}
+
+
+.particle-six {
+  left: 55%;
+  top: 82%;
+
+  width: 3px;
+  height: 3px;
+
+  animation:
+    particle-float-six
+    15s
+    ease-in-out
+    infinite;
+}
+
+
+/* =========================================================
+   TRANSPARENT LIVE CLOCK
+========================================================= */
+
+.orbital-clock {
+  position: absolute;
+
+  left: 69%;
+  top: 50%;
+
+  width: 250px;
+  height: 250px;
+
+  transform:
+    translate(-50%, -50%);
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  pointer-events:
+    none;
+
+  z-index:
+    3;
+}
+
+
+.orbital-clock-face {
+  position:
+    relative;
+
+  width:
+    100%;
+
+  height:
+    100%;
+
+  border-radius:
+    50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(
+        255,
+        255,
+        255,
+        0.025
+      ),
+      transparent 70%
+    );
+
+  border:
+    1px solid
+    rgba(
+      29,
+      137,
+      82,
+      0.075
+    );
+
+  box-shadow:
+    0 0 70px
+      rgba(
+        31,
+        146,
+        87,
+        0.045
+      );
+}
+
+
+/* clock hands */
+
+.orbital-clock-hand {
+  position:
+    absolute;
+
+  left:
+    50%;
+
+  bottom:
+    50%;
+
+  transform-origin:
+    50% 100%;
+
+  border-radius:
+    999px;
+}
+
+
+.clock-hour-hand {
+  width:
+    4px;
+
+  height:
+    25%;
+
+  background:
+    rgba(
+      21,
+      91,
+      57,
+      0.55
+    );
+}
+
+
+.clock-minute-hand {
+  width:
+    2px;
+
+  height:
+    36%;
+
+  background:
+    rgba(
+      24,
+      145,
+      83,
+      0.60
+    );
+}
+
+
+.clock-second-hand {
+  width:
+    1px;
+
+  height:
+    42%;
+
+  background:
+    rgba(
+      225,
+      158,
+      35,
+      0.72
+    );
+}
+
+
+/* center */
+
+.orbital-clock-dot {
+  position:
+    absolute;
+
+  left:
+    50%;
+
+  top:
+    50%;
+
+  width:
+    9px;
+
+  height:
+    9px;
+
+  transform:
+    translate(
+      -50%,
+      -50%
+    );
+
+  border-radius:
+    50%;
+
+  background:
+    rgba(
+      35,
+      161,
+      94,
+      0.72
+    );
+
+  box-shadow:
+    0 0 18px
+      rgba(
+        35,
+        161,
+        94,
+        0.26
+      );
+}
+
+
+/* clock numbers */
+
+.orbital-clock-mark {
+  position:
+    absolute;
+
+  left:
+    50%;
+
+  top:
+    50%;
+
+  font-size:
+    9px;
+
+  font-weight:
+    800;
+
+  color:
+    rgba(
+      31,
+      113,
+      72,
+      0.25
+    );
+}
+
+
+.mark-12 {
+  transform:
+    translate(
+      -50%,
+      -122px
+    );
+}
+
+
+.mark-3 {
+  transform:
+    translate(
+      113px,
+      -50%
+    );
+}
+
+
+.mark-6 {
+  transform:
+    translate(
+      -50%,
+      104px
+    );
+}
+
+
+.mark-9 {
+  transform:
+    translate(
+      -122px,
+      -50%
+    );
+}
+
+
+.orbital-clock-label {
+  display:
+    none;
+}
+
+
+/* =========================================================
+   FLOATING INFORMATION CARDS
+========================================================= */
+
+.orbital-status-card {
+
+  position:
+    absolute;
+
+  min-width:
+    145px;
+
+  padding:
+    10px 12px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    9px;
+
+  border:
+    1px solid
+    rgba(
+      35,
+      127,
+      80,
+      0.12
+    );
+
+  border-radius:
+    15px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(
+        255,
+        255,
+        255,
+        0.79
+      ),
+      rgba(
+        247,
+        252,
+        249,
+        0.58
+      )
+    );
+
+  backdrop-filter:
+    blur(16px);
+
+  -webkit-backdrop-filter:
+    blur(16px);
+
+  box-shadow:
+    0 18px 45px
+      rgba(
+        25,
+        88,
+        58,
+        0.07
+      ),
+    inset 0 1px 0
+      rgba(
+        255,
+        255,
+        255,
+        0.78
+      );
+
+  pointer-events:
+    auto;
+
+  z-index:
+    8;
+
+  transition:
+    transform
+    0.3s
+    cubic-bezier(
+      0.2,
+      0.8,
+      0.2,
+      1
+    ),
+    box-shadow
+    0.3s ease,
+    border-color
+    0.3s ease;
+}
+
+
+/* icon */
+
+.orbital-status-icon {
+
+  width:
+    32px;
+
+  height:
+    32px;
+
+  flex:
+    0 0 32px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  border-radius:
+    10px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(
+        231,
+        248,
+        238,
+        0.90
+      ),
+      rgba(
+        206,
+        235,
+        218,
+        0.72
+      )
+    );
+
+  color:
+    #218557;
+}
+
+
+/* text */
+
+.orbital-status-card span {
+
+  display:
+    block;
+
+  font-size:
+    7px;
+
+  font-weight:
+    900;
+
+  letter-spacing:
+    0.14em;
+
+  color:
+    #7b998d;
+}
+
+
+.orbital-status-card strong {
+
+  display:
+    block;
+
+  margin-top:
+    2px;
+
+  font-size:
+    11px;
+
+  line-height:
+    1.2;
+
+  color:
+    #174d38;
+}
+
+
+/* hover */
+
+.orbital-status-card:hover {
+
+  transform:
+    translateY(-5px)
+    scale(1.025);
+
+  border-color:
+    rgba(
+      29,
+      146,
+      84,
+      0.25
+    );
+
+  box-shadow:
+    0 26px 55px
+      rgba(
+        25,
+        92,
+        60,
+        0.12
+      );
+
+}
+
+
+/* =========================================================
+   IRREGULAR CARD POSITIONS
+========================================================= */
+
+.orbital-status-one {
+
+  left:
+    61%;
+
+  top:
+    13%;
+
+  transform:
+    rotate(-2deg);
+}
+
+
+.orbital-status-two {
+
+  left:
+    84%;
+
+  top:
+    28%;
+
+  transform:
+    rotate(2.5deg);
+}
+
+
+.orbital-status-three {
+
+  left:
+    76%;
+
+  top:
+    73%;
+
+  transform:
+    rotate(-1.8deg);
+}
+
+
+.orbital-status-four {
+
+  left:
+    53%;
+
+  top:
+    72%;
+
+  transform:
+    rotate(2.4deg);
+}
+
+
+.orbital-status-five {
+
+  left:
+    49%;
+
+  top:
+    38%;
+
+  transform:
+    rotate(-2.5deg);
+}
+
+
+/* =========================================================
+   LIVE SYSTEM LABEL
+========================================================= */
+
+.orbital-live-indicator {
+
+  position:
+    absolute;
+
+  left:
+    69%;
+
+  top:
+    84%;
+
+  transform:
+    translateX(-50%);
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    7px;
+
+  padding:
+    6px 11px;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.53
+    );
+
+  border:
+    1px solid
+    rgba(
+      29,
+      132,
+      79,
+      0.09
+    );
+
+  color:
+    rgba(
+      53,
+      111,
+      88,
+      0.65
+    );
+
+  font-size:
+    7px;
+
+  font-weight:
+    900;
+
+  letter-spacing:
+    0.15em;
+
+  white-space:
+    nowrap;
+
+  z-index:
+    6;
+}
+
+
+.orbital-live-indicator span {
+
+  width:
+    6px;
+
+  height:
+    6px;
+
+  border-radius:
+    50%;
+
+  background:
+    #31b873;
+
+  box-shadow:
+    0 0 0 4px
+      rgba(
+        49,
+        184,
+        115,
+        0.08
+      );
+
+  animation:
+    orbital-status-pulse
+    1.8s
+    ease-in-out
+    infinite;
+}
+
+
+/* =========================================================
+   DIGITAL TIME
+========================================================= */
+
+.orbital-digital-time {
+
+  position:
+    absolute;
+
+  right:
+    4%;
+
+  bottom:
+    8%;
+
+  padding:
+    5px 8px;
+
+  border-radius:
+    8px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.42
+    );
+
+  border:
+    1px solid
+    rgba(
+      29,
+      122,
+      76,
+      0.07
+    );
+
+  color:
+    rgba(
+      69,
+      111,
+      91,
+      0.55
+    );
+
+  font-size:
+    8px;
+
+  font-weight:
+    800;
+
+  letter-spacing:
+    0.06em;
+
+  z-index:
+    6;
+}
+
+
+/* =========================================================
+   ORBIT ANIMATIONS
+========================================================= */
+
+@keyframes orbital-drift-one {
+
+  from {
+    transform:
+      translate(-50%, -50%)
+      rotate(-7deg);
+  }
+
+  to {
+    transform:
+      translate(-50%, -50%)
+      rotate(353deg);
+  }
+
+}
+
+
+@keyframes orbital-drift-two {
+
+  from {
+    transform:
+      translate(-50%, -50%)
+      rotate(19deg);
+  }
+
+  to {
+    transform:
+      translate(-50%, -50%)
+      rotate(-341deg);
+  }
+
+}
+
+
+@keyframes orbital-drift-three {
+
+  from {
+    transform:
+      translate(-50%, -50%)
+      rotate(-13deg);
+  }
+
+  to {
+    transform:
+      translate(-50%, -50%)
+      rotate(347deg);
+  }
+
+}
+
+
+@keyframes orbital-drift-four {
+
+  from {
+    transform:
+      translate(-50%, -50%)
+      rotate(27deg);
+  }
+
+  to {
+    transform:
+      translate(-50%, -50%)
+      rotate(-333deg);
+  }
+
+}
+
+
+@keyframes orbital-drift-five {
+
+  from {
+    transform:
+      translate(-50%, -50%)
+      rotate(-21deg);
+  }
+
+  to {
+    transform:
+      translate(-50%, -50%)
+      rotate(339deg);
+  }
+
+}
+
+
+/* =========================================================
+   GLOW ANIMATIONS
+========================================================= */
+
+@keyframes orbital-glow-one {
+
+  0%,
+  100% {
+    opacity:
+      0.45;
+
+    transform:
+      scale(0.95);
+  }
+
+  50% {
+    opacity:
+      0.75;
+
+    transform:
+      scale(1.08);
+  }
+
+}
+
+
+@keyframes orbital-glow-two {
+
+  0%,
+  100% {
+    opacity:
+      0.35;
+
+    transform:
+      translateY(0);
+  }
+
+  50% {
+    opacity:
+      0.65;
+
+    transform:
+      translateY(-18px);
+  }
+
+}
+
+
+@keyframes orbital-glow-three {
+
+  0%,
+  100% {
+    opacity:
+      0.35;
+
+    transform:
+      translateX(0);
+  }
+
+  50% {
+    opacity:
+      0.60;
+
+    transform:
+      translateX(20px);
+  }
+
+}
+
+
+/* =========================================================
+   PARTICLE ANIMATIONS
+========================================================= */
+
+@keyframes particle-float-one {
+
+  0%,
+  100% {
+    transform:
+      translate(0, 0);
+
+    opacity:
+      0.40;
+  }
+
+  50% {
+    transform:
+      translate(
+        32px,
+        -28px
+      );
+
+    opacity:
+      1;
+  }
+
+}
+
+
+@keyframes particle-float-two {
+
+  0%,
+  100% {
+    transform:
+      translate(0, 0);
+
+    opacity:
+      0.35;
+  }
+
+  50% {
+    transform:
+      translate(
+        -24px,
+        30px
+      );
+
+    opacity:
+      0.9;
+  }
+
+}
+
+
+@keyframes particle-float-three {
+
+  0%,
+  100% {
+    transform:
+      translate(0, 0);
+
+    opacity:
+      0.30;
+  }
+
+  50% {
+    transform:
+      translate(
+        26px,
+        18px
+      );
+
+    opacity:
+      0.85;
+  }
+
+}
+
+
+@keyframes particle-float-four {
+
+  0%,
+  100% {
+    transform:
+      translate(0, 0);
+
+    opacity:
+      0.25;
+  }
+
+  50% {
+    transform:
+      translate(
+        -22px,
+        -25px
+      );
+
+    opacity:
+      0.80;
+  }
+
+}
+
+
+@keyframes particle-float-five {
+
+  0%,
+  100% {
+    transform:
+      translate(0, 0);
+
+    opacity:
+      0.30;
+  }
+
+  50% {
+    transform:
+      translate(
+        -35px,
+        -15px
+      );
+
+    opacity:
+      0.85;
+  }
+
+}
+
+
+@keyframes particle-float-six {
+
+  0%,
+  100% {
+    transform:
+      translate(0, 0);
+
+    opacity:
+      0.25;
+  }
+
+  50% {
+    transform:
+      translate(
+        20px,
+        -32px
+      );
+
+    opacity:
+      0.75;
+  }
+
+}
+
+
+/* =========================================================
+   STATUS ANIMATION
+========================================================= */
+
+@keyframes orbital-status-pulse {
+
+  0%,
+  100% {
+    transform:
+      scale(1);
+
+    opacity:
+      0.60;
+  }
+
+  50% {
+    transform:
+      scale(1.4);
+
+    opacity:
+      1;
+  }
+
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1000px) {
+
+  .orbital-clock {
+
+    left:
+      72%;
+
+    width:
+      200px;
+
+    height:
+      200px;
+
+  }
+
+
+  .mark-12 {
+    transform:
+      translate(
+        -50%,
+        -100px
+      );
+  }
+
+
+  .mark-3 {
+    transform:
+      translate(
+        92px,
+        -50%
+      );
+  }
+
+
+  .mark-6 {
+    transform:
+      translate(
+        -50%,
+        84px
+      );
+  }
+
+
+  .mark-9 {
+    transform:
+      translate(
+        -102px,
+        -50%
+      );
+  }
+
+
+  .orbital-status-card {
+
+    min-width:
+      125px;
+
+  }
+
+
+  .orbital-status-one {
+    left:
+      55%;
+  }
+
+
+  .orbital-status-two {
+    left:
+      76%;
+  }
+
+
+  .orbital-status-three {
+    left:
+      70%;
+  }
+
+
+  .orbital-status-four {
+    left:
+      50%;
+  }
+
+
+  .orbital-status-five {
+    left:
+      45%;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 800px) {
+
+  .landing-hero-visual {
+
+    position:
+      absolute !important;
+
+    inset:
+      0 !important;
+
+    height:
+      100% !important;
+
+  }
+
+
+  .orbital-field {
+
+    inset:
+      -30%;
+
+  }
+
+
+  .orbital-clock {
+
+    left:
+      72%;
+
+    top:
+      63%;
+
+    width:
+      180px;
+
+    height:
+      180px;
+
+  }
+
+
+  .orbital-status-card {
+
+    transform:
+      scale(0.82);
+
+    transform-origin:
+      center;
+
+  }
+
+
+  .orbital-status-one {
+
+    left:
+      52%;
+
+    top:
+      25%;
+
+  }
+
+
+  .orbital-status-two {
+
+    left:
+      70%;
+
+    top:
+      38%;
+
+  }
+
+
+  .orbital-status-three {
+
+    left:
+      63%;
+
+    top:
+      72%;
+
+  }
+
+
+  .orbital-status-four {
+
+    left:
+      40%;
+
+    top:
+      78%;
+
+  }
+
+
+  .orbital-status-five {
+
+    left:
+      34%;
+
+    top:
+      48%;
+
+  }
+
+
+  .orbital-live-indicator,
+  .orbital-digital-time {
+
+    display:
+      none;
+
+  }
+
+}
+
+.landing-hero-visual {
+  position: absolute !important;
+
+  inset: 0 !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  overflow: hidden !important;
+
+  pointer-events: none;
+
+  z-index: 1;
+}
+
+
+.landing-orbital-visual {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 100%;
+  height: 100%;
+
+  transform:
+    translate(-50%, -50%);
+
+  overflow: visible;
+
+  pointer-events: none;
+
+  isolation: isolate;
+}
+.orbital-field {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 175%;
+  height: 175%;
+
+  transform:
+    translate(-50%, -50%)
+    rotate(-7deg);
+
+  pointer-events: none;
+}
+
+.orbital-clock {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 250px;
+  height: 250px;
+
+  transform:
+    translate(-50%, -50%);
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  pointer-events: none;
+
+  z-index: 3;
+}
+
+.orbital-live-indicator {
+  position: absolute;
+
+  left: 50%;
+  top: 84%;
+
+  transform:
+    translateX(-50%);
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  padding: 6px 11px;
+
+  border-radius: 999px;
+
+  z-index: 6;
+}
+
+.orbital-status-one {
+  left: 39%;
+  top: 16%;
+  transform: rotate(-2deg);
+}
+
+.orbital-status-two {
+  left: 67%;
+  top: 25%;
+  transform: rotate(2.5deg);
+}
+
+.orbital-status-three {
+  left: 65%;
+  top: 69%;
+  transform: rotate(-1.8deg);
+}
+
+.orbital-status-four {
+  left: 34%;
+  top: 72%;
+  transform: rotate(2.4deg);
+}
+
+.orbital-status-five {
+  left: 30%;
+  top: 42%;
+  transform: rotate(-2.5deg);
+}
+
+/* =========================================================
+   PREMIUM ORBIT CARDS
+   Larger + controlled spacing + organic placement
+========================================================= */
+
+.orbital-status-card {
+  position: absolute;
+
+  width: 178px;
+  min-height: 70px;
+
+  padding: 12px 14px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  border-radius: 17px;
+
+  box-sizing: border-box;
+
+  z-index: 8;
+}
+
+
+/* icon */
+
+.orbital-status-icon {
+  width: 38px;
+  height: 38px;
+
+  flex: 0 0 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 11px;
+}
+
+
+/* card heading */
+
+.orbital-status-card span {
+  display: block;
+
+  font-size: 8px;
+
+  font-weight: 900;
+
+  letter-spacing: 0.14em;
+}
+
+
+/* card value */
+
+.orbital-status-card strong {
+  display: block;
+
+  margin-top: 3px;
+
+  font-size: 13px;
+
+  line-height: 1.2;
+}
+
+
+/* =========================================================
+   CONTROLLED RADIAL POSITIONS
+   Similar distance from the clock,
+   but intentionally different angles
+========================================================= */
+
+
+/* TOP */
+
+.orbital-status-one {
+  left: 50%;
+  top: calc(50% - 215px);
+
+  transform:
+    translateX(-50%)
+    rotate(-2deg);
+}
+
+
+/* UPPER RIGHT */
+
+.orbital-status-two {
+  left: calc(50% + 215px);
+  top: calc(50% - 95px);
+
+  transform:
+    rotate(2deg);
+}
+
+
+/* LOWER RIGHT */
+
+.orbital-status-three {
+  left: calc(50% + 190px);
+  top: calc(50% + 150px);
+
+  transform:
+    rotate(-2deg);
+}
+
+
+/* LOWER LEFT */
+
+.orbital-status-four {
+  left: calc(50% - 365px);
+  top: calc(50% + 145px);
+
+  transform:
+    rotate(2deg);
+}
+
+
+/* LEFT */
+
+.orbital-status-five {
+  left: calc(50% - 355px);
+  top: calc(50% - 80px);
+
+  transform:
+    rotate(-2.5deg);
+}
+.procurement-radar,
+.landing-orbital-visual {
+  overflow: visible;
+}
+
+.orbital-field {
+  width: 185%;
+  height: 185%;
+}
+
+.orbital-status-card {
+  transition:
+    transform 0.28s ease,
+    box-shadow 0.28s ease,
+    border-color 0.28s ease;
+}
+
+.orbital-status-card:hover {
+  transform:
+    translateY(-4px)
+    scale(1.025);
+}
+
+/* =========================================================
+   HERO VISUAL = TRUE BACKGROUND LAYER
+========================================================= */
+
+.landing-hero {
+  position: relative !important;
+  overflow: hidden;
+}
+
+
+/* The illustration occupies the complete hero,
+   independently from the text layout. */
+
+.landing-hero-visual {
+  position: absolute !important;
+
+  inset: 0 !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  display: block !important;
+
+  overflow: hidden !important;
+
+  pointer-events: none !important;
+
+  z-index: 1 !important;
+}
+
+
+/* Main illustration canvas */
+
+.landing-orbital-visual {
+  position: absolute !important;
+
+  left: 50%;
+  top: 50%;
+
+  width: 100%;
+  height: 100%;
+
+  transform:
+    translate(-50%, -50%);
+
+  overflow: visible !important;
+
+  pointer-events: none !important;
+}
+
+
+/* =========================================================
+   TEXT ALWAYS ABOVE THE ART
+========================================================= */
+
+.landing-hero-content {
+  position: relative !important;
+
+  z-index: 10 !important;
+}
+
+
+/* Keep other hero controls above the artwork too */
+
+.landing-hero-actions,
+.landing-hero-points,
+.landing-hero-badge,
+.landing-hero-logo {
+  position: relative;
+
+  z-index: 10;
+}
+
+.orbital-field {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 190%;
+  height: 190%;
+
+  transform:
+    translate(-50%, -50%);
+
+  pointer-events: none;
+}
+
+.orbital-clock {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 250px;
+  height: 250px;
+
+  transform:
+    translate(-50%, -50%);
+
+  pointer-events: none;
+
+  z-index: 3;
+}
+
+.orbital-status-one {
+  left: 50%;
+  top: 18%;
+
+  transform:
+    translateX(-50%)
+    rotate(-2deg);
+}
+
+
+.orbital-status-two {
+  left: 72%;
+  top: 31%;
+
+  transform:
+    rotate(2deg);
+}
+
+
+.orbital-status-three {
+  left: 69%;
+  top: 66%;
+
+  transform:
+    rotate(-2deg);
+}
+
+
+.orbital-status-four {
+  left: 31%;
+  top: 68%;
+
+  transform:
+    rotate(2deg);
+}
+
+
+.orbital-status-five {
+  left: 27%;
+  top: 40%;
+
+  transform:
+    rotate(-2deg);
+}
+
+.landing-hero {
+  overflow: hidden !important;
+}
+
+/* =========================================================
+   KRISHISETU LANDING HERO
+   FULL-SCREEN ORBITAL BACKGROUND SYSTEM
+
+   Design goals:
+   - illustration behaves like a background layer
+   - text stays safely above it
+   - no fragile pixel positioning
+   - no fixed desktop-only coordinates
+   - artwork scales with viewport
+   - artwork is clipped only by hero boundary
+========================================================= */
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.landing-hero {
+  position: relative !important;
+
+  width: 100% !important;
+  max-width: none !important;
+
+  overflow: hidden !important;
+
+  isolation: isolate;
+
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   EXISTING HERO BACKGROUND
+   Keep your existing hero background effects below the
+   orbital illustration.
+========================================================= */
+
+.landing-hero-background {
+  position: absolute;
+
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  pointer-events: none;
+
+  z-index: 0;
+}
+
+
+/* =========================================================
+   ORBITAL VISUAL
+   This is now a true background layer
+========================================================= */
+
+.landing-hero-visual {
+  position: absolute !important;
+
+  inset: 0 !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  overflow: visible !important;
+
+  pointer-events: none !important;
+
+  z-index: 1 !important;
+}
+
+
+/* =========================================================
+   MAIN VISUAL CANVAS
+
+   Everything inside this element is positioned relative
+   to the full hero, not to the text.
+========================================================= */
+
+.landing-orbital-visual {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 100%;
+  height: 100%;
+
+  transform:
+    translate(-50%, -50%);
+
+  overflow: visible;
+
+  pointer-events: none;
+
+  isolation: isolate;
+}
+
+
+/* =========================================================
+   FOREGROUND TEXT
+========================================================= */
+
+.landing-hero-content {
+  position: relative !important;
+
+  z-index: 10 !important;
+}
+
+
+/* Make sure interactive hero content is always above art */
+
+.landing-hero-content a,
+.landing-hero-content button,
+.landing-hero-content input,
+.landing-hero-content [role="button"] {
+  position: relative;
+
+  z-index: 11;
+}
+
+
+/* =========================================================
+   ORBITAL FIELD
+
+   Deliberately much larger than the viewport.
+   The center remains tied to the hero center.
+========================================================= */
+
+.orbital-field {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 175%;
+  height: 175%;
+
+  transform:
+    translate(-50%, -50%);
+
+  pointer-events: none;
+
+  z-index: 0;
+}
+
+
+/* =========================================================
+   ORBITS
+========================================================= */
+
+.orbital-ring {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  border-radius: 50%;
+
+  transform:
+    translate(-50%, -50%);
+
+  pointer-events: none;
+
+  box-sizing: border-box;
+
+  will-change:
+    transform;
+}
+
+
+/* Outer orbit */
+
+.ring-one {
+  width: 100%;
+  height: 67%;
+
+  border:
+    1px solid
+    rgba(
+      34,
+      143,
+      84,
+      0.115
+    );
+
+  transform:
+    translate(-50%, -50%)
+    rotate(-8deg);
+
+  animation:
+    orbital-ring-one
+    42s
+    linear
+    infinite;
+}
+
+
+/* Secondary orbit */
+
+.ring-two {
+  width: 82%;
+  height: 55%;
+
+  border:
+    1px solid
+    rgba(
+      34,
+      143,
+      84,
+      0.08
+    );
+
+  transform:
+    translate(-50%, -50%)
+    rotate(13deg);
+
+  animation:
+    orbital-ring-two
+    34s
+    linear
+    infinite
+    reverse;
+}
+
+
+/* Inner orbit */
+
+.ring-three {
+  width: 65%;
+  height: 44%;
+
+  border:
+    1px dashed
+    rgba(
+      34,
+      143,
+      84,
+      0.075
+    );
+
+  transform:
+    translate(-50%, -50%)
+    rotate(-15deg);
+
+  animation:
+    orbital-ring-three
+    29s
+    linear
+    infinite;
+}
+
+
+/* Smaller inner orbit */
+
+.ring-four {
+  width: 49%;
+  height: 34%;
+
+  border:
+    1px solid
+    rgba(
+      34,
+      143,
+      84,
+      0.052
+    );
+
+  transform:
+    translate(-50%, -50%)
+    rotate(19deg);
+
+  animation:
+    orbital-ring-four
+    25s
+    linear
+    infinite
+    reverse;
+}
+
+
+/* Huge outer arc */
+
+.ring-five {
+  width: 118%;
+  height: 78%;
+
+  border:
+    1px solid
+    rgba(
+      34,
+      143,
+      84,
+      0.05
+    );
+
+  transform:
+    translate(-50%, -50%)
+    rotate(-23deg);
+
+  animation:
+    orbital-ring-five
+    52s
+    linear
+    infinite;
+}
+
+
+/* =========================================================
+   ORBITAL LIGHT BLOOMS
+========================================================= */
+
+.orbital-glow {
+  position: absolute;
+
+  border-radius: 50%;
+
+  pointer-events: none;
+
+  filter:
+    blur(60px);
+
+  mix-blend-mode:
+    normal;
+
+  z-index: -1;
+}
+
+
+/* green bloom */
+
+.glow-one {
+  width:
+    clamp(
+      280px,
+      28vw,
+      520px
+    );
+
+  height:
+    clamp(
+      200px,
+      20vw,
+      380px
+    );
+
+  left:
+    56%;
+
+  top:
+    22%;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(
+        40,
+        173,
+        102,
+        0.11
+      ),
+      transparent 72%
+    );
+
+  animation:
+    glow-drift-one
+    9s
+    ease-in-out
+    infinite;
+}
+
+
+/* blue bloom */
+
+.glow-two {
+  width:
+    clamp(
+      240px,
+      24vw,
+      430px
+    );
+
+  height:
+    clamp(
+      180px,
+      18vw,
+      330px
+    );
+
+  left:
+    71%;
+
+  top:
+    57%;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(
+        69,
+        133,
+        201,
+        0.06
+      ),
+      transparent 72%
+    );
+
+  animation:
+    glow-drift-two
+    12s
+    ease-in-out
+    infinite
+    reverse;
+}
+
+
+/* warm bloom */
+
+.glow-three {
+  width:
+    clamp(
+      220px,
+      21vw,
+      380px
+    );
+
+  height:
+    clamp(
+      160px,
+      16vw,
+      300px
+    );
+
+  left:
+    38%;
+
+  top:
+    69%;
+
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(
+        218,
+        161,
+        46,
+        0.05
+      ),
+      transparent 72%
+    );
+
+  animation:
+    glow-drift-three
+    13s
+    ease-in-out
+    infinite;
+}
+
+
+/* =========================================================
+   FLOATING PARTICLES
+========================================================= */
+
+.orbital-particle {
+  position: absolute;
+
+  width:
+    5px;
+
+  height:
+    5px;
+
+  border-radius:
+    50%;
+
+  background:
+    rgba(
+      47,
+      178,
+      111,
+      0.90
+    );
+
+  box-shadow:
+    0 0 0 5px
+      rgba(
+        47,
+        178,
+        111,
+        0.06
+      ),
+    0 0 20px
+      rgba(
+        47,
+        178,
+        111,
+        0.28
+      );
+
+  pointer-events:
+    none;
+
+  z-index:
+    2;
+}
+
+
+.particle-one {
+  left:
+    62%;
+
+  top:
+    18%;
+
+  animation:
+    particle-one-motion
+    10s
+    ease-in-out
+    infinite;
+}
+
+
+.particle-two {
+  left:
+    82%;
+
+  top:
+    36%;
+
+  width:
+    4px;
+
+  height:
+    4px;
+
+  animation:
+    particle-two-motion
+    13s
+    ease-in-out
+    infinite;
+}
+
+
+.particle-three {
+  left:
+    64%;
+
+  top:
+    74%;
+
+  width:
+    4px;
+
+  height:
+    4px;
+
+  animation:
+    particle-three-motion
+    11s
+    ease-in-out
+    infinite;
+}
+
+
+.particle-four {
+  left:
+    43%;
+
+  top:
+    30%;
+
+  width:
+    3px;
+
+  height:
+    3px;
+
+  animation:
+    particle-four-motion
+    14s
+    ease-in-out
+    infinite;
+}
+
+
+.particle-five {
+  left:
+    90%;
+
+  top:
+    67%;
+
+  width:
+    4px;
+
+  height:
+    4px;
+
+  animation:
+    particle-five-motion
+    12s
+    ease-in-out
+    infinite;
+}
+
+
+.particle-six {
+  left:
+    54%;
+
+  top:
+    84%;
+
+  width:
+    3px;
+
+  height:
+    3px;
+
+  animation:
+    particle-six-motion
+    16s
+    ease-in-out
+    infinite;
+}
+
+
+/* =========================================================
+   CLOCK
+   Centered with the orbital system
+========================================================= */
+
+.orbital-clock {
+
+  position:
+    absolute;
+
+  left:
+    50%;
+
+  top:
+    50%;
+
+  width:
+    clamp(
+      170px,
+      17vw,
+      260px
+    );
+
+  aspect-ratio:
+    1 / 1;
+
+  transform:
+    translate(
+      -50%,
+      -50%
+    );
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  pointer-events:
+    none;
+
+  z-index:
+    3;
+}
+
+
+/* transparent clock face */
+
+.orbital-clock-face {
+
+  position:
+    relative;
+
+  width:
+    100%;
+
+  height:
+    100%;
+
+  border-radius:
+    50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(
+        255,
+        255,
+        255,
+        0.018
+      ),
+      transparent 70%
+    );
+
+  border:
+    1px solid
+    rgba(
+      31,
+      138,
+      82,
+      0.055
+    );
+
+  box-shadow:
+    0 0 65px
+      rgba(
+        28,
+        148,
+        88,
+        0.035
+      );
+}
+
+
+/* =========================================================
+   CLOCK HANDS
+========================================================= */
+
+.orbital-clock-hand {
+
+  position:
+    absolute;
+
+  left:
+    50%;
+
+  bottom:
+    50%;
+
+  transform-origin:
+    50%
+    100%;
+
+  border-radius:
+    999px;
+}
+
+
+.clock-hour-hand {
+
+  width:
+    4px;
+
+  height:
+    25%;
+
+  background:
+    rgba(
+      20,
+      94,
+      58,
+      0.58
+    );
+}
+
+
+.clock-minute-hand {
+
+  width:
+    2px;
+
+  height:
+    36%;
+
+  background:
+    rgba(
+      22,
+      145,
+      82,
+      0.68
+    );
+}
+
+
+.clock-second-hand {
+
+  width:
+    1px;
+
+  height:
+    43%;
+
+  background:
+    rgba(
+      224,
+      154,
+      27,
+      0.72
+    );
+
+  box-shadow:
+    0 0 12px
+      rgba(
+        224,
+        154,
+        27,
+        0.16
+      );
+}
+
+
+/* clock center */
+
+.orbital-clock-dot {
+
+  position:
+    absolute;
+
+  left:
+    50%;
+
+  top:
+    50%;
+
+  width:
+    9px;
+
+  height:
+    9px;
+
+  transform:
+    translate(
+      -50%,
+      -50%
+    );
+
+  border-radius:
+    50%;
+
+  background:
+    rgba(
+      31,
+      164,
+      96,
+      0.76
+    );
+
+  box-shadow:
+    0 0 18px
+      rgba(
+        31,
+        164,
+        96,
+        0.25
+      );
+}
+
+
+/* =========================================================
+   CLOCK NUMBERS
+========================================================= */
+
+.orbital-clock-mark {
+
+  position:
+    absolute;
+
+  left:
+    50%;
+
+  top:
+    50%;
+
+  font-size:
+    clamp(
+      7px,
+      0.55vw,
+      10px
+    );
+
+  font-weight:
+    800;
+
+  color:
+    rgba(
+      28,
+      113,
+      72,
+      0.21
+    );
+}
+
+
+.mark-12 {
+
+  transform:
+    translate(
+      -50%,
+      -50%
+    )
+    translateY(
+      clamp(
+        -100px,
+        -6vw,
+        -67px
+      )
+    );
+}
+
+
+.mark-3 {
+
+  transform:
+    translate(
+      -50%,
+      -50%
+    )
+    translateX(
+      clamp(
+        67px,
+        6vw,
+        100px
+      )
+    );
+}
+
+
+.mark-6 {
+
+  transform:
+    translate(
+      -50%,
+      -50%
+    )
+    translateY(
+      clamp(
+        67px,
+        6vw,
+        100px
+      )
+    );
+}
+
+
+.mark-9 {
+
+  transform:
+    translate(
+      -50%,
+      -50%
+    )
+    translateX(
+      clamp(
+        -100px,
+        -6vw,
+        -67px
+      )
+    );
+}
+
+
+/* =========================================================
+   STATUS CARDS
+   Large enough to remain readable,
+   but positioned using viewport-relative percentages.
+========================================================= */
+
+.orbital-status-card {
+
+  position:
+    absolute;
+
+  width:
+    clamp(
+      135px,
+      10vw,
+      180px
+    );
+
+  min-height:
+    64px;
+
+  padding:
+    10px 12px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    9px;
+
+  box-sizing:
+    border-box;
+
+  border:
+    1px solid
+    rgba(
+      36,
+      126,
+      80,
+      0.11
+    );
+
+  border-radius:
+    16px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(
+        255,
+        255,
+        255,
+        0.76
+      ),
+      rgba(
+        247,
+        252,
+        249,
+        0.52
+      )
+    );
+
+  backdrop-filter:
+    blur(15px);
+
+  -webkit-backdrop-filter:
+    blur(15px);
+
+  box-shadow:
+    0 18px 42px
+      rgba(
+        26,
+        88,
+        57,
+        0.065
+      ),
+    inset 0 1px 0
+      rgba(
+        255,
+        255,
+        255,
+        0.74
+      );
+
+  pointer-events:
+    auto;
+
+  z-index:
+    7;
+
+  transition:
+    transform
+    0.32s
+    cubic-bezier(
+      0.2,
+      0.8,
+      0.2,
+      1
+    ),
+    box-shadow
+    0.32s ease,
+    border-color
+    0.32s ease;
+}
+
+
+/* card icon */
+
+.orbital-status-icon {
+
+  width:
+    36px;
+
+  height:
+    36px;
+
+  flex:
+    0 0 36px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  border-radius:
+    11px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(
+        234,
+        248,
+        239,
+        0.88
+      ),
+      rgba(
+        211,
+        236,
+        220,
+        0.68
+      )
+    );
+
+  color:
+    #168451;
+
+}
+
+
+/* card text */
+
+.orbital-status-card span {
+
+  display:
+    block;
+
+  font-size:
+    7px;
+
+  font-weight:
+    900;
+
+  letter-spacing:
+    0.14em;
+
+  color:
+    #769489;
+}
+
+
+.orbital-status-card strong {
+
+  display:
+    block;
+
+  margin-top:
+    2px;
+
+  font-size:
+    clamp(
+      10px,
+      0.72vw,
+      13px
+    );
+
+  line-height:
+    1.2;
+
+  color:
+    #184d38;
+}
+
+
+/* card hover */
+
+.orbital-status-card:hover {
+
+  transform:
+    translateY(-4px)
+    scale(1.02);
+
+  border-color:
+    rgba(
+      29,
+      144,
+      84,
+      0.23
+    );
+
+  box-shadow:
+    0 26px 55px
+      rgba(
+        25,
+        92,
+        60,
+        0.11
+      );
+
+}
+
+
+/* =========================================================
+   CARD POSITIONS
+
+   These use percentages instead of fixed pixels.
+   They remain stable as screen width changes.
+========================================================= */
+
+
+/* top */
+
+.orbital-status-one {
+
+  left:
+    50%;
+
+  top:
+    15%;
+
+  transform:
+    translateX(-50%)
+    rotate(-2deg);
+
+}
+
+
+/* upper-right */
+
+.orbital-status-two {
+
+  left:
+    73%;
+
+  top:
+    29%;
+
+  transform:
+    rotate(2deg);
+
+}
+
+
+/* lower-right */
+
+.orbital-status-three {
+
+  left:
+    70%;
+
+  top:
+    70%;
+
+  transform:
+    rotate(-1.5deg);
+
+}
+
+
+/* lower-left */
+
+.orbital-status-four {
+
+  left:
+    31%;
+
+  top:
+    71%;
+
+  transform:
+    rotate(2deg);
+
+}
+
+
+/* left */
+
+.orbital-status-five {
+
+  left:
+    27%;
+
+  top:
+    39%;
+
+  transform:
+    rotate(-2deg);
+
+}
+
+
+/* =========================================================
+   LIVE SYSTEM LABEL
+========================================================= */
+
+.orbital-live-indicator {
+
+  position:
+    absolute;
+
+  left:
+    50%;
+
+  top:
+    84%;
+
+  transform:
+    translateX(-50%);
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    7px;
+
+  padding:
+    6px 11px;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.48
+    );
+
+  border:
+    1px solid
+    rgba(
+      29,
+      130,
+      79,
+      0.07
+    );
+
+  color:
+    rgba(
+      52,
+      108,
+      85,
+      0.55
+    );
+
+  font-size:
+    7px;
+
+  font-weight:
+    900;
+
+  letter-spacing:
+    0.15em;
+
+  white-space:
+    nowrap;
+
+  z-index:
+    6;
+}
+
+
+.orbital-live-indicator span {
+
+  width:
+    6px;
+
+  height:
+    6px;
+
+  border-radius:
+    50%;
+
+  background:
+    #2db775;
+
+  box-shadow:
+    0 0 0 4px
+      rgba(
+        45,
+        183,
+        117,
+        0.07
+      );
+
+  animation:
+    live-pulse
+    1.8s
+    ease-in-out
+    infinite;
+}
+
+
+/* =========================================================
+   DIGITAL TIME
+========================================================= */
+
+.orbital-digital-time {
+
+  position:
+    absolute;
+
+  right:
+    5%;
+
+  bottom:
+    7%;
+
+  padding:
+    5px 8px;
+
+  border-radius:
+    8px;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.38
+    );
+
+  color:
+    rgba(
+      71,
+      111,
+      91,
+      0.46
+    );
+
+  font-size:
+    8px;
+
+  font-weight:
+    800;
+
+  letter-spacing:
+    0.05em;
+
+  z-index:
+    6;
+}
+
+
+/* =========================================================
+   ORBIT ANIMATION
+========================================================= */
+
+@keyframes orbital-ring-one {
+
+  from {
+
+    transform:
+      translate(-50%, -50%)
+      rotate(-8deg);
+
+  }
+
+  to {
+
+    transform:
+      translate(-50%, -50%)
+      rotate(352deg);
+
+  }
+
+}
+
+
+@keyframes orbital-ring-two {
+
+  from {
+
+    transform:
+      translate(-50%, -50%)
+      rotate(13deg);
+
+  }
+
+  to {
+
+    transform:
+      translate(-50%, -50%)
+      rotate(-347deg);
+
+  }
+
+}
+
+
+@keyframes orbital-ring-three {
+
+  from {
+
+    transform:
+      translate(-50%, -50%)
+      rotate(-15deg);
+
+  }
+
+  to {
+
+    transform:
+      translate(-50%, -50%)
+      rotate(345deg);
+
+  }
+
+}
+
+
+@keyframes orbital-ring-four {
+
+  from {
+
+    transform:
+      translate(-50%, -50%)
+      rotate(19deg);
+
+  }
+
+  to {
+
+    transform:
+      translate(-50%, -50%)
+      rotate(-341deg);
+
+  }
+
+}
+
+
+@keyframes orbital-ring-five {
+
+  from {
+
+    transform:
+      translate(-50%, -50%)
+      rotate(-23deg);
+
+  }
+
+  to {
+
+    transform:
+      translate(-50%, -50%)
+      rotate(337deg);
+
+  }
+
+}
+
+
+/* =========================================================
+   GLOW MOTION
+========================================================= */
+
+@keyframes glow-drift-one {
+
+  0%,
+  100% {
+
+    opacity:
+      0.40;
+
+    transform:
+      scale(0.95);
+
+  }
+
+  50% {
+
+    opacity:
+      0.75;
+
+    transform:
+      scale(1.08);
+
+  }
+
+}
+
+
+@keyframes glow-drift-two {
+
+  0%,
+  100% {
+
+    opacity:
+      0.30;
+
+    transform:
+      translateY(0);
+
+  }
+
+  50% {
+
+    opacity:
+      0.60;
+
+    transform:
+      translateY(-20px);
+
+  }
+
+}
+
+
+@keyframes glow-drift-three {
+
+  0%,
+  100% {
+
+    opacity:
+      0.30;
+
+    transform:
+      translateX(0);
+
+  }
+
+  50% {
+
+    opacity:
+      0.55;
+
+    transform:
+      translateX(18px);
+
+  }
+
+}
+
+
+/* =========================================================
+   PARTICLE MOTION
+========================================================= */
+
+@keyframes particle-one-motion {
+
+  0%,
+  100% {
+
+    transform:
+      translate(0, 0);
+
+    opacity:
+      0.35;
+
+  }
+
+  50% {
+
+    transform:
+      translate(30px, -24px);
+
+    opacity:
+      1;
+
+  }
+
+}
+
+
+@keyframes particle-two-motion {
+
+  0%,
+  100% {
+
+    transform:
+      translate(0, 0);
+
+    opacity:
+      0.25;
+
+  }
+
+  50% {
+
+    transform:
+      translate(-24px, 28px);
+
+    opacity:
+      0.85;
+
+  }
+
+}
+
+
+@keyframes particle-three-motion {
+
+  0%,
+  100% {
+
+    transform:
+      translate(0, 0);
+
+    opacity:
+      0.25;
+
+  }
+
+  50% {
+
+    transform:
+      translate(24px, 18px);
+
+    opacity:
+      0.8;
+
+  }
+
+}
+
+
+@keyframes particle-four-motion {
+
+  0%,
+  100% {
+
+    transform:
+      translate(0, 0);
+
+    opacity:
+      0.25;
+
+  }
+
+  50% {
+
+    transform:
+      translate(-18px, -25px);
+
+    opacity:
+      0.75;
+
+  }
+
+}
+
+
+@keyframes particle-five-motion {
+
+  0%,
+  100% {
+
+    transform:
+      translate(0, 0);
+
+    opacity:
+      0.25;
+
+  }
+
+  50% {
+
+    transform:
+      translate(-30px, -14px);
+
+    opacity:
+      0.82;
+
+  }
+
+}
+
+
+@keyframes particle-six-motion {
+
+  0%,
+  100% {
+
+    transform:
+      translate(0, 0);
+
+    opacity:
+      0.20;
+
+  }
+
+  50% {
+
+    transform:
+      translate(20px, -28px);
+
+    opacity:
+      0.70;
+
+  }
+
+}
+
+
+/* =========================================================
+   LIVE INDICATOR
+========================================================= */
+
+@keyframes live-pulse {
+
+  0%,
+  100% {
+
+    transform:
+      scale(1);
+
+    opacity:
+      0.55;
+
+  }
+
+  50% {
+
+    transform:
+      scale(1.35);
+
+    opacity:
+      1;
+
+  }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE — LARGE LAPTOP
+========================================================= */
+
+@media (max-width: 1400px) {
+
+  .orbital-field {
+
+    width:
+      170%;
+
+    height:
+      170%;
+
+  }
+
+
+  .orbital-status-card {
+
+    width:
+      155px;
+
+  }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE — NORMAL LAPTOP
+========================================================= */
+
+@media (max-width: 1200px) {
+
+  .orbital-field {
+
+    width:
+      165%;
+
+    height:
+      165%;
+
+  }
+
+
+  .orbital-status-card {
+
+    width:
+      145px;
+
+    min-height:
+      60px;
+
+    padding:
+      9px 10px;
+
+  }
+
+
+  .orbital-status-icon {
+
+    width:
+      33px;
+
+    height:
+      33px;
+
+    flex-basis:
+      33px;
+
+  }
+
+
+  .orbital-status-one {
+
+    top:
+      17%;
+
+  }
+
+
+  .orbital-status-two {
+
+    left:
+      75%;
+
+  }
+
+
+  .orbital-status-three {
+
+    left:
+      72%;
+
+  }
+
+
+  .orbital-status-four {
+
+    left:
+      28%;
+
+  }
+
+
+  .orbital-status-five {
+
+    left:
+      23%;
+
+  }
+
+}
+
+
+/* =========================================================
+   SMALL LAPTOP
+========================================================= */
+
+@media (max-width: 1000px) {
+
+  .orbital-status-card {
+
+    width:
+      136px;
+
+    min-height:
+      57px;
+
+  }
+
+
+  .orbital-status-card strong {
+
+    font-size:
+      10px;
+
+  }
+
+
+  .orbital-status-card span {
+
+    font-size:
+      6px;
+
+  }
+
+
+  .orbital-status-one {
+
+    left:
+      50%;
+
+    top:
+      18%;
+
+  }
+
+
+  .orbital-status-two {
+
+    left:
+      77%;
+
+    top:
+      30%;
+
+  }
+
+
+  .orbital-status-three {
+
+    left:
+      73%;
+
+    top:
+      69%;
+
+  }
+
+
+  .orbital-status-four {
+
+    left:
+      27%;
+
+    top:
+      70%;
+
+  }
+
+
+  .orbital-status-five {
+
+    left:
+      20%;
+
+    top:
+      41%;
+
+  }
+
+
+  .orbital-clock {
+
+    width:
+      190px;
+
+  }
+
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 800px) {
+
+  .landing-hero-visual {
+
+    opacity:
+      0.55;
+
+  }
+
+
+  .orbital-field {
+
+    width:
+      150%;
+
+    height:
+      150%;
+
+  }
+
+
+  .orbital-clock {
+
+    left:
+      72%;
+
+    top:
+      62%;
+
+    width:
+      170px;
+
+  }
+
+
+  .orbital-status-one {
+
+    left:
+      62%;
+
+    top:
+      25%;
+
+  }
+
+
+  .orbital-status-two {
+
+    left:
+      78%;
+
+    top:
+      37%;
+
+  }
+
+
+  .orbital-status-three {
+
+    left:
+      72%;
+
+    top:
+      72%;
+
+  }
+
+
+  .orbital-status-four {
+
+    left:
+      52%;
+
+    top:
+      79%;
+
+  }
+
+
+  .orbital-status-five {
+
+    left:
+      40%;
+
+    top:
+      48%;
+
+  }
+
+
+  .orbital-live-indicator {
+
+    display:
+      none;
+
+  }
+
+
+  .orbital-digital-time {
+
+    display:
+      none;
+
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+  .landing-hero-visual {
+
+    opacity:
+      0.34;
+
+  }
+
+
+  .orbital-field {
+
+    width:
+      145%;
+
+    height:
+      145%;
+
+  }
+
+
+  .orbital-clock {
+
+    left:
+      67%;
+
+    top:
+      65%;
+
+    width:
+      145px;
+
+  }
+
+
+  .orbital-status-card {
+
+    width:
+      112px;
+
+    min-height:
+      50px;
+
+    padding:
+      7px;
+
+    gap:
+      7px;
+
+    border-radius:
+      12px;
+
+  }
+
+
+  .orbital-status-icon {
+
+    width:
+      28px;
+
+    height:
+      28px;
+
+    flex-basis:
+      28px;
+
+  }
+
+
+  .orbital-status-card strong {
+
+    font-size:
+      9px;
+
+  }
+
+
+  .orbital-status-card span {
+
+    font-size:
+      5.5px;
+
+  }
+
+
+  .orbital-status-one {
+
+    left:
+      55%;
+
+    top:
+      25%;
+
+  }
+
+
+  .orbital-status-two {
+
+    left:
+      70%;
+
+    top:
+      38%;
+
+  }
+
+
+  .orbital-status-three {
+
+    left:
+      66%;
+
+    top:
+      72%;
+
+  }
+
+
+  .orbital-status-four {
+
+    left:
+      39%;
+
+    top:
+      78%;
+
+  }
+
+
+  .orbital-status-five {
+
+    left:
+      31%;
+
+    top:
+      49%;
+
+  }
+
+}
+
+/* =========================================================
+   FLOATING CARDS — MORE SPACE FROM CLOCK
+========================================================= */
+
+.orbital-status-one {
+  left: 50%;
+  top: 10%;
+
+  transform:
+    translateX(-50%)
+    rotate(-2deg);
+}
+
+
+.orbital-status-two {
+  left: 79%;
+  top: 25%;
+
+  transform:
+    rotate(2deg);
+}
+
+
+.orbital-status-three {
+  left: 76%;
+  top: 76%;
+
+  transform:
+    rotate(-1.5deg);
+}
+
+
+.orbital-status-four {
+  left: 24%;
+  top: 77%;
+
+  transform:
+    rotate(2deg);
+}
+
+
+.orbital-status-five {
+  left: 17%;
+  top: 37%;
+
+  transform:
+    rotate(-2deg);
+}
+@media (max-width: 1200px) {
+
+  .orbital-status-one {
+    top: 12%;
+  }
+
+  .orbital-status-two {
+    left: 77%;
+    top: 27%;
+  }
+
+  .orbital-status-three {
+    left: 74%;
+    top: 75%;
+  }
+
+  .orbital-status-four {
+    left: 26%;
+    top: 76%;
+  }
+
+  .orbital-status-five {
+    left: 19%;
+    top: 39%;
+  }
+
+}
+
+/* =========================================================
+   ELLIPTICAL CARD COMPOSITION
+   Cards remain attached to the illustration.
+========================================================= */
+
+.orbital-status-card {
+  position: absolute;
+  z-index: 8;
+
+  width: clamp(
+    145px,
+    11vw,
+    180px
+  );
+
+  min-height: 64px;
+
+  box-sizing: border-box;
+}
+
+
+/* =========================================================
+   CENTERED ELLIPSE LAYOUT
+========================================================= */
+
+/* top card */
+.orbital-status-one {
+  left: 50%;
+  top: 14%;
+
+  transform:
+    translateX(-50%)
+    rotate(-2deg);
+}
+
+
+/* upper-right
+   intentionally closer to clock */
+.orbital-status-two {
+  left: 67%;
+  top: 30%;
+
+  transform:
+    rotate(2deg);
+}
+
+
+/* lower-right
+   intentionally closer to clock */
+.orbital-status-three {
+  left: 64%;
+  top: 66%;
+
+  transform:
+    rotate(-1.5deg);
+}
+
+
+/* lower-left
+   intentionally farther from clock */
+.orbital-status-four {
+  left: 20%;
+  top: 70%;
+
+  transform:
+    rotate(2deg);
+}
+
+
+/* left
+   farthest from clock */
+.orbital-status-five {
+  left: 13%;
+  top: 39%;
+
+  transform:
+    rotate(-2deg);
+}
+/* =========================================================
+   WIDE ELLIPTICAL ORBITAL FIELD
+========================================================= */
+
+.orbital-field {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 190%;
+  height: 135%;
+
+  transform:
+    translate(-50%, -50%);
+
+  pointer-events: none;
+}
+/* =========================================================
+   WIDE ORBITS
+========================================================= */
+
+.ring-one {
+  width: 96%;
+  height: 61%;
+
+  transform:
+    translate(-50%, -50%)
+    rotate(-7deg);
+}
+
+
+.ring-two {
+  width: 79%;
+  height: 49%;
+
+  transform:
+    translate(-50%, -50%)
+    rotate(9deg);
+}
+
+
+.ring-three {
+  width: 63%;
+  height: 38%;
+
+  transform:
+    translate(-50%, -50%)
+    rotate(-12deg);
+}
+
+
+.ring-four {
+  width: 48%;
+  height: 29%;
+
+  transform:
+    translate(-50%, -50%)
+    rotate(17deg);
+}
+
+
+.ring-five {
+  width: 116%;
+  height: 72%;
+
+  transform:
+    translate(-50%, -50%)
+    rotate(-20deg);
+}
+
+.landing-hero-visual {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+}
+
+/* =========================================================
+   ORBITAL ART = BACKGROUND LAYER
+========================================================= */
+
+.landing-hero {
+  position: relative !important;
+  overflow: hidden !important;
+  isolation: isolate;
+}
+
+
+/* No clipping here */
+.landing-hero-visual {
+  position: absolute !important;
+
+  inset: 0 !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  overflow: visible !important;
+
+  pointer-events: none !important;
+
+  z-index: 1 !important;
+}
+
+
+/* The actual orbital artwork */
+.landing-orbital-visual {
+  position: absolute !important;
+
+  left: 50%;
+  top: 50%;
+
+  width: 100%;
+  height: 100%;
+
+  transform:
+    translate(-50%, -50%);
+
+  overflow: visible !important;
+
+  pointer-events: none !important;
+}
+
+
+/* The oversized rings are allowed to extend
+   beyond the visual layer */
+.orbital-field {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 190%;
+  height: 135%;
+
+  transform:
+    translate(-50%, -50%)
+    rotate(-7deg);
+
+  overflow: visible !important;
+
+  pointer-events: none;
+}
+
+
+/* =========================================================
+   KEEP CONTENT ABOVE THE ORBITS
+========================================================= */
+
+.landing-hero-content {
+  position: relative !important;
+  z-index: 10 !important;
+}
+/* =========================================================
+   ELLIPSE-BOUND STATUS CARDS
+   Clock = right-center of the ellipse
+========================================================= */
+
+.orbital-status-card {
+  position: absolute;
+
+  width: clamp(
+    145px,
+    10.5vw,
+    180px
+  );
+
+  min-height: 64px;
+
+  box-sizing: border-box;
+
+  z-index: 8;
+}
+
+
+/* =========================================================
+   TOP-LEFT / TOP BOUNDARY
+========================================================= */
+
+.orbital-status-one {
+  left: 34%;
+  top: 13%;
+
+  transform:
+    translate(-50%, -50%)
+    rotate(-2deg);
+}
+
+
+/* =========================================================
+   UPPER-RIGHT
+   Closer to the clock
+========================================================= */
+
+.orbital-status-two {
+  left: 72%;
+  top: 29%;
+
+  transform:
+    translate(-50%, -50%)
+    rotate(2deg);
+}
+
+
+/* =========================================================
+   LOWER-RIGHT
+   Closer to clock than left cards
+========================================================= */
+
+.orbital-status-three {
+  left: 71%;
+  top: 71%;
+
+  transform:
+    translate(-50%, -50%)
+    rotate(-1.5deg);
+}
+
+
+/* =========================================================
+   LOWER-LEFT
+   Deliberately farther from clock
+========================================================= */
+
+.orbital-status-four {
+  left: 28%;
+  top: 76%;
+
+  transform:
+    translate(-50%, -50%)
+    rotate(2deg);
+}
+
+
+/* =========================================================
+   LEFT-MIDDLE
+   Farthest point from clock
+========================================================= */
+
+.orbital-status-five {
+  left: 16%;
+  top: 45%;
+
+  transform:
+    translate(-50%, -50%)
+    rotate(-2deg);
+}
+/* =========================================================
+   WIDE ELLIPSE
+========================================================= */
+
+.orbital-field {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 205%;
+  height: 135%;
+
+  transform:
+    translate(-50%, -50%);
+
+  overflow: visible !important;
+
+  pointer-events: none;
+}
+.ring-one {
+  width: 100%;
+  height: 64%;
+}
+
+.ring-two {
+  width: 82%;
+  height: 52%;
+}
+
+.ring-three {
+  width: 65%;
+  height: 41%;
+}
+
+.ring-four {
+  width: 49%;
+  height: 31%;
+}
+
+.ring-five {
+  width: 118%;
+  height: 76%;
+}
+
+@media (max-width: 1200px) {
+
+  .orbital-status-one {
+    left: 35%;
+    top: 15%;
+  }
+
+  .orbital-status-two {
+    left: 70%;
+    top: 30%;
+  }
+
+  .orbital-status-three {
+    left: 69%;
+    top: 69%;
+  }
+
+  .orbital-status-four {
+    left: 30%;
+    top: 74%;
+  }
+
+  .orbital-status-five {
+    left: 19%;
+    top: 45%;
+  }
+
+}
+
+
+@media (max-width: 900px) {
+
+  .orbital-status-card {
+    width: 132px;
+    min-height: 57px;
+  }
+
+  .orbital-status-one {
+    left: 38%;
+    top: 19%;
+  }
+
+  .orbital-status-two {
+    left: 72%;
+    top: 32%;
+  }
+
+  .orbital-status-three {
+    left: 70%;
+    top: 69%;
+  }
+
+  .orbital-status-four {
+    left: 32%;
+    top: 76%;
+  }
+
+  .orbital-status-five {
+    left: 23%;
+    top: 45%;
+  }
+
+}
+
+/* =========================================================
+   FINAL ORBITAL CARDS
+========================================================= */
+
+.orbital-status-card {
+  width: clamp(
+    155px,
+    11vw,
+    190px
+  );
+
+  min-height: 68px;
+
+  padding: 11px 13px;
+
+  gap: 10px;
+
+  transition:
+    transform 0.4s ease,
+    box-shadow 0.4s ease,
+    border-color 0.4s ease;
+}
+
+
+/* Slightly larger icon */
+
+.orbital-status-icon {
+  width: 38px;
+  height: 38px;
+
+  flex: 0 0 38px;
+}
+
+
+/* Keep the card movement extremely subtle */
+
+.orbital-status-card:hover {
+  transform:
+    translateY(-2px)
+    scale(1.008);
+
+  box-shadow:
+    0 20px 42px
+    rgba(
+      25,
+      92,
+      60,
+      0.08
+    );
+
+  border-color:
+    rgba(
+      29,
+      144,
+      84,
+      0.16
+    );
+}
+
+
+/* Keyboard focus should also remain subtle */
+
+.orbital-status-card:focus-visible {
+  transform:
+    translateY(-2px)
+    scale(1.008);
+
+  box-shadow:
+    0 20px 42px
+    rgba(
+      25,
+      92,
+      60,
+      0.08
+    );
+
+  border-color:
+    rgba(
+      29,
+      144,
+      84,
+      0.20
+    );
+
+  outline:
+    2px solid
+    rgba(
+      29,
+      144,
+      84,
+      0.16
+    );
+
+  outline-offset:
+    2px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1200px) {
+
+  .orbital-status-card {
+    width: 150px;
+
+    min-height: 63px;
+
+    padding:
+      10px 11px;
+  }
+
+  .orbital-status-icon {
+    width: 34px;
+    height: 34px;
+
+    flex-basis: 34px;
+  }
+
+}
+
+
+@media (max-width: 900px) {
+
+  .orbital-status-card {
+    width: 140px;
+
+    min-height: 58px;
+
+    padding:
+      9px 10px;
+  }
+
+}
+
+
+@media (max-width: 600px) {
+
+  .orbital-status-card {
+    width: 118px;
+
+    min-height: 51px;
+
+    padding:
+      7px 8px;
+
+    gap: 7px;
+  }
+
+  .orbital-status-icon {
+    width: 29px;
+    height: 29px;
+
+    flex-basis: 29px;
+  }
+
+  .orbital-status-card strong {
+    font-size: 9px;
+  }
+
+  .orbital-status-card span {
+    font-size: 5.5px;
+  }
+
+}

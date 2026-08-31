@@ -20,6 +20,7 @@ import {
 } from "react-router";
 
 import {
+  useEffect,
   useState,
 } from "react";
 
@@ -324,166 +325,9 @@ function Landing() {
 
           <div className="landing-hero-visual">
 
-            <div className="landing-visual-glow" />
+  <LiveProcurementVisual />
 
-
-            <div className="landing-journey-illustration">
-
-              <div className="journey-orbit orbit-main" />
-
-              <div className="journey-orbit orbit-inner" />
-
-
-              <div className="journey-center">
-
-                <div className="journey-center-icon">
-
-                  <Wheat size={52} />
-
-                </div>
-
-
-                <strong>
-                  KrishiSetu
-                </strong>
-
-
-                <span>
-                  FARM → MARKET
-                </span>
-
-              </div>
-
-
-              <div className="journey-node journey-farm">
-
-                <div className="journey-node-icon">
-
-                  <Wheat size={22} />
-
-                </div>
-
-
-                <div>
-
-                  <span>
-                    FARM
-                  </span>
-
-                  <strong>
-                    Produce
-                  </strong>
-
-                </div>
-
-              </div>
-
-
-              <div className="journey-node journey-token">
-
-                <div className="journey-node-icon">
-
-                  <ShieldCheck size={22} />
-
-                </div>
-
-
-                <div>
-
-                  <span>
-                    TOKEN
-                  </span>
-
-                  <strong>
-                    #B018
-                  </strong>
-
-                </div>
-
-              </div>
-
-
-              <div className="journey-node journey-weighing">
-
-                <div className="journey-node-icon">
-
-                  <Scale size={22} />
-
-                </div>
-
-
-                <div>
-
-                  <span>
-                    WEIGHING
-                  </span>
-
-                  <strong>
-                    248 kg
-                  </strong>
-
-                </div>
-
-              </div>
-
-
-              <div className="journey-node journey-center-node">
-
-                <div className="journey-node-icon">
-
-                  <MapPin size={22} />
-
-                </div>
-
-
-                <div>
-
-                  <span>
-                    CENTER
-                  </span>
-
-                  <strong>
-                    Arrival
-                  </strong>
-
-                </div>
-
-              </div>
-
-
-              <div className="journey-node journey-payment">
-
-                <div className="journey-node-icon">
-
-                  <Coins size={22} />
-
-                </div>
-
-
-                <div>
-
-                  <span>
-                    PAYMENT
-                  </span>
-
-                  <strong>
-                    Tracked
-                  </strong>
-
-                </div>
-
-              </div>
-
-
-              <div className="journey-pulse pulse-one" />
-
-              <div className="journey-pulse pulse-two" />
-
-              <div className="journey-pulse pulse-three" />
-
-            </div>
-
-          </div>
+</div>
 
         </section>
 
@@ -1566,7 +1410,336 @@ function FeatureCard({
   );
 
 }
+/* =========================================================
+   PREMIUM FULL-SCREEN ORBITAL VISUAL
+========================================================= */
 
+function LiveProcurementVisual() {
+
+  const [
+    currentTime,
+    setCurrentTime,
+  ] = useState(
+    new Date()
+  );
+
+
+  useEffect(() => {
+
+    const timer =
+      setInterval(
+        () => {
+          setCurrentTime(
+            new Date()
+          );
+        },
+        1000
+      );
+
+
+    return () =>
+      clearInterval(
+        timer
+      );
+
+  }, []);
+
+
+  const hours =
+    currentTime.getHours();
+
+
+  const minutes =
+    currentTime.getMinutes();
+
+
+  const seconds =
+    currentTime.getSeconds();
+
+
+  const secondAngle =
+    seconds * 6;
+
+
+  const minuteAngle =
+    minutes * 6 +
+    seconds * 0.1;
+
+
+  const hourAngle =
+    (
+      hours % 12
+    ) * 30 +
+    minutes * 0.5;
+
+
+  return (
+
+    <div className="landing-orbital-visual">
+
+
+      {/* =====================================================
+          HUGE BACKGROUND ORBITS
+      ====================================================== */}
+
+      <div className="orbital-field">
+
+
+        <div
+          className="orbital-ring ring-one"
+        />
+
+        <div
+          className="orbital-ring ring-two"
+        />
+
+        <div
+          className="orbital-ring ring-three"
+        />
+
+        <div
+          className="orbital-ring ring-four"
+        />
+
+        <div
+          className="orbital-ring ring-five"
+        />
+
+
+        <div className="orbital-glow glow-one" />
+
+        <div className="orbital-glow glow-two" />
+
+        <div className="orbital-glow glow-three" />
+
+      </div>
+
+
+      {/* =====================================================
+          MOVING LIGHT PARTICLES
+      ====================================================== */}
+
+      <div className="orbital-particle particle-one" />
+
+      <div className="orbital-particle particle-two" />
+
+      <div className="orbital-particle particle-three" />
+
+      <div className="orbital-particle particle-four" />
+
+      <div className="orbital-particle particle-five" />
+
+      <div className="orbital-particle particle-six" />
+
+
+      {/* =====================================================
+          SOFT CENTRAL CLOCK
+      ====================================================== */}
+
+      <div className="orbital-clock">
+
+
+        <div className="orbital-clock-face">
+
+
+          <div
+            className="orbital-clock-hand clock-hour-hand"
+            style={{
+              transform:
+                `rotate(${hourAngle}deg)`,
+            }}
+          />
+
+
+          <div
+            className="orbital-clock-hand clock-minute-hand"
+            style={{
+              transform:
+                `rotate(${minuteAngle}deg)`,
+            }}
+          />
+
+
+          <div
+            className="orbital-clock-hand clock-second-hand"
+            style={{
+              transform:
+                `rotate(${secondAngle}deg)`,
+            }}
+          />
+
+
+          <div className="orbital-clock-dot" />
+
+
+          <span className="orbital-clock-mark mark-12">
+            12
+          </span>
+
+          <span className="orbital-clock-mark mark-3">
+            3
+          </span>
+
+          <span className="orbital-clock-mark mark-6">
+            6
+          </span>
+
+          <span className="orbital-clock-mark mark-9">
+            9
+          </span>
+
+        </div>
+
+
+        <span className="orbital-clock-label">
+          LIVE
+        </span>
+
+      </div>
+
+
+      {/* =====================================================
+          FLOATING STATUS CARDS
+      ====================================================== */}
+
+      <div className="orbital-status-card orbital-status-one">
+
+        <div className="orbital-status-icon">
+          <Wheat size={18} />
+        </div>
+
+
+        <div>
+          <span>
+            FARM
+          </span>
+
+          <strong>
+            Produce ready
+          </strong>
+        </div>
+
+      </div>
+
+
+      <div className="orbital-status-card orbital-status-two">
+
+        <div className="orbital-status-icon">
+          <ShieldCheck size={18} />
+        </div>
+
+
+        <div>
+          <span>
+            TOKEN
+          </span>
+
+          <strong>
+            #B018
+          </strong>
+        </div>
+
+      </div>
+
+
+      <div className="orbital-status-card orbital-status-three">
+
+        <div className="orbital-status-icon">
+          <Scale size={18} />
+        </div>
+
+
+        <div>
+          <span>
+            WEIGHING
+          </span>
+
+          <strong>
+            248 kg
+          </strong>
+        </div>
+
+      </div>
+
+
+      <div className="orbital-status-card orbital-status-four">
+
+        <div className="orbital-status-icon">
+          <MapPin size={18} />
+        </div>
+
+
+        <div>
+          <span>
+            CENTER
+          </span>
+
+          <strong>
+            ARRIVAL
+          </strong>
+        </div>
+
+      </div>
+
+
+      <div className="orbital-status-card orbital-status-five">
+
+        <div className="orbital-status-icon">
+          <Coins size={18} />
+        </div>
+
+
+        <div>
+          <span>
+            PAYMENT
+          </span>
+
+          <strong>
+            TRACKED
+          </strong>
+        </div>
+
+      </div>
+
+
+      {/* =====================================================
+          LIVE SYSTEM LABEL
+      ====================================================== */}
+
+      <div className="orbital-live-indicator">
+
+        <span />
+
+        LIVE PROCUREMENT FLOW
+
+      </div>
+
+
+      <div className="orbital-digital-time">
+
+        {
+          currentTime.toLocaleTimeString(
+            "en-IN",
+            {
+              hour:
+                "2-digit",
+
+              minute:
+                "2-digit",
+
+              second:
+                "2-digit",
+            }
+          )
+        }
+
+      </div>
+
+    </div>
+
+  );
+
+}
 
 /* =========================================================
    USER ICON
