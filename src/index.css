@@ -130324,3 +130324,3384 @@ html[data-theme="midnight"] .admin-login-page > * {
 
   box-sizing: border-box;
 }
+
+/* =========================================================
+   KRISHISETU — STABLE GLOBAL THEME FOUNDATION
+   ---------------------------------------------------------
+   Changes:
+   • Dark   = pitch-black / charcoal
+   • Forest = deep green / natural green
+   • Midnight = black / navy / blue
+
+   Does NOT change:
+   • layout
+   • spacing
+   • sizing
+   • positioning
+   • typography scale
+   • backend
+   • component structure
+
+   Put this AFTER all existing theme CSS.
+========================================================= */
+
+
+/* =========================================================
+   THEME TOKENS
+========================================================= */
+
+:root {
+
+  /* Current light theme remains untouched */
+  --theme-bg:
+    #f6f8f6;
+
+  --theme-surface:
+    #ffffff;
+
+  --theme-surface-2:
+    #f3f6f4;
+
+  --theme-surface-3:
+    #e9efeb;
+
+  --theme-border:
+    #d8e1dc;
+
+  --theme-text:
+    #17352a;
+
+  --theme-text-soft:
+    #547064;
+
+  --theme-text-muted:
+    #71877c;
+
+  --theme-primary:
+    #168452;
+
+  --theme-primary-strong:
+    #0f6c41;
+
+  --theme-primary-soft:
+    #dff1e6;
+
+  --theme-accent:
+    #d69a24;
+
+  --theme-accent-soft:
+    #f7ebcf;
+
+  --theme-blue:
+    #2d72c9;
+
+  --theme-blue-soft:
+    #e2edfc;
+
+  --theme-danger:
+    #c84b4b;
+
+  --theme-danger-soft:
+    #f7dfdf;
+
+  --theme-success:
+    #168452;
+
+  --theme-success-soft:
+    #e0f2e7;
+
+  --theme-shadow:
+    rgba(19, 53, 39, 0.10);
+
+}
+
+
+/* =========================================================
+   DARK THEME
+========================================================= */
+
+[data-theme="dark"] {
+
+  --theme-bg:
+    #050607;
+
+  --theme-surface:
+    #0b0e0f;
+
+  --theme-surface-2:
+    #111516;
+
+  --theme-surface-3:
+    #171c1d;
+
+  --theme-border:
+    #263031;
+
+  /* IMPORTANT:
+     never use pure white for normal body text */
+  --theme-text:
+    #edf3ef;
+
+  --theme-text-soft:
+    #c4d0ca;
+
+  --theme-text-muted:
+    #98a9a1;
+
+  --theme-primary:
+    #42cf88;
+
+  --theme-primary-strong:
+    #63dda0;
+
+  --theme-primary-soft:
+    #123f2c;
+
+  --theme-accent:
+    #edbb55;
+
+  --theme-accent-soft:
+    #463615;
+
+  --theme-blue:
+    #67a8ff;
+
+  --theme-blue-soft:
+    #152e4d;
+
+  --theme-danger:
+    #ff7474;
+
+  --theme-danger-soft:
+    #481c20;
+
+  --theme-success:
+    #4fdb91;
+
+  --theme-success-soft:
+    #123b29;
+
+  --theme-shadow:
+    rgba(0, 0, 0, 0.42);
+
+}
+
+
+/* =========================================================
+   FOREST THEME
+========================================================= */
+
+[data-theme="forest"] {
+
+  --theme-bg:
+    #06130d;
+
+  --theme-surface:
+    #0a1c13;
+
+  --theme-surface-2:
+    #0f281b;
+
+  --theme-surface-3:
+    #143421;
+
+  --theme-border:
+    #28523a;
+
+  --theme-text:
+    #f0f6ec;
+
+  --theme-text-soft:
+    #d0dfcf;
+
+  --theme-text-muted:
+    #a5baa8;
+
+  --theme-primary:
+    #55d67d;
+
+  --theme-primary-strong:
+    #76e79a;
+
+  --theme-primary-soft:
+    #174d2c;
+
+  --theme-accent:
+    #efc85a;
+
+  --theme-accent-soft:
+    #554519;
+
+  --theme-blue:
+    #72b7ff;
+
+  --theme-blue-soft:
+    #183654;
+
+  --theme-danger:
+    #ff7e75;
+
+  --theme-danger-soft:
+    #4d2020;
+
+  --theme-success:
+    #62e291;
+
+  --theme-success-soft:
+    #164427;
+
+  --theme-shadow:
+    rgba(0, 0, 0, 0.38);
+
+}
+
+
+/* =========================================================
+   MIDNIGHT THEME
+========================================================= */
+
+[data-theme="midnight"] {
+
+  --theme-bg:
+    #03050a;
+
+  --theme-surface:
+    #080c15;
+
+  --theme-surface-2:
+    #0d1320;
+
+  --theme-surface-3:
+    #131d2e;
+
+  --theme-border:
+    #263750;
+
+  --theme-text:
+    #eef4ff;
+
+  --theme-text-soft:
+    #c6d2e6;
+
+  --theme-text-muted:
+    #9aa9bf;
+
+  --theme-primary:
+    #4ea8ff;
+
+  --theme-primary-strong:
+    #78bbff;
+
+  --theme-primary-soft:
+    #17395f;
+
+  --theme-accent:
+    #e5b94c;
+
+  --theme-accent-soft:
+    #4c3b14;
+
+  --theme-blue:
+    #65b5ff;
+
+  --theme-blue-soft:
+    #17385c;
+
+  --theme-danger:
+    #ff7676;
+
+  --theme-danger-soft:
+    #4b2025;
+
+  --theme-success:
+    #54d7a0;
+
+  --theme-success-soft:
+    #123b2f;
+
+  --theme-shadow:
+    rgba(0, 0, 0, 0.46);
+
+}
+
+
+/* =========================================================
+   GLOBAL ROOT SURFACES
+========================================================= */
+
+[data-theme="dark"] body,
+[data-theme="forest"] body,
+[data-theme="midnight"] body {
+
+  background:
+    var(--theme-bg) !important;
+
+  color:
+    var(--theme-text) !important;
+
+}
+
+
+/* =========================================================
+   COMMON PAGE ROOTS
+========================================================= */
+
+[data-theme="dark"] .app,
+[data-theme="dark"] #root,
+[data-theme="dark"] main,
+
+[data-theme="forest"] .app,
+[data-theme="forest"] #root,
+[data-theme="forest"] main,
+
+[data-theme="midnight"] .app,
+[data-theme="midnight"] #root,
+[data-theme="midnight"] main {
+
+  color:
+    var(--theme-text);
+
+}
+
+
+/* =========================================================
+   COMMON SURFACES
+   This is intentionally broad enough to cover your cards,
+   panels and boxes, but not buttons.
+========================================================= */
+
+[data-theme="dark"] .card,
+[data-theme="dark"] .panel,
+[data-theme="dark"] .box,
+[data-theme="dark"] .surface,
+
+[data-theme="forest"] .card,
+[data-theme="forest"] .panel,
+[data-theme="forest"] .box,
+[data-theme="forest"] .surface,
+
+[data-theme="midnight"] .card,
+[data-theme="midnight"] .panel,
+[data-theme="midnight"] .box,
+[data-theme="midnight"] .surface {
+
+  background:
+    var(--theme-surface);
+
+  color:
+    var(--theme-text);
+
+  border-color:
+    var(--theme-border);
+
+}
+
+
+/* =========================================================
+   MAIN TEXT
+========================================================= */
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6,
+
+[data-theme="forest"] h1,
+[data-theme="forest"] h2,
+[data-theme="forest"] h3,
+[data-theme="forest"] h4,
+[data-theme="forest"] h5,
+[data-theme="forest"] h6,
+
+[data-theme="midnight"] h1,
+[data-theme="midnight"] h2,
+[data-theme="midnight"] h3,
+[data-theme="midnight"] h4,
+[data-theme="midnight"] h5,
+[data-theme="midnight"] h6 {
+
+  color:
+    var(--theme-text);
+}
+
+
+/* normal paragraphs */
+
+[data-theme="dark"] p,
+[data-theme="dark"] li,
+
+[data-theme="forest"] p,
+[data-theme="forest"] li,
+
+[data-theme="midnight"] p,
+[data-theme="midnight"] li {
+
+  color:
+    var(--theme-text-soft);
+}
+
+
+/* secondary labels */
+
+[data-theme="dark"] small,
+[data-theme="dark"] .muted,
+[data-theme="dark"] .secondary-text,
+
+[data-theme="forest"] small,
+[data-theme="forest"] .muted,
+[data-theme="forest"] .secondary-text,
+
+[data-theme="midnight"] small,
+[data-theme="midnight"] .muted,
+[data-theme="midnight"] .secondary-text {
+
+  color:
+    var(--theme-text-muted);
+}
+
+
+/* =========================================================
+   LINKS
+========================================================= */
+
+[data-theme="dark"] a,
+[data-theme="forest"] a,
+[data-theme="midnight"] a {
+
+  color:
+    inherit;
+}
+
+
+/* =========================================================
+   FORM CONTROLS
+========================================================= */
+
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select,
+
+[data-theme="forest"] input,
+[data-theme="forest"] textarea,
+[data-theme="forest"] select,
+
+[data-theme="midnight"] input,
+[data-theme="midnight"] textarea,
+[data-theme="midnight"] select {
+
+  background:
+    var(--theme-surface-2) !important;
+
+  color:
+    var(--theme-text) !important;
+
+  border-color:
+    var(--theme-border) !important;
+}
+
+
+/* placeholders */
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder,
+
+[data-theme="forest"] input::placeholder,
+[data-theme="forest"] textarea::placeholder,
+
+[data-theme="midnight"] input::placeholder,
+[data-theme="midnight"] textarea::placeholder {
+
+  color:
+    var(--theme-text-muted) !important;
+
+  opacity:
+    1;
+}
+
+
+/* select options */
+
+[data-theme="dark"] option,
+[data-theme="forest"] option,
+[data-theme="midnight"] option {
+
+  background:
+    var(--theme-surface);
+
+  color:
+    var(--theme-text);
+}
+
+
+/* =========================================================
+   SVG / ICON SAFETY
+========================================================= */
+
+/*
+   Most lucide icons use currentColor.
+   This guarantees they follow readable text color
+   instead of becoming white accidentally.
+*/
+
+[data-theme="dark"] svg,
+[data-theme="forest"] svg,
+[data-theme="midnight"] svg {
+
+  color:
+    currentColor;
+}
+
+
+/* =========================================================
+   GENERIC SECONDARY SURFACES
+========================================================= */
+
+[data-theme="dark"] [class*="secondary"],
+[data-theme="dark"] [class*="subtle"],
+[data-theme="dark"] [class*="soft"],
+
+[data-theme="forest"] [class*="secondary"],
+[data-theme="forest"] [class*="subtle"],
+[data-theme="forest"] [class*="soft"],
+
+[data-theme="midnight"] [class*="secondary"],
+[data-theme="midnight"] [class*="subtle"],
+[data-theme="midnight"] [class*="soft"] {
+
+  color:
+    var(--theme-text-soft);
+}
+
+
+/* =========================================================
+   THEME-SAFE BUTTON TEXT
+========================================================= */
+
+[data-theme="dark"] button,
+[data-theme="forest"] button,
+[data-theme="midnight"] button {
+
+  color:
+    var(--theme-text);
+}
+
+
+/* don't force color onto explicitly colored buttons */
+
+[data-theme="dark"] .primary,
+[data-theme="dark"] .active,
+[data-theme="dark"] .selected,
+
+[data-theme="forest"] .primary,
+[data-theme="forest"] .active,
+[data-theme="forest"] .selected,
+
+[data-theme="midnight"] .primary,
+[data-theme="midnight"] .active,
+[data-theme="midnight"] .selected {
+
+  color:
+    #ffffff;
+}
+
+
+/* =========================================================
+   CHECKBOX / RADIO ACCENT
+========================================================= */
+
+[data-theme="dark"] input[type="checkbox"],
+[data-theme="dark"] input[type="radio"],
+
+[data-theme="forest"] input[type="checkbox"],
+[data-theme="forest"] input[type="radio"],
+
+[data-theme="midnight"] input[type="checkbox"],
+[data-theme="midnight"] input[type="radio"] {
+
+  accent-color:
+    var(--theme-primary);
+}
+
+
+/* =========================================================
+   BORDERS
+========================================================= */
+
+[data-theme="dark"] hr,
+[data-theme="dark"] [class*="divider"],
+
+[data-theme="forest"] hr,
+[data-theme="forest"] [class*="divider"],
+
+[data-theme="midnight"] hr,
+[data-theme="midnight"] [class*="divider"] {
+
+  border-color:
+    var(--theme-border);
+}
+
+
+/* =========================================================
+   SHADOW FOUNDATION
+========================================================= */
+
+[data-theme="dark"] [class*="card"],
+[data-theme="dark"] [class*="panel"],
+
+[data-theme="forest"] [class*="card"],
+[data-theme="forest"] [class*="panel"],
+
+[data-theme="midnight"] [class*="card"],
+[data-theme="midnight"] [class*="panel"] {
+
+  --local-shadow:
+    var(--theme-shadow);
+}
+
+
+/* =========================================================
+   DARK / FOREST / MIDNIGHT — COMMON LIGHT-PANEL FIX
+   This is the important part for your previous problem.
+
+   Pale backgrounds that were designed for the light theme
+   must become dark surfaces instead of staying white while
+   their text becomes pale.
+========================================================= */
+
+[data-theme="dark"] [class*="feature"],
+[data-theme="dark"] [class*="topic"],
+[data-theme="dark"] [class*="guide"],
+[data-theme="dark"] [class*="info"],
+[data-theme="dark"] [class*="contact"],
+[data-theme="dark"] [class*="quick"],
+[data-theme="dark"] [class*="security"],
+[data-theme="dark"] [class*="demo"],
+
+[data-theme="forest"] [class*="feature"],
+[data-theme="forest"] [class*="topic"],
+[data-theme="forest"] [class*="guide"],
+[data-theme="forest"] [class*="info"],
+[data-theme="forest"] [class*="contact"],
+[data-theme="forest"] [class*="quick"],
+[data-theme="forest"] [class*="security"],
+[data-theme="forest"] [class*="demo"],
+
+[data-theme="midnight"] [class*="feature"],
+[data-theme="midnight"] [class*="topic"],
+[data-theme="midnight"] [class*="guide"],
+[data-theme="midnight"] [class*="info"],
+[data-theme="midnight"] [class*="contact"],
+[data-theme="midnight"] [class*="quick"],
+[data-theme="midnight"] [class*="security"],
+[data-theme="midnight"] [class*="demo"] {
+
+  background:
+    var(--theme-surface-2);
+
+  color:
+    var(--theme-text);
+
+  border-color:
+    var(--theme-border);
+}
+
+
+/* =========================================================
+   STATIC BLOCK TEXT
+   Protect headings / titles / labels inside colored boxes.
+========================================================= */
+
+[data-theme="dark"] [class*="card"] strong,
+[data-theme="dark"] [class*="card"] b,
+[data-theme="dark"] [class*="card"] h3,
+[data-theme="dark"] [class*="card"] h4,
+
+[data-theme="forest"] [class*="card"] strong,
+[data-theme="forest"] [class*="card"] b,
+[data-theme="forest"] [class*="card"] h3,
+[data-theme="forest"] [class*="card"] h4,
+
+[data-theme="midnight"] [class*="card"] strong,
+[data-theme="midnight"] [class*="card"] b,
+[data-theme="midnight"] [class*="card"] h3,
+[data-theme="midnight"] [class*="card"] h4 {
+
+  color:
+    var(--theme-text) !important;
+}
+
+
+/* descriptions inside cards */
+
+[data-theme="dark"] [class*="card"] p,
+[data-theme="dark"] [class*="card"] span,
+
+[data-theme="forest"] [class*="card"] p,
+[data-theme="forest"] [class*="card"] span,
+
+[data-theme="midnight"] [class*="card"] p,
+[data-theme="midnight"] [class*="card"] span {
+
+  color:
+    var(--theme-text-soft);
+}
+
+
+/* =========================================================
+   LIGHT-COLORED TONE BLOCKS
+   Prevent pale green / blue / yellow backgrounds from
+   becoming white-looking in the dark-family themes.
+========================================================= */
+
+[data-theme="dark"] .green,
+[data-theme="dark"] .blue,
+[data-theme="dark"] .orange,
+[data-theme="dark"] .purple,
+[data-theme="dark"] .gold,
+[data-theme="dark"] .teal,
+
+[data-theme="forest"] .green,
+[data-theme="forest"] .blue,
+[data-theme="forest"] .orange,
+[data-theme="forest"] .purple,
+[data-theme="forest"] .gold,
+[data-theme="forest"] .teal,
+
+[data-theme="midnight"] .green,
+[data-theme="midnight"] .blue,
+[data-theme="midnight"] .orange,
+[data-theme="midnight"] .purple,
+[data-theme="midnight"] .gold,
+[data-theme="midnight"] .teal {
+
+  color:
+    var(--theme-text);
+
+}
+
+
+/* =========================================================
+   HOVER SAFETY
+   Prevent white hover backgrounds from destroying
+   contrast.
+========================================================= */
+
+[data-theme="dark"] button:hover,
+[data-theme="dark"] a:hover,
+
+[data-theme="forest"] button:hover,
+[data-theme="forest"] a:hover,
+
+[data-theme="midnight"] button:hover,
+[data-theme="midnight"] a:hover {
+
+  color:
+    var(--theme-text);
+}
+
+
+/* =========================================================
+   DISABLED ELEMENTS
+========================================================= */
+
+[data-theme="dark"] button:disabled,
+[data-theme="dark"] input:disabled,
+
+[data-theme="forest"] button:disabled,
+[data-theme="forest"] input:disabled,
+
+[data-theme="midnight"] button:disabled,
+[data-theme="midnight"] input:disabled {
+
+  color:
+    var(--theme-text-muted);
+
+  opacity:
+    0.72;
+}
+
+
+/* =========================================================
+   HEADER / SIDEBAR FOUNDATION
+========================================================= */
+
+[data-theme="dark"] header,
+[data-theme="dark"] aside,
+[data-theme="dark"] nav,
+
+[data-theme="forest"] header,
+[data-theme="forest"] aside,
+[data-theme="forest"] nav,
+
+[data-theme="midnight"] header,
+[data-theme="midnight"] aside,
+[data-theme="midnight"] nav {
+
+  color:
+    var(--theme-text);
+}
+
+
+/* =========================================================
+   TABLES
+========================================================= */
+
+[data-theme="dark"] table,
+[data-theme="dark"] th,
+[data-theme="dark"] td,
+
+[data-theme="forest"] table,
+[data-theme="forest"] th,
+[data-theme="forest"] td,
+
+[data-theme="midnight"] table,
+[data-theme="midnight"] th,
+[data-theme="midnight"] td {
+
+  border-color:
+    var(--theme-border);
+
+}
+
+
+[data-theme="dark"] th,
+[data-theme="forest"] th,
+[data-theme="midnight"] th {
+
+  background:
+    var(--theme-surface-2);
+
+  color:
+    var(--theme-text);
+}
+
+
+/* =========================================================
+   SCROLLBARS
+========================================================= */
+
+[data-theme="dark"] *,
+[data-theme="forest"] *,
+[data-theme="midnight"] * {
+
+  scrollbar-color:
+    var(--theme-border)
+    var(--theme-bg);
+}
+
+
+/* =========================================================
+   SELECTION
+========================================================= */
+
+[data-theme="dark"] ::selection,
+[data-theme="forest"] ::selection,
+[data-theme="midnight"] ::selection {
+
+  background:
+    var(--theme-primary);
+
+  color:
+    #ffffff;
+}
+
+
+/* =========================================================
+   LANDING-PAGE PALE PANELS
+========================================================= */
+
+[data-theme="dark"] .landing-purpose-section,
+[data-theme="dark"] .landing-process-section,
+[data-theme="dark"] .landing-features-section,
+
+[data-theme="forest"] .landing-purpose-section,
+[data-theme="forest"] .landing-process-section,
+[data-theme="forest"] .landing-features-section,
+
+[data-theme="midnight"] .landing-purpose-section,
+[data-theme="midnight"] .landing-process-section,
+[data-theme="midnight"] .landing-features-section {
+
+  color:
+    var(--theme-text);
+}
+
+
+/* =========================================================
+   HERO / LARGE BACKGROUND AREAS
+========================================================= */
+
+[data-theme="dark"] .landing-page,
+[data-theme="forest"] .landing-page,
+[data-theme="midnight"] .landing-page {
+
+  background:
+    var(--theme-bg);
+
+}
+
+
+/* =========================================================
+   ADMIN / FARMER GLOBAL SURFACES
+========================================================= */
+
+[data-theme="dark"] .admin-sidebar,
+[data-theme="dark"] .admin-main,
+[data-theme="dark"] .farmer-settings-page,
+[data-theme="dark"] .farmer-help-page,
+
+[data-theme="forest"] .admin-sidebar,
+[data-theme="forest"] .admin-main,
+[data-theme="forest"] .farmer-settings-page,
+[data-theme="forest"] .farmer-help-page,
+
+[data-theme="midnight"] .admin-sidebar,
+[data-theme="midnight"] .admin-main,
+[data-theme="midnight"] .farmer-settings-page,
+[data-theme="midnight"] .farmer-help-page {
+
+  color:
+    var(--theme-text);
+
+}
+
+
+/* =========================================================
+   FINAL TEXT-CONTRAST GUARD
+   Only affects elements which are literally using inherited
+   pale/white text variables in these themes.
+========================================================= */
+
+[data-theme="dark"] .text-dark,
+[data-theme="dark"] .dark-text,
+
+[data-theme="forest"] .text-dark,
+[data-theme="forest"] .dark-text,
+
+[data-theme="midnight"] .text-dark,
+[data-theme="midnight"] .dark-text {
+
+  color:
+    var(--theme-text) !important;
+}
+
+
+/* Explicitly named light text should remain visible */
+[data-theme="dark"] .text-light,
+[data-theme="dark"] .light-text,
+
+[data-theme="forest"] .text-light,
+[data-theme="forest"] .light-text,
+
+[data-theme="midnight"] .text-light,
+[data-theme="midnight"] .light-text {
+
+  color:
+    var(--theme-text) !important;
+}
+
+/* =========================================================
+   KRISHISETU
+   GLOBAL THEME SYSTEM — CLEAN REBUILD
+
+   Themes:
+   • light
+   • dark
+   • forest
+   • midnight
+
+   Design goals:
+   • soft contrast
+   • low eye strain
+   • readable headings
+   • readable subtitles
+   • readable cards
+   • no white-on-pale accidents
+   • no color inversion
+   • no layout changes
+========================================================= */
+
+
+/* =========================================================
+   BASE / LIGHT
+========================================================= */
+
+:root {
+
+  --theme-bg:
+    #f5f7f5;
+
+  --theme-surface:
+    #ffffff;
+
+  --theme-surface-soft:
+    #f1f4f2;
+
+  --theme-surface-deep:
+    #e8eeea;
+
+  --theme-border:
+    #d8e0db;
+
+  --theme-heading:
+    #18372a;
+
+  --theme-text:
+    #314f41;
+
+  --theme-muted:
+    #6f8178;
+
+  --theme-faint:
+    #89978f;
+
+  --theme-primary:
+    #247b52;
+
+  --theme-primary-strong:
+    #1c6945;
+
+  --theme-primary-soft:
+    #dcefe4;
+
+  --theme-secondary:
+    #557f9f;
+
+  --theme-secondary-soft:
+    #e4edf4;
+
+  --theme-gold:
+    #b78329;
+
+  --theme-gold-soft:
+    #f4ead5;
+
+  --theme-danger:
+    #b64b4b;
+
+  --theme-danger-soft:
+    #f5dddd;
+
+  --theme-success:
+    #287c53;
+
+  --theme-success-soft:
+    #dfeee5;
+
+  --theme-shadow:
+    rgba(26, 63, 45, 0.10);
+
+}
+
+
+/* =========================================================
+   DARK
+   Soft charcoal, not pure black everywhere
+========================================================= */
+
+[data-theme="dark"] {
+
+  --theme-bg:
+    #0a0c0d;
+
+  --theme-surface:
+    #111415;
+
+  --theme-surface-soft:
+    #171b1c;
+
+  --theme-surface-deep:
+    #1d2223;
+
+  --theme-border:
+    #2b3233;
+
+  --theme-heading:
+    #e5ece8;
+
+  --theme-text:
+    #c4cfca;
+
+  --theme-muted:
+    #91a09a;
+
+  --theme-faint:
+    #76837e;
+
+  --theme-primary:
+    #62b889;
+
+  --theme-primary-strong:
+    #78c69b;
+
+  --theme-primary-soft:
+    #183d2b;
+
+  --theme-secondary:
+    #78a3c4;
+
+  --theme-secondary-soft:
+    #1b2f3d;
+
+  --theme-gold:
+    #d3ad63;
+
+  --theme-gold-soft:
+    #3b301d;
+
+  --theme-danger:
+    #dc8585;
+
+  --theme-danger-soft:
+    #402628;
+
+  --theme-success:
+    #68bb8b;
+
+  --theme-success-soft:
+    #183a2a;
+
+  --theme-shadow:
+    rgba(0, 0, 0, 0.34);
+
+}
+
+
+/* =========================================================
+   FOREST
+   Deep natural greens with warm botanical highlights
+========================================================= */
+
+[data-theme="forest"] {
+
+  --theme-bg:
+    #0c1711;
+
+  --theme-surface:
+    #102319;
+
+  --theme-surface-soft:
+    #153022;
+
+  --theme-surface-deep:
+    #1b3a2a;
+
+  --theme-border:
+    #31513d;
+
+  --theme-heading:
+    #e8eee2;
+
+  --theme-text:
+    #c9d6c7;
+
+  --theme-muted:
+    #9dad99;
+
+  --theme-faint:
+    #7e907f;
+
+  --theme-primary:
+    #79ad70;
+
+  --theme-primary-strong:
+    #91bd88;
+
+  --theme-primary-soft:
+    #21472e;
+
+  --theme-secondary:
+    #7da88a;
+
+  --theme-secondary-soft:
+    #1b3828;
+
+  --theme-gold:
+    #c8a45c;
+
+  --theme-gold-soft:
+    #433820;
+
+  --theme-danger:
+    #d78579;
+
+  --theme-danger-soft:
+    #432826;
+
+  --theme-success:
+    #7fb77a;
+
+  --theme-success-soft:
+    #1c3e29;
+
+  --theme-shadow:
+    rgba(0, 0, 0, 0.32);
+
+}
+
+
+/* =========================================================
+   MIDNIGHT
+   Deep navy / graphite with restrained blue accents
+========================================================= */
+
+[data-theme="midnight"] {
+
+  --theme-bg:
+    #080b12;
+
+  --theme-surface:
+    #0f131c;
+
+  --theme-surface-soft:
+    #151b27;
+
+  --theme-surface-deep:
+    #1c2432;
+
+  --theme-border:
+    #303b4d;
+
+  --theme-heading:
+    #e5eaf2;
+
+  --theme-text:
+    #c5cedd;
+
+  --theme-muted:
+    #929eaf;
+
+  --theme-faint:
+    #747f91;
+
+  --theme-primary:
+    #6d9ac6;
+
+  --theme-primary-strong:
+    #84add6;
+
+  --theme-primary-soft:
+    #20354b;
+
+  --theme-secondary:
+    #7e98bc;
+
+  --theme-secondary-soft:
+    #1d2a3e;
+
+  --theme-gold:
+    #c5a86b;
+
+  --theme-gold-soft:
+    #40361f;
+
+  --theme-danger:
+    #da8588;
+
+  --theme-danger-soft:
+    #41272d;
+
+  --theme-success:
+    #71b298;
+
+  --theme-success-soft:
+    #1b382f;
+
+  --theme-shadow:
+    rgba(0, 0, 0, 0.38);
+
+}
+
+
+/* =========================================================
+   GLOBAL PAGE BACKGROUND
+========================================================= */
+
+[data-theme="dark"],
+[data-theme="forest"],
+[data-theme="midnight"] {
+
+  background:
+    var(--theme-bg);
+
+}
+
+
+/* =========================================================
+   BODY
+========================================================= */
+
+[data-theme="dark"] body,
+[data-theme="forest"] body,
+[data-theme="midnight"] body {
+
+  background:
+    var(--theme-bg) !important;
+
+  color:
+    var(--theme-text) !important;
+
+}
+
+
+/* =========================================================
+   COMMON ROOT CONTAINERS
+========================================================= */
+
+[data-theme="dark"] #root,
+[data-theme="dark"] .app,
+[data-theme="dark"] main,
+
+[data-theme="forest"] #root,
+[data-theme="forest"] .app,
+[data-theme="forest"] main,
+
+[data-theme="midnight"] #root,
+[data-theme="midnight"] .app,
+[data-theme="midnight"] main {
+
+  color:
+    var(--theme-text);
+
+}
+
+
+/* =========================================================
+   HEADINGS
+   THIS IS THE IMPORTANT FIX FOR YOUR DARK-TEXT PROBLEM
+========================================================= */
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6,
+
+[data-theme="forest"] h1,
+[data-theme="forest"] h2,
+[data-theme="forest"] h3,
+[data-theme="forest"] h4,
+[data-theme="forest"] h5,
+[data-theme="forest"] h6,
+
+[data-theme="midnight"] h1,
+[data-theme="midnight"] h2,
+[data-theme="midnight"] h3,
+[data-theme="midnight"] h4,
+[data-theme="midnight"] h5,
+[data-theme="midnight"] h6 {
+
+  color:
+    var(--theme-heading) !important;
+
+}
+
+
+/* =========================================================
+   BODY COPY
+========================================================= */
+
+[data-theme="dark"] p,
+[data-theme="dark"] li,
+
+[data-theme="forest"] p,
+[data-theme="forest"] li,
+
+[data-theme="midnight"] p,
+[data-theme="midnight"] li {
+
+  color:
+    var(--theme-text);
+}
+
+
+/* =========================================================
+   COMMON TITLE / SUBTITLE CLASSES
+========================================================= */
+
+[data-theme="dark"] [class*="title"],
+[data-theme="dark"] [class*="heading"],
+[data-theme="dark"] [class*="subtitle"],
+[data-theme="dark"] [class*="headline"],
+
+[data-theme="forest"] [class*="title"],
+[data-theme="forest"] [class*="heading"],
+[data-theme="forest"] [class*="subtitle"],
+[data-theme="forest"] [class*="headline"],
+
+[data-theme="midnight"] [class*="title"],
+[data-theme="midnight"] [class*="heading"],
+[data-theme="midnight"] [class*="subtitle"],
+[data-theme="midnight"] [class*="headline"] {
+
+  color:
+    var(--theme-heading) !important;
+
+}
+
+
+/* =========================================================
+   COMMON DESCRIPTION / SUPPORT TEXT
+========================================================= */
+
+[data-theme="dark"] [class*="description"],
+[data-theme="dark"] [class*="intro"],
+[data-theme="dark"] [class*="support"],
+[data-theme="dark"] [class*="caption"],
+[data-theme="dark"] [class*="meta"],
+
+[data-theme="forest"] [class*="description"],
+[data-theme="forest"] [class*="intro"],
+[data-theme="forest"] [class*="support"],
+[data-theme="forest"] [class*="caption"],
+[data-theme="forest"] [class*="meta"],
+
+[data-theme="midnight"] [class*="description"],
+[data-theme="midnight"] [class*="intro"],
+[data-theme="midnight"] [class*="support"],
+[data-theme="midnight"] [class*="caption"],
+[data-theme="midnight"] [class*="meta"] {
+
+  color:
+    var(--theme-text) !important;
+
+}
+
+
+/* =========================================================
+   SMALL / MUTED TEXT
+========================================================= */
+
+[data-theme="dark"] small,
+[data-theme="dark"] [class*="muted"],
+[data-theme="dark"] [class*="secondary-text"],
+
+[data-theme="forest"] small,
+[data-theme="forest"] [class*="muted"],
+[data-theme="forest"] [class*="secondary-text"],
+
+[data-theme="midnight"] small,
+[data-theme="midnight"] [class*="muted"],
+[data-theme="midnight"] [class*="secondary-text"] {
+
+  color:
+    var(--theme-muted) !important;
+
+}
+
+
+/* =========================================================
+   GENERIC PANELS / CARDS
+========================================================= */
+
+[data-theme="dark"] [class*="card"],
+[data-theme="dark"] [class*="panel"],
+[data-theme="dark"] [class*="box"],
+
+[data-theme="forest"] [class*="card"],
+[data-theme="forest"] [class*="panel"],
+[data-theme="forest"] [class*="box"],
+
+[data-theme="midnight"] [class*="card"],
+[data-theme="midnight"] [class*="panel"],
+[data-theme="midnight"] [class*="box"] {
+
+  border-color:
+    var(--theme-border);
+
+}
+
+
+/* =========================================================
+   CARD TEXT
+========================================================= */
+
+[data-theme="dark"] [class*="card"] h1,
+[data-theme="dark"] [class*="card"] h2,
+[data-theme="dark"] [class*="card"] h3,
+[data-theme="dark"] [class*="card"] h4,
+[data-theme="dark"] [class*="card"] strong,
+[data-theme="dark"] [class*="card"] b,
+
+[data-theme="forest"] [class*="card"] h1,
+[data-theme="forest"] [class*="card"] h2,
+[data-theme="forest"] [class*="card"] h3,
+[data-theme="forest"] [class*="card"] h4,
+[data-theme="forest"] [class*="card"] strong,
+[data-theme="forest"] [class*="card"] b,
+
+[data-theme="midnight"] [class*="card"] h1,
+[data-theme="midnight"] [class*="card"] h2,
+[data-theme="midnight"] [class*="card"] h3,
+[data-theme="midnight"] [class*="card"] h4,
+[data-theme="midnight"] [class*="card"] strong,
+[data-theme="midnight"] [class*="card"] b {
+
+  color:
+    var(--theme-heading) !important;
+
+}
+
+
+[data-theme="dark"] [class*="card"] p,
+[data-theme="dark"] [class*="card"] span,
+
+[data-theme="forest"] [class*="card"] p,
+[data-theme="forest"] [class*="card"] span,
+
+[data-theme="midnight"] [class*="card"] p,
+[data-theme="midnight"] [class*="card"] span {
+
+  color:
+    var(--theme-text);
+
+}
+
+
+/* =========================================================
+   COMMON SURFACES
+========================================================= */
+
+[data-theme="dark"] .surface,
+[data-theme="dark"] .panel-surface,
+
+[data-theme="forest"] .surface,
+[data-theme="forest"] .panel-surface,
+
+[data-theme="midnight"] .surface,
+[data-theme="midnight"] .panel-surface {
+
+  background:
+    var(--theme-surface);
+
+}
+
+
+/* =========================================================
+   FORCED LIGHT BACKGROUNDS
+   Prevent old white panels from becoming unreadable.
+========================================================= */
+
+[data-theme="dark"] [style*="background: white"],
+[data-theme="dark"] [style*="background:#fff"],
+[data-theme="dark"] [style*="background: #fff"],
+
+[data-theme="forest"] [style*="background: white"],
+[data-theme="forest"] [style*="background:#fff"],
+[data-theme="forest"] [style*="background: #fff"],
+
+[data-theme="midnight"] [style*="background: white"],
+[data-theme="midnight"] [style*="background:#fff"],
+[data-theme="midnight"] [style*="background: #fff"] {
+
+  background:
+    var(--theme-surface) !important;
+
+}
+
+
+/* =========================================================
+   INPUTS
+========================================================= */
+
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select,
+
+[data-theme="forest"] input,
+[data-theme="forest"] textarea,
+[data-theme="forest"] select,
+
+[data-theme="midnight"] input,
+[data-theme="midnight"] textarea,
+[data-theme="midnight"] select {
+
+  background:
+    var(--theme-surface-soft) !important;
+
+  color:
+    var(--theme-heading) !important;
+
+  border-color:
+    var(--theme-border) !important;
+
+}
+
+
+/* placeholders */
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder,
+
+[data-theme="forest"] input::placeholder,
+[data-theme="forest"] textarea::placeholder,
+
+[data-theme="midnight"] input::placeholder,
+[data-theme="midnight"] textarea::placeholder {
+
+  color:
+    var(--theme-muted) !important;
+
+  opacity:
+    1;
+
+}
+
+
+/* =========================================================
+   SELECT OPTIONS
+========================================================= */
+
+[data-theme="dark"] option,
+[data-theme="forest"] option,
+[data-theme="midnight"] option {
+
+  background:
+    var(--theme-surface);
+
+  color:
+    var(--theme-heading);
+
+}
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+[data-theme="dark"] button,
+[data-theme="forest"] button,
+[data-theme="midnight"] button {
+
+  color:
+    var(--theme-heading);
+}
+
+
+/* hover should not become white */
+
+[data-theme="dark"] button:hover,
+[data-theme="forest"] button:hover,
+[data-theme="midnight"] button:hover {
+
+  color:
+    var(--theme-heading);
+}
+
+
+/* =========================================================
+   LINKS
+========================================================= */
+
+[data-theme="dark"] a,
+[data-theme="forest"] a,
+[data-theme="midnight"] a {
+
+  color:
+    inherit;
+
+}
+
+
+/* =========================================================
+   ICONS
+========================================================= */
+
+[data-theme="dark"] svg,
+[data-theme="forest"] svg,
+[data-theme="midnight"] svg {
+
+  color:
+    currentColor;
+
+}
+
+
+/* =========================================================
+   SVG STROKES / FILLS THAT USED HARDCODED WHITE
+========================================================= */
+
+[data-theme="dark"] svg[stroke="#fff"],
+[data-theme="dark"] svg[stroke="white"],
+
+[data-theme="forest"] svg[stroke="#fff"],
+[data-theme="forest"] svg[stroke="white"],
+
+[data-theme="midnight"] svg[stroke="#fff"],
+[data-theme="midnight"] svg[stroke="white"] {
+
+  stroke:
+    currentColor;
+
+}
+
+
+/* =========================================================
+   NAVIGATION / SIDEBAR
+========================================================= */
+
+[data-theme="dark"] header,
+[data-theme="dark"] nav,
+[data-theme="dark"] aside,
+
+[data-theme="forest"] header,
+[data-theme="forest"] nav,
+[data-theme="forest"] aside,
+
+[data-theme="midnight"] header,
+[data-theme="midnight"] nav,
+[data-theme="midnight"] aside {
+
+  color:
+    var(--theme-text);
+
+}
+
+
+/* =========================================================
+   TABLES
+========================================================= */
+
+[data-theme="dark"] table,
+[data-theme="dark"] th,
+[data-theme="dark"] td,
+
+[data-theme="forest"] table,
+[data-theme="forest"] th,
+[data-theme="forest"] td,
+
+[data-theme="midnight"] table,
+[data-theme="midnight"] th,
+[data-theme="midnight"] td {
+
+  border-color:
+    var(--theme-border);
+
+}
+
+
+[data-theme="dark"] th,
+[data-theme="forest"] th,
+[data-theme="midnight"] th {
+
+  background:
+    var(--theme-surface-soft);
+
+  color:
+    var(--theme-heading);
+
+}
+
+
+/* =========================================================
+   STATUS / BADGES
+========================================================= */
+
+[data-theme="dark"] .success,
+[data-theme="forest"] .success,
+[data-theme="midnight"] .success {
+
+  color:
+    var(--theme-success);
+
+}
+
+
+[data-theme="dark"] .danger,
+[data-theme="forest"] .danger,
+[data-theme="midnight"] .danger {
+
+  color:
+    var(--theme-danger);
+
+}
+
+
+/* =========================================================
+   COMMON SOFT-TONE BLOCKS
+========================================================= */
+
+/* GREEN */
+
+[data-theme="dark"] .green,
+[data-theme="forest"] .green,
+[data-theme="midnight"] .green {
+
+  color:
+    var(--theme-primary);
+
+}
+
+
+/* BLUE */
+
+[data-theme="dark"] .blue,
+[data-theme="forest"] .blue,
+[data-theme="midnight"] .blue {
+
+  color:
+    var(--theme-secondary);
+
+}
+
+
+/* GOLD */
+
+[data-theme="dark"] .gold,
+[data-theme="forest"] .gold,
+[data-theme="midnight"] .gold {
+
+  color:
+    var(--theme-gold);
+
+}
+
+
+/* =========================================================
+   COMMON PALE BACKGROUND OVERRIDES
+========================================================= */
+
+[data-theme="dark"] [class*="soft"],
+[data-theme="dark"] [class*="subtle"],
+
+[data-theme="forest"] [class*="soft"],
+[data-theme="forest"] [class*="subtle"],
+
+[data-theme="midnight"] [class*="soft"],
+[data-theme="midnight"] [class*="subtle"] {
+
+  color:
+    var(--theme-text);
+
+}
+
+
+/* =========================================================
+   BORDER
+========================================================= */
+
+[data-theme="dark"] hr,
+[data-theme="forest"] hr,
+[data-theme="midnight"] hr {
+
+  border-color:
+    var(--theme-border);
+
+}
+
+
+/* =========================================================
+   CHECKBOX / RADIO
+========================================================= */
+
+[data-theme="dark"] input[type="checkbox"],
+[data-theme="dark"] input[type="radio"],
+
+[data-theme="forest"] input[type="checkbox"],
+[data-theme="forest"] input[type="radio"],
+
+[data-theme="midnight"] input[type="checkbox"],
+[data-theme="midnight"] input[type="radio"] {
+
+  accent-color:
+    var(--theme-primary);
+
+}
+
+
+/* =========================================================
+   FOCUS
+========================================================= */
+
+[data-theme="dark"] :focus-visible,
+[data-theme="forest"] :focus-visible,
+[data-theme="midnight"] :focus-visible {
+
+  outline-color:
+    var(--theme-primary);
+
+}
+
+
+/* =========================================================
+   SELECTION
+========================================================= */
+
+[data-theme="dark"] ::selection,
+[data-theme="forest"] ::selection,
+[data-theme="midnight"] ::selection {
+
+  background:
+    var(--theme-primary);
+
+  color:
+    #ffffff;
+
+}
+
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+[data-theme="dark"] *,
+[data-theme="forest"] *,
+[data-theme="midnight"] * {
+
+  scrollbar-color:
+    var(--theme-border)
+    var(--theme-bg);
+
+}
+
+
+/* =========================================================
+   LANDING PAGE
+========================================================= */
+
+[data-theme="dark"] .landing-page,
+[data-theme="forest"] .landing-page,
+[data-theme="midnight"] .landing-page {
+
+  background:
+    var(--theme-bg);
+
+}
+
+
+[data-theme="dark"] .landing-page h1,
+[data-theme="dark"] .landing-page h2,
+[data-theme="dark"] .landing-page h3,
+
+[data-theme="forest"] .landing-page h1,
+[data-theme="forest"] .landing-page h2,
+[data-theme="forest"] .landing-page h3,
+
+[data-theme="midnight"] .landing-page h1,
+[data-theme="midnight"] .landing-page h2,
+[data-theme="midnight"] .landing-page h3 {
+
+  color:
+    var(--theme-heading) !important;
+
+}
+
+
+/* =========================================================
+   FARMER HELP
+========================================================= */
+
+[data-theme="dark"] .farmer-help-page h1,
+[data-theme="dark"] .farmer-help-page h2,
+[data-theme="dark"] .farmer-help-page h3,
+[data-theme="dark"] .farmer-help-page h4,
+
+[data-theme="forest"] .farmer-help-page h1,
+[data-theme="forest"] .farmer-help-page h2,
+[data-theme="forest"] .farmer-help-page h3,
+[data-theme="forest"] .farmer-help-page h4,
+
+[data-theme="midnight"] .farmer-help-page h1,
+[data-theme="midnight"] .farmer-help-page h2,
+[data-theme="midnight"] .farmer-help-page h3,
+[data-theme="midnight"] .farmer-help-page h4 {
+
+  color:
+    var(--theme-heading) !important;
+
+}
+
+
+[data-theme="dark"] .farmer-help-page p,
+[data-theme="forest"] .farmer-help-page p,
+[data-theme="midnight"] .farmer-help-page p {
+
+  color:
+    var(--theme-text);
+
+}
+
+
+/* =========================================================
+   ADMIN WEIGHING
+========================================================= */
+
+[data-theme="dark"] .admin-weighing-page h1,
+[data-theme="dark"] .admin-weighing-page h2,
+[data-theme="dark"] .admin-weighing-page h3,
+[data-theme="dark"] .admin-weighing-page h4,
+
+[data-theme="forest"] .admin-weighing-page h1,
+[data-theme="forest"] .admin-weighing-page h2,
+[data-theme="forest"] .admin-weighing-page h3,
+[data-theme="forest"] .admin-weighing-page h4,
+
+[data-theme="midnight"] .admin-weighing-page h1,
+[data-theme="midnight"] .admin-weighing-page h2,
+[data-theme="midnight"] .admin-weighing-page h3,
+[data-theme="midnight"] .admin-weighing-page h4 {
+
+  color:
+    var(--theme-heading) !important;
+
+}
+
+
+[data-theme="dark"] .admin-weighing-page p,
+[data-theme="forest"] .admin-weighing-page p,
+[data-theme="midnight"] .admin-weighing-page p {
+
+  color:
+    var(--theme-text);
+
+}
+
+
+/* =========================================================
+   FINAL CONTRAST GUARD
+   Useful for old components whose CSS explicitly sets
+   very dark text colors.
+========================================================= */
+
+[data-theme="dark"] [class*="heading"] strong,
+[data-theme="dark"] [class*="title"] strong,
+[data-theme="dark"] [class*="subtitle"] strong,
+
+[data-theme="forest"] [class*="heading"] strong,
+[data-theme="forest"] [class*="title"] strong,
+[data-theme="forest"] [class*="subtitle"] strong,
+
+[data-theme="midnight"] [class*="heading"] strong,
+[data-theme="midnight"] [class*="title"] strong,
+[data-theme="midnight"] [class*="subtitle"] strong {
+
+  color:
+    var(--theme-heading) !important;
+
+}
+
+
+/* =========================================================
+   DISABLED TEXT
+========================================================= */
+
+[data-theme="dark"] button:disabled,
+[data-theme="dark"] input:disabled,
+[data-theme="dark"] select:disabled,
+[data-theme="dark"] textarea:disabled,
+
+[data-theme="forest"] button:disabled,
+[data-theme="forest"] input:disabled,
+[data-theme="forest"] select:disabled,
+[data-theme="forest"] textarea:disabled,
+
+[data-theme="midnight"] button:disabled,
+[data-theme="midnight"] input:disabled,
+[data-theme="midnight"] select:disabled,
+[data-theme="midnight"] textarea:disabled {
+
+  color:
+    var(--theme-muted) !important;
+
+}
+
+
+/* =========================================================
+   MOBILE SAFETY
+========================================================= */
+
+@media (max-width: 700px) {
+
+  [data-theme="dark"] .landing-hero-content,
+  [data-theme="forest"] .landing-hero-content,
+  [data-theme="midnight"] .landing-hero-content {
+
+    color:
+      var(--theme-heading);
+
+  }
+
+}
+
+/* =========================================================
+   KRISHISETU — GLOBAL STATIC BOX / HOVER FIX
+   ---------------------------------------------------------
+   Fixes:
+   • pale static cards becoming white
+   • dark text disappearing on dark themes
+   • icons becoming unreadable
+   • hover turning cards bright white
+   • colored green/blue/gold/purple/orange boxes losing contrast
+
+   Put this AFTER all other theme CSS.
+========================================================= */
+
+
+/* =========================================================
+   1. GLOBAL STATIC BOX SURFACES
+========================================================= */
+
+[data-theme="dark"] [class*="card"],
+[data-theme="dark"] [class*="box"],
+[data-theme="dark"] [class*="panel"],
+[data-theme="dark"] [class*="topic"],
+[data-theme="dark"] [class*="feature"],
+[data-theme="dark"] [class*="guide"],
+[data-theme="dark"] [class*="contact"],
+[data-theme="dark"] [class*="quick"],
+[data-theme="dark"] [class*="info"],
+[data-theme="dark"] [class*="demo"],
+[data-theme="dark"] [class*="security"],
+[data-theme="dark"] [class*="support"],
+[data-theme="dark"] [class*="note"],
+
+[data-theme="forest"] [class*="card"],
+[data-theme="forest"] [class*="box"],
+[data-theme="forest"] [class*="panel"],
+[data-theme="forest"] [class*="topic"],
+[data-theme="forest"] [class*="feature"],
+[data-theme="forest"] [class*="guide"],
+[data-theme="forest"] [class*="contact"],
+[data-theme="forest"] [class*="quick"],
+[data-theme="forest"] [class*="info"],
+[data-theme="forest"] [class*="demo"],
+[data-theme="forest"] [class*="security"],
+[data-theme="forest"] [class*="support"],
+[data-theme="forest"] [class*="note"],
+
+[data-theme="midnight"] [class*="card"],
+[data-theme="midnight"] [class*="box"],
+[data-theme="midnight"] [class*="panel"],
+[data-theme="midnight"] [class*="topic"],
+[data-theme="midnight"] [class*="feature"],
+[data-theme="midnight"] [class*="guide"],
+[data-theme="midnight"] [class*="contact"],
+[data-theme="midnight"] [class*="quick"],
+[data-theme="midnight"] [class*="info"],
+[data-theme="midnight"] [class*="demo"],
+[data-theme="midnight"] [class*="security"],
+[data-theme="midnight"] [class*="support"],
+[data-theme="midnight"] [class*="note"] {
+
+  background-color:
+    var(--theme-surface) !important;
+
+  color:
+    var(--theme-text) !important;
+
+  border-color:
+    var(--theme-border) !important;
+
+}
+
+
+/* =========================================================
+   2. COLORED STATIC BOXES
+   Keep their identity, but use dark versions of the tone.
+========================================================= */
+
+
+/* GREEN */
+
+[data-theme="dark"] [class*="green"],
+[data-theme="forest"] [class*="green"],
+[data-theme="midnight"] [class*="green"] {
+
+  background:
+    color-mix(
+      in srgb,
+      var(--theme-primary-soft) 78%,
+      var(--theme-surface) 22%
+    ) !important;
+
+  color:
+    var(--theme-text) !important;
+
+  border-color:
+    color-mix(
+      in srgb,
+      var(--theme-primary) 30%,
+      var(--theme-border) 70%
+    ) !important;
+}
+
+
+/* BLUE */
+
+[data-theme="dark"] [class*="blue"],
+[data-theme="forest"] [class*="blue"],
+[data-theme="midnight"] [class*="blue"] {
+
+  background:
+    color-mix(
+      in srgb,
+      var(--theme-secondary-soft) 78%,
+      var(--theme-surface) 22%
+    ) !important;
+
+  color:
+    var(--theme-text) !important;
+
+  border-color:
+    color-mix(
+      in srgb,
+      var(--theme-secondary) 28%,
+      var(--theme-border) 72%
+    ) !important;
+}
+
+
+/* GOLD / YELLOW */
+
+[data-theme="dark"] [class*="gold"],
+[data-theme="dark"] [class*="yellow"],
+
+[data-theme="forest"] [class*="gold"],
+[data-theme="forest"] [class*="yellow"],
+
+[data-theme="midnight"] [class*="gold"],
+[data-theme="midnight"] [class*="yellow"] {
+
+  background:
+    color-mix(
+      in srgb,
+      var(--theme-gold-soft) 78%,
+      var(--theme-surface) 22%
+    ) !important;
+
+  color:
+    var(--theme-text) !important;
+
+  border-color:
+    color-mix(
+      in srgb,
+      var(--theme-gold) 26%,
+      var(--theme-border) 74%
+    ) !important;
+}
+
+
+/* PURPLE */
+
+[data-theme="dark"] [class*="purple"],
+[data-theme="forest"] [class*="purple"],
+[data-theme="midnight"] [class*="purple"] {
+
+  background:
+    color-mix(
+      in srgb,
+      #3b3154 70%,
+      var(--theme-surface) 30%
+    ) !important;
+
+  color:
+    var(--theme-text) !important;
+
+  border-color:
+    rgba(
+      173,
+      143,
+      220,
+      0.18
+    ) !important;
+}
+
+
+/* ORANGE */
+
+[data-theme="dark"] [class*="orange"],
+[data-theme="forest"] [class*="orange"],
+[data-theme="midnight"] [class*="orange"] {
+
+  background:
+    color-mix(
+      in srgb,
+      #493523 72%,
+      var(--theme-surface) 28%
+    ) !important;
+
+  color:
+    var(--theme-text) !important;
+
+  border-color:
+    rgba(
+      214,
+      156,
+      85,
+      0.18
+    ) !important;
+}
+
+
+/* TEAL */
+
+[data-theme="dark"] [class*="teal"],
+[data-theme="forest"] [class*="teal"],
+[data-theme="midnight"] [class*="teal"] {
+
+  background:
+    color-mix(
+      in srgb,
+      #173b3c 72%,
+      var(--theme-surface) 28%
+    ) !important;
+
+  color:
+    var(--theme-text) !important;
+
+  border-color:
+    rgba(
+      93,
+      177,
+      176,
+      0.18
+    ) !important;
+}
+
+
+/* =========================================================
+   3. CARD HEADINGS / TITLES
+========================================================= */
+
+[data-theme="dark"] [class*="card"] h1,
+[data-theme="dark"] [class*="card"] h2,
+[data-theme="dark"] [class*="card"] h3,
+[data-theme="dark"] [class*="card"] h4,
+[data-theme="dark"] [class*="card"] strong,
+
+[data-theme="forest"] [class*="card"] h1,
+[data-theme="forest"] [class*="card"] h2,
+[data-theme="forest"] [class*="card"] h3,
+[data-theme="forest"] [class*="card"] h4,
+[data-theme="forest"] [class*="card"] strong,
+
+[data-theme="midnight"] [class*="card"] h1,
+[data-theme="midnight"] [class*="card"] h2,
+[data-theme="midnight"] [class*="card"] h3,
+[data-theme="midnight"] [class*="card"] h4,
+[data-theme="midnight"] [class*="card"] strong {
+
+  color:
+    var(--theme-heading) !important;
+}
+
+
+/* subtitles / descriptions */
+
+[data-theme="dark"] [class*="card"] p,
+[data-theme="dark"] [class*="card"] span,
+
+[data-theme="forest"] [class*="card"] p,
+[data-theme="forest"] [class*="card"] span,
+
+[data-theme="midnight"] [class*="card"] p,
+[data-theme="midnight"] [class*="card"] span {
+
+  color:
+    var(--theme-text) !important;
+}
+
+
+/* =========================================================
+   4. ICON CONTAINERS
+========================================================= */
+
+[data-theme="dark"] [class*="icon"],
+[data-theme="forest"] [class*="icon"],
+[data-theme="midnight"] [class*="icon"] {
+
+  color:
+    var(--theme-primary);
+
+  border-color:
+    var(--theme-border);
+}
+
+
+/* SVG inside icon boxes */
+
+[data-theme="dark"] [class*="icon"] svg,
+[data-theme="forest"] [class*="icon"] svg,
+[data-theme="midnight"] [class*="icon"] svg {
+
+  color:
+    currentColor !important;
+
+}
+
+
+/* =========================================================
+   5. STATIC BOX HOVER
+   This is the important part.
+   Prevent pale/white hover backgrounds.
+========================================================= */
+
+[data-theme="dark"] [class*="card"]:hover,
+[data-theme="dark"] [class*="box"]:hover,
+[data-theme="dark"] [class*="topic"]:hover,
+[data-theme="dark"] [class*="feature"]:hover,
+[data-theme="dark"] [class*="guide"]:hover,
+[data-theme="dark"] [class*="contact"]:hover,
+[data-theme="dark"] [class*="quick"]:hover,
+
+[data-theme="forest"] [class*="card"]:hover,
+[data-theme="forest"] [class*="box"]:hover,
+[data-theme="forest"] [class*="topic"]:hover,
+[data-theme="forest"] [class*="feature"]:hover,
+[data-theme="forest"] [class*="guide"]:hover,
+[data-theme="forest"] [class*="contact"]:hover,
+[data-theme="forest"] [class*="quick"]:hover,
+
+[data-theme="midnight"] [class*="card"]:hover,
+[data-theme="midnight"] [class*="box"]:hover,
+[data-theme="midnight"] [class*="topic"]:hover,
+[data-theme="midnight"] [class*="feature"]:hover,
+[data-theme="midnight"] [class*="guide"]:hover,
+[data-theme="midnight"] [class*="contact"]:hover,
+[data-theme="midnight"] [class*="quick"]:hover {
+
+  background-color:
+    var(--theme-surface-2) !important;
+
+  color:
+    var(--theme-text) !important;
+
+  border-color:
+    var(--theme-border) !important;
+
+}
+
+
+/* =========================================================
+   6. HOVERED TEXT MUST STAY VISIBLE
+========================================================= */
+
+[data-theme="dark"] [class*="card"]:hover h1,
+[data-theme="dark"] [class*="card"]:hover h2,
+[data-theme="dark"] [class*="card"]:hover h3,
+[data-theme="dark"] [class*="card"]:hover h4,
+[data-theme="dark"] [class*="card"]:hover strong,
+
+[data-theme="forest"] [class*="card"]:hover h1,
+[data-theme="forest"] [class*="card"]:hover h2,
+[data-theme="forest"] [class*="card"]:hover h3,
+[data-theme="forest"] [class*="card"]:hover h4,
+[data-theme="forest"] [class*="card"]:hover strong,
+
+[data-theme="midnight"] [class*="card"]:hover h1,
+[data-theme="midnight"] [class*="card"]:hover h2,
+[data-theme="midnight"] [class*="card"]:hover h3,
+[data-theme="midnight"] [class*="card"]:hover h4,
+[data-theme="midnight"] [class*="card"]:hover strong {
+
+  color:
+    var(--theme-heading) !important;
+}
+
+
+[data-theme="dark"] [class*="card"]:hover p,
+[data-theme="dark"] [class*="card"]:hover span,
+
+[data-theme="forest"] [class*="card"]:hover p,
+[data-theme="forest"] [class*="card"]:hover span,
+
+[data-theme="midnight"] [class*="card"]:hover p,
+[data-theme="midnight"] [class*="card"]:hover span {
+
+  color:
+    var(--theme-text) !important;
+}
+
+
+/* =========================================================
+   7. BUTTON-LIKE CARDS
+========================================================= */
+
+[data-theme="dark"] button[class*="card"],
+[data-theme="dark"] button[class*="topic"],
+[data-theme="dark"] button[class*="feature"],
+
+[data-theme="forest"] button[class*="card"],
+[data-theme="forest"] button[class*="topic"],
+[data-theme="forest"] button[class*="feature"],
+
+[data-theme="midnight"] button[class*="card"],
+[data-theme="midnight"] button[class*="topic"],
+[data-theme="midnight"] button[class*="feature"] {
+
+  background:
+    var(--theme-surface) !important;
+
+  color:
+    var(--theme-text) !important;
+}
+
+
+/* button-card hover */
+
+[data-theme="dark"] button[class*="card"]:hover,
+[data-theme="dark"] button[class*="topic"]:hover,
+[data-theme="dark"] button[class*="feature"]:hover,
+
+[data-theme="forest"] button[class*="card"]:hover,
+[data-theme="forest"] button[class*="topic"]:hover,
+[data-theme="forest"] button[class*="feature"]:hover,
+
+[data-theme="midnight"] button[class*="card"]:hover,
+[data-theme="midnight"] button[class*="topic"]:hover,
+[data-theme="midnight"] button[class*="feature"]:hover {
+
+  background:
+    var(--theme-surface-2) !important;
+
+  color:
+    var(--theme-text) !important;
+}
+
+
+/* =========================================================
+   8. FORM / STATIC INNER BOXES
+========================================================= */
+
+[data-theme="dark"] [class*="input"],
+[data-theme="dark"] [class*="field"],
+[data-theme="dark"] [class*="row"],
+
+[data-theme="forest"] [class*="input"],
+[data-theme="forest"] [class*="field"],
+[data-theme="forest"] [class*="row"],
+
+[data-theme="midnight"] [class*="input"],
+[data-theme="midnight"] [class*="field"],
+[data-theme="midnight"] [class*="row"] {
+
+  color:
+    var(--theme-text);
+}
+
+
+/* =========================================================
+   9. HARD WHITE HOVER BACKGROUNDS
+   Catch common old rules.
+========================================================= */
+
+[data-theme="dark"] [class*="card"]:hover,
+[data-theme="dark"] [class*="box"]:hover,
+[data-theme="dark"] [class*="panel"]:hover,
+
+[data-theme="forest"] [class*="card"]:hover,
+[data-theme="forest"] [class*="box"]:hover,
+[data-theme="forest"] [class*="panel"]:hover,
+
+[data-theme="midnight"] [class*="card"]:hover,
+[data-theme="midnight"] [class*="box"]:hover,
+[data-theme="midnight"] [class*="panel"]:hover {
+
+  filter:
+    none !important;
+}
+
+
+/* =========================================================
+   10. KEEP BOX SHADOWS SUBTLE
+========================================================= */
+
+[data-theme="dark"] [class*="card"],
+[data-theme="dark"] [class*="box"],
+[data-theme="dark"] [class*="panel"],
+
+[data-theme="forest"] [class*="card"],
+[data-theme="forest"] [class*="box"],
+[data-theme="forest"] [class*="panel"],
+
+[data-theme="midnight"] [class*="card"],
+[data-theme="midnight"] [class*="box"],
+[data-theme="midnight"] [class*="panel"] {
+
+  box-shadow:
+    0 12px 32px
+    var(--theme-shadow);
+}
+
+
+/* =========================================================
+   11. FOCUS
+========================================================= */
+
+[data-theme="dark"] [class*="card"]:focus-visible,
+[data-theme="forest"] [class*="card"]:focus-visible,
+[data-theme="midnight"] [class*="card"]:focus-visible {
+
+  outline:
+    2px solid
+    color-mix(
+      in srgb,
+      var(--theme-primary) 45%,
+      transparent
+    );
+
+  outline-offset:
+    2px;
+}
+
+/* =========================================================
+   KRISHISETU — FINAL THEME STABILITY LAYER
+   ---------------------------------------------------------
+   Production-style theme architecture:
+   • semantic color tokens
+   • stable dark surfaces
+   • intentional hover states
+   • no white hover flash
+   • no scroll color flicker
+   • no layout changes
+   • no backend changes
+========================================================= */
+
+
+/* =========================================================
+   1. THEME TOKENS
+========================================================= */
+
+:root {
+  --theme-page-bg: #f5f7f5;
+
+  --theme-surface-1: #ffffff;
+  --theme-surface-2: #f2f5f3;
+  --theme-surface-hover: #e9efeb;
+
+  --theme-border: #d9e1dc;
+
+  --theme-heading: #1b382b;
+  --theme-text: #355244;
+  --theme-muted: #71857b;
+
+  --theme-green: #2a7c53;
+  --theme-blue: #547da0;
+  --theme-gold: #b98732;
+
+  --theme-shadow:
+    0 14px 34px rgba(20, 53, 39, 0.09);
+}
+
+
+/* =========================================================
+   2. DARK
+========================================================= */
+
+[data-theme="dark"] {
+  --theme-page-bg: #0b0d0e;
+
+  --theme-surface-1: #121516;
+  --theme-surface-2: #181c1d;
+  --theme-surface-hover: #1d2324;
+
+  --theme-border: #2b3334;
+
+  --theme-heading: #e3ebe6;
+  --theme-text: #c3d0c9;
+  --theme-muted: #91a099;
+
+  --theme-green: #69b28a;
+  --theme-blue: #7f9fbc;
+  --theme-gold: #c7a45f;
+
+  --theme-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.34);
+}
+
+
+/* =========================================================
+   3. FOREST
+========================================================= */
+
+[data-theme="forest"] {
+  --theme-page-bg: #0d1912;
+
+  --theme-surface-1: #12251a;
+  --theme-surface-2: #173020;
+  --theme-surface-hover: #1d3a27;
+
+  --theme-border: #31503b;
+
+  --theme-heading: #e5ece2;
+  --theme-text: #c8d5c7;
+  --theme-muted: #9eae9d;
+
+  --theme-green: #82b878;
+  --theme-blue: #7ca28c;
+  --theme-gold: #c5a15a;
+
+  --theme-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.30);
+}
+
+
+/* =========================================================
+   4. MIDNIGHT
+========================================================= */
+
+[data-theme="midnight"] {
+  --theme-page-bg: #090c12;
+
+  --theme-surface-1: #10151e;
+  --theme-surface-2: #161d28;
+  --theme-surface-hover: #1d2735;
+
+  --theme-border: #2f3b4d;
+
+  --theme-heading: #e4e9f1;
+  --theme-text: #c5cfdd;
+  --theme-muted: #97a4b6;
+
+  --theme-green: #70ab96;
+  --theme-blue: #7f9fc1;
+  --theme-gold: #c6a865;
+
+  --theme-shadow:
+    0 14px 38px rgba(0, 0, 0, 0.36);
+}
+
+
+/* =========================================================
+   5. BASE DOCUMENT
+========================================================= */
+
+html,
+body,
+#root {
+  transition:
+    none !important;
+}
+
+
+/* Theme backgrounds */
+
+[data-theme="dark"] body,
+[data-theme="forest"] body,
+[data-theme="midnight"] body {
+  background:
+    var(--theme-page-bg) !important;
+
+  color:
+    var(--theme-text);
+}
+
+
+/* =========================================================
+   6. HEADINGS
+========================================================= */
+
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6,
+
+[data-theme="forest"] h1,
+[data-theme="forest"] h2,
+[data-theme="forest"] h3,
+[data-theme="forest"] h4,
+[data-theme="forest"] h5,
+[data-theme="forest"] h6,
+
+[data-theme="midnight"] h1,
+[data-theme="midnight"] h2,
+[data-theme="midnight"] h3,
+[data-theme="midnight"] h4,
+[data-theme="midnight"] h5,
+[data-theme="midnight"] h6 {
+  color:
+    var(--theme-heading) !important;
+}
+
+
+/* =========================================================
+   7. NORMAL TEXT
+========================================================= */
+
+[data-theme="dark"] p,
+[data-theme="dark"] li,
+
+[data-theme="forest"] p,
+[data-theme="forest"] li,
+
+[data-theme="midnight"] p,
+[data-theme="midnight"] li {
+  color:
+    var(--theme-text) !important;
+}
+
+
+/* =========================================================
+   8. TRUE STATIC CARD SURFACES
+   Only common structural classes.
+========================================================= */
+
+[data-theme="dark"] .card,
+[data-theme="dark"] .panel,
+[data-theme="dark"] .box,
+[data-theme="dark"] .surface,
+
+[data-theme="forest"] .card,
+[data-theme="forest"] .panel,
+[data-theme="forest"] .box,
+[data-theme="forest"] .surface,
+
+[data-theme="midnight"] .card,
+[data-theme="midnight"] .panel,
+[data-theme="midnight"] .box,
+[data-theme="midnight"] .surface {
+  background-color:
+    var(--theme-surface-1) !important;
+
+  color:
+    var(--theme-text) !important;
+
+  border-color:
+    var(--theme-border) !important;
+}
+
+
+/* =========================================================
+   9. CARD HEADINGS
+========================================================= */
+
+[data-theme="dark"] .card h1,
+[data-theme="dark"] .card h2,
+[data-theme="dark"] .card h3,
+[data-theme="dark"] .card h4,
+[data-theme="dark"] .card strong,
+
+[data-theme="forest"] .card h1,
+[data-theme="forest"] .card h2,
+[data-theme="forest"] .card h3,
+[data-theme="forest"] .card h4,
+[data-theme="forest"] .card strong,
+
+[data-theme="midnight"] .card h1,
+[data-theme="midnight"] .card h2,
+[data-theme="midnight"] .card h3,
+[data-theme="midnight"] .card h4,
+[data-theme="midnight"] .card strong {
+  color:
+    var(--theme-heading) !important;
+}
+
+
+/* =========================================================
+   10. CARD DESCRIPTIONS
+========================================================= */
+
+[data-theme="dark"] .card p,
+[data-theme="forest"] .card p,
+[data-theme="midnight"] .card p {
+  color:
+    var(--theme-text) !important;
+}
+
+
+/* =========================================================
+   11. SAFE HOVER FOR TRUE CARDS
+   No bright-white flash.
+========================================================= */
+
+[data-theme="dark"] .card:hover,
+[data-theme="dark"] .panel:hover,
+[data-theme="dark"] .box:hover,
+[data-theme="dark"] .surface:hover,
+
+[data-theme="forest"] .card:hover,
+[data-theme="forest"] .panel:hover,
+[data-theme="forest"] .box:hover,
+[data-theme="forest"] .surface:hover,
+
+[data-theme="midnight"] .card:hover,
+[data-theme="midnight"] .panel:hover,
+[data-theme="midnight"] .box:hover,
+[data-theme="midnight"] .surface:hover {
+  background-color:
+    var(--theme-surface-hover) !important;
+
+  color:
+    var(--theme-text) !important;
+
+  border-color:
+    var(--theme-border) !important;
+
+  filter:
+    none !important;
+}
+
+
+/* =========================================================
+   12. CARD HOVER TEXT
+========================================================= */
+
+[data-theme="dark"] .card:hover h1,
+[data-theme="dark"] .card:hover h2,
+[data-theme="dark"] .card:hover h3,
+[data-theme="dark"] .card:hover h4,
+[data-theme="dark"] .card:hover strong,
+
+[data-theme="forest"] .card:hover h1,
+[data-theme="forest"] .card:hover h2,
+[data-theme="forest"] .card:hover h3,
+[data-theme="forest"] .card:hover h4,
+[data-theme="forest"] .card:hover strong,
+
+[data-theme="midnight"] .card:hover h1,
+[data-theme="midnight"] .card:hover h2,
+[data-theme="midnight"] .card:hover h3,
+[data-theme="midnight"] .card:hover h4,
+[data-theme="midnight"] .card:hover strong {
+  color:
+    var(--theme-heading) !important;
+}
+
+
+[data-theme="dark"] .card:hover p,
+[data-theme="forest"] .card:hover p,
+[data-theme="midnight"] .card:hover p {
+  color:
+    var(--theme-text) !important;
+}
+
+
+/* =========================================================
+   13. IMPORTANT: YOUR ACTUAL HELP / SETTINGS / ADMIN BOXES
+   Explicitly target the recurring project components.
+========================================================= */
+
+[data-theme="dark"] .help-topic-card,
+[data-theme="dark"] .help-guide-card,
+[data-theme="dark"] .help-faq-item,
+[data-theme="dark"] .help-faq-side-card,
+[data-theme="dark"] .help-center-card,
+[data-theme="dark"] .help-contact-use-card,
+[data-theme="dark"] .help-language-option,
+[data-theme="dark"] .help-final-card,
+[data-theme="dark"] .admin-demo-box,
+[data-theme="dark"] .admin-login-feature,
+
+[data-theme="forest"] .help-topic-card,
+[data-theme="forest"] .help-guide-card,
+[data-theme="forest"] .help-faq-item,
+[data-theme="forest"] .help-faq-side-card,
+[data-theme="forest"] .help-center-card,
+[data-theme="forest"] .help-contact-use-card,
+[data-theme="forest"] .help-language-option,
+[data-theme="forest"] .help-final-card,
+[data-theme="forest"] .admin-demo-box,
+[data-theme="forest"] .admin-login-feature,
+
+[data-theme="midnight"] .help-topic-card,
+[data-theme="midnight"] .help-guide-card,
+[data-theme="midnight"] .help-faq-item,
+[data-theme="midnight"] .help-faq-side-card,
+[data-theme="midnight"] .help-center-card,
+[data-theme="midnight"] .help-contact-use-card,
+[data-theme="midnight"] .help-language-option,
+[data-theme="midnight"] .help-final-card,
+[data-theme="midnight"] .admin-demo-box,
+[data-theme="midnight"] .admin-login-feature {
+  background-color:
+    var(--theme-surface-1) !important;
+
+  color:
+    var(--theme-text) !important;
+
+  border-color:
+    var(--theme-border) !important;
+}
+
+
+/* =========================================================
+   14. THOSE COMPONENTS — HOVER
+========================================================= */
+
+[data-theme="dark"] .help-topic-card:hover,
+[data-theme="dark"] .help-guide-card:hover,
+[data-theme="dark"] .help-faq-item:hover,
+[data-theme="dark"] .help-faq-side-card:hover,
+[data-theme="dark"] .help-center-card:hover,
+[data-theme="dark"] .help-contact-use-card:hover,
+[data-theme="dark"] .help-language-option:hover,
+[data-theme="dark"] .help-final-card:hover,
+[data-theme="dark"] .admin-login-feature:hover,
+
+[data-theme="forest"] .help-topic-card:hover,
+[data-theme="forest"] .help-guide-card:hover,
+[data-theme="forest"] .help-faq-item:hover,
+[data-theme="forest"] .help-faq-side-card:hover,
+[data-theme="forest"] .help-center-card:hover,
+[data-theme="forest"] .help-contact-use-card:hover,
+[data-theme="forest"] .help-language-option:hover,
+[data-theme="forest"] .help-final-card:hover,
+[data-theme="forest"] .admin-login-feature:hover,
+
+[data-theme="midnight"] .help-topic-card:hover,
+[data-theme="midnight"] .help-guide-card:hover,
+[data-theme="midnight"] .help-faq-item:hover,
+[data-theme="midnight"] .help-faq-side-card:hover,
+[data-theme="midnight"] .help-center-card:hover,
+[data-theme="midnight"] .help-contact-use-card:hover,
+[data-theme="midnight"] .help-language-option:hover,
+[data-theme="midnight"] .help-final-card:hover,
+[data-theme="midnight"] .admin-login-feature:hover {
+  background-color:
+    var(--theme-surface-hover) !important;
+
+  color:
+    var(--theme-text) !important;
+
+  border-color:
+    var(--theme-border) !important;
+
+  filter:
+    none !important;
+}
+
+
+/* =========================================================
+   15. COMPONENT HEADINGS
+========================================================= */
+
+[data-theme="dark"] .help-topic-card strong,
+[data-theme="dark"] .help-guide-card h3,
+[data-theme="dark"] .help-faq-side-card h3,
+[data-theme="dark"] .help-contact-use-card h3,
+[data-theme="dark"] .help-center-card h3,
+[data-theme="dark"] .help-final-card h2,
+[data-theme="dark"] .admin-login-feature strong,
+
+[data-theme="forest"] .help-topic-card strong,
+[data-theme="forest"] .help-guide-card h3,
+[data-theme="forest"] .help-faq-side-card h3,
+[data-theme="forest"] .help-contact-use-card h3,
+[data-theme="forest"] .help-center-card h3,
+[data-theme="forest"] .help-final-card h2,
+[data-theme="forest"] .admin-login-feature strong,
+
+[data-theme="midnight"] .help-topic-card strong,
+[data-theme="midnight"] .help-guide-card h3,
+[data-theme="midnight"] .help-faq-side-card h3,
+[data-theme="midnight"] .help-contact-use-card h3,
+[data-theme="midnight"] .help-center-card h3,
+[data-theme="midnight"] .help-final-card h2,
+[data-theme="midnight"] .admin-login-feature strong {
+  color:
+    var(--theme-heading) !important;
+}
+
+
+/* =========================================================
+   16. COMPONENT BODY TEXT
+========================================================= */
+
+[data-theme="dark"] .help-topic-card p,
+[data-theme="dark"] .help-guide-card p,
+[data-theme="dark"] .help-faq-side-card p,
+[data-theme="dark"] .help-contact-use-card p,
+[data-theme="dark"] .help-center-card p,
+[data-theme="dark"] .admin-login-feature span,
+
+[data-theme="forest"] .help-topic-card p,
+[data-theme="forest"] .help-guide-card p,
+[data-theme="forest"] .help-faq-side-card p,
+[data-theme="forest"] .help-contact-use-card p,
+[data-theme="forest"] .help-center-card p,
+[data-theme="forest"] .admin-login-feature span,
+
+[data-theme="midnight"] .help-topic-card p,
+[data-theme="midnight"] .help-guide-card p,
+[data-theme="midnight"] .help-faq-side-card p,
+[data-theme="midnight"] .help-contact-use-card p,
+[data-theme="midnight"] .help-center-card p,
+[data-theme="midnight"] .admin-login-feature span {
+  color:
+    var(--theme-text) !important;
+}
+
+
+/* =========================================================
+   17. ICON CONTAINERS
+========================================================= */
+
+[data-theme="dark"] .help-topic-icon,
+[data-theme="dark"] .help-guide-icon,
+[data-theme="dark"] .help-faq-side-icon,
+[data-theme="dark"] .help-center-icon,
+[data-theme="dark"] .admin-login-feature-icon,
+
+[data-theme="forest"] .help-topic-icon,
+[data-theme="forest"] .help-guide-icon,
+[data-theme="forest"] .help-faq-side-icon,
+[data-theme="forest"] .help-center-icon,
+[data-theme="forest"] .admin-login-feature-icon,
+
+[data-theme="midnight"] .help-topic-icon,
+[data-theme="midnight"] .help-guide-icon,
+[data-theme="midnight"] .help-faq-side-icon,
+[data-theme="midnight"] .help-center-icon,
+[data-theme="midnight"] .admin-login-feature-icon {
+  background:
+    var(--theme-surface-2) !important;
+
+  color:
+    var(--theme-primary, var(--theme-green)) !important;
+
+  border-color:
+    var(--theme-border) !important;
+}
+
+
+/* =========================================================
+   18. SVG SAFETY
+========================================================= */
+
+[data-theme="dark"] .help-topic-icon svg,
+[data-theme="dark"] .help-guide-icon svg,
+[data-theme="dark"] .help-faq-side-icon svg,
+[data-theme="dark"] .help-center-icon svg,
+[data-theme="dark"] .admin-login-feature-icon svg,
+
+[data-theme="forest"] .help-topic-icon svg,
+[data-theme="forest"] .help-guide-icon svg,
+[data-theme="forest"] .help-faq-side-icon svg,
+[data-theme="forest"] .help-center-icon svg,
+[data-theme="forest"] .admin-login-feature-icon svg,
+
+[data-theme="midnight"] .help-topic-icon svg,
+[data-theme="midnight"] .help-guide-icon svg,
+[data-theme="midnight"] .help-faq-side-icon svg,
+[data-theme="midnight"] .help-center-icon svg,
+[data-theme="midnight"] .admin-login-feature-icon svg {
+  color:
+    currentColor !important;
+
+  stroke:
+    currentColor;
+}
+
+
+/* =========================================================
+   19. FORMS
+========================================================= */
+
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select,
+
+[data-theme="forest"] input,
+[data-theme="forest"] textarea,
+[data-theme="forest"] select,
+
+[data-theme="midnight"] input,
+[data-theme="midnight"] textarea,
+[data-theme="midnight"] select {
+  background-color:
+    var(--theme-surface-2) !important;
+
+  color:
+    var(--theme-heading) !important;
+
+  border-color:
+    var(--theme-border) !important;
+}
+
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder,
+
+[data-theme="forest"] input::placeholder,
+[data-theme="forest"] textarea::placeholder,
+
+[data-theme="midnight"] input::placeholder,
+[data-theme="midnight"] textarea::placeholder {
+  color:
+    var(--theme-muted) !important;
+
+  opacity:
+    1;
+}
+
+
+/* =========================================================
+   20. FORM HOVER / FOCUS
+========================================================= */
+
+[data-theme="dark"] input:hover,
+[data-theme="dark"] textarea:hover,
+[data-theme="dark"] select:hover,
+
+[data-theme="forest"] input:hover,
+[data-theme="forest"] textarea:hover,
+[data-theme="forest"] select:hover,
+
+[data-theme="midnight"] input:hover,
+[data-theme="midnight"] textarea:hover,
+[data-theme="midnight"] select:hover {
+  background-color:
+    var(--theme-surface-hover) !important;
+}
+
+
+[data-theme="dark"] input:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus,
+
+[data-theme="forest"] input:focus,
+[data-theme="forest"] textarea:focus,
+[data-theme="forest"] select:focus,
+
+[data-theme="midnight"] input:focus,
+[data-theme="midnight"] textarea:focus,
+[data-theme="midnight"] select:focus {
+  background-color:
+    var(--theme-surface-2) !important;
+
+  border-color:
+    var(--theme-border) !important;
+}
+
+
+/* =========================================================
+   21. BUTTON HOVER SAFETY
+   Don't recolor every button.
+   Only prevent a WHITE background from old theme rules.
+========================================================= */
+
+[data-theme="dark"] button:hover,
+[data-theme="forest"] button:hover,
+[data-theme="midnight"] button:hover {
+
+  filter:
+    none !important;
+}
+
+
+/* =========================================================
+   22. REMOVE TRANSITION-BASED COLOR FLICKER
+========================================================= */
+
+/*
+   The problem is often a transition between:
+     light theme color
+         ↓
+     dark theme color
+
+   during scroll/repaint.
+
+   For theme-sensitive properties, remove interpolation.
+*/
+
+[data-theme="dark"] *,
+[data-theme="forest"] *,
+[data-theme="midnight"] * {
+  transition-property:
+    transform,
+    opacity,
+    box-shadow,
+    border-color !important;
+}
+
+
+/* =========================================================
+   23. EXPLICITLY DISABLE COLOR TRANSITIONS
+========================================================= */
+
+[data-theme="dark"] *,
+[data-theme="forest"] *,
+[data-theme="midnight"] * {
+  transition:
+    transform 0.25s ease,
+    opacity 0.25s ease,
+    box-shadow 0.25s ease !important;
+}
+
+
+/* =========================================================
+   24. PREVENT FLASHING FILTER EFFECTS
+========================================================= */
+
+[data-theme="dark"] *,
+[data-theme="forest"] *,
+[data-theme="midnight"] * {
+  filter:
+    none;
+}
+
+
+/* =========================================================
+   25. FINAL SCROLL STABILITY
+========================================================= */
+
+[data-theme="dark"],
+[data-theme="dark"] body,
+[data-theme="dark"] #root,
+
+[data-theme="forest"],
+[data-theme="forest"] body,
+[data-theme="forest"] #root,
+
+[data-theme="midnight"],
+[data-theme="midnight"] body,
+[data-theme="midnight"] #root {
+  color-scheme:
+    dark;
+}
+
+
+/* =========================================================
+   26. DISABLED ELEMENTS
+========================================================= */
+
+[data-theme="dark"] button:disabled,
+[data-theme="dark"] input:disabled,
+[data-theme="dark"] select:disabled,
+[data-theme="dark"] textarea:disabled,
+
+[data-theme="forest"] button:disabled,
+[data-theme="forest"] input:disabled,
+[data-theme="forest"] select:disabled,
+[data-theme="forest"] textarea:disabled,
+
+[data-theme="midnight"] button:disabled,
+[data-theme="midnight"] input:disabled,
+[data-theme="midnight"] select:disabled,
+[data-theme="midnight"] textarea:disabled {
+  color:
+    var(--theme-muted) !important;
+}
+
+
+/* =========================================================
+   27. TABLES / LISTS
+========================================================= */
+
+[data-theme="dark"] th,
+[data-theme="dark"] td,
+
+[data-theme="forest"] th,
+[data-theme="forest"] td,
+
+[data-theme="midnight"] th,
+[data-theme="midnight"] td {
+  border-color:
+    var(--theme-border);
+}
+
+
+[data-theme="dark"] th,
+[data-theme="forest"] th,
+[data-theme="midnight"] th {
+  background:
+    var(--theme-surface-2);
+
+  color:
+    var(--theme-heading);
+}
