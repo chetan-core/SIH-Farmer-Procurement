@@ -119589,3 +119589,199 @@ html[data-theme="forest"] .help-emergency-note *,
 html[data-theme="midnight"] .help-emergency-note * {
   color: inherit !important;
 }
+
+/* =========================================================
+   FINAL QUICK HELP FIX
+   Targets ONLY the Quick Help topic cards
+========================================================= */
+
+html[data-theme="forest"] .help-quick-section .help-topic-card,
+html[data-theme="midnight"] .help-quick-section .help-topic-card {
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  box-shadow: none !important;
+  color: #ecfff4 !important;
+  -webkit-text-fill-color: #ecfff4 !important;
+  background-color: #123522 !important;
+  background-image: linear-gradient(
+    135deg,
+    #164b30 0%,
+    #0d3321 55%,
+    #082419 100%
+  ) !important;
+}
+
+
+/* GREEN */
+html[data-theme="forest"] .help-quick-section .help-topic-card.green,
+html[data-theme="midnight"] .help-quick-section .help-topic-card.green {
+  background-color: #14532d !important;
+  background-image: linear-gradient(
+    135deg,
+    #1b6337 0%,
+    #124728 52%,
+    #092719 100%
+  ) !important;
+}
+
+
+/* BLUE */
+html[data-theme="forest"] .help-quick-section .help-topic-card.blue,
+html[data-theme="midnight"] .help-quick-section .help-topic-card.blue {
+  background-color: #173f75 !important;
+  background-image: linear-gradient(
+    135deg,
+    #245da5 0%,
+    #17457c 50%,
+    #0b294e 100%
+  ) !important;
+}
+
+
+/* ORANGE */
+html[data-theme="forest"] .help-quick-section .help-topic-card.orange,
+html[data-theme="midnight"] .help-quick-section .help-topic-card.orange {
+  background-color: #713414 !important;
+  background-image: linear-gradient(
+    135deg,
+    #93461b 0%,
+    #6d3110 50%,
+    #361706 100%
+  ) !important;
+}
+
+
+/* PURPLE */
+html[data-theme="forest"] .help-quick-section .help-topic-card.purple,
+html[data-theme="midnight"] .help-quick-section .help-topic-card.purple {
+  background-color: #4c237b !important;
+  background-image: linear-gradient(
+    135deg,
+    #7137ad 0%,
+    #522687 50%,
+    #291344 100%
+  ) !important;
+}
+
+
+/* GOLD */
+html[data-theme="forest"] .help-quick-section .help-topic-card.gold,
+html[data-theme="midnight"] .help-quick-section .help-topic-card.gold {
+  background-color: #70500b !important;
+  background-image: linear-gradient(
+    135deg,
+    #95701a 0%,
+    #70500b 50%,
+    #3b2905 100%
+  ) !important;
+}
+
+
+/* TEAL */
+html[data-theme="forest"] .help-quick-section .help-topic-card.teal,
+html[data-theme="midnight"] .help-quick-section .help-topic-card.teal {
+  background-color: #105e57 !important;
+  background-image: linear-gradient(
+    135deg,
+    #168277 0%,
+    #105f58 50%,
+    #07332f 100%
+  ) !important;
+}
+
+
+/* =========================================================
+   QUICK HELP TEXT
+========================================================= */
+
+html[data-theme="forest"] .help-quick-section .help-topic-card strong,
+html[data-theme="forest"] .help-quick-section .help-topic-card p,
+html[data-theme="forest"] .help-quick-section .help-topic-card svg,
+html[data-theme="forest"] .help-quick-section .help-topic-card > *,
+
+html[data-theme="midnight"] .help-quick-section .help-topic-card strong,
+html[data-theme="midnight"] .help-quick-section .help-topic-card p,
+html[data-theme="midnight"] .help-quick-section .help-topic-card svg,
+html[data-theme="midnight"] .help-quick-section .help-topic-card > * {
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+}
+
+
+/* =========================================================
+   QUICK HELP HOVER
+   Prevent cards from turning white when cursor moves over them
+========================================================= */
+
+html[data-theme="forest"] .help-quick-section .help-topic-card:hover,
+html[data-theme="forest"] .help-quick-section .help-topic-card:focus,
+html[data-theme="forest"] .help-quick-section .help-topic-card:active,
+
+html[data-theme="midnight"] .help-quick-section .help-topic-card:hover,
+html[data-theme="midnight"] .help-quick-section .help-topic-card:focus,
+html[data-theme="midnight"] .help-quick-section .help-topic-card:active {
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+  filter: none !important;
+}
+
+
+/* Keep the theme gradient even on hover */
+html[data-theme="forest"] .help-quick-section .help-topic-card.green:hover,
+html[data-theme="midnight"] .help-quick-section .help-topic-card.green:hover {
+  background-image: linear-gradient(
+    135deg,
+    #1b6337,
+    #124728,
+    #092719
+  ) !important;
+}
+
+html[data-theme="forest"] .help-quick-section .help-topic-card.blue:hover,
+html[data-theme="midnight"] .help-quick-section .help-topic-card.blue:hover {
+  background-image: linear-gradient(
+    135deg,
+    #245da5,
+    #17457c,
+    #0b294e
+  ) !important;
+}
+
+html[data-theme="forest"] .help-quick-section .help-topic-card.orange:hover,
+html[data-theme="midnight"] .help-quick-section .help-topic-card.orange:hover {
+  background-image: linear-gradient(
+    135deg,
+    #93461b,
+    #6d3110,
+    #361706
+  ) !important;
+}
+
+html[data-theme="forest"] .help-quick-section .help-topic-card.purple:hover,
+html[data-theme="midnight"] .help-quick-section .help-topic-card.purple:hover {
+  background-image: linear-gradient(
+    135deg,
+    #7137ad,
+    #522687,
+    #291344
+  ) !important;
+}
+
+html[data-theme="forest"] .help-quick-section .help-topic-card.gold:hover,
+html[data-theme="midnight"] .help-quick-section .help-topic-card.gold:hover {
+  background-image: linear-gradient(
+    135deg,
+    #95701a,
+    #70500b,
+    #3b2905
+  ) !important;
+}
+
+html[data-theme="forest"] .help-quick-section .help-topic-card.teal:hover,
+html[data-theme="midnight"] .help-quick-section .help-topic-card.teal:hover {
+  background-image: linear-gradient(
+    135deg,
+    #168277,
+    #105f58,
+    #07332f
+  ) !important;
+}
