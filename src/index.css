@@ -117751,3 +117751,1616 @@ body[data-theme="dark"] .admin-login-card h3 {
 [data-theme="midnight"] .help-checklist-card > div > span {
   color: #17352a !important;
 }
+
+/* =========================================================
+   STATIC COLOURED CONTENT BLOCKS
+   HIGH-CONTRAST FIX FOR DARK / FOREST / MIDNIGHT
+========================================================= */
+
+/* CONTACT CENTER */
+.help-contact-use-card {
+  color: #102019 !important;
+}
+
+.help-contact-use-card span {
+  color: #2b6348 !important;
+}
+
+.help-contact-use-card h3 {
+  color: #0d1913 !important;
+}
+
+.help-contact-use-card svg {
+  color: #123d29 !important;
+  stroke: #123d29 !important;
+}
+
+.help-contact-use-icon {
+  background: #a9e7ba !important;
+  color: #123d29 !important;
+  border-color: #58b875 !important;
+}
+
+.help-contact-use-icon svg {
+  color: #123d29 !important;
+  stroke: #123d29 !important;
+}
+
+
+/* CONTACT REASONS */
+.help-contact-reasons > div {
+  color: #183126 !important;
+}
+
+.help-contact-reasons > div span {
+  color: #183126 !important;
+}
+
+.help-contact-reasons > div svg {
+  color: #157044 !important;
+  stroke: #157044 !important;
+}
+
+
+/* EMERGENCY / INFO BLOCK */
+.help-emergency-note {
+  color: #173126 !important;
+}
+
+.help-emergency-note p {
+  color: #173126 !important;
+}
+
+.help-emergency-note svg {
+  color: #176b43 !important;
+  stroke: #176b43 !important;
+}
+
+
+/* =========================================================
+   DARK THEME OVERRIDES
+========================================================= */
+
+.dark-theme .help-contact-use-card,
+[data-theme="dark"] .help-contact-use-card,
+[data-theme="forest"] .help-contact-use-card,
+[data-theme="midnight"] .help-contact-use-card {
+  background: #edf9f1 !important;
+  color: #102019 !important;
+  border-color: #69b981 !important;
+}
+
+.dark-theme .help-contact-use-card span,
+[data-theme="dark"] .help-contact-use-card span,
+[data-theme="forest"] .help-contact-use-card span,
+[data-theme="midnight"] .help-contact-use-card span {
+  color: #2a6246 !important;
+}
+
+.dark-theme .help-contact-use-card h3,
+[data-theme="dark"] .help-contact-use-card h3,
+[data-theme="forest"] .help-contact-use-card h3,
+[data-theme="midnight"] .help-contact-use-card h3 {
+  color: #0b1711 !important;
+}
+
+.dark-theme .help-contact-use-icon,
+[data-theme="dark"] .help-contact-use-icon,
+[data-theme="forest"] .help-contact-use-icon,
+[data-theme="midnight"] .help-contact-use-icon {
+  background: #a6e7b8 !important;
+  color: #0e3b26 !important;
+  border-color: #55bb76 !important;
+}
+
+.dark-theme .help-contact-use-icon svg,
+[data-theme="dark"] .help-contact-use-icon svg,
+[data-theme="forest"] .help-contact-use-icon svg,
+[data-theme="midnight"] .help-contact-use-icon svg {
+  color: #0e3b26 !important;
+  stroke: #0e3b26 !important;
+}
+
+
+/* REASONS */
+.dark-theme .help-contact-reasons > div span,
+[data-theme="dark"] .help-contact-reasons > div span,
+[data-theme="forest"] .help-contact-reasons > div span,
+[data-theme="midnight"] .help-contact-reasons > div span {
+  color: #183126 !important;
+}
+
+.dark-theme .help-contact-reasons > div svg,
+[data-theme="dark"] .help-contact-reasons > div svg,
+[data-theme="forest"] .help-contact-reasons > div svg,
+[data-theme="midnight"] .help-contact-reasons > div svg {
+  color: #147040 !important;
+  stroke: #147040 !important;
+}
+
+
+/* EMERGENCY */
+.dark-theme .help-emergency-note p,
+[data-theme="dark"] .help-emergency-note p,
+[data-theme="forest"] .help-emergency-note p,
+[data-theme="midnight"] .help-emergency-note p {
+  color: #173126 !important;
+}
+
+.dark-theme .help-emergency-note svg,
+[data-theme="dark"] .help-emergency-note svg,
+[data-theme="forest"] .help-emergency-note svg,
+[data-theme="midnight"] .help-emergency-note svg {
+  color: #147040 !important;
+  stroke: #147040 !important;
+}
+
+/* =========================================================
+   GLOBAL DARK THEME — HIGH CONTRAST STATIC / COLOURED BOXES
+   Applies to pale cards, feature blocks, illustrations,
+   headings, labels, descriptions and icons.
+========================================================= */
+
+
+/* ---------------------------------------------------------
+   DARK / FOREST / MIDNIGHT DETECTION
+--------------------------------------------------------- */
+
+:is(
+  .dark-theme,
+  [data-theme="dark"],
+  [data-theme="forest"],
+  [data-theme="midnight"]
+) {
+
+  /* =======================================================
+     GLOBAL COLOURED / STATIC CARDS
+  ======================================================= */
+
+  :is(
+    [class*="card"],
+    [class*="box"],
+    [class*="feature"],
+    [class*="topic"],
+    [class*="guide"],
+    [class*="checklist"],
+    [class*="support"],
+    [class*="contact"],
+    [class*="security"],
+    [class*="info"],
+    [class*="notice"],
+    [class*="tip"],
+    [class*="summary"],
+    [class*="workflow"]
+  ) {
+
+    /*
+     * Keep cards clearly distinct from the page background.
+     */
+    --global-card-text: #102018;
+    --global-card-heading: #07150e;
+    --global-card-muted: #315541;
+    --global-card-icon: #145d38;
+    --global-card-border: #65b77d;
+
+    color: var(--global-card-text);
+  }
+
+
+  /* =======================================================
+     GREEN
+  ======================================================= */
+
+  :is(
+    .green,
+    .green *,
+    [class*="green"]
+  ) {
+    --global-card-text: #102218;
+    --global-card-heading: #06140c;
+    --global-card-muted: #2b5c43;
+    --global-card-icon: #126338;
+    --global-card-border: #58b976;
+  }
+
+
+  /* =======================================================
+     BLUE
+  ======================================================= */
+
+  :is(
+    .blue,
+    .blue *,
+    [class*="blue"]
+  ) {
+    --global-card-text: #101b2c;
+    --global-card-heading: #07111f;
+    --global-card-muted: #304c70;
+    --global-card-icon: #174f8c;
+    --global-card-border: #639bd2;
+  }
+
+
+  /* =======================================================
+     GOLD / YELLOW
+  ======================================================= */
+
+  :is(
+    .gold,
+    .gold *,
+    [class*="gold"],
+    [class*="yellow"]
+  ) {
+    --global-card-text: #241c08;
+    --global-card-heading: #171000;
+    --global-card-muted: #63501f;
+    --global-card-icon: #8a6500;
+    --global-card-border: #d5ad45;
+  }
+
+
+  /* =======================================================
+     ORANGE
+  ======================================================= */
+
+  :is(
+    .orange,
+    .orange *,
+    [class*="orange"]
+  ) {
+    --global-card-text: #261509;
+    --global-card-heading: #170900;
+    --global-card-muted: #70421f;
+    --global-card-icon: #a84f11;
+    --global-card-border: #db8a45;
+  }
+
+
+  /* =======================================================
+     PURPLE
+  ======================================================= */
+
+  :is(
+    .purple,
+    .purple *,
+    [class*="purple"]
+  ) {
+    --global-card-text: #21152c;
+    --global-card-heading: #13081d;
+    --global-card-muted: #5d4170;
+    --global-card-icon: #7042a0;
+    --global-card-border: #b889d7;
+  }
+
+
+  /* =======================================================
+     TEAL
+  ======================================================= */
+
+  :is(
+    .teal,
+    .teal *,
+    [class*="teal"]
+  ) {
+    --global-card-text: #082522;
+    --global-card-heading: #031411;
+    --global-card-muted: #28635d;
+    --global-card-icon: #14756d;
+    --global-card-border: #68bbb3;
+  }
+
+
+  /* =======================================================
+     FORCE TEXT CONTRAST INSIDE STATIC BOXES
+  ======================================================= */
+
+  :is(
+    [class*="card"],
+    [class*="box"],
+    [class*="feature"],
+    [class*="topic"],
+    [class*="guide"],
+    [class*="checklist"],
+    [class*="support"],
+    [class*="contact"],
+    [class*="security"],
+    [class*="info"],
+    [class*="notice"],
+    [class*="tip"],
+    [class*="summary"],
+    [class*="workflow"]
+  ) :is(
+    h1,
+    h2,
+    h3,
+    h4,
+    strong,
+    b
+  ) {
+    color: var(--global-card-heading) !important;
+  }
+
+
+  :is(
+    [class*="card"],
+    [class*="box"],
+    [class*="feature"],
+    [class*="topic"],
+    [class*="guide"],
+    [class*="checklist"],
+    [class*="support"],
+    [class*="contact"],
+    [class*="security"],
+    [class*="info"],
+    [class*="notice"],
+    [class*="tip"],
+    [class*="summary"],
+    [class*="workflow"]
+  ) :is(
+    p,
+    span,
+    small,
+    label
+  ) {
+    color: var(--global-card-muted) !important;
+  }
+
+
+  /* =======================================================
+     SVG / ICONS
+  ======================================================= */
+
+  :is(
+    [class*="card"],
+    [class*="box"],
+    [class*="feature"],
+    [class*="topic"],
+    [class*="guide"],
+    [class*="checklist"],
+    [class*="support"],
+    [class*="contact"],
+    [class*="security"],
+    [class*="info"],
+    [class*="notice"],
+    [class*="tip"],
+    [class*="summary"],
+    [class*="workflow"]
+  ) svg {
+    color: var(--global-card-icon) !important;
+    stroke: var(--global-card-icon) !important;
+  }
+
+
+  /* =======================================================
+     ICON CONTAINERS
+  ======================================================= */
+
+  :is(
+    [class*="icon"],
+    [class*="badge"],
+    [class*="visual"]
+  ) {
+    color: var(--global-card-icon) !important;
+  }
+
+
+  :is(
+    [class*="icon"],
+    [class*="badge"],
+    [class*="visual"]
+  ) svg {
+    color: inherit !important;
+    stroke: currentColor !important;
+  }
+
+
+  /* =======================================================
+     BUTTONS INSIDE STATIC COLOURED BOXES
+  ======================================================= */
+
+  :is(
+    [class*="card"],
+    [class*="box"],
+    [class*="feature"],
+    [class*="topic"],
+    [class*="guide"],
+    [class*="checklist"],
+    [class*="support"],
+    [class*="contact"],
+    [class*="security"],
+    [class*="info"],
+    [class*="notice"],
+    [class*="tip"]
+  ) button {
+
+    color: var(--global-card-heading) !important;
+  }
+
+
+  /* =======================================================
+     FORM ELEMENTS INSIDE CARDS
+  ======================================================= */
+
+  :is(
+    [class*="card"],
+    [class*="box"],
+    [class*="feature"],
+    [class*="topic"],
+    [class*="guide"],
+    [class*="checklist"],
+    [class*="support"],
+    [class*="contact"],
+    [class*="security"],
+    [class*="info"],
+    [class*="notice"],
+    [class*="tip"]
+  ) :is(
+    input,
+    select,
+    textarea
+  ) {
+    color: #101820 !important;
+    background: #ffffff !important;
+    border-color: #6d8791 !important;
+  }
+
+
+  /* =======================================================
+     PALE STATIC SURFACES
+     The important part: stop them becoming near-white.
+  ======================================================= */
+
+  :is(
+    [class*="feature"],
+    [class*="topic"],
+    [class*="guide"],
+    [class*="checklist"],
+    [class*="support"],
+    [class*="contact"],
+    [class*="security"],
+    [class*="info"],
+    [class*="notice"],
+    [class*="tip"],
+    [class*="workflow"]
+  ) {
+
+    border-color: var(--global-card-border) !important;
+  }
+
+
+  /* -------------------------------------------------------
+     Prevent hover from turning cards white
+  ------------------------------------------------------- */
+
+  :is(
+    [class*="feature"],
+    [class*="topic"],
+    [class*="guide"],
+    [class*="checklist"],
+    [class*="support"],
+    [class*="contact"],
+    [class*="security"],
+    [class*="info"],
+    [class*="notice"],
+    [class*="tip"],
+    [class*="workflow"]
+  ):hover {
+
+    color: var(--global-card-text) !important;
+  }
+
+
+  :is(
+    [class*="feature"],
+    [class*="topic"],
+    [class*="guide"],
+    [class*="checklist"],
+    [class*="support"],
+    [class*="contact"],
+    [class*="security"],
+    [class*="info"],
+    [class*="notice"],
+    [class*="tip"],
+    [class*="workflow"]
+  ):hover :is(
+    h1,
+    h2,
+    h3,
+    h4,
+    strong,
+    b,
+    p,
+    span,
+    small,
+    label
+  ) {
+    color: var(--global-card-heading) !important;
+  }
+
+
+  /* -------------------------------------------------------
+     Hover icons remain readable
+  ------------------------------------------------------- */
+
+  :is(
+    [class*="feature"],
+    [class*="topic"],
+    [class*="guide"],
+    [class*="checklist"],
+    [class*="support"],
+    [class*="contact"],
+    [class*="security"],
+    [class*="info"],
+    [class*="notice"],
+    [class*="tip"],
+    [class*="workflow"]
+  ):hover svg {
+    color: var(--global-card-icon) !important;
+    stroke: var(--global-card-icon) !important;
+  }
+
+}
+
+
+/* =========================================================
+   FOREST — STRONGER GREEN IDENTITY
+========================================================= */
+
+[data-theme="forest"] {
+
+  background-color: #06140d;
+
+  color: #e8fff0;
+
+}
+
+[data-theme="forest"] :is(
+  [class*="card"],
+  [class*="box"],
+  [class*="feature"],
+  [class*="topic"],
+  [class*="guide"],
+  [class*="checklist"],
+  [class*="support"],
+  [class*="contact"],
+  [class*="security"],
+  [class*="info"],
+  [class*="notice"],
+  [class*="tip"]
+) {
+  border-color: #3e9e61 !important;
+}
+
+
+/* =========================================================
+   MIDNIGHT — BLACK / BLUE IDENTITY
+========================================================= */
+
+[data-theme="midnight"] {
+
+  background-color: #03070d;
+
+  color: #edf6ff;
+
+}
+
+[data-theme="midnight"] :is(
+  [class*="card"],
+  [class*="box"],
+  [class*="feature"],
+  [class*="topic"],
+  [class*="guide"],
+  [class*="checklist"],
+  [class*="support"],
+  [class*="contact"],
+  [class*="security"],
+  [class*="info"],
+  [class*="notice"],
+  [class*="tip"]
+) {
+  border-color: #3d75a8 !important;
+}
+/* =========================================================
+   GLOBAL DARK THEME — BRAND + SMALL UI CONTROLS
+========================================================= */
+
+
+/* ---------------------------------------------------------
+   KRISHISETU LOGO / BRAND NAME
+--------------------------------------------------------- */
+
+:is(
+  .dark-theme,
+  [data-theme="dark"],
+  [data-theme="forest"],
+  [data-theme="midnight"]
+) :is(
+  .app-header-brand,
+  .app-header-brand *,
+  .admin-login-brand,
+  .admin-login-brand *,
+  .logo,
+  [class*="logo"],
+  [class*="brand"]
+) {
+  color: #f4fff8 !important;
+}
+
+
+/* Make the brand name especially clear */
+:is(
+  .dark-theme,
+  [data-theme="dark"],
+  [data-theme="forest"],
+  [data-theme="midnight"]
+) :is(
+  .app-header-brand strong,
+  .app-header-brand span,
+  .admin-login-brand strong,
+  .admin-login-brand span
+) {
+  color: #f4fff8 !important;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.35);
+}
+
+
+/* SVG logo/icon */
+:is(
+  .dark-theme,
+  [data-theme="dark"],
+  [data-theme="forest"],
+  [data-theme="midnight"]
+) :is(
+  .app-header-brand svg,
+  .admin-login-brand svg,
+  [class*="logo"] svg
+) {
+  color: #39b56a !important;
+  stroke: #39b56a !important;
+}
+
+
+/* ---------------------------------------------------------
+   SMALL WHITE / LIGHT UI BOXES
+   Examples:
+   English / हिन्दी / తెలుగు
+   Help
+   Theme controls
+   Small action chips
+--------------------------------------------------------- */
+
+:is(
+  .dark-theme,
+  [data-theme="dark"],
+  [data-theme="forest"],
+  [data-theme="midnight"]
+) :is(
+  [class*="language-option"],
+  [class*="language-current"],
+  [class*="language-selector"],
+  [class*="help-button"],
+  [class*="theme-button"],
+  [class*="theme-toggle"],
+  [class*="action-button"],
+  [class*="pill"],
+  [class*="chip"]
+) {
+  color: #102018 !important;
+}
+
+
+/* Strong text inside those controls */
+:is(
+  .dark-theme,
+  [data-theme="dark"],
+  [data-theme="forest"],
+  [data-theme="midnight"]
+) :is(
+  [class*="language-option"] strong,
+  [class*="language-option"] span,
+  [class*="language-current"] span,
+  [class*="help-button"] span,
+  [class*="theme-button"] span,
+  [class*="theme-toggle"] span,
+  [class*="action-button"] span,
+  [class*="pill"] span,
+  [class*="chip"] span
+) {
+  color: #102018 !important;
+}
+
+
+/* Icons in those light controls */
+:is(
+  .dark-theme,
+  [data-theme="dark"],
+  [data-theme="forest"],
+  [data-theme="midnight"]
+) :is(
+  [class*="language-option"] svg,
+  [class*="language-selector"] svg,
+  [class*="help-button"] svg,
+  [class*="theme-button"] svg,
+  [class*="theme-toggle"] svg,
+  [class*="action-button"] svg,
+  [class*="pill"] svg,
+  [class*="chip"] svg
+) {
+  color: #155c38 !important;
+  stroke: #155c38 !important;
+}
+
+
+/* ---------------------------------------------------------
+   LANGUAGE OPTION SPECIFICALLY
+--------------------------------------------------------- */
+
+:is(
+  .dark-theme,
+  [data-theme="dark"],
+  [data-theme="forest"],
+  [data-theme="midnight"]
+) .language-option {
+  background: #dff7e8 !important;
+  border-color: #4faa72 !important;
+  color: #102018 !important;
+}
+
+
+:is(
+  .dark-theme,
+  [data-theme="dark"],
+  [data-theme="forest"],
+  [data-theme="midnight"]
+) .language-option:hover {
+  background: #bdebcf !important;
+  color: #07150d !important;
+}
+
+
+:is(
+  .dark-theme,
+  [data-theme="dark"],
+  [data-theme="forest"],
+  [data-theme="midnight"]
+) .language-option.active {
+  background: #a7e8bc !important;
+  border-color: #27834c !important;
+  color: #06140c !important;
+}
+
+
+/* ---------------------------------------------------------
+   HELP BUTTON
+--------------------------------------------------------- */
+
+:is(
+  .dark-theme,
+  [data-theme="dark"],
+  [data-theme="forest"],
+  [data-theme="midnight"]
+) .header-help-button {
+  background: #dff7e8 !important;
+  border-color: #4faa72 !important;
+  color: #102018 !important;
+}
+
+
+:is(
+  .dark-theme,
+  [data-theme="dark"],
+  [data-theme="forest"],
+  [data-theme="midnight"]
+) .header-help-button:hover {
+  background: #bdebcf !important;
+  color: #06140c !important;
+}
+
+
+:is(
+  .dark-theme,
+  [data-theme="dark"],
+  [data-theme="forest"],
+  [data-theme="midnight"]
+) .header-help-button svg {
+  color: #155c38 !important;
+  stroke: #155c38 !important;
+}
+
+
+/* ---------------------------------------------------------
+   THEME CONTROL
+--------------------------------------------------------- */
+
+:is(
+  .dark-theme,
+  [data-theme="dark"],
+  [data-theme="forest"],
+  [data-theme="midnight"]
+) :is(
+  .theme-toggle,
+  .theme-button,
+  [class*="theme-control"]
+) {
+  color: #102018 !important;
+}
+
+
+:is(
+  .dark-theme,
+  [data-theme="dark"],
+  [data-theme="forest"],
+  [data-theme="midnight"]
+) :is(
+  .theme-toggle,
+  .theme-button,
+  [class*="theme-control"]
+) svg {
+  color: #155c38 !important;
+  stroke: #155c38 !important;
+}
+
+
+/* ---------------------------------------------------------
+   LANGUAGE DROPDOWN ITSELF
+--------------------------------------------------------- */
+
+:is(
+  .dark-theme,
+  [data-theme="dark"],
+  [data-theme="forest"],
+  [data-theme="midnight"]
+) .language-dropdown {
+  background: #e8faef !important;
+  border-color: #4faa72 !important;
+}
+
+
+:is(
+  .dark-theme,
+  [data-theme="dark"],
+  [data-theme="forest"],
+  [data-theme="midnight"]
+) .language-dropdown-heading {
+  color: #163b27 !important;
+}
+
+
+:is(
+  .dark-theme,
+  [data-theme="dark"],
+  [data-theme="forest"],
+  [data-theme="midnight"]
+) .language-dropdown-heading span {
+  color: #315e45 !important;
+}
+
+
+/* ---------------------------------------------------------
+   LANGUAGE CODE BOXES: EN / हि / తె
+--------------------------------------------------------- */
+
+:is(
+  .dark-theme,
+  [data-theme="dark"],
+  [data-theme="forest"],
+  [data-theme="midnight"]
+) .language-option-code {
+  background: #a7e8bc !important;
+  border-color: #4faa72 !important;
+  color: #07150d !important;
+}
+
+
+/* ---------------------------------------------------------
+   CURRENT LANGUAGE BUTTON
+--------------------------------------------------------- */
+
+:is(
+  .dark-theme,
+  [data-theme="dark"],
+  [data-theme="forest"],
+  [data-theme="midnight"]
+) .language-selector-button {
+  background: #dff7e8 !important;
+  border-color: #4faa72 !important;
+  color: #102018 !important;
+}
+
+
+:is(
+  .dark-theme,
+  [data-theme="dark"],
+  [data-theme="forest"],
+  [data-theme="midnight"]
+) .language-selector-button:hover {
+  background: #bdebcf !important;
+  color: #06140c !important;
+}
+
+
+/* ---------------------------------------------------------
+   FINAL OVERRIDE FOR PALE TEXT
+--------------------------------------------------------- */
+
+:is(
+  .dark-theme,
+  [data-theme="dark"],
+  [data-theme="forest"],
+  [data-theme="midnight"]
+) :is(
+  .language-option,
+  .language-selector-button,
+  .header-help-button,
+  .theme-toggle,
+  .theme-button
+) :is(
+  h1,
+  h2,
+  h3,
+  strong,
+  b,
+  span,
+  small
+) {
+  color: #102018 !important;
+}
+
+/* =========================================================
+   GLOBAL THEME TEXT FIX
+   Headings / titles / subtitles / static block text
+========================================================= */
+
+/* FOREST */
+[data-theme="forest"] :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  strong,
+  .help-section-heading,
+  .help-section-heading h2,
+  .help-section-heading h3,
+  .help-guide-card h3,
+  .help-guide-intro,
+  .help-topic-card strong,
+  .help-topic-card p,
+  .help-hero-card strong,
+  .help-hero-card span,
+  .help-contact-use-card h3,
+  .help-contact-use-card span,
+  .help-faq-side-card h3,
+  .help-faq-side-card span,
+  .help-final-card h2,
+  .help-final-card p,
+  .help-language-copy h2,
+  .help-language-copy p,
+  .help-connectivity-main h2,
+  .help-connectivity-main p,
+  .help-sms-copy h2,
+  .help-sms-copy p
+) {
+  color: #eafff1 !important;
+}
+
+/* MIDNIGHT */
+[data-theme="midnight"] :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  strong,
+  .help-section-heading,
+  .help-section-heading h2,
+  .help-section-heading h3,
+  .help-guide-card h3,
+  .help-guide-intro,
+  .help-topic-card strong,
+  .help-topic-card p,
+  .help-hero-card strong,
+  .help-hero-card span,
+  .help-contact-use-card h3,
+  .help-contact-use-card span,
+  .help-faq-side-card h3,
+  .help-faq-side-card span,
+  .help-final-card h2,
+  .help-final-card p,
+  .help-language-copy h2,
+  .help-language-copy p,
+  .help-connectivity-main h2,
+  .help-connectivity-main p,
+  .help-sms-copy h2,
+  .help-sms-copy p
+) {
+  color: #eaf4ff !important;
+}
+
+
+/* =========================================================
+   GLOBAL STATIC / CARD TEXT
+   Prevent dark/black text from becoming unreadable
+========================================================= */
+
+[data-theme="forest"] :is(
+  .help-topic-card,
+  .help-guide-card,
+  .help-checklist-card,
+  .help-faq-side-card,
+  .help-contact-use-card,
+  .help-language-option,
+  .help-hero-card,
+  .help-connectivity-section,
+  .help-sms-section,
+  .help-final-card
+) {
+  color: #eafff1 !important;
+}
+
+[data-theme="midnight"] :is(
+  .help-topic-card,
+  .help-guide-card,
+  .help-checklist-card,
+  .help-faq-side-card,
+  .help-contact-use-card,
+  .help-language-option,
+  .help-hero-card,
+  .help-connectivity-section,
+  .help-sms-section,
+  .help-final-card
+) {
+  color: #eaf4ff !important;
+}
+
+
+/* =========================================================
+   INHERITED TEXT INSIDE THOSE BLOCKS
+========================================================= */
+
+[data-theme="forest"] :is(
+  .help-topic-card *,
+  .help-guide-card *,
+  .help-checklist-card *,
+  .help-faq-side-card *,
+  .help-contact-use-card *,
+  .help-language-option *,
+  .help-hero-card *,
+  .help-connectivity-section *,
+  .help-sms-section *,
+  .help-final-card *
+) {
+  color: inherit !important;
+}
+
+[data-theme="midnight"] :is(
+  .help-topic-card *,
+  .help-guide-card *,
+  .help-checklist-card *,
+  .help-faq-side-card *,
+  .help-contact-use-card *,
+  .help-language-option *,
+  .help-hero-card *,
+  .help-connectivity-section *,
+  .help-sms-section *,
+  .help-final-card *
+) {
+  color: inherit !important;
+}
+
+
+/* =========================================================
+   KEEP EYEBROWS / SECONDARY TEXT VISUALLY DISTINCT
+========================================================= */
+
+[data-theme="forest"] :is(
+  .page-eyebrow,
+  .help-eyebrow-row,
+  .help-guide-number,
+  .help-topic-card p,
+  .help-guide-intro,
+  .help-section-heading p
+) {
+  color: #b8e8ca !important;
+}
+
+[data-theme="midnight"] :is(
+  .page-eyebrow,
+  .help-eyebrow-row,
+  .help-guide-number,
+  .help-topic-card p,
+  .help-guide-intro,
+  .help-section-heading p
+) {
+  color: #b8d8f5 !important;
+}
+
+/* =========================================================
+   FINAL FIX — STOP THEME TEXT COLOR FLICKER
+========================================================= */
+
+html[data-theme="forest"] .help-topic-card,
+html[data-theme="forest"] .help-guide-card,
+html[data-theme="forest"] .help-checklist-card,
+html[data-theme="forest"] .help-faq-side-card,
+html[data-theme="forest"] .help-contact-use-card,
+html[data-theme="forest"] .help-language-option,
+html[data-theme="forest"] .help-hero-card,
+html[data-theme="forest"] .help-connectivity-section,
+html[data-theme="forest"] .help-sms-section,
+html[data-theme="forest"] .help-final-card {
+  color: #eafff1 !important;
+  transition: none !important;
+  -webkit-text-fill-color: #eafff1 !important;
+}
+
+html[data-theme="midnight"] .help-topic-card,
+html[data-theme="midnight"] .help-guide-card,
+html[data-theme="midnight"] .help-checklist-card,
+html[data-theme="midnight"] .help-faq-side-card,
+html[data-theme="midnight"] .help-contact-use-card,
+html[data-theme="midnight"] .help-language-option,
+html[data-theme="midnight"] .help-hero-card,
+html[data-theme="midnight"] .help-connectivity-section,
+html[data-theme="midnight"] .help-sms-section,
+html[data-theme="midnight"] .help-final-card {
+  color: #eaf4ff !important;
+  transition: none !important;
+  -webkit-text-fill-color: #eaf4ff !important;
+}
+
+
+/* Force every text element inside those blocks to stay fixed */
+html[data-theme="forest"] .help-topic-card *,
+html[data-theme="forest"] .help-guide-card *,
+html[data-theme="forest"] .help-checklist-card *,
+html[data-theme="forest"] .help-faq-side-card *,
+html[data-theme="forest"] .help-contact-use-card *,
+html[data-theme="forest"] .help-language-option *,
+html[data-theme="forest"] .help-hero-card *,
+html[data-theme="forest"] .help-connectivity-section *,
+html[data-theme="forest"] .help-sms-section *,
+html[data-theme="forest"] .help-final-card * {
+  transition: none !important;
+  animation: none !important;
+}
+
+html[data-theme="midnight"] .help-topic-card *,
+html[data-theme="midnight"] .help-guide-card *,
+html[data-theme="midnight"] .help-checklist-card *,
+html[data-theme="midnight"] .help-faq-side-card *,
+html[data-theme="midnight"] .help-contact-use-card *,
+html[data-theme="midnight"] .help-language-option *,
+html[data-theme="midnight"] .help-hero-card *,
+html[data-theme="midnight"] .help-connectivity-section *,
+html[data-theme="midnight"] .help-sms-section *,
+html[data-theme="midnight"] .help-final-card * {
+  transition: none !important;
+  animation: none !important;
+}
+
+
+/* Remove visual effects that can cause text repaint/flicker */
+html[data-theme="forest"] .help-topic-card *,
+html[data-theme="forest"] .help-guide-card *,
+html[data-theme="forest"] .help-checklist-card *,
+html[data-theme="forest"] .help-faq-side-card *,
+html[data-theme="forest"] .help-contact-use-card *,
+html[data-theme="forest"] .help-language-option *,
+html[data-theme="forest"] .help-hero-card *,
+html[data-theme="forest"] .help-connectivity-section *,
+html[data-theme="forest"] .help-sms-section *,
+html[data-theme="forest"] .help-final-card *,
+html[data-theme="midnight"] .help-topic-card *,
+html[data-theme="midnight"] .help-guide-card *,
+html[data-theme="midnight"] .help-checklist-card *,
+html[data-theme="midnight"] .help-faq-side-card *,
+html[data-theme="midnight"] .help-contact-use-card *,
+html[data-theme="midnight"] .help-language-option *,
+html[data-theme="midnight"] .help-hero-card *,
+html[data-theme="midnight"] .help-connectivity-section *,
+html[data-theme="midnight"] .help-sms-section *,
+html[data-theme="midnight"] .help-final-card * {
+  mix-blend-mode: normal !important;
+  filter: none !important;
+}
+
+/* =========================================================
+   SOFT GRADIENT BACKGROUNDS
+   Same theme colors — smoother and easier on the eyes
+========================================================= */
+
+
+/* =========================================================
+   FOREST
+========================================================= */
+
+html[data-theme="forest"] body,
+html[data-theme="forest"] .app,
+html[data-theme="forest"] #root {
+  background:
+    radial-gradient(
+      circle at 12% 8%,
+      rgba(34, 197, 94, 0.12),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 88% 18%,
+      rgba(16, 185, 129, 0.10),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 50% 100%,
+      rgba(132, 204, 22, 0.08),
+      transparent 38%
+    ),
+    linear-gradient(
+      135deg,
+      #071a12 0%,
+      #092317 38%,
+      #0b2a1c 68%,
+      #071a12 100%
+    ) !important;
+}
+
+
+/* Large page surfaces */
+html[data-theme="forest"] .farmer-home-page,
+html[data-theme="forest"] .farmer-help-page,
+html[data-theme="forest"] .farmer-book-page,
+html[data-theme="forest"] .farmer-settings-page,
+html[data-theme="forest"] .admin-login-page,
+html[data-theme="forest"] .admin-page {
+  background:
+    radial-gradient(
+      circle at 10% 0%,
+      rgba(74, 222, 128, 0.08),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 90% 20%,
+      rgba(16, 185, 129, 0.07),
+      transparent 30%
+    ),
+    linear-gradient(
+      145deg,
+      #071a12,
+      #0a2418 48%,
+      #071a12
+    ) !important;
+}
+
+
+/* =========================================================
+   MIDNIGHT
+========================================================= */
+
+html[data-theme="midnight"] body,
+html[data-theme="midnight"] .app,
+html[data-theme="midnight"] #root {
+  background:
+    radial-gradient(
+      circle at 10% 5%,
+      rgba(59, 130, 246, 0.12),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 90% 15%,
+      rgba(37, 99, 235, 0.10),
+      transparent 32%
+    ),
+    radial-gradient(
+      circle at 50% 100%,
+      rgba(14, 165, 233, 0.07),
+      transparent 38%
+    ),
+    linear-gradient(
+      135deg,
+      #020617 0%,
+      #06122a 38%,
+      #071a3a 68%,
+      #020617 100%
+    ) !important;
+}
+
+
+/* Large page surfaces */
+html[data-theme="midnight"] .farmer-home-page,
+html[data-theme="midnight"] .farmer-help-page,
+html[data-theme="midnight"] .farmer-book-page,
+html[data-theme="midnight"] .farmer-settings-page,
+html[data-theme="midnight"] .admin-login-page,
+html[data-theme="midnight"] .admin-page {
+  background:
+    radial-gradient(
+      circle at 8% 0%,
+      rgba(59, 130, 246, 0.08),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 92% 20%,
+      rgba(14, 165, 233, 0.07),
+      transparent 30%
+    ),
+    linear-gradient(
+      145deg,
+      #020617,
+      #071a36 48%,
+      #020617
+    ) !important;
+}
+
+/* =========================================================
+   SOFT THEMED MICRO-BACKGROUNDS
+   For badges, pills, labels, icon boxes and text containers
+========================================================= */
+
+
+/* =========================================================
+   FOREST — SOFT GREEN VARIANTS
+========================================================= */
+
+html[data-theme="forest"] .green,
+html[data-theme="forest"] .tone-green,
+html[data-theme="forest"] .booking-feature,
+html[data-theme="forest"] .status-feature,
+html[data-theme="forest"] .help-topic-card.green,
+html[data-theme="forest"] .help-guide-card.green,
+html[data-theme="forest"] .help-checklist-card.green,
+html[data-theme="forest"] .confirm-review-icon.green,
+html[data-theme="forest"] .farmer-settings-section-icon.green {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(22, 163, 74, 0.24),
+      rgba(34, 197, 94, 0.10)
+    ) !important;
+  color: #d9ffe7 !important;
+}
+
+
+/* BLUE */
+
+html[data-theme="forest"] .blue,
+html[data-theme="forest"] .tone-blue,
+html[data-theme="forest"] .help-topic-card.blue,
+html[data-theme="forest"] .help-guide-card.blue,
+html[data-theme="forest"] .help-checklist-card.blue,
+html[data-theme="forest"] .confirm-review-icon.blue,
+html[data-theme="forest"] .farmer-settings-section-icon.blue {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(37, 99, 235, 0.22),
+      rgba(59, 130, 246, 0.08)
+    ) !important;
+  color: #dbeafe !important;
+}
+
+
+/* GOLD / YELLOW */
+
+html[data-theme="forest"] .gold,
+html[data-theme="forest"] .tone-gold,
+html[data-theme="forest"] .help-topic-card.gold,
+html[data-theme="forest"] .help-guide-card.gold,
+html[data-theme="forest"] .help-checklist-card.gold,
+html[data-theme="forest"] .confirm-review-icon.gold,
+html[data-theme="forest"] .farmer-settings-section-icon.gold {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(202, 138, 4, 0.22),
+      rgba(234, 179, 8, 0.08)
+    ) !important;
+  color: #fff4c2 !important;
+}
+
+
+/* ORANGE */
+
+html[data-theme="forest"] .orange,
+html[data-theme="forest"] .tone-orange,
+html[data-theme="forest"] .help-topic-card.orange,
+html[data-theme="forest"] .help-guide-card.orange,
+html[data-theme="forest"] .help-checklist-card.orange,
+html[data-theme="forest"] .confirm-review-icon.orange {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(234, 88, 12, 0.22),
+      rgba(249, 115, 22, 0.08)
+    ) !important;
+  color: #ffe4c7 !important;
+}
+
+
+/* PURPLE */
+
+html[data-theme="forest"] .purple,
+html[data-theme="forest"] .tone-purple,
+html[data-theme="forest"] .help-topic-card.purple,
+html[data-theme="forest"] .help-guide-card.purple,
+html[data-theme="forest"] .help-checklist-card.purple,
+html[data-theme="forest"] .confirm-review-icon.purple {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(124, 58, 237, 0.22),
+      rgba(168, 85, 247, 0.08)
+    ) !important;
+  color: #eee4ff !important;
+}
+
+
+/* TEAL */
+
+html[data-theme="forest"] .teal,
+html[data-theme="forest"] .tone-teal,
+html[data-theme="forest"] .help-topic-card.teal,
+html[data-theme="forest"] .help-guide-card.teal,
+html[data-theme="forest"] .help-checklist-card.teal,
+html[data-theme="forest"] .confirm-review-icon.teal {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(13, 148, 136, 0.24),
+      rgba(20, 184, 166, 0.08)
+    ) !important;
+  color: #d7fffa !important;
+}
+
+
+/* =========================================================
+   MIDNIGHT — COOLER, DEEPER VARIANTS
+========================================================= */
+
+
+/* GREEN */
+
+html[data-theme="midnight"] .green,
+html[data-theme="midnight"] .tone-green,
+html[data-theme="midnight"] .booking-feature,
+html[data-theme="midnight"] .status-feature,
+html[data-theme="midnight"] .help-topic-card.green,
+html[data-theme="midnight"] .help-guide-card.green,
+html[data-theme="midnight"] .help-checklist-card.green,
+html[data-theme="midnight"] .confirm-review-icon.green,
+html[data-theme="midnight"] .farmer-settings-section-icon.green {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(21, 128, 61, 0.30),
+      rgba(34, 197, 94, 0.10)
+    ) !important;
+  color: #d9ffe7 !important;
+}
+
+
+/* BLUE */
+
+html[data-theme="midnight"] .blue,
+html[data-theme="midnight"] .tone-blue,
+html[data-theme="midnight"] .help-topic-card.blue,
+html[data-theme="midnight"] .help-guide-card.blue,
+html[data-theme="midnight"] .help-checklist-card.blue,
+html[data-theme="midnight"] .confirm-review-icon.blue,
+html[data-theme="midnight"] .farmer-settings-section-icon.blue {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(29, 78, 216, 0.30),
+      rgba(59, 130, 246, 0.10)
+    ) !important;
+  color: #dcecff !important;
+}
+
+
+/* GOLD */
+
+html[data-theme="midnight"] .gold,
+html[data-theme="midnight"] .tone-gold,
+html[data-theme="midnight"] .help-topic-card.gold,
+html[data-theme="midnight"] .help-guide-card.gold,
+html[data-theme="midnight"] .help-checklist-card.gold,
+html[data-theme="midnight"] .confirm-review-icon.gold,
+html[data-theme="midnight"] .farmer-settings-section-icon.gold {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(161, 98, 7, 0.28),
+      rgba(202, 138, 4, 0.10)
+    ) !important;
+  color: #fff2bd !important;
+}
+
+
+/* ORANGE */
+
+html[data-theme="midnight"] .orange,
+html[data-theme="midnight"] .tone-orange,
+html[data-theme="midnight"] .help-topic-card.orange,
+html[data-theme="midnight"] .help-guide-card.orange,
+html[data-theme="midnight"] .help-checklist-card.orange,
+html[data-theme="midnight"] .confirm-review-icon.orange {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(194, 65, 12, 0.28),
+      rgba(249, 115, 22, 0.09)
+    ) !important;
+  color: #ffe5cf !important;
+}
+
+
+/* PURPLE */
+
+html[data-theme="midnight"] .purple,
+html[data-theme="midnight"] .tone-purple,
+html[data-theme="midnight"] .help-topic-card.purple,
+html[data-theme="midnight"] .help-guide-card.purple,
+html[data-theme="midnight"] .help-checklist-card.purple,
+html[data-theme="midnight"] .confirm-review-icon.purple {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(109, 40, 217, 0.28),
+      rgba(168, 85, 247, 0.09)
+    ) !important;
+  color: #eee5ff !important;
+}
+
+
+/* TEAL */
+
+html[data-theme="midnight"] .teal,
+html[data-theme="midnight"] .tone-teal,
+html[data-theme="midnight"] .help-topic-card.teal,
+html[data-theme="midnight"] .help-guide-card.teal,
+html[data-theme="midnight"] .help-checklist-card.teal,
+html[data-theme="midnight"] .confirm-review-icon.teal {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(13, 120, 110, 0.30),
+      rgba(20, 184, 166, 0.09)
+    ) !important;
+  color: #d8fffa !important;
+}
+
+
+/* =========================================================
+   KEEP TEXT / ICONS INSIDE THESE BOXES CONTRASTED
+========================================================= */
+
+html[data-theme="forest"] .green *,
+html[data-theme="forest"] .blue *,
+html[data-theme="forest"] .gold *,
+html[data-theme="forest"] .orange *,
+html[data-theme="forest"] .purple *,
+html[data-theme="forest"] .teal *,
+
+html[data-theme="midnight"] .green *,
+html[data-theme="midnight"] .blue *,
+html[data-theme="midnight"] .gold *,
+html[data-theme="midnight"] .orange *,
+html[data-theme="midnight"] .purple *,
+html[data-theme="midnight"] .teal * {
+  color: inherit !important;
+}
+
+
+/* =========================================================
+   NO HARSH WHITE HOVER
+========================================================= */
+
+html[data-theme="forest"] .help-topic-card:hover,
+html[data-theme="forest"] .help-guide-card:hover,
+html[data-theme="forest"] .help-checklist-card:hover,
+html[data-theme="midnight"] .help-topic-card:hover,
+html[data-theme="midnight"] .help-guide-card:hover,
+html[data-theme="midnight"] .help-checklist-card:hover {
+  color: inherit !important;
+}
