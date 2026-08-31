@@ -113823,3 +113823,788 @@ body[data-theme="dark"]
   background: #182b38 !important;
   color: #f4f9fc !important;
 }
+
+/* =========================================================
+   GLOBAL DARK THEME — HIGH CONTRAST PALE-SURFACE FIX
+   ========================================================= */
+
+
+/* =========================================================
+   DARK THEME ROOT
+   ========================================================= */
+
+html.dark,
+body.dark,
+html[data-theme="dark"],
+body[data-theme="dark"] {
+  --dark-bg: #0b141c;
+  --dark-surface: #111e28;
+  --dark-surface-2: #162a36;
+  --dark-surface-3: #1b3341;
+
+  --dark-border: #3c5d70;
+  --dark-border-strong: #527389;
+
+  --dark-text: #f7fbff;
+  --dark-text-soft: #d8e5ed;
+  --dark-text-muted: #aec1cc;
+
+  --dark-green: #35d58a;
+  --dark-green-soft: #173d31;
+
+  --dark-blue: #55bfff;
+  --dark-blue-soft: #17364a;
+
+  --dark-yellow: #ffc857;
+  --dark-yellow-soft: #463716;
+
+  --dark-orange: #ff9f43;
+  --dark-orange-soft: #4a3018;
+
+  --dark-purple: #bc8cff;
+  --dark-purple-soft: #33254b;
+
+  --dark-teal: #4dd9c5;
+  --dark-teal-soft: #173b39;
+}
+
+
+/* =========================================================
+   1. PALE HERO / HEADER SURFACES
+   ========================================================= */
+
+html.dark .farmer-settings-hero,
+body.dark .farmer-settings-hero,
+html[data-theme="dark"] .farmer-settings-hero,
+body[data-theme="dark"] .farmer-settings-hero,
+
+html.dark .help-hero,
+body.dark .help-hero,
+html[data-theme="dark"] .help-hero,
+body[data-theme="dark"] .help-hero,
+
+html.dark .help-final-card,
+body.dark .help-final-card,
+html[data-theme="dark"] .help-final-card,
+body[data-theme="dark"] .help-final-card {
+  background: var(--dark-surface) !important;
+  border-color: var(--dark-border) !important;
+  color: var(--dark-text) !important;
+}
+
+
+/* Hero text */
+
+html.dark .farmer-settings-hero *,
+body.dark .farmer-settings-hero *,
+html[data-theme="dark"] .farmer-settings-hero *,
+body[data-theme="dark"] .farmer-settings-hero *,
+
+html.dark .help-hero *,
+body.dark .help-hero *,
+html[data-theme="dark"] .help-hero *,
+body[data-theme="dark"] .help-hero *,
+
+html.dark .help-final-card *,
+body.dark .help-final-card *,
+html[data-theme="dark"] .help-final-card *,
+body[data-theme="dark"] .help-final-card * {
+  color: var(--dark-text) !important;
+}
+
+
+/* Hero secondary paragraph text */
+
+html.dark .farmer-settings-hero p,
+body.dark .farmer-settings-hero p,
+html[data-theme="dark"] .farmer-settings-hero p,
+body[data-theme="dark"] .farmer-settings-hero p,
+
+html.dark .help-hero p,
+body.dark .help-hero p,
+html[data-theme="dark"] .help-hero p,
+body[data-theme="dark"] .help-hero p {
+  color: var(--dark-text-soft) !important;
+}
+
+
+/* =========================================================
+   2. PALE GREEN ICON BOXES
+   ========================================================= */
+
+html.dark .farmer-settings-hero-icon,
+body.dark .farmer-settings-hero-icon,
+html[data-theme="dark"] .farmer-settings-hero-icon,
+body[data-theme="dark"] .farmer-settings-hero-icon,
+
+html.dark .farmer-settings-section-icon,
+body.dark .farmer-settings-section-icon,
+html[data-theme="dark"] .farmer-settings-section-icon,
+body[data-theme="dark"] .farmer-settings-section-icon,
+
+html.dark .help-hero-card-icon,
+body.dark .help-hero-card-icon,
+html[data-theme="dark"] .help-hero-card-icon,
+body[data-theme="dark"] .help-hero-card-icon,
+
+html.dark .help-center-icon,
+body.dark .help-center-icon,
+html[data-theme="dark"] .help-center-icon,
+body[data-theme="dark"] .help-center-icon,
+
+html.dark .admin-login-lock,
+body.dark .admin-login-lock,
+html[data-theme="dark"] .admin-login-lock,
+body[data-theme="dark"] .admin-login-lock {
+  background: var(--dark-green-soft) !important;
+  border-color: #3f8b6e !important;
+  color: var(--dark-green) !important;
+}
+
+
+/* Make SVGs visible */
+
+html.dark .farmer-settings-hero-icon svg,
+body.dark .farmer-settings-hero-icon svg,
+html[data-theme="dark"] .farmer-settings-hero-icon svg,
+body[data-theme="dark"] .farmer-settings-hero-icon svg,
+
+html.dark .farmer-settings-section-icon svg,
+body.dark .farmer-settings-section-icon svg,
+html[data-theme="dark"] .farmer-settings-section-icon svg,
+body[data-theme="dark"] .farmer-settings-section-icon svg,
+
+html.dark .help-hero-card-icon svg,
+body.dark .help-hero-card-icon svg,
+html[data-theme="dark"] .help-hero-card-icon svg,
+body[data-theme="dark"] .help-hero-card-icon svg {
+  color: var(--dark-green) !important;
+  stroke: var(--dark-green) !important;
+}
+
+
+/* =========================================================
+   3. ALL FARMER SETTINGS CARDS
+   ========================================================= */
+
+html.dark .farmer-settings-card,
+body.dark .farmer-settings-card,
+html[data-theme="dark"] .farmer-settings-card,
+body[data-theme="dark"] .farmer-settings-card {
+  background: var(--dark-surface) !important;
+  border-color: var(--dark-border) !important;
+  color: var(--dark-text) !important;
+}
+
+
+html.dark .farmer-settings-card *,
+body.dark .farmer-settings-card *,
+html[data-theme="dark"] .farmer-settings-card *,
+body[data-theme="dark"] .farmer-settings-card * {
+  color: var(--dark-text-soft) !important;
+}
+
+
+html.dark .farmer-settings-card h1,
+html.dark .farmer-settings-card h2,
+html.dark .farmer-settings-card h3,
+body.dark .farmer-settings-card h1,
+body.dark .farmer-settings-card h2,
+body.dark .farmer-settings-card h3,
+html[data-theme="dark"] .farmer-settings-card h1,
+html[data-theme="dark"] .farmer-settings-card h2,
+html[data-theme="dark"] .farmer-settings-card h3,
+body[data-theme="dark"] .farmer-settings-card h1,
+body[data-theme="dark"] .farmer-settings-card h2,
+body[data-theme="dark"] .farmer-settings-card h3 {
+  color: var(--dark-text) !important;
+}
+
+
+/* =========================================================
+   4. FARMER SETTINGS INPUTS / SELECTS
+   ========================================================= */
+
+html.dark .farmer-settings-field input,
+html.dark .farmer-settings-field select,
+body.dark .farmer-settings-field input,
+body.dark .farmer-settings-field select,
+html[data-theme="dark"] .farmer-settings-field input,
+html[data-theme="dark"] .farmer-settings-field select,
+body[data-theme="dark"] .farmer-settings-field input,
+body[data-theme="dark"] .farmer-settings-field select {
+  background: #10202c !important;
+  color: var(--dark-text) !important;
+  border-color: var(--dark-border-strong) !important;
+}
+
+
+/* Input placeholder */
+
+html.dark .farmer-settings-field input::placeholder,
+body.dark .farmer-settings-field input::placeholder,
+html[data-theme="dark"] .farmer-settings-field input::placeholder,
+body[data-theme="dark"] .farmer-settings-field input::placeholder {
+  color: #9fb4c1 !important;
+  opacity: 1 !important;
+}
+
+
+/* Input labels */
+
+html.dark .farmer-settings-label,
+body.dark .farmer-settings-label,
+html[data-theme="dark"] .farmer-settings-label,
+body[data-theme="dark"] .farmer-settings-label {
+  color: var(--dark-text) !important;
+}
+
+
+/* =========================================================
+   5. PALE BLUE / PALE GREEN BUTTONS
+   ========================================================= */
+
+html.dark .farmer-settings-secondary,
+body.dark .farmer-settings-secondary,
+html[data-theme="dark"] .farmer-settings-secondary,
+body[data-theme="dark"] .farmer-settings-secondary,
+
+html.dark .help-secondary-action,
+body.dark .help-secondary-action,
+html[data-theme="dark"] .help-secondary-action,
+body[data-theme="dark"] .help-secondary-action,
+
+html.dark .admin-login-submit,
+body.dark .admin-login-submit,
+html[data-theme="dark"] .admin-login-submit,
+body[data-theme="dark"] .admin-login-submit {
+  background: var(--dark-surface-2) !important;
+  border-color: var(--dark-border-strong) !important;
+  color: var(--dark-text) !important;
+}
+
+
+/* Button contents */
+
+html.dark .farmer-settings-secondary *,
+body.dark .farmer-settings-secondary *,
+html[data-theme="dark"] .farmer-settings-secondary *,
+body[data-theme="dark"] .farmer-settings-secondary *,
+
+html.dark .help-secondary-action *,
+body.dark .help-secondary-action *,
+html[data-theme="dark"] .help-secondary-action *,
+body[data-theme="dark"] .help-secondary-action *,
+
+html.dark .admin-login-submit *,
+body.dark .admin-login-submit *,
+html[data-theme="dark"] .admin-login-submit *,
+body[data-theme="dark"] .admin-login-submit * {
+  color: var(--dark-text) !important;
+}
+
+
+/* Hover */
+
+html.dark .farmer-settings-secondary:hover,
+body.dark .farmer-settings-secondary:hover,
+html[data-theme="dark"] .farmer-settings-secondary:hover,
+body[data-theme="dark"] .farmer-settings-secondary:hover,
+
+html.dark .help-secondary-action:hover,
+body.dark .help-secondary-action:hover,
+html[data-theme="dark"] .help-secondary-action:hover,
+body[data-theme="dark"] .help-secondary-action:hover,
+
+html.dark .admin-login-submit:hover,
+body.dark .admin-login-submit:hover,
+html[data-theme="dark"] .admin-login-submit:hover,
+body[data-theme="dark"] .admin-login-submit:hover {
+  background: #204155 !important;
+  border-color: var(--dark-blue) !important;
+  color: #ffffff !important;
+}
+
+
+/* =========================================================
+   6. FARMER SETTINGS PREFERENCE ROWS
+   ========================================================= */
+
+html.dark .farmer-settings-preference,
+body.dark .farmer-settings-preference,
+html[data-theme="dark"] .farmer-settings-preference,
+body[data-theme="dark"] .farmer-settings-preference {
+  background: #132530 !important;
+  border-color: var(--dark-border) !important;
+  color: var(--dark-text) !important;
+}
+
+
+html.dark .farmer-settings-preference *,
+body.dark .farmer-settings-preference *,
+html[data-theme="dark"] .farmer-settings-preference *,
+body[data-theme="dark"] .farmer-settings-preference * {
+  color: var(--dark-text-soft) !important;
+}
+
+
+html.dark .farmer-settings-preference-copy strong,
+body.dark .farmer-settings-preference-copy strong,
+html[data-theme="dark"] .farmer-settings-preference-copy strong,
+body[data-theme="dark"] .farmer-settings-preference-copy strong {
+  color: #ffffff !important;
+}
+
+
+html.dark .farmer-settings-preference-copy span,
+body.dark .farmer-settings-preference-copy span,
+html[data-theme="dark"] .farmer-settings-preference-copy span,
+body[data-theme="dark"] .farmer-settings-preference-copy span {
+  color: var(--dark-text-muted) !important;
+}
+
+
+/* =========================================================
+   7. TOGGLE ICON / PREFERENCE ICON
+   ========================================================= */
+
+html.dark .farmer-settings-preference-icon,
+body.dark .farmer-settings-preference-icon,
+html[data-theme="dark"] .farmer-settings-preference-icon,
+body[data-theme="dark"] .farmer-settings-preference-icon {
+  background: var(--dark-blue-soft) !important;
+  border-color: #397a9e !important;
+  color: var(--dark-blue) !important;
+}
+
+
+html.dark .farmer-settings-preference-icon svg,
+body.dark .farmer-settings-preference-icon svg,
+html[data-theme="dark"] .farmer-settings-preference-icon svg,
+body[data-theme="dark"] .farmer-settings-preference-icon svg {
+  color: var(--dark-blue) !important;
+  stroke: var(--dark-blue) !important;
+}
+
+
+/* =========================================================
+   8. HELP CHECKLIST / WHITE-LOOKING ROWS
+   ========================================================= */
+
+html.dark .help-check-row,
+body.dark .help-check-row,
+html[data-theme="dark"] .help-check-row,
+body[data-theme="dark"] .help-check-row,
+
+html.dark .help-contact-reasons > div,
+body.dark .help-contact-reasons > div,
+html[data-theme="dark"] .help-contact-reasons > div,
+body[data-theme="dark"] .help-contact-reasons > div,
+
+html.dark .help-guide-item,
+body.dark .help-guide-item,
+html[data-theme="dark"] .help-guide-item,
+body[data-theme="dark"] .help-guide-item {
+  background: #142833 !important;
+  border-color: var(--dark-border) !important;
+  color: var(--dark-text) !important;
+}
+
+
+html.dark .help-check-row *,
+body.dark .help-check-row *,
+html[data-theme="dark"] .help-check-row *,
+body[data-theme="dark"] .help-check-row *,
+
+html.dark .help-contact-reasons > div *,
+body.dark .help-contact-reasons > div *,
+html[data-theme="dark"] .help-contact-reasons > div *,
+body[data-theme="dark"] .help-contact-reasons > div *,
+
+html.dark .help-guide-item *,
+body.dark .help-guide-item *,
+html[data-theme="dark"] .help-guide-item *,
+body[data-theme="dark"] .help-guide-item * {
+  color: var(--dark-text) !important;
+}
+
+
+/* =========================================================
+   9. HELP TOPIC CARDS
+   ========================================================= */
+
+html.dark .help-topic-card,
+body.dark .help-topic-card,
+html[data-theme="dark"] .help-topic-card,
+body[data-theme="dark"] .help-topic-card {
+  background: var(--dark-surface) !important;
+  border-color: var(--dark-border) !important;
+  color: var(--dark-text) !important;
+}
+
+
+html.dark .help-topic-card *,
+body.dark .help-topic-card *,
+html[data-theme="dark"] .help-topic-card *,
+body[data-theme="dark"] .help-topic-card * {
+  color: var(--dark-text) !important;
+}
+
+
+/* =========================================================
+   10. HELP CENTER / CONTACT CARDS
+   ========================================================= */
+
+html.dark .help-center-card,
+body.dark .help-center-card,
+html[data-theme="dark"] .help-center-card,
+body[data-theme="dark"] .help-center-card,
+
+html.dark .help-contact-use-card,
+body.dark .help-contact-use-card,
+html[data-theme="dark"] .help-contact-use-card,
+body[data-theme="dark"] .help-contact-use-card,
+
+html.dark .help-faq-side-card,
+body.dark .help-faq-side-card,
+html[data-theme="dark"] .help-faq-side-card,
+body[data-theme="dark"] .help-faq-side-card {
+  background: var(--dark-surface) !important;
+  border-color: var(--dark-border) !important;
+  color: var(--dark-text) !important;
+}
+
+
+html.dark .help-center-card *,
+body.dark .help-center-card *,
+html[data-theme="dark"] .help-center-card *,
+body[data-theme="dark"] .help-center-card *,
+
+html.dark .help-contact-use-card *,
+body.dark .help-contact-use-card *,
+html[data-theme="dark"] .help-contact-use-card *,
+body[data-theme="dark"] .help-contact-use-card *,
+
+html.dark .help-faq-side-card *,
+body.dark .help-faq-side-card *,
+html[data-theme="dark"] .help-faq-side-card *,
+body[data-theme="dark"] .help-faq-side-card * {
+  color: var(--dark-text-soft) !important;
+}
+
+
+/* Headings remain bright */
+
+html.dark .help-center-card h1,
+html.dark .help-center-card h2,
+html.dark .help-center-card h3,
+body.dark .help-center-card h1,
+body.dark .help-center-card h2,
+body.dark .help-center-card h3,
+html[data-theme="dark"] .help-center-card h1,
+html[data-theme="dark"] .help-center-card h2,
+html[data-theme="dark"] .help-center-card h3,
+body[data-theme="dark"] .help-center-card h1,
+body[data-theme="dark"] .help-center-card h2,
+body[data-theme="dark"] .help-center-card h3 {
+  color: #ffffff !important;
+}
+
+
+/* =========================================================
+   11. EMERGENCY / NOTICE BOXES
+   ========================================================= */
+
+html.dark .help-emergency-note,
+body.dark .help-emergency-note,
+html[data-theme="dark"] .help-emergency-note,
+body[data-theme="dark"] .help-emergency-note,
+
+html.dark .farmer-settings-error,
+body.dark .farmer-settings-error,
+html[data-theme="dark"] .farmer-settings-error,
+body[data-theme="dark"] .farmer-settings-error {
+  background: #3b2818 !important;
+  border-color: #a66a2d !important;
+  color: #fff4df !important;
+}
+
+
+html.dark .help-emergency-note *,
+body.dark .help-emergency-note *,
+html[data-theme="dark"] .help-emergency-note *,
+body[data-theme="dark"] .help-emergency-note *,
+
+html.dark .farmer-settings-error *,
+body.dark .farmer-settings-error *,
+html[data-theme="dark"] .farmer-settings-error *,
+body[data-theme="dark"] .farmer-settings-error * {
+  color: #fff4df !important;
+}
+
+
+/* =========================================================
+   12. SMS / CONNECTIVITY SURFACES
+   ========================================================= */
+
+html.dark .help-sms-section,
+body.dark .help-sms-section,
+html[data-theme="dark"] .help-sms-section,
+body[data-theme="dark"] .help-sms-section,
+
+html.dark .help-connectivity-section,
+body.dark .help-connectivity-section,
+html[data-theme="dark"] .help-connectivity-section,
+body[data-theme="dark"] .help-connectivity-section {
+  background: var(--dark-surface) !important;
+  border-color: var(--dark-border) !important;
+  color: var(--dark-text) !important;
+}
+
+
+html.dark .help-sms-section *,
+body.dark .help-sms-section *,
+html[data-theme="dark"] .help-sms-section *,
+body[data-theme="dark"] .help-sms-section *,
+
+html.dark .help-connectivity-section *,
+body.dark .help-connectivity-section *,
+html[data-theme="dark"] .help-connectivity-section *,
+body[data-theme="dark"] .help-connectivity-section * {
+  color: var(--dark-text-soft) !important;
+}
+
+
+/* =========================================================
+   13. ADMIN LOGIN — PALE ELEMENTS
+   ========================================================= */
+
+html.dark .admin-login-feature,
+body.dark .admin-login-feature,
+html[data-theme="dark"] .admin-login-feature,
+body[data-theme="dark"] .admin-login-feature,
+
+html.dark .admin-demo-box,
+body.dark .admin-demo-box,
+html[data-theme="dark"] .admin-demo-box,
+body[data-theme="dark"] .admin-demo-box,
+
+html.dark .admin-security-row,
+body.dark .admin-security-row,
+html[data-theme="dark"] .admin-security-row,
+body[data-theme="dark"] .admin-security-row {
+  background: var(--dark-surface-2) !important;
+  border-color: var(--dark-border) !important;
+  color: var(--dark-text) !important;
+}
+
+
+html.dark .admin-login-feature *,
+body.dark .admin-login-feature *,
+html[data-theme="dark"] .admin-login-feature *,
+body[data-theme="dark"] .admin-login-feature *,
+
+html.dark .admin-demo-box *,
+body.dark .admin-demo-box *,
+html[data-theme="dark"] .admin-demo-box *,
+body[data-theme="dark"] .admin-demo-box *,
+
+html.dark .admin-security-row *,
+body.dark .admin-security-row *,
+html[data-theme="dark"] .admin-security-row * {
+  color: var(--dark-text-soft) !important;
+}
+
+
+/* =========================================================
+   14. ADMIN DEMO / ICON BOX
+   ========================================================= */
+
+html.dark .admin-demo-icon,
+body.dark .admin-demo-icon,
+html[data-theme="dark"] .admin-demo-icon,
+body[data-theme="dark"] .admin-demo-icon {
+  background: var(--dark-blue-soft) !important;
+  border-color: #397a9e !important;
+  color: var(--dark-blue) !important;
+}
+
+
+html.dark .admin-demo-icon svg,
+body.dark .admin-demo-icon svg,
+html[data-theme="dark"] .admin-demo-icon svg,
+body[data-theme="dark"] .admin-demo-icon svg {
+  color: var(--dark-blue) !important;
+  stroke: var(--dark-blue) !important;
+}
+
+
+/* =========================================================
+   15. GENERIC VERY-PALE SURFACES
+   =========================================================
+   These catch components that use common pale color values
+   rather than a unique class.
+   ========================================================= */
+
+html.dark
+  [style*="#f5fbff"],
+html.dark
+  [style*="#f3faff"],
+html.dark
+  [style*="#eef8fb"],
+html.dark
+  [style*="#eaf6fa"],
+html.dark
+  [style*="#edf8f2"],
+html.dark
+  [style*="#effaf5"],
+html.dark
+  [style*="#f1faf7"],
+body.dark
+  [style*="#f5fbff"],
+body.dark
+  [style*="#f3faff"],
+body.dark
+  [style*="#eef8fb"],
+body.dark
+  [style*="#eaf6fa"],
+body.dark
+  [style*="#edf8f2"],
+body.dark
+  [style*="#effaf5"],
+body.dark
+  [style*="#f1faf7"],
+html[data-theme="dark"]
+  [style*="#f5fbff"],
+html[data-theme="dark"]
+  [style*="#f3faff"],
+html[data-theme="dark"]
+  [style*="#eef8fb"],
+html[data-theme="dark"]
+  [style*="#eaf6fa"],
+html[data-theme="dark"]
+  [style*="#edf8f2"],
+html[data-theme="dark"]
+  [style*="#effaf5"],
+html[data-theme="dark"]
+  [style*="#f1faf7"],
+body[data-theme="dark"]
+  [style*="#f5fbff"],
+body[data-theme="dark"]
+  [style*="#f3faff"],
+body[data-theme="dark"]
+  [style*="#eef8fb"],
+body[data-theme="dark"]
+  [style*="#eaf6fa"],
+body[data-theme="dark"]
+  [style*="#edf8f2"],
+body[data-theme="dark"]
+  [style*="#effaf5"],
+body[data-theme="dark"]
+  [style*="#f1faf7"] {
+  background: var(--dark-surface-2) !important;
+  color: var(--dark-text) !important;
+}
+
+
+/* =========================================================
+   16. PREVENT WHITE HOVER FLASH
+   ========================================================= */
+
+html.dark button:hover,
+body.dark button:hover,
+html[data-theme="dark"] button:hover,
+body[data-theme="dark"] button:hover {
+  color: inherit;
+}
+
+
+html.dark
+  .farmer-settings-secondary:hover *,
+html.dark
+  .help-secondary-action:hover *,
+html.dark
+  .admin-login-submit:hover *,
+body.dark
+  .farmer-settings-secondary:hover *,
+body.dark
+  .help-secondary-action:hover *,
+body.dark
+  .admin-login-submit:hover *,
+html[data-theme="dark"]
+  .farmer-settings-secondary:hover *,
+html[data-theme="dark"]
+  .help-secondary-action:hover *,
+html[data-theme="dark"]
+  .admin-login-submit:hover *,
+body[data-theme="dark"]
+  .farmer-settings-secondary:hover *,
+body[data-theme="dark"]
+  .help-secondary-action:hover *,
+body[data-theme="dark"]
+  .admin-login-submit:hover * {
+  color: #ffffff !important;
+}
+
+
+/* =========================================================
+   17. UNIVERSAL TEXT CONTRAST INSIDE FIXED DARK SURFACES
+   ========================================================= */
+
+html.dark .farmer-settings-hero strong,
+html.dark .farmer-settings-hero h1,
+html.dark .farmer-settings-hero h2,
+html.dark .farmer-settings-hero h3,
+
+html.dark .help-hero strong,
+html.dark .help-hero h1,
+html.dark .help-hero h2,
+html.dark .help-hero h3,
+
+html.dark .admin-login-card h1,
+html.dark .admin-login-card h2,
+html.dark .admin-login-card h3,
+
+body.dark .farmer-settings-hero strong,
+body.dark .farmer-settings-hero h1,
+body.dark .farmer-settings-hero h2,
+body.dark .farmer-settings-hero h3,
+
+body.dark .help-hero strong,
+body.dark .help-hero h1,
+body.dark .help-hero h2,
+body.dark .help-hero h3,
+
+body.dark .admin-login-card h1,
+body.dark .admin-login-card h2,
+body.dark .admin-login-card h3,
+
+html[data-theme="dark"] .farmer-settings-hero strong,
+html[data-theme="dark"] .farmer-settings-hero h1,
+html[data-theme="dark"] .farmer-settings-hero h2,
+html[data-theme="dark"] .farmer-settings-hero h3,
+
+html[data-theme="dark"] .help-hero strong,
+html[data-theme="dark"] .help-hero h1,
+html[data-theme="dark"] .help-hero h2,
+html[data-theme="dark"] .help-hero h3,
+
+html[data-theme="dark"] .admin-login-card h1,
+html[data-theme="dark"] .admin-login-card h2,
+html[data-theme="dark"] .admin-login-card h3,
+
+body[data-theme="dark"] .farmer-settings-hero strong,
+body[data-theme="dark"] .farmer-settings-hero h1,
+body[data-theme="dark"] .farmer-settings-hero h2,
+body[data-theme="dark"] .farmer-settings-hero h3,
+
+body[data-theme="dark"] .help-hero strong,
+body[data-theme="dark"] .help-hero h1,
+body[data-theme="dark"] .help-hero h2,
+body[data-theme="dark"] .help-hero h3,
+
+body[data-theme="dark"] .admin-login-card h1,
+body[data-theme="dark"] .admin-login-card h2,
+body[data-theme="dark"] .admin-login-card h3 {
+  color: #ffffff !important;
+}
