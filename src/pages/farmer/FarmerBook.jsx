@@ -1,4 +1,3 @@
-
 import {
   useEffect,
   useMemo,
@@ -954,6 +953,24 @@ function FarmerBook() {
     );
 
 
+  const [
+    availabilityCheckedAt,
+    setAvailabilityCheckedAt,
+  ] =
+    useState(
+      null
+    );
+
+
+  const [
+    bookingConfirmed,
+    setBookingConfirmed,
+  ] =
+    useState(
+      false
+    );
+
+
   /*
    * ========================================================
    * CROPS
@@ -998,10 +1015,6 @@ function FarmerBook() {
    * ========================================================
    * ACTIVE CENTERS
    * ========================================================
-   *
-   * IMPORTANT:
-   * Farmers now use the database centers directly.
-   * No hardcoded locationData center list is used here.
    */
 
   const availableCenters =
@@ -1673,6 +1686,45 @@ function FarmerBook() {
         return availabilityTemplate.map(
           slot => {
 
+            const past =
+              isSlotInPast(
+                slot,
+                selectedDate
+              );
+
+
+            if (
+              past
+            ) {
+
+              const pastCapacity =
+                getCenterCapacity(
+                  selectedCenter,
+                  settings
+                );
+
+
+              return {
+
+                ...slot,
+
+                capacity:
+                  pastCapacity,
+
+                booked:
+                  pastCapacity,
+
+                remaining:
+                  0,
+
+                loadClass:
+                  "past",
+
+              };
+
+            }
+
+
             const booked =
               getBookedCount(
                 bookings,
@@ -1796,14 +1848,26 @@ function FarmerBook() {
         }
 
 
-        return (
+        const record =
           availability.find(
             slot =>
               slot.id ===
               selectedSlot.id
           ) ||
-          null
-        );
+          null;
+
+
+        if (
+          record?.loadClass ===
+          "past"
+        ) {
+
+          return null;
+
+        }
+
+
+        return record;
 
       },
       [
@@ -1989,6 +2053,10 @@ function FarmerBook() {
     );
 
     setSelectedSlot(
+      null
+    );
+
+    setAvailabilityCheckedAt(
       null
     );
 
@@ -2178,6 +2246,10 @@ function FarmerBook() {
     );
 
     setSelectedSlot(
+      null
+    );
+
+    setAvailabilityCheckedAt(
       null
     );
 
@@ -2381,6 +2453,18 @@ function FarmerBook() {
       const slot of slots
     ) {
 
+      if (
+        isSlotInPast(
+          slot,
+          selectedDate
+        )
+      ) {
+
+        continue;
+
+      }
+
+
       const booked =
         getBookedCount(
           bookingRows,
@@ -2473,10 +2557,6 @@ function FarmerBook() {
         await refreshBookings();
 
 
-      /*
-       * First try the farmer's selected center.
-       */
-
       const selectedAvailability =
         getFreeSlotForCenter(
           selectedCenter,
@@ -2492,15 +2572,14 @@ function FarmerBook() {
           true
         );
 
+        setAvailabilityCheckedAt(
+          new Date()
+        );
+
         return;
 
       }
 
-
-      /*
-       * Selected center has no free slot.
-       * Search every other active center.
-       */
 
       const alternatives =
         availableCenters.filter(
@@ -2548,6 +2627,11 @@ function FarmerBook() {
         );
 
 
+        setAvailabilityCheckedAt(
+          new Date()
+        );
+
+
         setSelectedSlot(
           null
         );
@@ -2567,12 +2651,13 @@ function FarmerBook() {
       }
 
 
-      /*
-       * No active center has an opening.
-       */
-
       setAvailable(
         false
+      );
+
+
+      setAvailabilityCheckedAt(
+        new Date()
       );
 
 
@@ -2624,7 +2709,9 @@ function FarmerBook() {
       Number(
         slot.remaining
       ) <=
-      0
+      0 ||
+      slot.loadClass ===
+      "past"
     ) {
 
       return;
@@ -2722,12 +2809,12 @@ function FarmerBook() {
       ""
     );
 
+    setBookingConfirmed(
+      false
+    );
+
 
     try {
-
-      /*
-       * Verify farmer.
-       */
 
       const farmerResponse =
         await fetch(
@@ -2784,10 +2871,6 @@ function FarmerBook() {
       }
 
 
-      /*
-       * Refresh bookings one final time.
-       */
-
       const latestBookings =
         await refreshBookings();
 
@@ -2813,11 +2896,6 @@ function FarmerBook() {
         matchingBookings >=
         capacity
       ) {
-
-        /*
-         * Current slot is full.
-         * Search another center automatically.
-         */
 
         const alternative =
           availableCenters
@@ -2850,6 +2928,11 @@ function FarmerBook() {
 
         setSelectedSlot(
           null
+        );
+
+
+        setAvailabilityCheckedAt(
+          new Date()
         );
 
 
@@ -2891,10 +2974,6 @@ function FarmerBook() {
 
       }
 
-
-      /*
-       * Generate temporary client-side identifiers.
-       */
 
       const bookingId =
         `B${Date.now()}${Math.floor(
@@ -3042,10 +3121,6 @@ function FarmerBook() {
       }
 
 
-      /*
-       * Synchronize local prototype state.
-       */
-
       try {
 
         syncBookingToPrototype(
@@ -3140,10 +3215,6 @@ function FarmerBook() {
       }
 
 
-      /*
-       * Verify exact backend booking.
-       */
-
       const verifyResponse =
         await fetch(
           `${API_URL}/bookings/${encodeURIComponent(
@@ -3179,6 +3250,20 @@ function FarmerBook() {
         );
 
       }
+
+
+      setBookingConfirmed(
+        true
+      );
+
+
+      await new Promise(
+        resolve =>
+          setTimeout(
+            resolve,
+            900
+          )
+      );
 
 
       navigate(
@@ -3226,6 +3311,74 @@ function FarmerBook() {
   return (
 
     <div className="farmer-book-page">
+
+      {
+        bookingConfirmed && (
+
+          <div className="booking-confirmed-overlay">
+
+            <div className="booking-confirmed-card">
+
+              <div className="booking-confirmed-icon">
+
+                <CheckCircle2
+                  size={30}
+                />
+
+              </div>
+
+
+              <span className="page-eyebrow">
+
+                {
+                  language === "hi"
+                    ? "बुकिंग सफल"
+                    : language === "te"
+                      ? "బుకింగ్ విజయవంతం"
+                      : "BOOKING CONFIRMED"
+                }
+
+              </span>
+
+
+              <h2>
+
+                {
+                  language === "hi"
+                    ? "आपकी बुकिंग सफलतापूर्वक सेव हो गई"
+                    : language === "te"
+                      ? "మీ బుకింగ్ విజయవంతంగా సేవ్ చేయబడింది"
+                      : "Your booking is confirmed"
+                }
+
+              </h2>
+
+
+              <p>
+
+                {
+                  language === "hi"
+                    ? "आपका डिजिटल टोकन तैयार किया जा रहा है..."
+                    : language === "te"
+                      ? "మీ డిజిటల్ టోకెన్ సిద్ధం అవుతోంది..."
+                      : "Your digital token is being prepared..."
+                }
+
+              </p>
+
+
+              <LoaderCircle
+                size={19}
+                className="loading-spin"
+              />
+
+            </div>
+
+          </div>
+
+        )
+      }
+
 
       <Header />
 
@@ -4909,6 +5062,65 @@ function FarmerBook() {
 
                 </div>
 
+
+                {
+                  availabilityCheckedAt && (
+
+                    <div className="availability-overview-item">
+
+                      <div className="availability-overview-icon blue">
+
+                        <Clock3
+                          size={18}
+                        />
+
+                      </div>
+
+
+                      <div>
+
+                        <span>
+
+                          {
+                            language === "hi"
+                              ? "अंतिम जांच"
+                              : language === "te"
+                                ? "చివరి తనిఖీ"
+                                : "Last checked"
+                          }
+
+                        </span>
+
+
+                        <strong>
+
+                          {
+                            availabilityCheckedAt.toLocaleTimeString(
+                              language === "hi"
+                                ? "hi-IN"
+                                : language === "te"
+                                  ? "te-IN"
+                                  : "en-IN",
+                              {
+                                hour:
+                                  "numeric",
+
+                                minute:
+                                  "2-digit",
+
+                              }
+                            )
+                          }
+
+                        </strong>
+
+                      </div>
+
+                    </div>
+
+                  )
+                }
+
               </div>
 
 
@@ -4951,9 +5163,15 @@ function FarmerBook() {
                         slot.id;
 
 
+                      const isPast =
+                        slot.loadClass ===
+                        "past";
+
+
                       const isFull =
                         slot.remaining <=
-                        0;
+                          0 ||
+                        isPast;
 
 
                       let availabilityLabel =
@@ -4961,7 +5179,19 @@ function FarmerBook() {
 
 
                       if (
-                        isFull
+                        isPast
+                      ) {
+
+                        availabilityLabel =
+                          language === "hi"
+                            ? "समय निकल चुका"
+                            : language === "te"
+                              ? "సమయం ముగిసింది"
+                              : "Past";
+
+                      } else if (
+                        slot.remaining ===
+                        0
                       ) {
 
                         availabilityLabel =
@@ -5010,6 +5240,7 @@ function FarmerBook() {
                             }`
                           }
                           onClick={() =>
+                            !isPast &&
                             handleSelectSlot(
                               slot
                             )
@@ -5059,15 +5290,18 @@ function FarmerBook() {
 
                             <span
                               className={
-                                isFull
+                                isPast
                                   ? "slot-full-label"
-                                  : slot.loadClass ===
-                                    "busy"
-                                    ? "slot-busy-label"
+                                  : slot.remaining ===
+                                    0
+                                    ? "slot-full-label"
                                     : slot.loadClass ===
-                                      "limited"
-                                      ? "slot-limited-label"
-                                      : "slot-normal-label"
+                                      "busy"
+                                      ? "slot-busy-label"
+                                      : slot.loadClass ===
+                                        "limited"
+                                        ? "slot-limited-label"
+                                        : "slot-normal-label"
                               }
                             >
 
@@ -5085,20 +5319,22 @@ function FarmerBook() {
                             <div
                               style={{
                                 width:
-                                  `${Math.min(
-                                    100,
-                                    (
-                                      Math.min(
-                                        slot.booked,
-                                        slot.capacity
-                                      ) /
-                                      Math.max(
-                                        slot.capacity,
-                                        1
-                                      )
-                                    ) *
-                                    100
-                                  )}%`,
+                                  `${isPast
+                                    ? 100
+                                    : Math.min(
+                                        100,
+                                        (
+                                          Math.min(
+                                            slot.booked,
+                                            slot.capacity
+                                          ) /
+                                          Math.max(
+                                            slot.capacity,
+                                            1
+                                          )
+                                        ) *
+                                        100
+                                      )}%`,
                               }}
                             />
 
@@ -5110,15 +5346,23 @@ function FarmerBook() {
                             <span>
 
                               {
-                                isFull
-                                  ? copy.noPlaces
-                                  : `${Math.max(
-                                      0,
-                                      Math.min(
-                                        slot.remaining,
-                                        slot.capacity
-                                      )
-                                    )} ${copy.placesRemaining}`
+                                isPast
+                                  ? (
+                                      language === "hi"
+                                        ? "समय निकल चुका"
+                                        : language === "te"
+                                          ? "సమయం ముగిసింది"
+                                          : "Time passed"
+                                    )
+                                  : isFull
+                                    ? copy.noPlaces
+                                    : `${Math.max(
+                                        0,
+                                        Math.min(
+                                          slot.remaining,
+                                          slot.capacity
+                                        )
+                                      )} ${copy.placesRemaining}`
                               }
 
                             </span>
@@ -5969,6 +6213,73 @@ function normalisePhone(
   ).replace(
     /\D/g,
     ""
+  );
+
+}
+
+
+/* =========================================================
+   SLOT TIME CHECK
+========================================================= */
+
+function isSlotInPast(
+  slot,
+  selectedDate
+) {
+
+  if (
+    !selectedDate ||
+    !slot
+  ) {
+
+    return false;
+
+  }
+
+
+  const today =
+    new Date();
+
+
+  const todayString =
+    [
+      today.getFullYear(),
+      String(
+        today.getMonth() + 1
+      ).padStart(
+        2,
+        "0"
+      ),
+      String(
+        today.getDate()
+      ).padStart(
+        2,
+        "0"
+      ),
+    ].join("-");
+
+
+  if (
+    selectedDate.date !==
+    todayString
+  ) {
+
+    return false;
+
+  }
+
+
+  const currentMinutes =
+    today.getHours() *
+      60 +
+    today.getMinutes();
+
+
+  return (
+    timeToMinutes(
+      slot.end
+    ) <=
+    currentMinutes
   );
 
 }

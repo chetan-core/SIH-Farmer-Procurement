@@ -8,20 +8,26 @@ import {
 import {
   AlertTriangle,
   ArrowRight,
+  Check,
   CheckCircle2,
   Clock3,
+  Copy,
   CreditCard,
   Database,
+  ExternalLink,
   IndianRupee,
   RefreshCw,
   Search,
+  ShieldCheck,
   UserRound,
+  Volume2,
   X,
 } from "lucide-react";
 
 import AdminLayout from "../../components/admin/AdminLayout";
 
 import { useLanguage } from "../../translations/LanguageContext";
+
 
 const API_URL =
   import.meta.env.VITE_API_URL;
@@ -32,36 +38,46 @@ function AdminPayments() {
   const [bookings, setBookings] =
     useState([]);
 
+
   const [loading, setLoading] =
     useState(true);
+
 
   const [refreshing, setRefreshing] =
     useState(false);
 
+
   const [saving, setSaving] =
     useState(false);
+
 
   const [error, setError] =
     useState("");
 
+
   const [success, setSuccess] =
     useState("");
+
 
   const [search, setSearch] =
     useState("");
 
+
   const [filter, setFilter] =
     useState("PENDING");
+
 
   const [selectedBooking, setSelectedBooking] =
     useState(null);
 
+
   const [showPaymentForm, setShowPaymentForm] =
     useState(false);
 
+
   const {
-  language,
-} = useLanguage();
+    language,
+  } = useLanguage();
 
 
   const text =
@@ -79,9 +95,17 @@ function AdminPayments() {
         if (
           manual
         ) {
-          setRefreshing(true);
+
+          setRefreshing(
+            true
+          );
+
         } else {
-          setLoading(true);
+
+          setLoading(
+            true
+          );
+
         }
 
 
@@ -138,8 +162,13 @@ function AdminPayments() {
 
         } finally {
 
-          setLoading(false);
-          setRefreshing(false);
+          setLoading(
+            false
+          );
+
+          setRefreshing(
+            false
+          );
 
         }
 
@@ -161,33 +190,10 @@ function AdminPayments() {
       );
 
 
-    function handleLanguageChange() {
-
-      setLanguage(
-        localStorage.getItem(
-          "krishisetu-language"
-        ) || "en"
-      );
-
-    }
-
-
-    window.addEventListener(
-      "storage",
-      handleLanguageChange
-    );
-
-
     return () => {
 
       clearInterval(
         timer
-      );
-
-
-      window.removeEventListener(
-        "storage",
-        handleLanguageChange
       );
 
     };
@@ -307,7 +313,9 @@ function AdminPayments() {
                 booking.status !==
                   "PAYMENT_PENDING"
               ) {
+
                 return false;
+
               }
 
 
@@ -317,7 +325,9 @@ function AdminPayments() {
                 booking.status !==
                   "PAYMENT_SENT"
               ) {
+
                 return false;
+
               }
 
 
@@ -331,33 +341,30 @@ function AdminPayments() {
                   booking.status
                 )
               ) {
+
                 return false;
+
               }
 
 
               if (
                 !query
               ) {
+
                 return true;
+
               }
 
 
               const searchable =
                 [
                   booking.id,
-
                   booking.token,
-
                   booking.farmer_name,
-
                   booking.farmer_phone,
-
                   booking.farmer_village,
-
                   booking.crop,
-
                   booking.payment_reference,
-
                 ]
                   .filter(Boolean)
                   .join(" ")
@@ -414,6 +421,130 @@ function AdminPayments() {
   }
 
 
+  function speakPaymentConfirmation(
+    booking,
+    amount,
+    paymentLanguage
+  ) {
+
+    if (
+      typeof window ===
+      "undefined"
+    ) {
+
+      return;
+
+    }
+
+
+    if (
+      !(
+        "speechSynthesis"
+        in window
+      )
+    ) {
+
+      return;
+
+    }
+
+
+    const farmer =
+      booking?.farmer_name ||
+      "";
+
+
+    const token =
+      booking?.token ||
+      booking?.id ||
+      "";
+
+
+    let message =
+      "";
+
+
+    if (
+      paymentLanguage ===
+      "hi"
+    ) {
+
+      message =
+        `${farmer} जी, आपके टोकन नंबर ${token} का भुगतान ${formatSpeechAmount(
+          amount
+        )} रुपये सफलतापूर्वक भेज दिया गया है। कृपया अपनी भुगतान जानकारी जांचें।`;
+
+    } else if (
+      paymentLanguage ===
+      "te"
+    ) {
+
+      message =
+        `${farmer} గారు, మీ టోకెన్ నంబర్ ${token} కోసం ${formatSpeechAmount(
+          amount
+        )} రూపాయల చెల్లింపు విజయవంతంగా పంపబడింది. దయచేసి మీ చెల్లింపు సమాచారాన్ని తనిఖీ చేయండి.`;
+
+    } else {
+
+      message =
+        `${farmer}, payment for token ${token} of ${formatSpeechAmount(
+          amount
+        )} rupees has been successfully sent. Please check your payment information.`;
+
+    }
+
+
+    try {
+
+      window.speechSynthesis.cancel();
+
+
+      const utterance =
+        new SpeechSynthesisUtterance(
+          message
+        );
+
+
+      utterance.lang =
+        paymentLanguage ===
+        "hi"
+          ? "hi-IN"
+          : paymentLanguage ===
+            "te"
+              ? "te-IN"
+              : "en-IN";
+
+
+      utterance.rate =
+        0.92;
+
+
+      utterance.pitch =
+        1;
+
+
+      utterance.volume =
+        0.85;
+
+
+      window.speechSynthesis.speak(
+        utterance
+      );
+
+    } catch (
+      speechError
+    ) {
+
+      console.warn(
+        "Payment voice announcement failed:",
+        speechError
+      );
+
+    }
+
+  }
+
+
   async function submitPayment(
     form
   ) {
@@ -421,7 +552,48 @@ function AdminPayments() {
     if (
       !selectedBooking
     ) {
+
       return;
+
+    }
+
+
+    const amount =
+      Number(
+        form.amount
+      );
+
+
+    if (
+      !Number.isFinite(
+        amount
+      ) ||
+      amount <=
+      0
+    ) {
+
+      setError(
+        text.invalidAmount
+      );
+
+      return;
+
+    }
+
+
+    if (
+      !String(
+        form.reference ||
+        ""
+      ).trim()
+    ) {
+
+      setError(
+        text.referenceRequired
+      );
+
+      return;
+
     }
 
 
@@ -451,18 +623,16 @@ function AdminPayments() {
             body:
               JSON.stringify({
                 amount:
-                  Number(
-                    form.amount
-                  ),
+                  amount,
 
                 method:
                   form.method,
 
                 reference:
-                  form.reference,
+                  form.reference.trim(),
 
                 notes:
-                  form.notes,
+                  form.notes.trim(),
 
               }),
 
@@ -490,6 +660,7 @@ function AdminPayments() {
         false
       );
 
+
       setSelectedBooking(
         null
       );
@@ -497,6 +668,15 @@ function AdminPayments() {
 
       setSuccess(
         text.paymentRecorded
+      );
+
+
+      speakPaymentConfirmation(
+        selectedBooking,
+        amount,
+        selectedBooking.language ||
+        selectedBooking.farmer_language ||
+        language
       );
 
 
@@ -553,17 +733,23 @@ function AdminPayments() {
           <div>
 
             <span className="admin-page-eyebrow">
+
               {text.eyebrow}
+
             </span>
 
 
             <h2>
+
               {text.heading}
+
             </h2>
 
 
             <p>
+
               {text.description}
+
             </p>
 
           </div>
@@ -773,6 +959,57 @@ function AdminPayments() {
 
 
         {/* =====================================================
+            PAYMENT INSIGHT STRIP
+        ====================================================== */}
+
+        <section className="admin-payment-insight-strip">
+
+          <div className="admin-payment-insight-icon">
+
+            <Volume2
+              size={19}
+            />
+
+          </div>
+
+
+          <div>
+
+            <strong>
+              {text.voiceReadyTitle}
+            </strong>
+
+
+            <span>
+              {text.voiceReadyText}
+            </span>
+
+          </div>
+
+
+          <div className="admin-payment-insight-amount">
+
+            <span>
+              {text.pendingAmount}
+            </span>
+
+
+            <strong>
+              {
+                formatCurrency(
+                  stats.pendingAmount,
+                  language
+                )
+              }
+            </strong>
+
+          </div>
+
+        </section>
+
+
+
+        {/* =====================================================
             FILTERS
         ====================================================== */}
 
@@ -848,7 +1085,9 @@ function AdminPayments() {
             <div>
 
               <span className="admin-page-eyebrow">
+
                 {text.paymentQueue}
+
               </span>
 
 
@@ -1001,6 +1240,9 @@ function AdminPayments() {
               booking={
                 selectedBooking
               }
+              language={
+                language
+              }
               text={
                 text
               }
@@ -1012,12 +1254,16 @@ function AdminPayments() {
                 if (
                   saving
                 ) {
+
                   return;
+
                 }
+
 
                 setShowPaymentForm(
                   false
                 );
+
 
                 setSelectedBooking(
                   null
@@ -1098,6 +1344,14 @@ function PaymentRow({
   const paid =
     booking.status ===
     "PAYMENT_SENT";
+
+
+  const quantity =
+    Number(
+      booking.actual_quantity ??
+      booking.estimated_quantity ??
+      0
+    );
 
 
   return (
@@ -1205,6 +1459,21 @@ function PaymentRow({
 
         </span>
 
+
+        {quantity > 0 && (
+
+          <small>
+
+            {
+              quantity.toLocaleString()
+            }
+
+            {" kg"}
+
+          </small>
+
+        )}
+
       </div>
 
 
@@ -1288,6 +1557,10 @@ function PaymentRow({
             }
           >
 
+            <IndianRupee
+              size={13}
+            />
+
             {text.recordPayment}
 
             <ArrowRight
@@ -1304,6 +1577,7 @@ function PaymentRow({
     </div>
 
   );
+
 }
 
 
@@ -1313,6 +1587,7 @@ function PaymentRow({
 
 function PaymentForm({
   booking,
+  language,
   text,
   saving,
   onClose,
@@ -1359,6 +1634,208 @@ function PaymentForm({
     );
 
 
+  const [
+    payeeUpi,
+    setPayeeUpi,
+  ] =
+    useState(
+      booking.farmer_upi_id ||
+      booking.upi_id ||
+      ""
+    );
+
+
+  const [
+    referenceCopied,
+    setReferenceCopied,
+  ] =
+    useState(
+      false
+    );
+
+
+  const amountNumber =
+    Number(
+      amount ||
+      0
+    );
+
+
+  const quantity =
+    Number(
+      booking.actual_quantity ??
+      booking.estimated_quantity ??
+      0
+    );
+
+
+  const rate =
+    Number(
+      booking.payment_rate_per_kg ||
+      0
+    );
+
+
+  const calculatedAmount =
+    quantity > 0 &&
+    rate > 0
+      ? quantity *
+        rate
+      : null;
+
+
+  const amountDifference =
+    calculatedAmount !== null &&
+    amountNumber > 0
+      ? amountNumber -
+        calculatedAmount
+      : null;
+
+
+  function copyReference() {
+
+    if (
+      !reference.trim()
+    ) {
+
+      return;
+
+    }
+
+
+    if (
+      navigator?.clipboard
+    ) {
+
+      navigator.clipboard
+        .writeText(
+          reference.trim()
+        )
+        .then(() => {
+
+          setReferenceCopied(
+            true
+          );
+
+
+          window.setTimeout(
+            () =>
+              setReferenceCopied(
+                false
+              ),
+            1800
+          );
+
+        })
+        .catch(
+          () => {}
+        );
+
+    }
+
+  }
+
+
+  function openUpi() {
+
+    const upi =
+      payeeUpi
+        .trim();
+
+
+    if (
+      !upi
+    ) {
+
+      return;
+
+    }
+
+
+    const name =
+      booking.farmer_name ||
+      "KrishiSetu Farmer";
+
+
+    const currentAmount =
+      Number(
+        amount ||
+        0
+      );
+
+
+    const params =
+      new URLSearchParams({
+
+        pa:
+          upi,
+
+        pn:
+          name,
+
+        tr:
+          booking.token ||
+          booking.id,
+
+        tn:
+          `KrishiSetu payment ${booking.token || booking.id}`,
+
+        am:
+          currentAmount > 0
+            ? currentAmount.toFixed(
+                2
+              )
+            : "",
+
+        cu:
+          "INR",
+
+      });
+
+
+    window.location.href =
+      `upi://pay?${params.toString()}`;
+
+  }
+
+
+  function openBankPortal() {
+
+    const bankLinks = {
+
+      SBI:
+        "https://onlinesbi.sbi/",
+
+      HDFC:
+        "https://netbanking.hdfcbank.com/",
+
+      ICICI:
+        "https://infinity.icicibank.com/",
+
+      AXIS:
+        "https://omni.axisbank.co.in/",
+
+    };
+
+
+    const chosenBank =
+      method ===
+        "BANK_TRANSFER"
+        ? "SBI"
+        : "SBI";
+
+
+    window.open(
+      bankLinks[
+        chosenBank
+      ],
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+  }
+
+
   function submit(
     event
   ) {
@@ -1366,11 +1843,28 @@ function PaymentForm({
     event.preventDefault();
 
 
+    if (
+      Number(
+        amount
+      ) <=
+      0
+    ) {
+
+      return;
+
+    }
+
+
     onSubmit({
+
       amount,
+
       method,
+
       reference,
+
       notes,
+
     });
 
   }
@@ -1390,12 +1884,16 @@ function PaymentForm({
           <div>
 
             <span className="admin-page-eyebrow">
+
               {text.paymentForm}
+
             </span>
 
 
             <h2>
+
               {text.recordPayment}
+
             </h2>
 
 
@@ -1431,47 +1929,154 @@ function PaymentForm({
 
 
 
-        <div className="admin-payment-form-booking">
+        {/* =====================================================
+            BOOKING SUMMARY
+        ====================================================== */}
+
+        <div className="admin-payment-form-summary">
 
 
-          <div className="admin-payment-form-token">
+          <div className="admin-payment-form-booking">
 
-            #
 
-            {
-              booking.token ||
-              booking.id
-            }
+            <div className="admin-payment-form-token">
+
+              #
+
+              {
+                booking.token ||
+                booking.id
+              }
+
+            </div>
+
+
+            <div>
+
+              <strong>
+
+                {
+                  booking.farmer_name ||
+                  text.unknownFarmer
+                }
+
+              </strong>
+
+
+              <span>
+
+                {
+                  booking.farmer_phone ||
+                  "—"
+                }
+
+              </span>
+
+            </div>
 
           </div>
 
 
-          <div>
 
-            <strong>
-
-              {
-                booking.farmer_name ||
-                text.unknownFarmer
-              }
-
-            </strong>
+          <div className="admin-payment-form-verification">
 
 
-            <span>
+            <div>
 
-              {
-                booking.farmer_phone ||
-                "—"
-              }
+              <span>
+                {text.crop}
+              </span>
 
-            </span>
+
+              <strong>
+                {
+                  getCropName(
+                    booking.crop,
+                    language
+                  )
+                }
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <span>
+                {text.quantity}
+              </span>
+
+
+              <strong>
+
+                {
+                  quantity.toLocaleString()
+                }
+
+                {" kg"}
+
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <span>
+                {text.rate}
+              </span>
+
+
+              <strong>
+
+                {
+                  rate > 0
+                    ? formatCurrency(
+                        rate,
+                        language
+                      )
+                    : "—"
+                }
+
+                /kg
+
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <span>
+                {text.calculatedAmount}
+              </span>
+
+
+              <strong>
+
+                {
+                  calculatedAmount !==
+                  null
+                    ? formatCurrency(
+                        calculatedAmount,
+                        language
+                      )
+                    : "—"
+                }
+
+              </strong>
+
+            </div>
 
           </div>
 
         </div>
 
 
+
+        {/* =====================================================
+            FORM
+        ====================================================== */}
 
         <form
           className="admin-payment-form"
@@ -1511,6 +2116,42 @@ function PaymentForm({
               />
 
             </div>
+
+
+            {
+              amountDifference !==
+              null &&
+              amountDifference !==
+                0 && (
+
+                <small
+                  className={
+                    amountDifference >
+                    0
+                      ? "payment-amount-warning positive"
+                      : "payment-amount-warning negative"
+                  }
+                >
+
+                  {amountDifference >
+                  0
+                    ? `${text.aboveCalculated} ${formatCurrency(
+                        Math.abs(
+                          amountDifference
+                        ),
+                        language
+                      )}`
+                    : `${text.belowCalculated} ${formatCurrency(
+                        Math.abs(
+                          amountDifference
+                        ),
+                        language
+                      )}`}
+
+                </small>
+
+              )
+            }
 
           </label>
 
@@ -1560,6 +2201,108 @@ function PaymentForm({
 
 
 
+          {
+            method ===
+            "UPI" && (
+
+              <div className="admin-payment-upi-helper">
+
+
+                <label className="admin-payment-field">
+
+                  <span>
+                    {text.payeeUpi}
+                  </span>
+
+
+                  <input
+                    type="text"
+                    value={
+                      payeeUpi
+                    }
+                    onChange={(event) =>
+                      setPayeeUpi(
+                        event.target.value
+                      )
+                    }
+                    placeholder={
+                      text.payeeUpiPlaceholder
+                    }
+                  />
+
+                </label>
+
+
+                <button
+                  type="button"
+                  className="admin-payment-open-upi"
+                  onClick={
+                    openUpi
+                  }
+                  disabled={
+                    !payeeUpi.trim() ||
+                    amountNumber <=
+                    0
+                  }
+                >
+
+                  <ExternalLink
+                    size={14}
+                  />
+
+                  {text.openUpi}
+
+                </button>
+
+              </div>
+
+            )
+          }
+
+
+
+          {
+            method ===
+              "BANK_TRANSFER" && (
+
+              <div className="admin-payment-bank-helper">
+
+                <div>
+
+                  <ShieldCheck
+                    size={16}
+                  />
+
+
+                  <span>
+                    {text.bankPortalNote}
+                  </span>
+
+                </div>
+
+
+                <button
+                  type="button"
+                  onClick={
+                    openBankPortal
+                  }
+                >
+
+                  <ExternalLink
+                    size={14}
+                  />
+
+                  {text.openBankPortal}
+
+                </button>
+
+              </div>
+
+            )
+          }
+
+
+
           <label className="admin-payment-field">
 
             <span>
@@ -1567,21 +2310,55 @@ function PaymentForm({
             </span>
 
 
-            <input
-              type="text"
-              value={
-                reference
-              }
-              onChange={(event) =>
-                setReference(
-                  event.target.value
-                )
-              }
-              placeholder={
-                text.referencePlaceholder
-              }
-              required
-            />
+            <div className="admin-payment-reference-input">
+
+              <input
+                type="text"
+                value={
+                  reference
+                }
+                onChange={(event) =>
+                  setReference(
+                    event.target.value
+                  )
+                }
+                placeholder={
+                  text.referencePlaceholder
+                }
+                required
+              />
+
+
+              <button
+                type="button"
+                onClick={
+                  copyReference
+                }
+                disabled={
+                  !reference.trim()
+                }
+                aria-label={
+                  text.copyReference
+                }
+              >
+
+                {referenceCopied ? (
+
+                  <Check
+                    size={14}
+                  />
+
+                ) : (
+
+                  <Copy
+                    size={14}
+                  />
+
+                )}
+
+              </button>
+
+            </div>
 
           </label>
 
@@ -1621,7 +2398,20 @@ function PaymentForm({
 
 
             <span>
-              {text.paymentWarning}
+
+              {
+                calculatedAmount !==
+                null
+                  ? text.paymentWarningWithAmount.replace(
+                      "{amount}",
+                      formatCurrency(
+                        calculatedAmount,
+                        language
+                      )
+                    )
+                  : text.paymentWarning
+              }
+
             </span>
 
           </div>
@@ -1640,7 +2430,9 @@ function PaymentForm({
                 saving
               }
             >
+
               {text.cancel}
+
             </button>
 
 
@@ -1648,7 +2440,10 @@ function PaymentForm({
               type="submit"
               className="admin-payment-form-submit"
               disabled={
-                saving
+                saving ||
+                amountNumber <=
+                0 ||
+                !reference.trim()
               }
             >
 
@@ -1731,6 +2526,7 @@ function PaymentLoading() {
     </div>
 
   );
+
 }
 
 
@@ -1744,9 +2540,11 @@ function formatCurrency(
 ) {
 
   const locale =
-    language === "hi"
+    language ===
+      "hi"
       ? "hi-IN"
-      : language === "te"
+      : language ===
+          "te"
         ? "te-IN"
         : "en-IN";
 
@@ -1756,15 +2554,120 @@ function formatCurrency(
     {
       style:
         "currency",
+
       currency:
         "INR",
+
       maximumFractionDigits:
         2,
+
     }
   ).format(
     Number(
-      value || 0
+      value ||
+      0
     )
+  );
+
+}
+
+
+function formatSpeechAmount(
+  value
+) {
+
+  const number =
+    Number(
+      value ||
+      0
+    );
+
+
+  return number
+    .toLocaleString(
+      "en-IN",
+      {
+        maximumFractionDigits:
+          2,
+      }
+    );
+
+}
+
+
+function getCropName(
+  crop,
+  language
+) {
+
+  const names = {
+
+    wheat: {
+
+      en:
+        "Wheat",
+
+      hi:
+        "गेहूं",
+
+      te:
+        "గోధుమ",
+
+    },
+
+    paddy: {
+
+      en:
+        "Paddy",
+
+      hi:
+        "धान",
+
+      te:
+        "వరి",
+
+    },
+
+    maize: {
+
+      en:
+        "Maize",
+
+      hi:
+        "मक्का",
+
+      te:
+        "మొక్కజొన్న",
+
+    },
+
+    cotton: {
+
+      en:
+        "Cotton",
+
+      hi:
+        "कपास",
+
+      te:
+        "పత్తి",
+
+    },
+
+  };
+
+
+  return (
+    names[
+      crop
+    ]?.[
+      language
+    ] ||
+    names[
+      crop
+    ]?.en ||
+    crop ||
+    "—"
   );
 
 }
@@ -1920,6 +2823,9 @@ function getPaymentsCopy(
       paymentWarning:
         "Marking this payment as sent permanently changes the booking status to PAYMENT_SENT.",
 
+      paymentWarningWithAmount:
+        "The calculated procurement amount is {amount}. Verify the amount and transaction reference before marking payment as sent.",
+
       cancel:
         "Cancel",
 
@@ -1931,6 +2837,54 @@ function getPaymentsCopy(
 
       paymentError:
         "Unable to record payment.",
+
+      invalidAmount:
+        "Enter a valid payment amount greater than zero.",
+
+      referenceRequired:
+        "Enter the payment transaction reference.",
+
+      quantity:
+        "Quantity",
+
+      rate:
+        "Rate",
+
+      crop:
+        "Crop",
+
+      calculatedAmount:
+        "Calculated amount",
+
+      aboveCalculated:
+        "Amount is above calculated value by",
+
+      belowCalculated:
+        "Amount is below calculated value by",
+
+      payeeUpi:
+        "Farmer UPI ID",
+
+      payeeUpiPlaceholder:
+        "example@upi",
+
+      openUpi:
+        "Open UPI App",
+
+      bankPortalNote:
+        "The bank portal opens separately. Complete the actual transfer there and return here to record the transaction reference.",
+
+      openBankPortal:
+        "Open Bank Portal",
+
+      copyReference:
+        "Copy reference",
+
+      voiceReadyTitle:
+        "Voice confirmation ready",
+
+      voiceReadyText:
+        "After a successful payment, the operator receives an automatic confirmation announcement in the farmer's language when available.",
 
     },
 
@@ -2075,17 +3029,68 @@ function getPaymentsCopy(
       paymentWarning:
         "भुगतान भेजा गया के रूप में चिह्नित करने पर बुकिंग स्थिति PAYMENT_SENT हो जाएगी।",
 
+      paymentWarningWithAmount:
+        "गणना की गई खरीद राशि {amount} है। भुगतान भेजने से पहले राशि और लेनदेन संदर्भ सत्यापित करें।",
+
       cancel:
         "रद्द करें",
 
       markPaid:
-        "भुगतान करें",
+        "भुगतान किया गया चिन्हित करें",
 
       saving:
         "सहेजा जा रहा है...",
 
       paymentError:
         "भुगतान रिकॉर्ड नहीं किया जा सका।",
+
+      invalidAmount:
+        "शून्य से अधिक मान्य भुगतान राशि दर्ज करें।",
+
+      referenceRequired:
+        "भुगतान लेनदेन संदर्भ दर्ज करें।",
+
+      quantity:
+        "मात्रा",
+
+      rate:
+        "दर",
+
+      crop:
+        "फसल",
+
+      calculatedAmount:
+        "गणना की गई राशि",
+
+      aboveCalculated:
+        "राशि गणना से अधिक है:",
+
+      belowCalculated:
+        "राशि गणना से कम है:",
+
+      payeeUpi:
+        "किसान UPI ID",
+
+      payeeUpiPlaceholder:
+        "example@upi",
+
+      openUpi:
+        "UPI ऐप खोलें",
+
+      bankPortalNote:
+        "बैंक पोर्टल अलग से खुलेगा। वहां वास्तविक ट्रांसफर पूरा करें और वापस आकर लेनदेन संदर्भ दर्ज करें।",
+
+      openBankPortal:
+        "बैंक पोर्टल खोलें",
+
+      copyReference:
+        "संदर्भ कॉपी करें",
+
+      voiceReadyTitle:
+        "वॉइस पुष्टि तैयार",
+
+      voiceReadyText:
+        "सफल भुगतान के बाद उपलब्ध किसान भाषा में ऑपरेटर को स्वचालित पुष्टि सुनाई जाएगी।",
 
     },
 
@@ -2230,6 +3235,9 @@ function getPaymentsCopy(
       paymentWarning:
         "చెల్లింపు పంపబడిందిగా గుర్తిస్తే బుకింగ్ స్థితి PAYMENT_SENT అవుతుంది.",
 
+      paymentWarningWithAmount:
+        "లెక్కించిన కొనుగోలు మొత్తం {amount}. చెల్లింపు పంపబడిందిగా గుర్తించే ముందు మొత్తాన్ని మరియు లావాదేవీ రిఫరెన్స్‌ను ధృవీకరించండి.",
+
       cancel:
         "రద్దు చేయండి",
 
@@ -2241,6 +3249,54 @@ function getPaymentsCopy(
 
       paymentError:
         "చెల్లింపును నమోదు చేయలేకపోయాము.",
+
+      invalidAmount:
+        "సున్నా కంటే ఎక్కువ సరైన చెల్లింపు మొత్తాన్ని నమోదు చేయండి.",
+
+      referenceRequired:
+        "చెల్లింపు లావాదేవీ రిఫరెన్స్ నమోదు చేయండి.",
+
+      quantity:
+        "పరిమాణం",
+
+      rate:
+        "రేటు",
+
+      crop:
+        "పంట",
+
+      calculatedAmount:
+        "లెక్కించిన మొత్తం",
+
+      aboveCalculated:
+        "లెక్కించిన మొత్తానికి ఎక్కువ:",
+
+      belowCalculated:
+        "లెక్కించిన మొత్తానికి తక్కువ:",
+
+      payeeUpi:
+        "రైతు UPI ID",
+
+      payeeUpiPlaceholder:
+        "example@upi",
+
+      openUpi:
+        "UPI యాప్ తెరవండి",
+
+      bankPortalNote:
+        "బ్యాంక్ పోర్టల్ విడిగా తెరుచుకుంటుంది. అక్కడ నిజమైన ట్రాన్స్‌ఫర్ పూర్తి చేసి, తిరిగి వచ్చి లావాదేవీ రిఫరెన్స్ నమోదు చేయండి.",
+
+      openBankPortal:
+        "బ్యాంక్ పోర్టల్ తెరవండి",
+
+      copyReference:
+        "రిఫరెన్స్ కాపీ చేయండి",
+
+      voiceReadyTitle:
+        "వాయిస్ నిర్ధారణ సిద్ధంగా ఉంది",
+
+      voiceReadyText:
+        "విజయవంతమైన చెల్లింపు తర్వాత అందుబాటులో ఉన్న రైతు భాషలో ఆపరేటర్‌కు ఆటోమేటిక్ నిర్ధారణ వినిపించబడుతుంది.",
 
     },
 
