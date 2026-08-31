@@ -1,97 +1,158 @@
-import { Moon, Sun } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  Moon,
+  Star,
+  Sun,
+  Trees,
+} from "lucide-react";
 
-const THEME_KEY = "krishisetu-theme";
+import {
+  useEffect,
+  useState,
+} from "react";
 
-function getSystemTheme() {
-  if (
-    window.matchMedia(
-      "(prefers-color-scheme: dark)"
-    ).matches
-  ) {
-    return "dark";
-  }
 
-  return "light";
-}
+const THEMES = [
+  {
+    id: "light",
+    label: "Light",
+    icon: Sun,
+  },
 
-function getInitialTheme() {
-  const savedTheme =
-    localStorage.getItem(THEME_KEY);
+  {
+    id: "dark",
+    label: "Dark",
+    icon: Moon,
+  },
 
-  if (
-    savedTheme === "light" ||
-    savedTheme === "dark"
-  ) {
-    return savedTheme;
-  }
+  {
+    id: "forest",
+    label: "Forest",
+    icon: Trees,
+  },
 
-  return getSystemTheme();
-}
+  {
+    id: "midnight",
+    label: "Midnight",
+    icon: Star,
+  },
+];
 
-function applyTheme(theme) {
-  document.documentElement.setAttribute(
-    "data-theme",
-    theme
-  );
-
-  document.documentElement.style.colorScheme =
-    theme;
-}
 
 function ThemeToggle() {
-  const [theme, setTheme] =
-    useState(getInitialTheme);
+
+  const [
+    theme,
+    setTheme,
+  ] =
+    useState(
+      () =>
+        localStorage.getItem(
+          "krishisetu-theme"
+        ) ||
+        "light"
+    );
+
 
   useEffect(() => {
-    applyTheme(theme);
 
-    localStorage.setItem(
-      THEME_KEY,
+    document.documentElement.setAttribute(
+      "data-theme",
       theme
     );
-  }, [theme]);
 
-  const toggleTheme = () => {
-    setTheme((current) =>
-      current === "light"
-        ? "dark"
-        : "light"
+    localStorage.setItem(
+      "krishisetu-theme",
+      theme
     );
-  };
 
-  const isDark =
-    theme === "dark";
+  }, [
+    theme,
+  ]);
+
+
+  function cycleTheme() {
+
+    const currentIndex =
+      THEMES.findIndex(
+        item =>
+          item.id ===
+          theme
+      );
+
+
+    const nextIndex =
+      currentIndex ===
+      -1
+        ? 0
+        : (
+            currentIndex + 1
+          ) %
+          THEMES.length;
+
+
+    setTheme(
+      THEMES[
+        nextIndex
+      ].id
+    );
+
+  }
+
+
+  const currentTheme =
+    THEMES.find(
+      item =>
+        item.id ===
+        theme
+    ) ||
+    THEMES[0];
+
+
+  const CurrentIcon =
+    currentTheme.icon;
+
 
   return (
+
     <button
       type="button"
-      className="theme-toggle"
-      onClick={toggleTheme}
+      className="theme-selector-button"
+      onClick={
+        cycleTheme
+      }
       aria-label={
-        isDark
-          ? "Switch to light mode"
-          : "Switch to dark mode"
+        `Switch theme. Current theme: ${currentTheme.label}`
       }
       title={
-        isDark
-          ? "Switch to light mode"
-          : "Switch to dark mode"
+        `Current theme: ${currentTheme.label}. Click for ${THEMES[
+          (
+            THEMES.findIndex(
+              item =>
+                item.id ===
+                theme
+            ) + 1
+          ) %
+          THEMES.length
+        ].label}`
       }
     >
-      {isDark ? (
-        <Sun size={18} />
-      ) : (
-        <Moon size={18} />
-      )}
+
+      <CurrentIcon
+        size={20}
+      />
+
 
       <span>
-        {isDark
-          ? "Light"
-          : "Dark"}
+        {
+          currentTheme.label
+        }
       </span>
+
     </button>
+
   );
+
 }
+
 
 export default ThemeToggle;

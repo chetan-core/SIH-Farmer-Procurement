@@ -114608,3 +114608,3146 @@ body[data-theme="dark"] .admin-login-card h2,
 body[data-theme="dark"] .admin-login-card h3 {
   color: #ffffff !important;
 }
+
+/* =========================================================
+   ADDITIONAL GLOBAL THEMES
+========================================================= */
+
+
+/* =========================================================
+   FOREST
+========================================================= */
+
+[data-theme="forest"] {
+  --theme-page-bg: #071c17;
+  --theme-surface: #0d2922;
+  --theme-surface-2: #12352b;
+  --theme-surface-3: #174238;
+
+  --theme-text: #f1fff8;
+  --theme-text-soft: #c6ded3;
+  --theme-text-muted: #9fc0b2;
+
+  --theme-border: #2e5b4d;
+
+  --theme-primary: #20c979;
+  --theme-primary-dark: #10985a;
+
+  --theme-blue: #4db8ff;
+  --theme-yellow: #f6c453;
+
+  --theme-icon-bg: #173e31;
+  --theme-input-bg: #102d25;
+
+  --theme-shadow:
+    0 18px 45px rgba(
+      0,
+      0,
+      0,
+      0.35
+    );
+}
+
+
+/* =========================================================
+   MIDNIGHT
+========================================================= */
+
+[data-theme="midnight"] {
+  --theme-page-bg: #050914;
+  --theme-surface: #0b1220;
+  --theme-surface-2: #111b2d;
+  --theme-surface-3: #17243a;
+
+  --theme-text: #f7fbff;
+  --theme-text-soft: #d4dfed;
+  --theme-text-muted: #a7b8cb;
+
+  --theme-border: #334762;
+
+  --theme-primary: #61b7ff;
+  --theme-primary-dark: #2388d4;
+
+  --theme-blue: #6bbfff;
+  --theme-yellow: #ffd166;
+
+  --theme-icon-bg: #16263d;
+  --theme-input-bg: #101a2b;
+
+  --theme-shadow:
+    0 18px 45px rgba(
+      0,
+      0,
+      0,
+      0.45
+    );
+}
+
+
+/* =========================================================
+   GLOBAL ADDITIONAL-THEME SURFACES
+========================================================= */
+
+[data-theme="forest"],
+[data-theme="midnight"] {
+
+  background-color:
+    var(--theme-page-bg);
+
+  color:
+    var(--theme-text);
+}
+
+
+/* Main page surfaces */
+
+[data-theme="forest"] .card,
+[data-theme="forest"] section,
+[data-theme="forest"] article,
+[data-theme="forest"] .modal,
+[data-theme="forest"] .panel,
+[data-theme="forest"] .help-topic-card,
+[data-theme="forest"] .help-guide-card,
+[data-theme="forest"] .help-center-card,
+[data-theme="forest"] .farmer-settings-card,
+[data-theme="forest"] .booking-panel,
+[data-theme="forest"] .booking-summary-card,
+
+[data-theme="midnight"] .card,
+[data-theme="midnight"] section,
+[data-theme="midnight"] article,
+[data-theme="midnight"] .modal,
+[data-theme="midnight"] .panel,
+[data-theme="midnight"] .help-topic-card,
+[data-theme="midnight"] .help-guide-card,
+[data-theme="midnight"] .help-center-card,
+[data-theme="midnight"] .farmer-settings-card,
+[data-theme="midnight"] .booking-panel,
+[data-theme="midnight"] .booking-summary-card {
+
+  background:
+    var(--theme-surface);
+
+  color:
+    var(--theme-text);
+
+  border-color:
+    var(--theme-border);
+
+  box-shadow:
+    var(--theme-shadow);
+}
+
+
+/* Typography */
+
+[data-theme="forest"] h1,
+[data-theme="forest"] h2,
+[data-theme="forest"] h3,
+[data-theme="forest"] h4,
+[data-theme="forest"] h5,
+[data-theme="forest"] h6,
+[data-theme="forest"] strong,
+[data-theme="forest"] label,
+
+[data-theme="midnight"] h1,
+[data-theme="midnight"] h2,
+[data-theme="midnight"] h3,
+[data-theme="midnight"] h4,
+[data-theme="midnight"] h5,
+[data-theme="midnight"] h6,
+[data-theme="midnight"] strong,
+[data-theme="midnight"] label {
+
+  color:
+    var(--theme-text);
+}
+
+
+/* Paragraphs and secondary text */
+
+[data-theme="forest"] p,
+[data-theme="forest"] span,
+[data-theme="forest"] small,
+
+[data-theme="midnight"] p,
+[data-theme="midnight"] span,
+[data-theme="midnight"] small {
+
+  color:
+    var(--theme-text-soft);
+}
+
+
+/* Inputs */
+
+[data-theme="forest"] input,
+[data-theme="forest"] select,
+[data-theme="forest"] textarea,
+
+[data-theme="midnight"] input,
+[data-theme="midnight"] select,
+[data-theme="midnight"] textarea {
+
+  background:
+    var(--theme-input-bg) !important;
+
+  color:
+    var(--theme-text) !important;
+
+  border-color:
+    var(--theme-border) !important;
+}
+
+
+/* Placeholder */
+
+[data-theme="forest"] input::placeholder,
+[data-theme="forest"] textarea::placeholder,
+
+[data-theme="midnight"] input::placeholder,
+[data-theme="midnight"] textarea::placeholder {
+
+  color:
+    var(--theme-text-muted) !important;
+
+  opacity:
+    1;
+}
+
+
+/* Buttons */
+
+[data-theme="forest"] button,
+[data-theme="forest"] a,
+[data-theme="midnight"] button,
+[data-theme="midnight"] a {
+
+  color:
+    var(--theme-text);
+}
+
+
+/* Light blue surfaces that were becoming white */
+
+[data-theme="forest"] .help-call-button,
+[data-theme="forest"] .help-secondary-action,
+[data-theme="forest"] .help-language-option,
+[data-theme="forest"] .farmer-settings-secondary,
+[data-theme="forest"] .farmer-settings-preference,
+[data-theme="forest"] .admin-demo-box,
+
+[data-theme="midnight"] .help-call-button,
+[data-theme="midnight"] .help-secondary-action,
+[data-theme="midnight"] .help-language-option,
+[data-theme="midnight"] .farmer-settings-secondary,
+[data-theme="midnight"] .farmer-settings-preference,
+[data-theme="midnight"] .admin-demo-box {
+
+  background:
+    var(--theme-surface-2) !important;
+
+  color:
+    var(--theme-text) !important;
+
+  border-color:
+    var(--theme-border) !important;
+}
+
+
+/* Icons sitting inside pale backgrounds */
+
+[data-theme="forest"] .help-hero-card-icon,
+[data-theme="forest"] .help-center-icon,
+[data-theme="forest"] .farmer-settings-hero-icon,
+[data-theme="forest"] .farmer-settings-section-icon,
+
+[data-theme="midnight"] .help-hero-card-icon,
+[data-theme="midnight"] .help-center-icon,
+[data-theme="midnight"] .farmer-settings-hero-icon,
+[data-theme="midnight"] .farmer-settings-section-icon {
+
+  background:
+    var(--theme-icon-bg) !important;
+
+  color:
+    var(--theme-primary) !important;
+}
+
+
+/* Primary green buttons */
+
+[data-theme="forest"] .help-primary-action,
+[data-theme="forest"] .home-primary-action,
+[data-theme="forest"] .farmer-settings-primary,
+
+[data-theme="midnight"] .help-primary-action,
+[data-theme="midnight"] .home-primary-action,
+[data-theme="midnight"] .farmer-settings-primary {
+
+  background:
+    var(--theme-primary) !important;
+
+  color:
+    #ffffff !important;
+}
+
+
+/* Hover */
+
+[data-theme="forest"] button:hover,
+[data-theme="forest"] a:hover,
+
+[data-theme="midnight"] button:hover,
+[data-theme="midnight"] a:hover {
+
+  color:
+    var(--theme-text);
+}
+
+
+/* Prevent pale hover backgrounds */
+
+[data-theme="forest"] button:hover,
+[data-theme="midnight"] button:hover {
+
+  background-color:
+    var(--theme-surface-3);
+}
+
+
+/* Keep primary buttons readable on hover */
+
+[data-theme="forest"] .help-primary-action:hover,
+[data-theme="forest"] .home-primary-action:hover,
+[data-theme="forest"] .farmer-settings-primary:hover,
+
+[data-theme="midnight"] .help-primary-action:hover,
+[data-theme="midnight"] .home-primary-action:hover,
+[data-theme="midnight"] .farmer-settings-primary:hover {
+
+  background:
+    var(--theme-primary-dark) !important;
+
+  color:
+    #ffffff !important;
+}
+
+
+/* Dropdowns */
+
+[data-theme="forest"] .language-dropdown,
+[data-theme="forest"] .theme-selector-menu,
+[data-theme="forest"] .select-menu,
+
+[data-theme="midnight"] .language-dropdown,
+[data-theme="midnight"] .theme-selector-menu,
+[data-theme="midnight"] .select-menu {
+
+  background:
+    var(--theme-surface-2) !important;
+
+  color:
+    var(--theme-text) !important;
+
+  border-color:
+    var(--theme-border) !important;
+
+  box-shadow:
+    var(--theme-shadow);
+}
+
+
+/* Dropdown options */
+
+[data-theme="forest"] .language-option,
+[data-theme="forest"] .theme-option,
+
+[data-theme="midnight"] .language-option,
+[data-theme="midnight"] .theme-option {
+
+  color:
+    var(--theme-text) !important;
+
+  background:
+    transparent !important;
+}
+
+
+[data-theme="forest"] .language-option:hover,
+[data-theme="forest"] .theme-option:hover,
+
+[data-theme="midnight"] .language-option:hover,
+[data-theme="midnight"] .theme-option:hover {
+
+  background:
+    var(--theme-surface-3) !important;
+
+  color:
+    #ffffff !important;
+}
+
+
+/* =========================================================
+   THEME SELECTOR
+========================================================= */
+
+.theme-selector {
+  position: relative;
+}
+
+
+.theme-selector-menu {
+  position: absolute;
+  top: calc(
+    100% + 8px
+  );
+  right: 0;
+
+  min-width: 150px;
+
+  padding: 7px;
+
+  border-radius: 13px;
+
+  display: none;
+
+  z-index: 99999;
+}
+
+
+.theme-selector:hover
+.theme-selector-menu,
+.theme-selector:focus-within
+.theme-selector-menu {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+
+.theme-option {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 9px;
+
+  width: 100%;
+
+  padding: 9px 11px;
+
+  border: 0;
+
+  border-radius: 9px;
+
+  cursor: pointer;
+
+  text-align: left;
+}
+
+
+.theme-option.active {
+
+  background:
+    var(--theme-primary) !important;
+
+  color:
+    #ffffff !important;
+}
+
+
+.theme-option.active svg {
+
+  color:
+    #ffffff !important;
+}
+
+/* =========================================================
+   THEME SELECTOR
+========================================================= */
+
+.theme-selector {
+  position: relative;
+  display: inline-flex;
+}
+
+
+.theme-selector-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  min-height: 48px;
+  padding: 0 16px;
+
+  border: 1px solid #d4e1e8;
+  border-radius: 16px;
+
+  background: #ffffff;
+  color: #28556b;
+
+  cursor: pointer;
+
+  font: inherit;
+  font-weight: 600;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+
+.theme-selector-button:hover {
+  background: #f5fafc;
+  border-color: #b8ccd7;
+}
+
+
+.theme-selector-button svg {
+  flex-shrink: 0;
+}
+
+
+.theme-chevron {
+  transition:
+    transform 0.2s ease;
+}
+
+
+.theme-chevron.open {
+  transform: rotate(180deg);
+}
+
+
+/* =========================================================
+   DROPDOWN
+========================================================= */
+
+.theme-selector-menu {
+  position: absolute;
+
+  top: calc(
+    100% + 8px
+  );
+
+  right: 0;
+
+  min-width: 175px;
+
+  padding: 7px;
+
+  border: 1px solid #d4e1e8;
+  border-radius: 15px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 18px 45px rgba(
+      20,
+      50,
+      65,
+      0.18
+    );
+
+  z-index: 100000;
+
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+
+.theme-option {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  width: 100%;
+
+  padding: 11px 12px;
+
+  border: 0;
+  border-radius: 10px;
+
+  background: transparent;
+
+  color: #28556b;
+
+  cursor: pointer;
+
+  font: inherit;
+  font-weight: 600;
+
+  text-align: left;
+}
+
+
+.theme-option:hover {
+  background: #eef6fa;
+  color: #164860;
+}
+
+
+.theme-option.active {
+  background: #168f5a;
+  color: #ffffff;
+}
+
+
+.theme-option.active:hover {
+  background: #117548;
+  color: #ffffff;
+}
+
+
+.theme-option svg {
+  flex-shrink: 0;
+}
+
+
+/* =========================================================
+   DARK
+========================================================= */
+
+[data-theme="dark"] .theme-selector-button,
+[data-theme="midnight"] .theme-selector-button,
+[data-theme="forest"] .theme-selector-button {
+
+  background: #101a25;
+  border-color: #3d566d;
+  color: #f4f9ff;
+}
+
+
+[data-theme="dark"] .theme-selector-button:hover,
+[data-theme="midnight"] .theme-selector-button:hover,
+[data-theme="forest"] .theme-selector-button:hover {
+
+  background: #172434;
+  border-color: #58718a;
+}
+
+
+[data-theme="dark"] .theme-selector-menu {
+  background: #111d2a;
+  border-color: #40586e;
+}
+
+
+[data-theme="forest"] .theme-selector-menu {
+  background: #0d2922;
+  border-color: #376456;
+}
+
+
+[data-theme="midnight"] .theme-selector-menu {
+  background: #0c1523;
+  border-color: #3b4e68;
+}
+
+
+[data-theme="dark"] .theme-option,
+[data-theme="forest"] .theme-option,
+[data-theme="midnight"] .theme-option {
+
+  background: transparent;
+  color: #f4f9ff;
+}
+
+
+[data-theme="dark"] .theme-option:hover,
+[data-theme="forest"] .theme-option:hover,
+[data-theme="midnight"] .theme-option:hover {
+
+  background: #1b2b3d;
+  color: #ffffff;
+}
+
+
+[data-theme="dark"] .theme-option.active,
+[data-theme="forest"] .theme-option.active,
+[data-theme="midnight"] .theme-option.active {
+
+  background: #168f5a;
+  color: #ffffff;
+}
+
+/* =========================================================
+   THEME BUTTON
+========================================================= */
+
+.theme-selector-button {
+  width: 242px;
+  height: 48px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 11px;
+
+  padding: 0 18px;
+
+  border: 1px solid #d4e1e8;
+  border-radius: 16px;
+
+  background: #ffffff;
+  color: #28556b;
+
+  cursor: pointer;
+
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+
+.theme-selector-button:hover {
+  background: #f5fafc;
+  border-color: #b8ccd7;
+}
+
+
+.theme-selector-button:active {
+  transform: scale(0.98);
+}
+
+
+.theme-selector-button svg {
+  flex-shrink: 0;
+}
+
+
+/* =========================================================
+   DARK / FOREST / MIDNIGHT
+========================================================= */
+
+[data-theme="dark"] .theme-selector-button,
+[data-theme="forest"] .theme-selector-button,
+[data-theme="midnight"] .theme-selector-button {
+
+  background: #101a25;
+  border-color: #425a70;
+  color: #f5f9ff;
+
+}
+
+
+[data-theme="dark"] .theme-selector-button:hover,
+[data-theme="forest"] .theme-selector-button:hover,
+[data-theme="midnight"] .theme-selector-button:hover {
+
+  background: #182838;
+  border-color: #617991;
+
+}
+
+.theme-selector-button {
+  width: 145px;
+  height: 48px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+
+  padding: 0 16px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #d4e1e8;
+  border-radius: 16px;
+
+  background: #ffffff;
+  color: #28556b;
+
+  cursor: pointer;
+
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+
+.theme-selector-button:hover {
+  background: #f5fafc;
+  border-color: #b9ced9;
+}
+
+.theme-selector-button:active {
+  transform: scale(0.90);
+}
+
+.theme-selector-button svg {
+  flex-shrink: 0;
+}
+
+.language-selector-button {
+  height: 48px;
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   FOREST THEME
+========================================================= */
+
+[data-theme="forest"] {
+  --theme-bg: #081b16;
+  --theme-bg-soft: #0d261f;
+  --theme-surface: #102d25;
+  --theme-surface-2: #15382e;
+
+  --theme-border: #31594d;
+  --theme-border-soft: #24483e;
+
+  --theme-text: #f2f8f3;
+  --theme-text-strong: #ffffff;
+  --theme-text-soft: #c6d9d0;
+  --theme-text-muted: #9bb5aa;
+
+  --theme-green: #36d37c;
+  --theme-green-bright: #5ee59a;
+
+  --theme-blue: #55b9ef;
+  --theme-yellow: #f3c969;
+  --theme-orange: #f3a45b;
+  --theme-purple: #b89cff;
+
+  background: var(--theme-bg);
+  color: var(--theme-text);
+}
+
+
+[data-theme="forest"] body {
+  background:
+    radial-gradient(
+      circle at 15% 10%,
+      rgba(54, 211, 124, 0.14),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 85% 20%,
+      rgba(85, 185, 239, 0.10),
+      transparent 32%
+    ),
+    linear-gradient(
+      135deg,
+      #071914 0%,
+      #0b211b 45%,
+      #081b16 100%
+    );
+
+  color: var(--theme-text);
+}
+
+[data-theme="forest"] .card,
+[data-theme="forest"] .panel,
+[data-theme="forest"] .box,
+[data-theme="forest"] .section,
+[data-theme="forest"] .surface {
+  background: #102d25;
+  border-color: #31594d;
+  color: #f2f8f3;
+}
+
+[data-theme="forest"] .green,
+[data-theme="forest"] .green-card {
+  background: #123d2d;
+  color: #ecfff4;
+  border-color: #287052;
+}
+
+[data-theme="forest"] .blue,
+[data-theme="forest"] .blue-card {
+  background: #102f3e;
+  color: #edf9ff;
+  border-color: #35677d;
+}
+
+[data-theme="forest"] .gold,
+[data-theme="forest"] .gold-card {
+  background: #3d3219;
+  color: #fff7da;
+  border-color: #77602a;
+}
+
+[data-theme="forest"] .purple,
+[data-theme="forest"] .purple-card {
+  background: #2e2545;
+  color: #f5efff;
+  border-color: #594b7d;
+}
+
+/* =========================================================
+   MIDNIGHT THEME
+========================================================= */
+
+[data-theme="midnight"] {
+  --theme-bg: #070d19;
+  --theme-bg-soft: #0c1424;
+
+  --theme-surface: #111c30;
+  --theme-surface-2: #17243a;
+
+  --theme-border: #334764;
+  --theme-border-soft: #253650;
+
+  --theme-text: #f3f7ff;
+  --theme-text-strong: #ffffff;
+  --theme-text-soft: #c7d3e6;
+  --theme-text-muted: #95a7c1;
+
+  --theme-green: #42d88a;
+  --theme-blue: #61bdf7;
+  --theme-yellow: #f3ca63;
+  --theme-orange: #f2a45f;
+  --theme-purple: #b99cff;
+
+  background: var(--theme-bg);
+  color: var(--theme-text);
+}
+
+
+[data-theme="midnight"] body {
+  background:
+    radial-gradient(
+      circle at 15% 15%,
+      rgba(97, 189, 247, 0.13),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 85% 20%,
+      rgba(185, 156, 255, 0.11),
+      transparent 30%
+    ),
+    linear-gradient(
+      135deg,
+      #060b15 0%,
+      #0a1220 45%,
+      #070d19 100%
+    );
+
+  color: var(--theme-text);
+}
+
+[data-theme="midnight"] .card,
+[data-theme="midnight"] .panel,
+[data-theme="midnight"] .box,
+[data-theme="midnight"] .section,
+[data-theme="midnight"] .surface {
+  background: #111c30;
+  border-color: #334764;
+  color: #f3f7ff;
+}
+
+[data-theme="midnight"] .green,
+[data-theme="midnight"] .green-card {
+  background: #103326;
+  color: #edfff5;
+  border-color: #287051;
+}
+
+[data-theme="midnight"] .blue,
+[data-theme="midnight"] .blue-card {
+  background: #112b42;
+  color: #edf8ff;
+  border-color: #376685;
+}
+
+[data-theme="midnight"] .gold,
+[data-theme="midnight"] .gold-card {
+  background: #3a3018;
+  color: #fff8dd;
+  border-color: #766129;
+}
+
+[data-theme="midnight"] .purple,
+[data-theme="midnight"] .purple-card {
+  background: #29203f;
+  color: #f5efff;
+  border-color: #594b7c;
+}
+
+[data-theme="forest"] .farmer-help-page [class*="card"],
+[data-theme="forest"] .farmer-help-page [class*="box"],
+[data-theme="forest"] .farmer-help-page [class*="note"],
+[data-theme="forest"] .farmer-settings-page [class*="card"],
+[data-theme="forest"] .admin-login-page [class*="card"],
+
+[data-theme="midnight"] .farmer-help-page [class*="card"],
+[data-theme="midnight"] .farmer-help-page [class*="box"],
+[data-theme="midnight"] .farmer-help-page [class*="note"],
+[data-theme="midnight"] .farmer-settings-page [class*="card"],
+[data-theme="midnight"] .admin-login-page [class*="card"] {
+  color: var(--theme-text);
+}
+
+[data-theme="forest"] [style*="background"],
+[data-theme="midnight"] [style*="background"] {
+  color: inherit;
+}
+
+[data-theme="forest"] .theme-selector-button {
+  background: #102d25;
+  border-color: #3b6659;
+  color: #effff5;
+}
+
+[data-theme="forest"] .theme-selector-button:hover {
+  background: #163c31;
+  border-color: #4b806e;
+}
+
+
+[data-theme="midnight"] .theme-selector-button {
+  background: #111c30;
+  border-color: #3b506c;
+  color: #f4f8ff;
+}
+
+[data-theme="midnight"] .theme-selector-button:hover {
+  background: #18263d;
+  border-color: #4e6889;
+}
+
+/* =========================================================
+   FOREST THEME — INTENSE GREEN
+   Does not modify Light / Dark themes
+========================================================= */
+
+[data-theme="forest"] {
+  --theme-bg: #03140d;
+  --theme-bg-soft: #062319;
+
+  --theme-surface: #073d29;
+  --theme-surface-2: #0a5036;
+  --theme-surface-strong: #0d6040;
+
+  --theme-border: #1c8b5c;
+  --theme-border-soft: #126b47;
+
+  --theme-text: #f4fff8;
+  --theme-text-strong: #ffffff;
+  --theme-text-soft: #d4f3df;
+  --theme-text-muted: #a5d0b7;
+
+  --theme-green: #35f38b;
+  --theme-green-bright: #66ffad;
+
+  --theme-blue: #55c8ff;
+  --theme-yellow: #ffd95a;
+  --theme-orange: #ffad63;
+  --theme-purple: #c39cff;
+
+  background: #03140d;
+  color: #f4fff8;
+}
+
+
+[data-theme="forest"] body {
+  background:
+    radial-gradient(
+      circle at 12% 8%,
+      rgba(53, 243, 139, 0.28),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 88% 18%,
+      rgba(53, 243, 139, 0.17),
+      transparent 30%
+    ),
+    linear-gradient(
+      135deg,
+      #02100a 0%,
+      #06321f 48%,
+      #03170e 100%
+    );
+
+  color: #f4fff8;
+}
+
+
+
+
+/* Green cards */
+
+[data-theme="forest"] .green,
+[data-theme="forest"] .green-card {
+  background: #0b5a38;
+  color: #f3fff7;
+  border-color: #31bd78;
+}
+
+
+/* Blue cards */
+
+[data-theme="forest"] .blue,
+[data-theme="forest"] .blue-card {
+  background: #08445a;
+  color: #effbff;
+  border-color: #42b9ed;
+}
+
+
+/* Gold cards */
+
+[data-theme="forest"] .gold,
+[data-theme="forest"] .gold-card {
+  background: #5b4a0b;
+  color: #fffbdc;
+  border-color: #e9c83e;
+}
+
+
+/* Orange cards */
+
+[data-theme="forest"] .orange,
+[data-theme="forest"] .orange-card {
+  background: #5a2f0a;
+  color: #fff5e8;
+  border-color: #f0a052;
+}
+
+
+/* Purple cards */
+
+[data-theme="forest"] .purple,
+[data-theme="forest"] .purple-card {
+  background: #39215e;
+  color: #faf5ff;
+  border-color: #ad83ef;
+}
+
+
+/* Inputs */
+
+[data-theme="forest"] input,
+[data-theme="forest"] select,
+[data-theme="forest"] textarea {
+  background: #052c1e;
+  color: #ffffff;
+  border-color: #267b55;
+}
+
+[data-theme="forest"] input::placeholder,
+[data-theme="forest"] textarea::placeholder {
+  color: #8fb9a3;
+}
+
+
+/* Buttons */
+
+[data-theme="forest"] button,
+[data-theme="forest"] .button {
+  color: #ffffff;
+}
+
+[data-theme="forest"] button:hover,
+[data-theme="forest"] .button:hover {
+  filter: brightness(1.14);
+}
+
+
+/* Theme selector */
+
+[data-theme="forest"] .theme-selector-button {
+  background: #0b5a38;
+  border-color: #3ad485;
+  color: #ffffff;
+  box-shadow:
+    0 6px 22px rgba(53, 243, 139, 0.16);
+}
+
+[data-theme="forest"] .theme-selector-button:hover {
+  background: #0d6b42;
+  border-color: #66ffad;
+}
+
+
+/* Accent text */
+
+[data-theme="forest"] .page-eyebrow,
+[data-theme="forest"] .card-eyebrow {
+  color: #66ffad;
+}
+
+
+/* Strong links */
+
+[data-theme="forest"] a {
+  color: #72ffb5;
+}
+
+[data-theme="forest"] a:hover {
+  color: #b1ffd2;
+}
+
+
+/* Icons */
+
+
+
+
+/* =========================================================
+   MIDNIGHT THEME — PITCH BLACK + ELECTRIC BLUE
+   Does not modify Light / Dark themes
+========================================================= */
+
+[data-theme="midnight"] {
+  --theme-bg: #00030a;
+  --theme-bg-soft: #020817;
+
+  --theme-surface: #07101f;
+  --theme-surface-2: #0b172b;
+  --theme-surface-strong: #10203a;
+
+  --theme-border: #25476e;
+  --theme-border-soft: #183353;
+
+  --theme-text: #f5f9ff;
+  --theme-text-strong: #ffffff;
+  --theme-text-soft: #d4e2f7;
+  --theme-text-muted: #91a8c5;
+
+  --theme-green: #45f59a;
+  --theme-blue: #38bfff;
+  --theme-blue-bright: #70d7ff;
+  --theme-yellow: #ffd85c;
+  --theme-orange: #ffad64;
+  --theme-purple: #b996ff;
+
+  background: #00030a;
+  color: #f5f9ff;
+}
+
+
+[data-theme="midnight"] body {
+  background:
+    radial-gradient(
+      circle at 15% 10%,
+      rgba(56, 191, 255, 0.20),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 85% 15%,
+      rgba(70, 100, 255, 0.16),
+      transparent 30%
+    ),
+    linear-gradient(
+      135deg,
+      #000208 0%,
+      #030916 48%,
+      #00040d 100%
+    );
+
+  color: #f5f9ff;
+}
+
+
+/* Global Midnight surfaces */
+
+[data-theme="midnight"] .card,
+[data-theme="midnight"] .panel,
+[data-theme="midnight"] .box,
+[data-theme="midnight"] .section,
+[data-theme="midnight"] .surface {
+  background: #07101f;
+  border-color: #25476e;
+  color: #f5f9ff;
+}
+
+
+[data-theme="midnight"] [class*="card"] {
+  color: #f5f9ff;
+}
+
+
+/* Green cards */
+
+[data-theme="midnight"] .green,
+[data-theme="midnight"] .green-card {
+  background: #073825;
+  color: #effff7;
+  border-color: #229b62;
+}
+
+
+/* Blue cards */
+
+[data-theme="midnight"] .blue,
+[data-theme="midnight"] .blue-card {
+  background: #062b47;
+  color: #effaff;
+  border-color: #219fdd;
+}
+
+
+/* Gold cards */
+
+[data-theme="midnight"] .gold,
+[data-theme="midnight"] .gold-card {
+  background: #3e3207;
+  color: #fffbdc;
+  border-color: #cbb32f;
+}
+
+
+/* Orange cards */
+
+[data-theme="midnight"] .orange,
+[data-theme="midnight"] .orange-card {
+  background: #43240a;
+  color: #fff4e8;
+  border-color: #dc8b3e;
+}
+
+
+/* Purple cards */
+
+[data-theme="midnight"] .purple,
+[data-theme="midnight"] .purple-card {
+  background: #241543;
+  color: #f8f3ff;
+  border-color: #8760d8;
+}
+
+
+/* Inputs */
+
+[data-theme="midnight"] input,
+[data-theme="midnight"] select,
+[data-theme="midnight"] textarea {
+  background: #030916;
+  color: #ffffff;
+  border-color: #315579;
+}
+
+[data-theme="midnight"] input::placeholder,
+[data-theme="midnight"] textarea::placeholder {
+  color: #8298b4;
+}
+
+
+/* Buttons */
+
+[data-theme="midnight"] button,
+[data-theme="midnight"] .button {
+  color: #ffffff;
+}
+
+[data-theme="midnight"] button:hover,
+[data-theme="midnight"] .button:hover {
+  filter: brightness(1.15);
+}
+
+
+/* Theme selector */
+
+[data-theme="midnight"] .theme-selector-button {
+  background: #071a31;
+  border-color: #287bb3;
+  color: #ffffff;
+  box-shadow:
+    0 6px 22px rgba(56, 191, 255, 0.16);
+}
+
+[data-theme="midnight"] .theme-selector-button:hover {
+  background: #0a2442;
+  border-color: #55cfff;
+}
+
+
+/* Accent text */
+
+[data-theme="midnight"] .page-eyebrow,
+[data-theme="midnight"] .card-eyebrow {
+  color: #70d7ff;
+}
+
+
+/* Links */
+
+[data-theme="midnight"] a {
+  color: #69d3ff;
+}
+
+[data-theme="midnight"] a:hover {
+  color: #b4ebff;
+}
+
+
+/* Icons */
+
+[data-theme="midnight"] svg {
+  color: inherit;
+}
+
+/* =========================================================
+   PREVENT PALE UI SURFACES FROM BECOMING WHITE
+========================================================= */
+
+[data-theme="forest"] [style*="#f"],
+[data-theme="forest"] [style*="#e"],
+[data-theme="midnight"] [style*="#f"],
+[data-theme="midnight"] [style*="#e"] {
+  color: inherit;
+}
+
+
+/* Common pale utility surfaces */
+
+[data-theme="forest"] .light-blue,
+[data-theme="forest"] .soft-blue,
+[data-theme="forest"] .pale-blue,
+[data-theme="forest"] .light-green,
+[data-theme="forest"] .soft-green,
+[data-theme="midnight"] .light-blue,
+[data-theme="midnight"] .soft-blue,
+[data-theme="midnight"] .pale-blue,
+[data-theme="midnight"] .light-green,
+[data-theme="midnight"] .soft-green {
+  color: #ffffff;
+}
+
+
+/* Strong readable text inside themed surfaces */
+
+[data-theme="forest"] [class*="card"] *,
+[data-theme="forest"] [class*="box"] *,
+[data-theme="forest"] [class*="panel"] *,
+[data-theme="midnight"] [class*="card"] *,
+[data-theme="midnight"] [class*="box"] *,
+[data-theme="midnight"] [class*="panel"] * {
+  color: inherit;
+}
+
+/* =========================================================
+   SAFE GLOBAL THEME OVERRIDES
+   Preserve existing text colors unless the surface itself
+   is explicitly being changed to a dark themed surface.
+========================================================= */
+
+/* =========================================================
+   DARK THEMED SURFACES
+========================================================= */
+
+[data-theme="forest"] .admin-login-card,
+[data-theme="forest"] .admin-login-feature,
+[data-theme="forest"] .admin-login-workflow,
+[data-theme="forest"] .farmer-settings-card,
+[data-theme="forest"] .booking-panel,
+[data-theme="forest"] .booking-summary-card,
+[data-theme="forest"] .booking-help-card,
+[data-theme="forest"] .home-dashboard-section,
+[data-theme="forest"] .home-month-summary-card,
+[data-theme="forest"] .home-center-card,
+[data-theme="forest"] .home-arrival-check-card,
+[data-theme="forest"] .help-guide-card,
+[data-theme="forest"] .help-faq-item,
+[data-theme="forest"] .help-faq-side-card,
+[data-theme="forest"] .help-center-card,
+[data-theme="forest"] .admin-center-card {
+  background: #073d29;
+  border-color: #1c8b5c;
+  color: #f4fff8;
+}
+
+
+[data-theme="midnight"] .admin-login-card,
+[data-theme="midnight"] .admin-login-feature,
+[data-theme="midnight"] .admin-login-workflow,
+[data-theme="midnight"] .farmer-settings-card,
+[data-theme="midnight"] .booking-panel,
+[data-theme="midnight"] .booking-summary-card,
+[data-theme="midnight"] .booking-help-card,
+[data-theme="midnight"] .home-dashboard-section,
+[data-theme="midnight"] .home-month-summary-card,
+[data-theme="midnight"] .home-center-card,
+[data-theme="midnight"] .home-arrival-check-card,
+[data-theme="midnight"] .help-guide-card,
+[data-theme="midnight"] .help-faq-item,
+[data-theme="midnight"] .help-faq-side-card,
+[data-theme="midnight"] .help-center-card,
+[data-theme="midnight"] .admin-center-card {
+  background: #07101f;
+  border-color: #25476e;
+  color: #f5f9ff;
+}
+
+
+/* =========================================================
+   DARK SURFACE CHILDREN
+========================================================= */
+
+[data-theme="forest"] .admin-login-card h1,
+[data-theme="forest"] .admin-login-card h2,
+[data-theme="forest"] .admin-login-card h3,
+[data-theme="forest"] .admin-login-card p,
+[data-theme="forest"] .admin-login-card span,
+[data-theme="forest"] .admin-login-feature strong,
+[data-theme="forest"] .admin-login-feature span,
+[data-theme="forest"] .farmer-settings-card h1,
+[data-theme="forest"] .farmer-settings-card h2,
+[data-theme="forest"] .farmer-settings-card h3,
+[data-theme="forest"] .farmer-settings-card p,
+[data-theme="forest"] .booking-panel h1,
+[data-theme="forest"] .booking-panel h2,
+[data-theme="forest"] .booking-panel h3,
+[data-theme="forest"] .booking-panel p {
+  color: #f4fff8;
+}
+
+
+[data-theme="midnight"] .admin-login-card h1,
+[data-theme="midnight"] .admin-login-card h2,
+[data-theme="midnight"] .admin-login-card h3,
+[data-theme="midnight"] .admin-login-card p,
+[data-theme="midnight"] .admin-login-card span,
+[data-theme="midnight"] .admin-login-feature strong,
+[data-theme="midnight"] .admin-login-feature span,
+[data-theme="midnight"] .farmer-settings-card h1,
+[data-theme="midnight"] .farmer-settings-card h2,
+[data-theme="midnight"] .farmer-settings-card h3,
+[data-theme="midnight"] .farmer-settings-card p,
+[data-theme="midnight"] .booking-panel h1,
+[data-theme="midnight"] .booking-panel h2,
+[data-theme="midnight"] .booking-panel h3,
+[data-theme="midnight"] .booking-panel p {
+  color: #f5f9ff;
+}
+
+
+/* =========================================================
+   PALE / WHITE SURFACES
+   Keep dark text readable.
+========================================================= */
+
+[data-theme="forest"] .light-blue,
+[data-theme="forest"] .soft-blue,
+[data-theme="forest"] .pale-blue,
+[data-theme="forest"] .light-green,
+[data-theme="forest"] .soft-green,
+
+[data-theme="midnight"] .light-blue,
+[data-theme="midnight"] .soft-blue,
+[data-theme="midnight"] .pale-blue,
+[data-theme="midnight"] .light-green,
+[data-theme="midnight"] .soft-green {
+  color: #123b52;
+}
+
+
+/* White/pale buttons */
+
+[data-theme="forest"] .help-secondary-action,
+[data-theme="forest"] .farmer-settings-secondary,
+[data-theme="forest"] .admin-login-back,
+
+[data-theme="midnight"] .help-secondary-action,
+[data-theme="midnight"] .farmer-settings-secondary,
+[data-theme="midnight"] .admin-login-back {
+  color: #123b52;
+}
+
+
+/* Their icons should match their dark text */
+
+[data-theme="forest"] .help-secondary-action svg,
+[data-theme="forest"] .farmer-settings-secondary svg,
+[data-theme="forest"] .admin-login-back svg,
+
+[data-theme="midnight"] .help-secondary-action svg,
+[data-theme="midnight"] .farmer-settings-secondary svg,
+[data-theme="midnight"] .admin-login-back svg {
+  color: #123b52;
+}
+
+
+/* =========================================================
+   INPUTS
+========================================================= */
+
+[data-theme="forest"] input,
+[data-theme="forest"] select,
+[data-theme="forest"] textarea {
+  background: #052c1e;
+  color: #ffffff;
+  border-color: #267b55;
+}
+
+[data-theme="midnight"] input,
+[data-theme="midnight"] select,
+[data-theme="midnight"] textarea {
+  background: #030916;
+  color: #ffffff;
+  border-color: #315579;
+}
+
+
+/* =========================================================
+   IMPORTANT:
+   DO NOT globally recolor every SVG or every child element.
+========================================================= */
+
+/* =========================================================
+   FINAL FOREST / MIDNIGHT CONTRAST RESCUE
+   Put this AFTER all existing theme CSS.
+========================================================= */
+
+
+/* =========================================================
+   THEME VARIABLES
+========================================================= */
+
+[data-theme="forest"] {
+  --theme-bg: #021b12;
+  --theme-surface: #073d29;
+  --theme-surface-2: #0b5238;
+  --theme-border: #23845b;
+
+  --theme-text: #f4fff8;
+  --theme-text-soft: #c9f1dd;
+  --theme-muted: #9dd0b9;
+
+  --theme-green: #25d982;
+  --theme-blue: #53b7ff;
+  --theme-yellow: #ffc857;
+  --theme-orange: #ffad42;
+
+  --theme-pale-bg: #dff7ec;
+  --theme-pale-text: #123b52;
+}
+
+
+[data-theme="midnight"] {
+  --theme-bg: #020711;
+  --theme-surface: #07101f;
+  --theme-surface-2: #0c1a2d;
+  --theme-border: #315579;
+
+  --theme-text: #f5f9ff;
+  --theme-text-soft: #d3e2f2;
+  --theme-muted: #9eb6cc;
+
+  --theme-green: #45e69b;
+  --theme-blue: #63baff;
+  --theme-yellow: #ffd45c;
+  --theme-orange: #ffb45c;
+
+  --theme-pale-bg: #dceeff;
+  --theme-pale-text: #123b52;
+}
+
+
+/* =========================================================
+   PAGE ROOT
+========================================================= */
+
+[data-theme="forest"] .farmer-help-page,
+[data-theme="forest"] .farmer-settings-page,
+[data-theme="forest"] .farmer-book-page,
+[data-theme="forest"] .farmer-home-page,
+[data-theme="forest"] .admin-login-page,
+[data-theme="forest"] .admin-centers-page,
+
+[data-theme="midnight"] .farmer-help-page,
+[data-theme="midnight"] .farmer-settings-page,
+[data-theme="midnight"] .farmer-book-page,
+[data-theme="midnight"] .farmer-home-page,
+[data-theme="midnight"] .admin-login-page,
+[data-theme="midnight"] .admin-centers-page {
+  color: var(--theme-text);
+}
+
+
+/* =========================================================
+   DARK SURFACES
+========================================================= */
+
+[data-theme="forest"] .admin-login-card,
+[data-theme="forest"] .admin-login-feature,
+[data-theme="forest"] .admin-login-workflow,
+[data-theme="forest"] .farmer-settings-card,
+[data-theme="forest"] .booking-panel,
+[data-theme="forest"] .booking-summary-card,
+[data-theme="forest"] .booking-help-card,
+[data-theme="forest"] .home-dashboard-section,
+[data-theme="forest"] .home-month-summary-card,
+[data-theme="forest"] .home-center-card,
+[data-theme="forest"] .home-arrival-check-card,
+[data-theme="forest"] .help-guide-card,
+[data-theme="forest"] .help-faq-item,
+[data-theme="forest"] .help-faq-side-card,
+[data-theme="forest"] .help-center-card,
+[data-theme="forest"] .admin-center-card,
+
+[data-theme="midnight"] .admin-login-card,
+[data-theme="midnight"] .admin-login-feature,
+[data-theme="midnight"] .admin-login-workflow,
+[data-theme="midnight"] .farmer-settings-card,
+[data-theme="midnight"] .booking-panel,
+[data-theme="midnight"] .booking-summary-card,
+[data-theme="midnight"] .booking-help-card,
+[data-theme="midnight"] .home-dashboard-section,
+[data-theme="midnight"] .home-month-summary-card,
+[data-theme="midnight"] .home-center-card,
+[data-theme="midnight"] .home-arrival-check-card,
+[data-theme="midnight"] .help-guide-card,
+[data-theme="midnight"] .help-faq-item,
+[data-theme="midnight"] .help-faq-side-card,
+[data-theme="midnight"] .help-center-card,
+[data-theme="midnight"] .admin-center-card {
+  color: var(--theme-text);
+}
+
+
+/* =========================================================
+   TEXT INSIDE DARK SURFACES
+========================================================= */
+
+[data-theme="forest"] .admin-login-card h1,
+[data-theme="forest"] .admin-login-card h2,
+[data-theme="forest"] .admin-login-card h3,
+[data-theme="forest"] .admin-login-card p,
+[data-theme="forest"] .admin-login-card span,
+[data-theme="forest"] .admin-login-card label,
+
+[data-theme="forest"] .farmer-settings-card h1,
+[data-theme="forest"] .farmer-settings-card h2,
+[data-theme="forest"] .farmer-settings-card h3,
+[data-theme="forest"] .farmer-settings-card p,
+[data-theme="forest"] .farmer-settings-card span,
+[data-theme="forest"] .farmer-settings-card label,
+
+[data-theme="forest"] .booking-panel h1,
+[data-theme="forest"] .booking-panel h2,
+[data-theme="forest"] .booking-panel h3,
+[data-theme="forest"] .booking-panel p,
+[data-theme="forest"] .booking-panel span,
+[data-theme="forest"] .booking-panel label,
+
+[data-theme="forest"] .help-guide-card h1,
+[data-theme="forest"] .help-guide-card h2,
+[data-theme="forest"] .help-guide-card h3,
+[data-theme="forest"] .help-guide-card p,
+[data-theme="forest"] .help-guide-card span,
+
+[data-theme="midnight"] .admin-login-card h1,
+[data-theme="midnight"] .admin-login-card h2,
+[data-theme="midnight"] .admin-login-card h3,
+[data-theme="midnight"] .admin-login-card p,
+[data-theme="midnight"] .admin-login-card span,
+[data-theme="midnight"] .admin-login-card label,
+
+[data-theme="midnight"] .farmer-settings-card h1,
+[data-theme="midnight"] .farmer-settings-card h2,
+[data-theme="midnight"] .farmer-settings-card h3,
+[data-theme="midnight"] .farmer-settings-card p,
+[data-theme="midnight"] .farmer-settings-card span,
+[data-theme="midnight"] .farmer-settings-card label,
+
+[data-theme="midnight"] .booking-panel h1,
+[data-theme="midnight"] .booking-panel h2,
+[data-theme="midnight"] .booking-panel h3,
+[data-theme="midnight"] .booking-panel p,
+[data-theme="midnight"] .booking-panel span,
+[data-theme="midnight"] .booking-panel label,
+
+[data-theme="midnight"] .help-guide-card h1,
+[data-theme="midnight"] .help-guide-card h2,
+[data-theme="midnight"] .help-guide-card h3,
+[data-theme="midnight"] .help-guide-card p,
+[data-theme="midnight"] .help-guide-card span {
+  color: var(--theme-text);
+}
+
+
+/* =========================================================
+   MUTED / SECONDARY TEXT
+========================================================= */
+
+[data-theme="forest"] .admin-login-card small,
+[data-theme="forest"] .admin-login-card .field-help,
+[data-theme="forest"] .farmer-settings-card small,
+[data-theme="forest"] .booking-panel small,
+[data-theme="forest"] .help-guide-card small,
+
+[data-theme="midnight"] .admin-login-card small,
+[data-theme="midnight"] .admin-login-card .field-help,
+[data-theme="midnight"] .farmer-settings-card small,
+[data-theme="midnight"] .booking-panel small,
+[data-theme="midnight"] .help-guide-card small {
+  color: var(--theme-text-soft);
+}
+
+
+/* =========================================================
+   SVG RESCUE
+========================================================= */
+
+[data-theme="forest"] .admin-login-card svg,
+[data-theme="forest"] .farmer-settings-card svg,
+[data-theme="forest"] .booking-panel svg,
+[data-theme="forest"] .help-guide-card svg,
+
+[data-theme="midnight"] .admin-login-card svg,
+[data-theme="midnight"] .farmer-settings-card svg,
+[data-theme="midnight"] .booking-panel svg,
+[data-theme="midnight"] .help-guide-card svg {
+  stroke: currentColor;
+}
+
+
+/* =========================================================
+   STATIC ICON / TEXT WRAPPERS
+========================================================= */
+
+[data-theme="forest"] .admin-login-feature-icon,
+[data-theme="forest"] .admin-login-lock,
+[data-theme="forest"] .admin-demo-icon,
+[data-theme="forest"] .admin-security-row,
+[data-theme="forest"] .farmer-settings-section-icon,
+[data-theme="forest"] .farmer-settings-preference-icon,
+[data-theme="forest"] .home-center-icon,
+[data-theme="forest"] .help-connectivity-icon,
+[data-theme="forest"] .help-language-icon,
+
+[data-theme="midnight"] .admin-login-feature-icon,
+[data-theme="midnight"] .admin-login-lock,
+[data-theme="midnight"] .admin-demo-icon,
+[data-theme="midnight"] .admin-security-row,
+[data-theme="midnight"] .farmer-settings-section-icon,
+[data-theme="midnight"] .farmer-settings-preference-icon,
+[data-theme="midnight"] .home-center-icon,
+[data-theme="midnight"] .help-connectivity-icon,
+[data-theme="midnight"] .help-language-icon {
+  color: var(--theme-text);
+}
+
+
+/* =========================================================
+   PALE ACCENT BOXES
+   These MUST keep dark text.
+========================================================= */
+
+[data-theme="forest"] .help-secondary-action,
+[data-theme="forest"] .farmer-settings-secondary,
+[data-theme="forest"] .admin-login-back,
+[data-theme="forest"] .admin-demo-box,
+[data-theme="forest"] .help-emergency-note,
+
+[data-theme="midnight"] .help-secondary-action,
+[data-theme="midnight"] .farmer-settings-secondary,
+[data-theme="midnight"] .admin-login-back,
+[data-theme="midnight"] .admin-demo-box,
+[data-theme="midnight"] .help-emergency-note {
+  color: var(--theme-pale-text);
+}
+
+
+/* Make ALL nested text in these pale blocks readable */
+
+[data-theme="forest"] .help-secondary-action *,
+[data-theme="forest"] .farmer-settings-secondary *,
+[data-theme="forest"] .admin-login-back *,
+[data-theme="forest"] .admin-demo-box *,
+[data-theme="forest"] .help-emergency-note *,
+
+[data-theme="midnight"] .help-secondary-action *,
+[data-theme="midnight"] .farmer-settings-secondary *,
+[data-theme="midnight"] .admin-login-back *,
+[data-theme="midnight"] .admin-demo-box *,
+[data-theme="midnight"] .help-emergency-note * {
+  color: inherit;
+}
+
+
+/* SVGs inside pale blocks */
+
+[data-theme="forest"] .help-secondary-action svg,
+[data-theme="forest"] .farmer-settings-secondary svg,
+[data-theme="forest"] .admin-login-back svg,
+[data-theme="forest"] .admin-demo-box svg,
+[data-theme="forest"] .help-emergency-note svg,
+
+[data-theme="midnight"] .help-secondary-action svg,
+[data-theme="midnight"] .farmer-settings-secondary svg,
+[data-theme="midnight"] .admin-login-back svg,
+[data-theme="midnight"] .admin-demo-box svg,
+[data-theme="midnight"] .help-emergency-note svg {
+  stroke: currentColor;
+}
+
+
+/* =========================================================
+   LIGHT-COLOURED BUTTONS
+========================================================= */
+
+[data-theme="forest"] .help-secondary-action,
+[data-theme="midnight"] .help-secondary-action {
+  color: #123b52;
+}
+
+
+/* =========================================================
+   GREEN / BLUE / YELLOW ACCENT BOXES
+========================================================= */
+
+[data-theme="forest"] .tone-green,
+[data-theme="forest"] .green {
+  --local-accent: var(--theme-green);
+}
+
+[data-theme="forest"] .tone-blue,
+[data-theme="forest"] .blue {
+  --local-accent: var(--theme-blue);
+}
+
+[data-theme="forest"] .tone-gold,
+[data-theme="forest"] .gold {
+  --local-accent: var(--theme-yellow);
+}
+
+[data-theme="forest"] .tone-orange,
+[data-theme="forest"] .orange {
+  --local-accent: var(--theme-orange);
+}
+
+[data-theme="midnight"] .tone-green,
+[data-theme="midnight"] .green {
+  --local-accent: var(--theme-green);
+}
+
+[data-theme="midnight"] .tone-blue,
+[data-theme="midnight"] .blue {
+  --local-accent: var(--theme-blue);
+}
+
+[data-theme="midnight"] .tone-gold,
+[data-theme="midnight"] .gold {
+  --local-accent: var(--theme-yellow);
+}
+
+[data-theme="midnight"] .tone-orange,
+[data-theme="midnight"] .orange {
+  --local-accent: var(--theme-orange);
+}
+
+
+/* =========================================================
+   DISABLED / DEAD / INACTIVE UI
+========================================================= */
+
+[data-theme="forest"] button:disabled,
+[data-theme="forest"] input:disabled,
+[data-theme="forest"] select:disabled,
+[data-theme="forest"] textarea:disabled,
+[data-theme="forest"] [aria-disabled="true"],
+
+[data-theme="midnight"] button:disabled,
+[data-theme="midnight"] input:disabled,
+[data-theme="midnight"] select:disabled,
+[data-theme="midnight"] textarea:disabled,
+[data-theme="midnight"] [aria-disabled="true"] {
+  color: var(--theme-muted) !important;
+}
+
+
+[data-theme="forest"] button:disabled *,
+[data-theme="forest"] [aria-disabled="true"] *,
+
+[data-theme="midnight"] button:disabled *,
+[data-theme="midnight"] [aria-disabled="true"] * {
+  color: inherit !important;
+}
+
+
+[data-theme="forest"] button:disabled svg,
+[data-theme="forest"] [aria-disabled="true"] svg,
+
+[data-theme="midnight"] button:disabled svg,
+[data-theme="midnight"] [aria-disabled="true"] svg {
+  stroke: currentColor !important;
+}
+
+
+/* =========================================================
+   INPUT PLACEHOLDERS
+========================================================= */
+
+[data-theme="forest"] input::placeholder,
+[data-theme="forest"] textarea::placeholder,
+[data-theme="midnight"] input::placeholder,
+[data-theme="midnight"] textarea::placeholder {
+  color: var(--theme-muted) !important;
+  opacity: 1;
+}
+
+
+/* =========================================================
+   BUTTON HOVER
+   Never turn pale buttons into unreadable white.
+========================================================= */
+
+[data-theme="forest"] .help-secondary-action:hover,
+[data-theme="forest"] .farmer-settings-secondary:hover,
+[data-theme="forest"] .admin-login-back:hover,
+
+[data-theme="midnight"] .help-secondary-action:hover,
+[data-theme="midnight"] .farmer-settings-secondary:hover,
+[data-theme="midnight"] .admin-login-back:hover {
+  color: #123b52 !important;
+}
+
+
+/* =========================================================
+   CHECKBOX / SELECT / OPTION TEXT
+========================================================= */
+
+[data-theme="forest"] option,
+[data-theme="midnight"] option {
+  color: #123b52;
+  background: #ffffff;
+}
+
+
+/* =========================================================
+   FINAL SVG SAFETY
+   Do NOT recolor every SVG globally.
+========================================================= */
+
+[data-theme="forest"] .theme-readable-icon,
+[data-theme="midnight"] .theme-readable-icon {
+  color: currentColor;
+}
+
+[data-theme="forest"] .theme-readable-icon svg,
+[data-theme="midnight"] .theme-readable-icon svg {
+  stroke: currentColor;
+}
+
+/* =========================================================
+   ULTRA HIGH-CONTRAST FOREST + MIDNIGHT
+   FINAL OVERRIDE
+========================================================= */
+
+
+/* =========================================================
+   FOREST
+========================================================= */
+
+[data-theme="forest"] {
+  --forest-bg: #01150d;
+  --forest-surface: #05291b;
+  --forest-surface-2: #073b27;
+
+  --forest-green: #20f28a;
+  --forest-green-soft: #82ffc1;
+
+  --forest-blue: #58c7ff;
+  --forest-yellow: #ffd447;
+  --forest-orange: #ffad42;
+  --forest-purple: #c49cff;
+
+  --forest-light-green: #baffd9;
+  --forest-light-blue: #b9e7ff;
+  --forest-light-yellow: #ffe99a;
+  --forest-light-orange: #ffd39a;
+
+  --forest-dark-text: #062317;
+  --forest-dark-blue-text: #06243a;
+  --forest-dark-yellow-text: #302100;
+}
+
+
+/* =========================================================
+   MIDNIGHT
+========================================================= */
+
+[data-theme="midnight"] {
+  --midnight-bg: #01040a;
+  --midnight-surface: #050b15;
+  --midnight-surface-2: #0a1422;
+
+  --midnight-green: #4cffab;
+  --midnight-blue: #62c6ff;
+  --midnight-yellow: #ffd84d;
+  --midnight-orange: #ffb45f;
+  --midnight-purple: #c9a3ff;
+
+  --midnight-light-green: #b9ffdd;
+  --midnight-light-blue: #bfeaff;
+  --midnight-light-yellow: #ffed9e;
+  --midnight-light-orange: #ffd39f;
+
+  --midnight-dark-text: #041b12;
+  --midnight-dark-blue-text: #041d32;
+  --midnight-dark-yellow-text: #2d2100;
+}
+
+
+/* =========================================================
+   STATIC LIGHT ACCENT BLOCKS
+   These are intentionally DARK-TEXT blocks.
+========================================================= */
+
+
+/* ---------- GREEN ---------- */
+
+[data-theme="forest"] .green,
+[data-theme="forest"] .tone-green,
+[data-theme="forest"] .booking-feature,
+[data-theme="forest"] .home-month-stat.green,
+[data-theme="forest"] .help-topic-card.green,
+[data-theme="forest"] .help-guide-card.green,
+[data-theme="forest"] .help-checklist-card.green,
+
+[data-theme="midnight"] .green,
+[data-theme="midnight"] .tone-green,
+[data-theme="midnight"] .booking-feature,
+[data-theme="midnight"] .home-month-stat.green,
+[data-theme="midnight"] .help-topic-card.green,
+[data-theme="midnight"] .help-guide-card.green,
+[data-theme="midnight"] .help-checklist-card.green {
+  background: var(--forest-light-green, #baffd9) !important;
+  color: var(--forest-dark-text, #062317) !important;
+  border-color: #41d996 !important;
+}
+
+
+/* ---------- BLUE ---------- */
+
+[data-theme="forest"] .blue,
+[data-theme="forest"] .tone-blue,
+[data-theme="forest"] .status-feature,
+[data-theme="forest"] .help-topic-card.blue,
+[data-theme="forest"] .help-guide-card.blue,
+[data-theme="forest"] .help-checklist-card.blue,
+
+[data-theme="midnight"] .blue,
+[data-theme="midnight"] .tone-blue,
+[data-theme="midnight"] .status-feature,
+[data-theme="midnight"] .help-topic-card.blue,
+[data-theme="midnight"] .help-guide-card.blue,
+[data-theme="midnight"] .help-checklist-card.blue {
+  background: var(--forest-light-blue, #b9e7ff) !important;
+  color: var(--forest-dark-blue-text, #06243a) !important;
+  border-color: #4aaee8 !important;
+}
+
+
+/* ---------- YELLOW ---------- */
+
+[data-theme="forest"] .gold,
+[data-theme="forest"] .tone-gold,
+[data-theme="forest"] .help-topic-card.gold,
+[data-theme="forest"] .help-guide-card.gold,
+[data-theme="forest"] .help-checklist-card.gold,
+
+[data-theme="midnight"] .gold,
+[data-theme="midnight"] .tone-gold,
+[data-theme="midnight"] .help-topic-card.gold,
+[data-theme="midnight"] .help-guide-card.gold,
+[data-theme="midnight"] .help-checklist-card.gold {
+  background: var(--forest-light-yellow, #ffe99a) !important;
+  color: var(--forest-dark-yellow-text, #302100) !important;
+  border-color: #e1bd39 !important;
+}
+
+
+/* ---------- ORANGE ---------- */
+
+[data-theme="forest"] .orange,
+[data-theme="forest"] .tone-orange,
+[data-theme="forest"] .help-topic-card.orange,
+[data-theme="forest"] .help-guide-card.orange,
+[data-theme="forest"] .help-checklist-card.orange,
+
+[data-theme="midnight"] .orange,
+[data-theme="midnight"] .tone-orange,
+[data-theme="midnight"] .help-topic-card.orange,
+[data-theme="midnight"] .help-guide-card.orange,
+[data-theme="midnight"] .help-checklist-card.orange {
+  background: var(--forest-light-orange, #ffd39a) !important;
+  color: #3a2100 !important;
+  border-color: #dc9638 !important;
+}
+
+
+/* =========================================================
+   FORCE NESTED STATIC TEXT TO DARK CONTRAST
+========================================================= */
+
+[data-theme="forest"] .green *,
+[data-theme="forest"] .tone-green *,
+[data-theme="forest"] .blue *,
+[data-theme="forest"] .tone-blue *,
+[data-theme="forest"] .gold *,
+[data-theme="forest"] .tone-gold *,
+[data-theme="forest"] .orange *,
+[data-theme="forest"] .tone-orange *,
+
+[data-theme="midnight"] .green *,
+[data-theme="midnight"] .tone-green *,
+[data-theme="midnight"] .blue *,
+[data-theme="midnight"] .tone-blue *,
+[data-theme="midnight"] .gold *,
+[data-theme="midnight"] .tone-gold *,
+[data-theme="midnight"] .orange *,
+[data-theme="midnight"] .tone-orange * {
+  color: inherit !important;
+}
+
+
+/* =========================================================
+   STATIC BLOCK TYPOGRAPHY
+========================================================= */
+
+[data-theme="forest"] .green strong,
+[data-theme="forest"] .green span,
+[data-theme="forest"] .green p,
+[data-theme="forest"] .green small,
+[data-theme="forest"] .green h1,
+[data-theme="forest"] .green h2,
+[data-theme="forest"] .green h3,
+
+[data-theme="midnight"] .green strong,
+[data-theme="midnight"] .green span,
+[data-theme="midnight"] .green p,
+[data-theme="midnight"] .green small,
+[data-theme="midnight"] .green h1,
+[data-theme="midnight"] .green h2,
+[data-theme="midnight"] .green h3 {
+  color: #062317 !important;
+}
+
+
+[data-theme="forest"] .blue strong,
+[data-theme="forest"] .blue span,
+[data-theme="forest"] .blue p,
+[data-theme="forest"] .blue small,
+[data-theme="forest"] .blue h1,
+[data-theme="forest"] .blue h2,
+[data-theme="forest"] .blue h3,
+
+[data-theme="midnight"] .blue strong,
+[data-theme="midnight"] .blue span,
+[data-theme="midnight"] .blue p,
+[data-theme="midnight"] .blue small,
+[data-theme="midnight"] .blue h1,
+[data-theme="midnight"] .blue h2,
+[data-theme="midnight"] .blue h3 {
+  color: #06243a !important;
+}
+
+
+[data-theme="forest"] .gold strong,
+[data-theme="forest"] .gold span,
+[data-theme="forest"] .gold p,
+[data-theme="forest"] .gold small,
+[data-theme="forest"] .gold h1,
+[data-theme="forest"] .gold h2,
+[data-theme="forest"] .gold h3,
+
+[data-theme="midnight"] .gold strong,
+[data-theme="midnight"] .gold span,
+[data-theme="midnight"] .gold p,
+[data-theme="midnight"] .gold small,
+[data-theme="midnight"] .gold h1,
+[data-theme="midnight"] .gold h2,
+[data-theme="midnight"] .gold h3 {
+  color: #302100 !important;
+}
+
+
+[data-theme="forest"] .orange strong,
+[data-theme="forest"] .orange span,
+[data-theme="forest"] .orange p,
+[data-theme="forest"] .orange small,
+[data-theme="forest"] .orange h1,
+[data-theme="forest"] .orange h2,
+[data-theme="forest"] .orange h3,
+
+[data-theme="midnight"] .orange strong,
+[data-theme="midnight"] .orange span,
+[data-theme="midnight"] .orange p,
+[data-theme="midnight"] .orange small,
+[data-theme="midnight"] .orange h1,
+[data-theme="midnight"] .orange h2,
+[data-theme="midnight"] .orange h3 {
+  color: #3a2100 !important;
+}
+
+
+/* =========================================================
+   SVGs INSIDE ACCENT BLOCKS
+========================================================= */
+
+[data-theme="forest"] .green svg,
+[data-theme="forest"] .tone-green svg,
+[data-theme="forest"] .blue svg,
+[data-theme="forest"] .tone-blue svg,
+[data-theme="forest"] .gold svg,
+[data-theme="forest"] .tone-gold svg,
+[data-theme="forest"] .orange svg,
+[data-theme="forest"] .tone-orange svg,
+
+[data-theme="midnight"] .green svg,
+[data-theme="midnight"] .tone-green svg,
+[data-theme="midnight"] .blue svg,
+[data-theme="midnight"] .tone-blue svg,
+[data-theme="midnight"] .gold svg,
+[data-theme="midnight"] .tone-gold svg,
+[data-theme="midnight"] .orange svg,
+[data-theme="midnight"] .tone-orange svg {
+  stroke: currentColor !important;
+  color: currentColor !important;
+}
+
+
+/* =========================================================
+   ICON CONTAINERS
+========================================================= */
+
+[data-theme="forest"] .help-topic-icon,
+[data-theme="forest"] .help-guide-icon,
+[data-theme="forest"] .help-checklist-icon,
+[data-theme="forest"] .farmer-settings-section-icon,
+[data-theme="forest"] .farmer-settings-preference-icon,
+
+[data-theme="midnight"] .help-topic-icon,
+[data-theme="midnight"] .help-guide-icon,
+[data-theme="midnight"] .help-checklist-icon,
+[data-theme="midnight"] .farmer-settings-section-icon,
+[data-theme="midnight"] .farmer-settings-preference-icon {
+  color: inherit !important;
+}
+
+
+[data-theme="forest"] .green .help-topic-icon,
+[data-theme="forest"] .green .help-guide-icon,
+[data-theme="forest"] .green .help-checklist-icon,
+
+[data-theme="midnight"] .green .help-topic-icon,
+[data-theme="midnight"] .green .help-guide-icon,
+[data-theme="midnight"] .green .help-checklist-icon {
+  background: #73e8ae !important;
+  color: #052418 !important;
+}
+
+
+[data-theme="forest"] .blue .help-topic-icon,
+[data-theme="forest"] .blue .help-guide-icon,
+[data-theme="forest"] .blue .help-checklist-icon,
+
+[data-theme="midnight"] .blue .help-topic-icon,
+[data-theme="midnight"] .blue .help-guide-icon,
+[data-theme="midnight"] .blue .help-checklist-icon {
+  background: #73caff !important;
+  color: #042238 !important;
+}
+
+
+[data-theme="forest"] .gold .help-topic-icon,
+[data-theme="forest"] .gold .help-guide-icon,
+[data-theme="forest"] .gold .help-checklist-icon,
+
+[data-theme="midnight"] .gold .help-topic-icon,
+[data-theme="midnight"] .gold .help-guide-icon,
+[data-theme="midnight"] .gold .help-checklist-icon {
+  background: #f4cd49 !important;
+  color: #322400 !important;
+}
+
+
+[data-theme="forest"] .orange .help-topic-icon,
+[data-theme="forest"] .orange .help-guide-icon,
+[data-theme="forest"] .orange .help-checklist-icon,
+
+[data-theme="midnight"] .orange .help-topic-icon,
+[data-theme="midnight"] .orange .help-guide-icon,
+[data-theme="midnight"] .orange .help-checklist-icon {
+  background: #f2a84f !important;
+  color: #392000 !important;
+}
+
+
+/* =========================================================
+   FORCE SVG COLOR IN ICON CONTAINERS
+========================================================= */
+
+[data-theme="forest"] .help-topic-icon svg,
+[data-theme="forest"] .help-guide-icon svg,
+[data-theme="forest"] .help-checklist-icon svg,
+[data-theme="forest"] .farmer-settings-section-icon svg,
+[data-theme="forest"] .farmer-settings-preference-icon svg,
+
+[data-theme="midnight"] .help-topic-icon svg,
+[data-theme="midnight"] .help-guide-icon svg,
+[data-theme="midnight"] .help-checklist-icon svg,
+[data-theme="midnight"] .farmer-settings-section-icon svg,
+[data-theme="midnight"] .farmer-settings-preference-icon svg {
+  stroke: currentColor !important;
+}
+
+
+/* =========================================================
+   DARK SURFACES REMAIN DARK
+========================================================= */
+
+[data-theme="forest"] .farmer-settings-card,
+[data-theme="forest"] .booking-panel,
+[data-theme="forest"] .booking-summary-card,
+[data-theme="forest"] .help-guide-section,
+[data-theme="forest"] .help-faq-section,
+[data-theme="forest"] .help-contact-section,
+
+[data-theme="midnight"] .farmer-settings-card,
+[data-theme="midnight"] .booking-panel,
+[data-theme="midnight"] .booking-summary-card,
+[data-theme="midnight"] .help-guide-section,
+[data-theme="midnight"] .help-faq-section,
+[data-theme="midnight"] .help-contact-section {
+  background: var(--forest-surface, #05291b);
+  color: var(--forest-light-green, #eafff2);
+}
+
+
+/* =========================================================
+   DARK-SURFACE TEXT
+========================================================= */
+
+[data-theme="forest"] .farmer-settings-card h1,
+[data-theme="forest"] .farmer-settings-card h2,
+[data-theme="forest"] .farmer-settings-card h3,
+[data-theme="forest"] .farmer-settings-card p,
+[data-theme="forest"] .farmer-settings-card span,
+[data-theme="forest"] .booking-panel h1,
+[data-theme="forest"] .booking-panel h2,
+[data-theme="forest"] .booking-panel h3,
+[data-theme="forest"] .booking-panel p,
+[data-theme="forest"] .booking-panel span,
+
+[data-theme="midnight"] .farmer-settings-card h1,
+[data-theme="midnight"] .farmer-settings-card h2,
+[data-theme="midnight"] .farmer-settings-card h3,
+[data-theme="midnight"] .farmer-settings-card p,
+[data-theme="midnight"] .farmer-settings-card span,
+[data-theme="midnight"] .booking-panel h1,
+[data-theme="midnight"] .booking-panel h2,
+[data-theme="midnight"] .booking-panel h3,
+[data-theme="midnight"] .booking-panel p,
+[data-theme="midnight"] .booking-panel span {
+  color: #f4fff9 !important;
+}
+
+
+/* =========================================================
+   HOVER — KEEP TEXT READABLE
+========================================================= */
+
+[data-theme="forest"] .green:hover,
+[data-theme="midnight"] .green:hover {
+  background: #a9ffd0 !important;
+  color: #062317 !important;
+}
+
+[data-theme="forest"] .blue:hover,
+[data-theme="midnight"] .blue:hover {
+  background: #a6e1ff !important;
+  color: #06243a !important;
+}
+
+[data-theme="forest"] .gold:hover,
+[data-theme="midnight"] .gold:hover {
+  background: #ffe281 !important;
+  color: #302100 !important;
+}
+
+[data-theme="forest"] .orange:hover,
+[data-theme="midnight"] .orange:hover {
+  background: #ffc47f !important;
+  color: #3a2100 !important;
+}
+
+
+/* =========================================================
+   HOVER NESTED CONTENT
+========================================================= */
+
+[data-theme="forest"] .green:hover *,
+[data-theme="forest"] .blue:hover *,
+[data-theme="forest"] .gold:hover *,
+[data-theme="forest"] .orange:hover *,
+
+[data-theme="midnight"] .green:hover *,
+[data-theme="midnight"] .blue:hover *,
+[data-theme="midnight"] .gold:hover *,
+[data-theme="midnight"] .orange:hover * {
+  color: inherit !important;
+}
+
+
+/* =========================================================
+   BUTTONS WITH PALE BACKGROUND
+========================================================= */
+
+[data-theme="forest"] button.green,
+[data-theme="forest"] button.blue,
+[data-theme="forest"] button.gold,
+[data-theme="forest"] button.orange,
+
+[data-theme="midnight"] button.green,
+[data-theme="midnight"] button.blue,
+[data-theme="midnight"] button.gold,
+[data-theme="midnight"] button.orange {
+  font-weight: 700 !important;
+}
+
+
+/* =========================================================
+   STATIC LABEL / BADGE BLOCKS
+========================================================= */
+
+[data-theme="forest"] .page-eyebrow,
+[data-theme="forest"] .card-eyebrow,
+[data-theme="forest"] .panel-step-label,
+[data-theme="forest"] .booking-live-pill,
+
+[data-theme="midnight"] .page-eyebrow,
+[data-theme="midnight"] .card-eyebrow,
+[data-theme="midnight"] .panel-step-label,
+[data-theme="midnight"] .booking-live-pill {
+  font-weight: 800;
+}
+
+
+/* =========================================================
+   NO FADED WHITE TEXT IN THESE BLOCKS
+========================================================= */
+
+[data-theme="forest"] .green .muted,
+[data-theme="forest"] .green .secondary,
+[data-theme="forest"] .green .subtext,
+[data-theme="forest"] .blue .muted,
+[data-theme="forest"] .blue .secondary,
+[data-theme="forest"] .blue .subtext,
+[data-theme="forest"] .gold .muted,
+[data-theme="forest"] .gold .secondary,
+[data-theme="forest"] .gold .subtext,
+[data-theme="forest"] .orange .muted,
+[data-theme="forest"] .orange .secondary,
+[data-theme="forest"] .orange .subtext,
+
+[data-theme="midnight"] .green .muted,
+[data-theme="midnight"] .green .secondary,
+[data-theme="midnight"] .green .subtext,
+[data-theme="midnight"] .blue .muted,
+[data-theme="midnight"] .blue .secondary,
+[data-theme="midnight"] .blue .subtext,
+[data-theme="midnight"] .gold .muted,
+[data-theme="midnight"] .gold .secondary,
+[data-theme="midnight"] .gold .subtext,
+[data-theme="midnight"] .orange .muted,
+[data-theme="midnight"] .orange .secondary,
+[data-theme="midnight"] .orange .subtext {
+  opacity: 1 !important;
+  color: inherit !important;
+}
+
+/* =========================================================
+   FOREST + MIDNIGHT
+   TEXT / ICON CONTRAST ONLY
+   Do NOT change backgrounds
+========================================================= */
+
+
+/* =========================================================
+   LIGHT ACCENT BLOCKS
+   Pale green / blue / yellow / orange backgrounds
+   -> use DARK text
+========================================================= */
+
+[data-theme="forest"] .green,
+[data-theme="forest"] .tone-green,
+[data-theme="forest"] .blue,
+[data-theme="forest"] .tone-blue,
+[data-theme="forest"] .gold,
+[data-theme="forest"] .tone-gold,
+[data-theme="forest"] .orange,
+[data-theme="forest"] .tone-orange,
+
+[data-theme="midnight"] .green,
+[data-theme="midnight"] .tone-green,
+[data-theme="midnight"] .blue,
+[data-theme="midnight"] .tone-blue,
+[data-theme="midnight"] .gold,
+[data-theme="midnight"] .tone-gold,
+[data-theme="midnight"] .orange,
+[data-theme="midnight"] .tone-orange {
+  color: #111827 !important;
+}
+
+
+/* All text inside those blocks */
+
+[data-theme="forest"] .green *,
+[data-theme="forest"] .tone-green *,
+[data-theme="forest"] .blue *,
+[data-theme="forest"] .tone-blue *,
+[data-theme="forest"] .gold *,
+[data-theme="forest"] .tone-gold *,
+[data-theme="forest"] .orange *,
+[data-theme="forest"] .tone-orange *,
+
+[data-theme="midnight"] .green *,
+[data-theme="midnight"] .tone-green *,
+[data-theme="midnight"] .blue *,
+[data-theme="midnight"] .tone-blue *,
+[data-theme="midnight"] .gold *,
+[data-theme="midnight"] .tone-gold *,
+[data-theme="midnight"] .orange *,
+[data-theme="midnight"] .tone-orange * {
+  color: #111827 !important;
+}
+
+
+/* SVGs inside light blocks */
+
+[data-theme="forest"] .green svg,
+[data-theme="forest"] .tone-green svg,
+[data-theme="forest"] .blue svg,
+[data-theme="forest"] .tone-blue svg,
+[data-theme="forest"] .gold svg,
+[data-theme="forest"] .tone-gold svg,
+[data-theme="forest"] .orange svg,
+[data-theme="forest"] .tone-orange svg,
+
+[data-theme="midnight"] .green svg,
+[data-theme="midnight"] .tone-green svg,
+[data-theme="midnight"] .blue svg,
+[data-theme="midnight"] .tone-blue svg,
+[data-theme="midnight"] .gold svg,
+[data-theme="midnight"] .tone-gold svg,
+[data-theme="midnight"] .orange svg,
+[data-theme="midnight"] .tone-orange svg {
+  color: #111827 !important;
+  stroke: #111827 !important;
+}
+
+
+/* =========================================================
+   COMMON STATIC LIGHT CARDS
+========================================================= */
+
+[data-theme="forest"] .booking-feature,
+[data-theme="forest"] .status-feature,
+[data-theme="forest"] .help-topic-card.green,
+[data-theme="forest"] .help-topic-card.blue,
+[data-theme="forest"] .help-topic-card.gold,
+[data-theme="forest"] .help-topic-card.orange,
+[data-theme="forest"] .help-guide-card.green,
+[data-theme="forest"] .help-guide-card.blue,
+[data-theme="forest"] .help-guide-card.gold,
+[data-theme="forest"] .help-guide-card.orange,
+[data-theme="forest"] .help-checklist-card.green,
+[data-theme="forest"] .help-checklist-card.blue,
+[data-theme="forest"] .help-checklist-card.gold,
+[data-theme="forest"] .help-checklist-card.orange,
+
+[data-theme="midnight"] .booking-feature,
+[data-theme="midnight"] .status-feature,
+[data-theme="midnight"] .help-topic-card.green,
+[data-theme="midnight"] .help-topic-card.blue,
+[data-theme="midnight"] .help-topic-card.gold,
+[data-theme="midnight"] .help-topic-card.orange,
+[data-theme="midnight"] .help-guide-card.green,
+[data-theme="midnight"] .help-guide-card.blue,
+[data-theme="midnight"] .help-guide-card.gold,
+[data-theme="midnight"] .help-guide-card.orange,
+[data-theme="midnight"] .help-checklist-card.green,
+[data-theme="midnight"] .help-checklist-card.blue,
+[data-theme="midnight"] .help-checklist-card.gold,
+[data-theme="midnight"] .help-checklist-card.orange {
+  color: #111827 !important;
+}
+
+
+[data-theme="forest"] .booking-feature *,
+[data-theme="forest"] .status-feature *,
+[data-theme="forest"] .help-topic-card.green *,
+[data-theme="forest"] .help-topic-card.blue *,
+[data-theme="forest"] .help-topic-card.gold *,
+[data-theme="forest"] .help-topic-card.orange *,
+[data-theme="forest"] .help-guide-card.green *,
+[data-theme="forest"] .help-guide-card.blue *,
+[data-theme="forest"] .help-guide-card.gold *,
+[data-theme="forest"] .help-guide-card.orange *,
+[data-theme="forest"] .help-checklist-card.green *,
+[data-theme="forest"] .help-checklist-card.blue *,
+[data-theme="forest"] .help-checklist-card.gold *,
+[data-theme="forest"] .help-checklist-card.orange *,
+
+[data-theme="midnight"] .booking-feature *,
+[data-theme="midnight"] .status-feature *,
+[data-theme="midnight"] .help-topic-card.green *,
+[data-theme="midnight"] .help-topic-card.blue *,
+[data-theme="midnight"] .help-topic-card.gold *,
+[data-theme="midnight"] .help-topic-card.orange *,
+[data-theme="midnight"] .help-guide-card.green *,
+[data-theme="midnight"] .help-guide-card.blue *,
+[data-theme="midnight"] .help-guide-card.gold *,
+[data-theme="midnight"] .help-guide-card.orange *,
+[data-theme="midnight"] .help-checklist-card.green *,
+[data-theme="midnight"] .help-checklist-card.blue *,
+[data-theme="midnight"] .help-checklist-card.gold *,
+[data-theme="midnight"] .help-checklist-card.orange * {
+  color: #111827 !important;
+}
+
+
+/* =========================================================
+   DARK SURFACES
+   -> use BRIGHT / WHITE text
+========================================================= */
+
+[data-theme="forest"] .farmer-settings-card,
+[data-theme="forest"] .booking-panel,
+[data-theme="forest"] .booking-summary-card,
+[data-theme="forest"] .help-guide-section,
+[data-theme="forest"] .help-faq-section,
+[data-theme="forest"] .help-contact-section,
+
+[data-theme="midnight"] .farmer-settings-card,
+[data-theme="midnight"] .booking-panel,
+[data-theme="midnight"] .booking-summary-card,
+[data-theme="midnight"] .help-guide-section,
+[data-theme="midnight"] .help-faq-section,
+[data-theme="midnight"] .help-contact-section {
+  color: #f8fafc !important;
+}
+
+
+[data-theme="forest"] .farmer-settings-card h1,
+[data-theme="forest"] .farmer-settings-card h2,
+[data-theme="forest"] .farmer-settings-card h3,
+[data-theme="forest"] .farmer-settings-card p,
+[data-theme="forest"] .farmer-settings-card span,
+[data-theme="forest"] .farmer-settings-card label,
+
+[data-theme="forest"] .booking-panel h1,
+[data-theme="forest"] .booking-panel h2,
+[data-theme="forest"] .booking-panel h3,
+[data-theme="forest"] .booking-panel p,
+[data-theme="forest"] .booking-panel span,
+[data-theme="forest"] .booking-panel label,
+
+[data-theme="midnight"] .farmer-settings-card h1,
+[data-theme="midnight"] .farmer-settings-card h2,
+[data-theme="midnight"] .farmer-settings-card h3,
+[data-theme="midnight"] .farmer-settings-card p,
+[data-theme="midnight"] .farmer-settings-card span,
+[data-theme="midnight"] .farmer-settings-card label,
+
+[data-theme="midnight"] .booking-panel h1,
+[data-theme="midnight"] .booking-panel h2,
+[data-theme="midnight"] .booking-panel h3,
+[data-theme="midnight"] .booking-panel p,
+[data-theme="midnight"] .booking-panel span,
+[data-theme="midnight"] .booking-panel label {
+  color: #f8fafc !important;
+}
+
+
+/* =========================================================
+   DARK-SURFACE SVGs
+========================================================= */
+
+[data-theme="forest"] .farmer-settings-card svg,
+[data-theme="forest"] .booking-panel svg,
+[data-theme="forest"] .booking-summary-card svg,
+
+[data-theme="midnight"] .farmer-settings-card svg,
+[data-theme="midnight"] .booking-panel svg,
+[data-theme="midnight"] .booking-summary-card svg {
+  color: #f8fafc;
+  stroke: #f8fafc;
+}
+
+
+/* =========================================================
+   INPUTS / SELECTS
+   Dark theme but pale/white controls -> dark text
+========================================================= */
+
+[data-theme="forest"] input,
+[data-theme="forest"] select,
+[data-theme="forest"] textarea,
+
+[data-theme="midnight"] input,
+[data-theme="midnight"] select,
+[data-theme="midnight"] textarea {
+  color: #111827 !important;
+}
+
+
+/* Placeholder */
+
+[data-theme="forest"] input::placeholder,
+[data-theme="forest"] textarea::placeholder,
+[data-theme="midnight"] input::placeholder,
+[data-theme="midnight"] textarea::placeholder {
+  color: #4b5563 !important;
+}
+
+
+/* =========================================================
+   HOVER
+   Keep contrast; don't let inherited white text appear
+========================================================= */
+
+[data-theme="forest"] .green:hover *,
+[data-theme="forest"] .blue:hover *,
+[data-theme="forest"] .gold:hover *,
+[data-theme="forest"] .orange:hover *,
+
+[data-theme="midnight"] .green:hover *,
+[data-theme="midnight"] .blue:hover *,
+[data-theme="midnight"] .gold:hover *,
+[data-theme="midnight"] .orange:hover * {
+  color: #111827 !important;
+}
+
+
+/* =========================================================
+   LIGHT ICON CIRCLES / ICON BOXES
+========================================================= */
+
+[data-theme="forest"] .help-topic-icon svg,
+[data-theme="forest"] .help-guide-icon svg,
+[data-theme="forest"] .help-checklist-icon svg,
+
+[data-theme="midnight"] .help-topic-icon svg,
+[data-theme="midnight"] .help-guide-icon svg,
+[data-theme="midnight"] .help-checklist-icon svg {
+  color: #111827 !important;
+  stroke: #111827 !important;
+}
+
+
+/* =========================================================
+   STATIC LABELS INSIDE PALE BLOCKS
+========================================================= */
+
+[data-theme="forest"] .green .page-eyebrow,
+[data-theme="forest"] .blue .page-eyebrow,
+[data-theme="forest"] .gold .page-eyebrow,
+[data-theme="forest"] .orange .page-eyebrow,
+
+[data-theme="midnight"] .green .page-eyebrow,
+[data-theme="midnight"] .blue .page-eyebrow,
+[data-theme="midnight"] .gold .page-eyebrow,
+[data-theme="midnight"] .orange .page-eyebrow {
+  color: #111827 !important;
+}
+
+
+/* =========================================================
+   IMPORTANT:
+   Do not globally force EVERY span/svg to white.
+   Only dark surfaces get white text.
+   Light accent blocks get dark text.
+========================================================= */
+
+/* =========================================================
+   FOREST + MIDNIGHT
+   HIGH-CONTRAST COLOURED STATIC CARDS
+========================================================= */
+
+
+/* ---------------------------------------------------------
+   QUICK HELP / TOPIC CARDS
+--------------------------------------------------------- */
+
+[data-theme="forest"] .help-topic-card.green,
+[data-theme="midnight"] .help-topic-card.green {
+  background: #063d24 !important;
+  border-color: #18b86a !important;
+  color: #f3fff8 !important;
+}
+
+[data-theme="forest"] .help-topic-card.blue,
+[data-theme="midnight"] .help-topic-card.blue {
+  background: #063a66 !important;
+  border-color: #2499ff !important;
+  color: #f2f8ff !important;
+}
+
+[data-theme="forest"] .help-topic-card.orange,
+[data-theme="midnight"] .help-topic-card.orange {
+  background: #663300 !important;
+  border-color: #ff9d38 !important;
+  color: #fff8ef !important;
+}
+
+[data-theme="forest"] .help-topic-card.purple,
+[data-theme="midnight"] .help-topic-card.purple {
+  background: #40206b !important;
+  border-color: #b47cff !important;
+  color: #faf7ff !important;
+}
+
+[data-theme="forest"] .help-topic-card.gold,
+[data-theme="midnight"] .help-topic-card.gold {
+  background: #5f4600 !important;
+  border-color: #f5c542 !important;
+  color: #fffbea !important;
+}
+
+[data-theme="forest"] .help-topic-card.teal,
+[data-theme="midnight"] .help-topic-card.teal {
+  background: #034c4a !important;
+  border-color: #20d4c7 !important;
+  color: #efffff !important;
+}
+
+
+/* ---------------------------------------------------------
+   ALL CONTENT INSIDE QUICK HELP CARDS
+--------------------------------------------------------- */
+
+[data-theme="forest"] .help-topic-card.green *,
+[data-theme="forest"] .help-topic-card.blue *,
+[data-theme="forest"] .help-topic-card.orange *,
+[data-theme="forest"] .help-topic-card.purple *,
+[data-theme="forest"] .help-topic-card.gold *,
+[data-theme="forest"] .help-topic-card.teal *,
+
+[data-theme="midnight"] .help-topic-card.green *,
+[data-theme="midnight"] .help-topic-card.blue *,
+[data-theme="midnight"] .help-topic-card.orange *,
+[data-theme="midnight"] .help-topic-card.purple *,
+[data-theme="midnight"] .help-topic-card.gold *,
+[data-theme="midnight"] .help-topic-card.teal * {
+  color: inherit !important;
+}
+
+
+/* ---------------------------------------------------------
+   ICON BOX
+--------------------------------------------------------- */
+
+[data-theme="forest"] .help-topic-card.green .help-topic-icon,
+[data-theme="midnight"] .help-topic-card.green .help-topic-icon {
+  background: #0a6139 !important;
+  border-color: #24d47a !important;
+  color: #d9ffe9 !important;
+}
+
+[data-theme="forest"] .help-topic-card.blue .help-topic-icon,
+[data-theme="midnight"] .help-topic-card.blue .help-topic-icon {
+  background: #07548f !important;
+  border-color: #43aaff !important;
+  color: #e2f3ff !important;
+}
+
+[data-theme="forest"] .help-topic-card.orange .help-topic-icon,
+[data-theme="midnight"] .help-topic-card.orange .help-topic-icon {
+  background: #854500 !important;
+  border-color: #ffb45c !important;
+  color: #fff0d9 !important;
+}
+
+[data-theme="forest"] .help-topic-card.purple .help-topic-icon,
+[data-theme="midnight"] .help-topic-card.purple .help-topic-icon {
+  background: #552b8d !important;
+  border-color: #c899ff !important;
+  color: #f4eaff !important;
+}
+
+[data-theme="forest"] .help-topic-card.gold .help-topic-icon,
+[data-theme="midnight"] .help-topic-card.gold .help-topic-icon {
+  background: #796000 !important;
+  border-color: #ffd65a !important;
+  color: #fff8cf !important;
+}
+
+[data-theme="forest"] .help-topic-card.teal .help-topic-icon,
+[data-theme="midnight"] .help-topic-card.teal .help-topic-icon {
+  background: #086663 !important;
+  border-color: #35e8dc !important;
+  color: #ddfffc !important;
+}
+
+
+/* ---------------------------------------------------------
+   SVG INSIDE ICONS
+--------------------------------------------------------- */
+
+[data-theme="forest"] .help-topic-card .help-topic-icon svg,
+[data-theme="midnight"] .help-topic-card .help-topic-icon svg {
+  color: inherit !important;
+  stroke: currentColor !important;
+}
+
+
+/* ---------------------------------------------------------
+   HOVER
+   Don't let hover turn the card white.
+--------------------------------------------------------- */
+
+[data-theme="forest"] .help-topic-card.green:hover,
+[data-theme="midnight"] .help-topic-card.green:hover {
+  background: #07552f !important;
+  color: #ffffff !important;
+}
+
+[data-theme="forest"] .help-topic-card.blue:hover,
+[data-theme="midnight"] .help-topic-card.blue:hover {
+  background: #074a80 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="forest"] .help-topic-card.orange:hover,
+[data-theme="midnight"] .help-topic-card.orange:hover {
+  background: #7a3c00 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="forest"] .help-topic-card.purple:hover,
+[data-theme="midnight"] .help-topic-card.purple:hover {
+  background: #4d2581 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="forest"] .help-topic-card.gold:hover,
+[data-theme="midnight"] .help-topic-card.gold:hover {
+  background: #705300 !important;
+  color: #ffffff !important;
+}
+
+[data-theme="forest"] .help-topic-card.teal:hover,
+[data-theme="midnight"] .help-topic-card.teal:hover {
+  background: #075b58 !important;
+  color: #ffffff !important;
+}
+
+
+/* ---------------------------------------------------------
+   DISABLE ANY GLOBAL WHITE-TEXT OVERRIDES
+--------------------------------------------------------- */
+
+[data-theme="forest"] .help-topic-card strong,
+[data-theme="forest"] .help-topic-card p,
+[data-theme="forest"] .help-topic-card span,
+[data-theme="forest"] .help-topic-card svg,
+
+[data-theme="midnight"] .help-topic-card strong,
+[data-theme="midnight"] .help-topic-card p,
+[data-theme="midnight"] .help-topic-card span,
+[data-theme="midnight"] .help-topic-card svg {
+  color: inherit !important;
+}
+
+/* =========================================================
+   FOREST + MIDNIGHT
+   FIX PALE STATIC CARD TEXT
+========================================================= */
+
+[data-theme="forest"] .help-hero-card,
+[data-theme="midnight"] .help-hero-card,
+[data-theme="forest"] .help-topic-card,
+[data-theme="midnight"] .help-topic-card,
+[data-theme="forest"] .help-guide-card,
+[data-theme="midnight"] .help-guide-card,
+[data-theme="forest"] .help-checklist-card,
+[data-theme="midnight"] .help-checklist-card {
+  color: #d9e7df !important;
+}
+
+
+/* Main readable heading inside coloured cards */
+[data-theme="forest"] .help-hero-card strong,
+[data-theme="midnight"] .help-hero-card strong,
+[data-theme="forest"] .help-topic-card strong,
+[data-theme="midnight"] .help-topic-card strong,
+[data-theme="forest"] .help-guide-card h3,
+[data-theme="midnight"] .help-guide-card h3,
+[data-theme="forest"] .help-checklist-card h3,
+[data-theme="midnight"] .help-checklist-card h3 {
+  color: #17352a !important;
+}
+
+
+/* Secondary / descriptive text */
+[data-theme="forest"] .help-hero-card span,
+[data-theme="midnight"] .help-hero-card span,
+[data-theme="forest"] .help-hero-card p,
+[data-theme="midnight"] .help-hero-card p,
+[data-theme="forest"] .help-topic-card p,
+[data-theme="midnight"] .help-topic-card p,
+[data-theme="forest"] .help-guide-card p,
+[data-theme="midnight"] .help-guide-card p,
+[data-theme="forest"] .help-checklist-card p,
+[data-theme="midnight"] .help-checklist-card p {
+  color: #24483a !important;
+}
+
+
+/* Quick Help label itself */
+[data-theme="forest"] .help-hero-card-top > div > span,
+[data-theme="midnight"] .help-hero-card-top > div > span {
+  color: #315d49 !important;
+}
+
+
+/* Quick Help title: dark, readable text */
+[data-theme="forest"] .help-hero-card-top > div > strong,
+[data-theme="midnight"] .help-hero-card-top > div > strong {
+  color: #10281e !important;
+}
+
+
+/* Prevent global SVG rules from washing icons out */
+[data-theme="forest"] .help-hero-card svg,
+[data-theme="midnight"] .help-hero-card svg,
+[data-theme="forest"] .help-topic-card svg,
+[data-theme="midnight"] .help-topic-card svg,
+[data-theme="forest"] .help-guide-card svg,
+[data-theme="midnight"] .help-guide-card svg,
+[data-theme="forest"] .help-checklist-card svg,
+[data-theme="midnight"] .help-checklist-card svg {
+  color: inherit !important;
+  stroke: currentColor !important;
+}
+
+
+/* Keep numbered/static labels dark too */
+[data-theme="forest"] .help-guide-number,
+[data-theme="midnight"] .help-guide-number,
+[data-theme="forest"] .help-checklist-card > div > span,
+[data-theme="midnight"] .help-checklist-card > div > span {
+  color: #17352a !important;
+}
