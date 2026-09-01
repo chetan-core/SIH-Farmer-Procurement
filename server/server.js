@@ -9,6 +9,9 @@ import db, {
   transaction,
   initializeDatabase,
 } from "./db.js";
+import {
+  query as dbQuery,
+} from "./db.js";
 
 dotenv.config();
 
@@ -37,6 +40,98 @@ app.use(
 
 app.use(
   express.json()
+);
+/* =========================================================
+   TEMP DATABASE DEBUG
+========================================================= */
+
+app.get(
+  "/api/debug/database",
+  async (
+    req,
+    res
+  ) => {
+
+    try {
+
+      const farmers =
+        await dbQuery(
+          "SELECT id, name, phone, created_at FROM farmers ORDER BY created_at DESC"
+        );
+
+      const bookings =
+        await dbQuery(
+          "SELECT id, token, farmer_id, center_id, status, created_at FROM bookings ORDER BY created_at DESC"
+        );
+
+      const centers =
+        await dbQuery(
+          "SELECT id, name, active FROM centers ORDER BY id"
+        );
+
+      const notifications =
+        await dbQuery(
+          "SELECT id, farmer_id, booking_id, type, channel, status, created_at FROM notifications ORDER BY created_at DESC"
+        );
+
+      res.json({
+
+        success:
+          true,
+
+        counts: {
+          farmers:
+            farmers.rowCount,
+
+          bookings:
+            bookings.rowCount,
+
+          centers:
+            centers.rowCount,
+
+          notifications:
+            notifications.rowCount,
+        },
+
+        farmers:
+          farmers.rows,
+
+        bookings:
+          bookings.rows,
+
+        centers:
+          centers.rows,
+
+        notifications:
+          notifications.rows,
+
+      });
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        "Database debug error:",
+        error
+      );
+
+      res
+        .status(500)
+        .json({
+
+          success:
+            false,
+
+          message:
+            error?.message ||
+            "Database debug failed.",
+
+        });
+
+    }
+
+  }
 );
 
 app.use(
