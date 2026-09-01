@@ -33,14 +33,9 @@ const pool =
     connectionString:
       DATABASE_URL,
 
-    ssl:
-      process.env.NODE_ENV ===
-      "production"
-        ? {
-            rejectUnauthorized:
-              false,
-          }
-        : false,
+    ssl: {
+  rejectUnauthorized: false,
+},
 
     max:
       10,

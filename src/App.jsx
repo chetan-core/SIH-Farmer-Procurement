@@ -30,6 +30,24 @@ import AdminActivityLog from "./pages/admin/AdminActivityLog";
 import AdminPaymentIssues from "./pages/admin/AdminPaymentIssues";
 
 import PageTransition from "./components/PageTransition";
+import VoiceAssistant from "./components/VoiceAssistant";
+
+
+function FarmerPortalPage({
+  children,
+}) {
+
+  return (
+    <>
+      <VoiceAssistant />
+
+      <PageTransition>
+        {children}
+      </PageTransition>
+    </>
+  );
+
+}
 
 
 function App() {
@@ -59,6 +77,7 @@ function App() {
         }
       />
 
+
       <Route
         path="/farmer/register"
         element={
@@ -68,66 +87,73 @@ function App() {
         }
       />
 
+
       <Route
         path="/farmer/home"
         element={
-          <PageTransition>
+          <FarmerPortalPage>
             <FarmerHome />
-          </PageTransition>
+          </FarmerPortalPage>
         }
       />
+
 
       <Route
         path="/farmer/book"
         element={
-          <PageTransition>
+          <FarmerPortalPage>
             <FarmerBook />
-          </PageTransition>
+          </FarmerPortalPage>
         }
       />
+
 
       <Route
         path="/farmer/token"
         element={
-          <PageTransition>
+          <FarmerPortalPage>
             <FarmerToken />
-          </PageTransition>
+          </FarmerPortalPage>
         }
       />
+
 
       <Route
         path="/farmer/history"
         element={
-          <PageTransition>
+          <FarmerPortalPage>
             <FarmerHistory />
-          </PageTransition>
+          </FarmerPortalPage>
         }
       />
+
 
       <Route
         path="/farmer/payments"
         element={
-          <PageTransition>
+          <FarmerPortalPage>
             <FarmerPayments />
-          </PageTransition>
+          </FarmerPortalPage>
         }
       />
+
 
       <Route
         path="/farmer/settings"
         element={
-          <PageTransition>
+          <FarmerPortalPage>
             <FarmerSettings />
-          </PageTransition>
+          </FarmerPortalPage>
         }
       />
+
 
       <Route
         path="/farmer/help"
         element={
-          <PageTransition>
+          <FarmerPortalPage>
             <FarmerHelp />
-          </PageTransition>
+          </FarmerPortalPage>
         }
       />
 
@@ -145,6 +171,7 @@ function App() {
         }
       />
 
+
       <Route
         path="/admin/dashboard"
         element={
@@ -153,6 +180,7 @@ function App() {
           </PageTransition>
         }
       />
+
 
       <Route
         path="/admin/queue"
@@ -163,6 +191,7 @@ function App() {
         }
       />
 
+
       <Route
         path="/admin/weighing"
         element={
@@ -171,6 +200,7 @@ function App() {
           </PageTransition>
         }
       />
+
 
       <Route
         path="/admin/procurement"
@@ -181,6 +211,7 @@ function App() {
         }
       />
 
+
       <Route
         path="/admin/activity"
         element={
@@ -189,6 +220,7 @@ function App() {
           </PageTransition>
         }
       />
+
 
       <Route
         path="/admin/payments"
@@ -199,6 +231,7 @@ function App() {
         }
       />
 
+
       <Route
         path="/admin/payment-issues"
         element={
@@ -207,6 +240,7 @@ function App() {
           </PageTransition>
         }
       />
+
 
       <Route
         path="/admin/reports"
@@ -217,6 +251,7 @@ function App() {
         }
       />
 
+
       <Route
         path="/admin/farmers"
         element={
@@ -226,6 +261,7 @@ function App() {
         }
       />
 
+
       <Route
         path="/admin/centers"
         element={
@@ -234,6 +270,7 @@ function App() {
           </PageTransition>
         }
       />
+
 
       <Route
         path="/admin/settings"
