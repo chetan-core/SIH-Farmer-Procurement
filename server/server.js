@@ -5,7 +5,6 @@ import {
   GoogleGenAI,
   Type,
 } from "@google/genai";
-
 import db, {
   query,
   get,
@@ -13,6 +12,7 @@ import db, {
   transaction,
   initializeDatabase,
 } from "./db.js";
+
 import {
   query as dbQuery,
 } from "./db.js";
@@ -33,17 +33,20 @@ const SMS_ENABLED =
   ).toLowerCase() ===
   "true";
 
-const gemini =
-  process.env.GEMINI_API_KEY
-    ? new GoogleGenAI({
-        apiKey:
-          process.env.GEMINI_API_KEY,
-      })
-    : null;
+const GEMINI_API_KEY =
+  process.env.GEMINI_API_KEY;
 
 const GEMINI_MODEL =
   process.env.GEMINI_MODEL ||
   "gemini-2.5-flash";
+
+const gemini =
+  GEMINI_API_KEY
+    ? new GoogleGenAI({
+        apiKey:
+          GEMINI_API_KEY,
+      })
+    : null;
 /* =========================================================
    MIDDLEWARE
 ========================================================= */
@@ -6547,12 +6550,1058 @@ app.get(
 );
 
 /* =========================================================
-   AI FARMER ASSISTANT
+   KRISHISETU AI ASSISTANT
 ========================================================= */
 
-/* =========================================================
-   AI FARMER ASSISTANT
-========================================================= */
+const ASSISTANT_ACTIONS = [
+  "OPEN_HOME",
+  "OPEN_BOOKING",
+  "OPEN_TOKEN",
+  "OPEN_HISTORY",
+  "OPEN_PAYMENTS",
+  "OPEN_NOTIFICATIONS",
+  "OPEN_SETTINGS",
+  "OPEN_HELP",
+  "NONE",
+];
+
+
+const ASSISTANT_PAGES = {
+  "/farmer/home": {
+    name: "Farmer Home",
+    description:
+      "Main farmer dashboard showing active procurement, upcoming bookings, recent payments, monthly summary, procurement center, recent bookings, and the notifications bell.",
+    capabilities: [
+      "view active procurement",
+      "view upcoming procurements",
+      "view recent payments",
+      "view monthly summary",
+      "view procurement center",
+      "open notifications",
+      "open settings",
+      "refresh live data",
+      "logout",
+    ],
+    notificationLocation:
+      "top-right area beside settings, represented by a bell icon",
+  },
+
+  "/farmer/book": {
+    name: "Book Procurement Slot",
+    description:
+      "Page for creating a new procurement booking.",
+    capabilities: [
+      "select crop",
+      "enter estimated quantity",
+      "select procurement center",
+      "select arrival date",
+      "check live slot availability",
+      "select arrival window",
+      "review booking",
+      "confirm booking",
+    ],
+  },
+
+  "/farmer/token": {
+    name: "Token",
+    description:
+      "Page showing the farmer's procurement token and booking status.",
+    capabilities: [
+      "view token",
+      "view booking information",
+      "track procurement status",
+      "view procurement progress",
+    ],
+  },
+
+  "/farmer/history": {
+    name: "Procurement History",
+    description:
+      "Page containing previous and current procurement records.",
+    capabilities: [
+      "search bookings",
+      "filter by crop",
+      "filter by month",
+      "view completed procurement",
+      "view supplied quantity",
+      "view received amount",
+      "open booking record",
+    ],
+  },
+
+  "/farmer/payments": {
+    name: "Payment History",
+    description:
+      "Page containing payment records connected to procurement bookings.",
+    capabilities: [
+      "view total received",
+      "view completed payments",
+      "view pending payments",
+      "view pending amount",
+      "search payments",
+      "filter paid payments",
+      "filter pending payments",
+      "view payment reference",
+      "report payment issue",
+    ],
+  },
+
+  "/farmer/settings": {
+    name: "Farmer Settings",
+    description:
+      "Page for managing farmer profile and preferences.",
+    capabilities: [
+      "change name",
+      "change phone",
+      "change village",
+      "change preferred language",
+      "change primary crop",
+      "change typical quantity",
+      "change preferred procurement center",
+      "change in-app notifications",
+      "change SMS notifications",
+    ],
+  },
+
+  "/farmer/help": {
+    name: "Farmer Help",
+    description:
+      "Comprehensive farmer help and FAQ page.",
+    capabilities: [
+      "booking guidance",
+      "token guidance",
+      "arrival guidance",
+      "weighing guidance",
+      "payment guidance",
+      "SMS guidance",
+      "low connectivity guidance",
+      "FAQ",
+      "contact center",
+    ],
+  },
+};
+
+
+const ASSISTANT_INTENTS = {
+  BOOKING: [
+    "booking",
+    "book",
+    "slot",
+    "reserve",
+    "reservation",
+    "procurement booking",
+    "procurement slot",
+    "arrival slot",
+    "schedule",
+  ],
+
+  TOKEN: [
+    "token",
+    "token number",
+    "digital token",
+    "my token",
+    "token id",
+  ],
+
+  HISTORY: [
+    "history",
+    "booking history",
+    "procurement history",
+    "previous booking",
+    "past booking",
+    "old booking",
+    "previous procurement",
+    "past procurement",
+    "records",
+  ],
+
+  PAYMENTS: [
+    "payment",
+    "payments",
+    "payment history",
+    "payment record",
+    "money",
+    "amount received",
+    "amount",
+    "payment status",
+    "payment reference",
+    "money received",
+    "paid",
+  ],
+
+  NOTIFICATIONS: [
+    "notification",
+    "notifications",
+    "alert",
+    "alerts",
+    "updates",
+    "messages",
+    "my alerts",
+    "notification history",
+  ],
+
+  SETTINGS: [
+    "settings",
+    "setting",
+    "profile",
+    "account",
+    "personal details",
+    "language",
+    "phone number",
+    "mobile number",
+    "village",
+  ],
+
+  HELP: [
+    "help",
+    "support",
+    "how does this work",
+    "how to",
+    "what should i do",
+    "guide",
+  ],
+
+  HOME: [
+    "home",
+    "dashboard",
+    "main page",
+    "farmer home",
+  ],
+};
+
+
+function cleanAssistantText(
+  value
+) {
+  return String(
+    value || ""
+  )
+    .trim()
+    .replace(
+      /\s+/g,
+      " "
+    );
+}
+
+
+function truncateAssistantText(
+  value,
+  maximum = 6000
+) {
+  const text =
+    String(
+      value || ""
+    );
+
+  return text.length <= maximum
+    ? text
+    : `${text.slice(
+        0,
+        maximum
+      )}\n[truncated]`;
+}
+
+
+function normalizeAssistantHistory(
+  history
+) {
+  if (
+    !Array.isArray(
+      history
+    )
+  ) {
+    return [];
+  }
+
+  return history
+    .slice(-12)
+    .map(
+      item => {
+
+        const role =
+          item?.role ===
+          "assistant"
+            ? "assistant"
+            : "user";
+
+        const content =
+          cleanAssistantText(
+            item?.content
+          );
+
+        return {
+          role,
+          content,
+        };
+
+      }
+    )
+    .filter(
+      item =>
+        item.content
+    );
+}
+
+
+function buildAssistantConversationText(
+  history
+) {
+  const rows =
+    normalizeAssistantHistory(
+      history
+    );
+
+  if (
+    rows.length ===
+    0
+  ) {
+    return "No previous conversation.";
+  }
+
+  return rows
+    .map(
+      item =>
+        `${item.role === "assistant" ? "KrishiSetu AI" : "Farmer"}: ${item.content}`
+    )
+    .join("\n");
+}
+
+
+function normalizeAssistantLanguage(
+  value
+) {
+  const language =
+    String(
+      value || "en"
+    )
+      .trim()
+      .toLowerCase();
+
+  return [
+    "en",
+    "hi",
+    "te",
+  ].includes(
+    language
+  )
+    ? language
+    : "en";
+}
+
+
+function getPageName(
+  path
+) {
+  return (
+    ASSISTANT_PAGES[path]?.name ||
+    path ||
+    "Unknown page"
+  );
+}
+
+
+function getActionPath(
+  action
+) {
+  const paths = {
+    OPEN_HOME:
+      "/farmer/home",
+
+    OPEN_BOOKING:
+      "/farmer/book",
+
+    OPEN_TOKEN:
+      "/farmer/token",
+
+    OPEN_HISTORY:
+      "/farmer/history",
+
+    OPEN_PAYMENTS:
+      "/farmer/payments",
+
+    OPEN_SETTINGS:
+      "/farmer/settings",
+
+    OPEN_HELP:
+      "/farmer/help",
+
+    OPEN_NOTIFICATIONS:
+      "/farmer/home",
+  };
+
+  return (
+    paths[action] ||
+    null
+  );
+}
+
+
+function getIntentHints() {
+  return Object.entries(
+    ASSISTANT_INTENTS
+  )
+    .map(
+      (
+        [
+          intent,
+          words,
+        ]
+      ) =>
+        `${intent}: ${words.join(", ")}`
+    )
+    .join("\n");
+}
+
+
+function buildAssistantKnowledge() {
+  const pages =
+    Object.entries(
+      ASSISTANT_PAGES
+    )
+      .map(
+        (
+          [
+            path,
+            page,
+          ]
+        ) => {
+
+          const capabilities =
+            Array.isArray(
+              page.capabilities
+            )
+              ? page.capabilities.join(
+                  ", "
+                )
+              : "";
+
+          let result =
+            `${page.name} (${path})\n${page.description}\nCapabilities: ${capabilities}`;
+
+          if (
+            page.notificationLocation
+          ) {
+            result +=
+              `\nNotification location: ${page.notificationLocation}`;
+          }
+
+          return result;
+
+        }
+      )
+      .join("\n\n");
+
+  return pages;
+}
+
+
+async function buildAssistantContext({
+  farmer,
+  bookings,
+  payments,
+  notifications,
+  centers,
+  settings,
+}) {
+
+  const safeFarmer =
+    farmer
+      ? {
+          id:
+            farmer.id,
+
+          name:
+            farmer.name ||
+            null,
+
+          phone:
+            farmer.phone ||
+            null,
+
+          village:
+            farmer.village ||
+            null,
+
+          language:
+            farmer.language ||
+            null,
+
+          preferredCenterId:
+            farmer.preferred_center_id ||
+            null,
+
+          primaryCrop:
+            farmer.primary_crop ||
+            null,
+
+          estimatedQuantity:
+            Number(
+              farmer.estimated_quantity ||
+              0
+            ),
+        }
+      : null;
+
+
+  const safeBookings =
+    Array.isArray(
+      bookings
+    )
+      ? bookings.map(
+          booking => ({
+            id:
+              booking.id,
+
+            token:
+              booking.token,
+
+            centerId:
+              booking.center_id,
+
+            crop:
+              booking.crop,
+
+            estimatedQuantity:
+              booking.estimated_quantity,
+
+            actualQuantity:
+              booking.actual_quantity,
+
+            date:
+              booking.date,
+
+            slotStart:
+              booking.slot_start,
+
+            slotEnd:
+              booking.slot_end,
+
+            status:
+              booking.status,
+
+            quality:
+              booking.quality,
+
+            createdAt:
+              booking.created_at,
+          })
+        )
+      : [];
+
+
+  const safePayments =
+    Array.isArray(
+      payments
+    )
+      ? payments.map(
+          payment => ({
+            id:
+              payment.id,
+
+            bookingId:
+              payment.booking_id,
+
+            amount:
+              payment.amount,
+
+            method:
+              payment.method,
+
+            reference:
+              payment.reference,
+
+            status:
+              payment.status,
+
+            ratePerKg:
+              payment.rate_per_kg,
+
+            notes:
+              payment.notes,
+
+            updatedAt:
+              payment.updated_at,
+
+            createdAt:
+              payment.created_at,
+          })
+        )
+      : [];
+
+
+  const safeNotifications =
+    Array.isArray(
+      notifications
+    )
+      ? notifications.map(
+          notification => ({
+            id:
+              notification.id,
+
+            bookingId:
+              notification.booking_id,
+
+            type:
+              notification.type,
+
+            title:
+              notification.title,
+
+            message:
+              notification.message,
+
+            channel:
+              notification.channel,
+
+            status:
+              notification.status,
+
+            read:
+              Boolean(
+                notification.read_at
+              ),
+
+            createdAt:
+              notification.created_at,
+          })
+        )
+      : [];
+
+
+  const safeCenters =
+    Array.isArray(
+      centers
+    )
+      ? centers.map(
+          center => ({
+            id:
+              center.id,
+
+            name:
+              center.name,
+
+            village:
+              center.village,
+
+            address:
+              center.address,
+
+            capacity:
+              center.capacity,
+
+            active:
+              center.active,
+
+            openingTime:
+              center.opening_time,
+
+            closingTime:
+              center.closing_time,
+          })
+        )
+      : [];
+
+
+  return {
+
+    farmer:
+      safeFarmer,
+
+    bookings:
+      safeBookings,
+
+    payments:
+      safePayments,
+
+    notifications:
+      safeNotifications,
+
+    centers:
+      safeCenters,
+
+    settings:
+      settings || {},
+
+  };
+
+}
+
+
+function getAssistantFallback(
+  text,
+  language,
+  farmer
+) {
+  const lower =
+    cleanAssistantText(
+      text
+    ).toLowerCase();
+
+
+  const farmerName =
+    farmer?.name ||
+    "";
+
+
+  if (
+    lower.includes(
+      "payment"
+    ) ||
+    lower.includes(
+      "paymnt"
+    ) ||
+    lower.includes(
+      "पेमेंट"
+    ) ||
+    lower.includes(
+      "पैसे"
+    ) ||
+    lower.includes(
+      "చెల్లింపు"
+    )
+  ) {
+
+    if (
+      language ===
+      "hi"
+    ) {
+
+      return farmerName
+        ? `${farmerName}, आपकी payment history Payments पेज पर है।`
+        : "आपकी payment history Payments पेज पर है।";
+
+    }
+
+
+    if (
+      language ===
+      "te"
+    ) {
+
+      return farmerName
+        ? `${farmerName}, మీ payment history Payments పేజీలో ఉంది.`
+        : "మీ payment history Payments పేజీలో ఉంది.";
+
+    }
+
+
+    return farmerName
+      ? `${farmerName}, your payment history is on the Payments page.`
+      : "Your payment history is on the Payments page.";
+
+  }
+
+
+  if (
+    lower.includes(
+      "notification"
+    ) ||
+    lower.includes(
+      "notif"
+    ) ||
+    lower.includes(
+      "alert"
+    ) ||
+    lower.includes(
+      "updates"
+    ) ||
+    lower.includes(
+      "नोटिफिकेशन"
+    ) ||
+    lower.includes(
+      "सूचना"
+    ) ||
+    lower.includes(
+      "నోటిఫికేషన్"
+    )
+  ) {
+
+    if (
+      language ===
+      "hi"
+    ) {
+
+      return "आपके notifications Farmer Home के ऊपर दाईं ओर bell icon में हैं।";
+
+    }
+
+
+    if (
+      language ===
+      "te"
+    ) {
+
+      return "మీ notifications Farmer Home పేజీ పై కుడివైపు ఉన్న bell iconలో ఉన్నాయి.";
+
+    }
+
+
+    return "Your notifications are in the bell icon at the top-right of the Farmer Home page.";
+
+  }
+
+
+  if (
+    lower.includes(
+      "token"
+    ) ||
+    lower.includes(
+      "टोकन"
+    ) ||
+    lower.includes(
+      "టోకెన్"
+    )
+  ) {
+
+    if (
+      language ===
+      "hi"
+    ) {
+
+      return "आपका current procurement token Token page पर है।";
+
+    }
+
+
+    if (
+      language ===
+      "te"
+    ) {
+
+      return "మీ current procurement token Token pageలో ఉంది.";
+
+    }
+
+
+    return "Your current procurement token is on the Token page.";
+
+  }
+
+
+  if (
+    lower.includes(
+      "booking"
+    ) ||
+    lower.includes(
+      "book"
+    ) ||
+    lower.includes(
+      "बुक"
+    ) ||
+    lower.includes(
+      "బుకింగ్"
+    )
+  ) {
+
+    if (
+      language ===
+      "hi"
+    ) {
+
+      return "नई procurement booking शुरू करने के लिए मैं Booking page खोल सकता हूँ।";
+
+    }
+
+
+    if (
+      language ===
+      "te"
+    ) {
+
+      return "కొత్త procurement booking ప్రారంభించడానికి నేను Booking pageని తెరవగలను.";
+
+    }
+
+
+    return "I can open the Booking page so you can start a new procurement booking.";
+
+  }
+
+
+  if (
+    language ===
+    "hi"
+  ) {
+
+    return "मैं KrishiSetu में booking, token, history, payments, notifications, settings और help में आपकी मदद कर सकता हूँ।";
+
+  }
+
+
+  if (
+    language ===
+    "te"
+  ) {
+
+    return "నేను KrishiSetuలో booking, token, history, payments, notifications, settings మరియు helpలో మీకు సహాయం చేయగలను.";
+
+  }
+
+
+  return "I can help you with bookings, tokens, procurement history, payments, notifications, settings, help, and the rest of your KrishiSetu journey.";
+
+}
+
+
+function repairAssistantAction(
+  action,
+  reply,
+  text
+) {
+  const normalized =
+    cleanAssistantText(
+      action
+    ).toUpperCase();
+
+
+  if (
+    ASSISTANT_ACTIONS.includes(
+      normalized
+    )
+  ) {
+    return normalized;
+  }
+
+
+  const lower =
+    cleanAssistantText(
+      `${reply} ${text}`
+    ).toLowerCase();
+
+
+  if (
+    lower.includes(
+      "payment history"
+    ) ||
+    lower.includes(
+      "payment"
+    )
+  ) {
+    return "OPEN_PAYMENTS";
+  }
+
+
+  if (
+    lower.includes(
+      "notification"
+    ) ||
+    lower.includes(
+      "bell icon"
+    )
+  ) {
+    return "OPEN_NOTIFICATIONS";
+  }
+
+
+  if (
+    lower.includes(
+      "token"
+    )
+  ) {
+    return "OPEN_TOKEN";
+  }
+
+
+  if (
+    lower.includes(
+      "booking"
+    ) ||
+    lower.includes(
+      "book a slot"
+    )
+  ) {
+    return "OPEN_BOOKING";
+  }
+
+
+  if (
+    lower.includes(
+      "history"
+    )
+  ) {
+    return "OPEN_HISTORY";
+  }
+
+
+  if (
+    lower.includes(
+      "setting"
+    ) ||
+    lower.includes(
+      "profile"
+    )
+  ) {
+    return "OPEN_SETTINGS";
+  }
+
+
+  if (
+    lower.includes(
+      "help"
+    )
+  ) {
+    return "OPEN_HELP";
+  }
+
+
+  return "NONE";
+}
+
+
+function shouldNavigate(
+  action
+) {
+  return [
+    "OPEN_HOME",
+    "OPEN_BOOKING",
+    "OPEN_TOKEN",
+    "OPEN_HISTORY",
+    "OPEN_PAYMENTS",
+    "OPEN_NOTIFICATIONS",
+    "OPEN_SETTINGS",
+    "OPEN_HELP",
+  ].includes(
+    action
+  );
+}
+
+
+app.get(
+  "/api/assistant/health",
+  (
+    req,
+    res
+  ) => {
+
+    res.json({
+
+      success:
+        true,
+
+      configured:
+        Boolean(
+          GEMINI_API_KEY
+        ),
+
+      model:
+        GEMINI_MODEL,
+
+      route:
+        "/api/assistant",
+
+      actions:
+        ASSISTANT_ACTIONS,
+
+      pages:
+        Object.keys(
+          ASSISTANT_PAGES
+        ),
+
+    });
+
+  }
+);
+
 
 app.post(
   "/api/assistant",
@@ -6560,6 +7609,10 @@ app.post(
     req,
     res
   ) => {
+
+    const requestStartedAt =
+      Date.now();
+
 
     try {
 
@@ -6570,41 +7623,53 @@ app.post(
         return res
           .status(503)
           .json({
+
             success:
               false,
 
             message:
-              "AI assistant is not configured.",
+              "AI assistant is not configured. Check GEMINI_API_KEY in the backend .env file.",
+
           });
 
       }
 
 
       const text =
-        String(
-          req.body?.text ||
-          ""
-        ).trim();
+        cleanAssistantText(
+          req.body?.text ??
+          req.body?.message
+        );
 
 
       const language =
-        String(
-          req.body?.language ||
-          "en"
-        ).trim();
+        normalizeAssistantLanguage(
+          req.body?.language
+        );
+
+
+      const currentPath =
+        cleanAssistantText(
+          req.body?.currentPath ||
+          "/farmer/home"
+        );
 
 
       const farmerId =
-        String(
-          req.body?.farmerId ||
-          ""
-        ).trim();
+        cleanAssistantText(
+          req.body?.farmerId
+        );
 
 
       const phone =
         normalisePhone(
-          req.body?.phone ||
-          ""
+          req.body?.phone
+        );
+
+
+      const history =
+        normalizeAssistantHistory(
+          req.body?.history
         );
 
 
@@ -6615,11 +7680,13 @@ app.post(
         return res
           .status(400)
           .json({
+
             success:
               false,
 
             message:
               "Assistant input is required.",
+
           });
 
       }
@@ -6627,17 +7694,19 @@ app.post(
 
       if (
         text.length >
-        1500
+        3000
       ) {
 
         return res
           .status(400)
           .json({
+
             success:
               false,
 
             message:
               "Assistant input is too long.",
+
           });
 
       }
@@ -6645,31 +7714,12 @@ app.post(
 
       const farmer =
         await resolveFarmer({
+
           farmerId,
+
           phone,
+
         });
-
-
-      let farmerContext =
-        "No farmer account is currently identified.";
-
-
-      if (
-        farmer
-      ) {
-
-        farmerContext = `
-Farmer ID: ${farmer.id}
-Name: ${farmer.name || "Unknown"}
-Phone: ${farmer.phone || "Unknown"}
-Village: ${farmer.village || "Unknown"}
-Language: ${farmer.language || language}
-Preferred center: ${farmer.preferred_center_id || "None"}
-Primary crop: ${farmer.primary_crop || "Unknown"}
-Estimated quantity: ${farmer.estimated_quantity || 0} kg
-        `.trim();
-
-      }
 
 
       const bookings =
@@ -6677,24 +7727,55 @@ Estimated quantity: ${farmer.estimated_quantity || 0} kg
           ? await all(
               `
                 SELECT
-                  id,
-                  token,
-                  center_id,
-                  crop,
-                  estimated_quantity,
-                  actual_quantity,
-                  date,
-                  slot_start,
-                  slot_end,
-                  status,
-                  quality,
-                  created_at
-                FROM bookings
-                WHERE farmer_id = $1
+                  b.id,
+                  b.token,
+                  b.center_id,
+                  b.crop,
+                  b.estimated_quantity,
+                  b.actual_quantity,
+                  b.date,
+                  b.slot_start,
+                  b.slot_end,
+                  b.status,
+                  b.quality,
+                  b.created_at
+                FROM bookings b
+                WHERE b.farmer_id = $1
                 ORDER BY
-                  created_at DESC,
-                  id DESC
-                LIMIT 10
+                  b.created_at DESC,
+                  b.id DESC
+                LIMIT 30
+              `,
+              [
+                farmer.id,
+              ]
+            )
+          : [];
+
+
+      const payments =
+        farmer
+          ? await all(
+              `
+                SELECT
+                  p.id,
+                  p.booking_id,
+                  p.amount,
+                  p.method,
+                  p.reference,
+                  p.status,
+                  p.rate_per_kg,
+                  p.notes,
+                  p.updated_at,
+                  p.created_at
+                FROM payments p
+                INNER JOIN bookings b
+                  ON b.id = p.booking_id
+                WHERE b.farmer_id = $1
+                ORDER BY
+                  p.created_at DESC,
+                  p.id DESC
+                LIMIT 30
               `,
               [
                 farmer.id,
@@ -6716,13 +7797,14 @@ Estimated quantity: ${farmer.estimated_quantity || 0} kg
                   channel,
                   status,
                   read_at,
+                  sent_at,
                   created_at
                 FROM notifications
                 WHERE farmer_id = $1
                 ORDER BY
                   created_at DESC,
                   id DESC
-                LIMIT 10
+                LIMIT 30
               `,
               [
                 farmer.id,
@@ -6754,328 +7836,829 @@ Estimated quantity: ${farmer.estimated_quantity || 0} kg
         await getSettings();
 
 
-      const systemPrompt = `
-You are the official KrishiSetu farmer assistant.
+      const knowledge =
+        buildAssistantKnowledge();
 
-Your role is to help farmers understand and use the KrishiSetu website.
 
-You must understand:
+      const context =
+        await buildAssistantContext({
 
-- English
-- Hindi
-- Telugu
-- Hinglish
-- mixed English/Hindi/Telugu
-- transliterated Indian languages
-- informal speech
-- speech-to-text errors
+          farmer,
+
+          bookings,
+
+          payments,
+
+          notifications,
+
+          centers,
+
+          settings,
+
+        });
+
+
+      const pageInfo =
+        ASSISTANT_PAGES[
+          currentPath
+        ] ||
+        null;
+
+
+      const conversation =
+        buildAssistantConversationText(
+          history
+        );
+
+
+      const prompt = `
+You are KrishiSetu AI.
+
+You are the intelligent conversational assistant inside the KrishiSetu farmer website.
+
+You must behave like a genuinely capable modern AI assistant, not a keyword chatbot.
+
+==================================================
+CORE BEHAVIOUR
+==================================================
+
+Understand the user's INTENDED MEANING.
+
+Do not require exact spelling.
+
+Correct or interpret:
 - spelling mistakes
+- speech-to-text mistakes
 - missing words
-- repeated words
-- incorrect grammar
+- grammatical mistakes
+- Hinglish
+- Hindi mixed with English
+- Telugu mixed with English
+- Telugu written using English letters
 - casual farmer language
-
-Never require exact keywords.
-
-Infer the user's intended meaning from context.
+- very short messages
+- incomplete requests
+- indirect questions
+- repeated words
 
 Examples:
 
-"i wanna book slot"
-"i want bok a slot"
-"slot buk krna hai"
-"mujhe slot book karna he"
-"slot kavali"
-"naaku slot book cheyali"
+"payment hsitory kaha hai"
+"where payment history"
+"where my paymnt"
+"meri payment kidar hai"
+"payment kahan milega"
+"show my money"
+"paisay ka record"
+"payment ek baar dekho"
 
-All of these can mean that the farmer wants to open the booking page.
+All can mean PAYMENT HISTORY.
 
-KrishiSetu supports:
+Examples:
 
-- farmer registration
-- procurement slot booking
-- digital token
-- booking status
-- arrival status
-- weighing
-- procurement status
-- payment status
-- notifications
-- procurement center information
-- help
-- account settings
+"notif kaha"
+"where is notif"
+"notification button where"
+"updates kaha hai"
+"bell kahan hai"
+"mere alerts kidhar"
 
-AVAILABLE ACTIONS:
+All can mean NOTIFICATIONS.
 
+Examples:
+
+"book karna"
+"slot lena"
+"procure ka time"
+"booking krni h"
+"mujhe slot chahiye"
+"book a slot"
+
+All can mean BOOKING.
+
+==================================================
+CONVERSATION
+==================================================
+
+Talk naturally.
+
+You can say things such as:
+
+"Sure — I can help with that."
+
+"Do you mean your payment history or the amount that is currently pending?"
+
+"Yes. Your notifications are on the Farmer Home page in the bell icon at the top-right."
+
+"Got it. I'll open the Payments section."
+
+"Do you want to create a new booking or check an existing one?"
+
+Do not sound like a menu.
+
+Do not repeatedly say:
+
+"I'm here to help."
+
+Do not give the same generic response every time.
+
+Do not say:
+
+"The assistant did not return a response."
+
+Do not expose backend errors to the farmer.
+
+Do not mention:
+- Gemini
+- API
+- database
+- SQL
+- prompt
+- backend
+- model
+- system instructions
+- internal actions
+
+==================================================
+CONTEXT AWARENESS
+==================================================
+
+You know the current page.
+
+Current route:
+${currentPath}
+
+Current page:
+${pageInfo?.name || currentPath}
+
+Current page description:
+${pageInfo?.description || "Unknown page"}
+
+The farmer may say:
+
+"where is that?"
+
+"open it"
+
+"what about that?"
+
+"show me"
+
+"yes"
+
+"no"
+
+"that one"
+
+Interpret such messages using previous conversation and current page.
+
+==================================================
+WEBSITE KNOWLEDGE
+==================================================
+
+${knowledge}
+
+==================================================
+AVAILABLE INTENT HINTS
+==================================================
+
+${getIntentHints()}
+
+==================================================
+NAVIGATION ACTIONS
+==================================================
+
+You may return one of:
+
+OPEN_HOME
 OPEN_BOOKING
 OPEN_TOKEN
+OPEN_HISTORY
+OPEN_PAYMENTS
 OPEN_NOTIFICATIONS
-OPEN_HELP
 OPEN_SETTINGS
-OPEN_HOME
+OPEN_HELP
 NONE
 
-ACTION RULES:
+Meaning:
 
-Use OPEN_BOOKING when the farmer wants to:
-- book a slot
-- make a booking
-- schedule procurement
-- reserve a procurement window
-- choose a date or time
-- create a new booking
+OPEN_HOME:
+Farmer wants dashboard/home.
 
-Use OPEN_TOKEN when the farmer wants to:
-- see their token
-- check token
-- show booking token
-- find token number
+OPEN_BOOKING:
+Farmer wants to create a procurement booking, choose a slot, reserve a visit, schedule arrival, or start a new booking.
 
-Use OPEN_NOTIFICATIONS when the farmer wants:
-- notifications
-- updates
-- alerts
-- recent messages
+OPEN_TOKEN:
+Farmer wants current token, token number, digital token, or to track their procurement token.
 
-Use OPEN_HELP when the farmer asks:
-- how to use KrishiSetu
-- what to do
-- needs help
-- does not understand the process
+OPEN_HISTORY:
+Farmer wants previous bookings, procurement history, past records, or old procurement activity.
 
-Use OPEN_SETTINGS when the farmer wants:
-- profile
-- settings
-- change phone
-- change language
-- change personal details
+OPEN_PAYMENTS:
+Farmer wants payment history, payment records, received money, payment status, payment reference, pending amount, completed payments, etc.
 
-Use OPEN_HOME when the farmer wants:
-- dashboard
-- home
-- main page
+OPEN_NOTIFICATIONS:
+Farmer wants notifications, alerts, updates, or messages.
 
-Use NONE when:
-- answering a normal question is enough
-- no page needs to be opened
-- the user is simply greeting the assistant
+The notification UI is located inside Farmer Home, at the TOP-RIGHT beside Settings, using the BELL icon.
 
-IMPORTANT SAFETY / DATA RULES:
+OPEN_SETTINGS:
+Farmer wants profile, account, language, phone, village, preferences, or settings.
 
-Never invent farmer information.
+OPEN_HELP:
+Farmer wants guidance, FAQs, support, or wants to know how the system works.
 
-Never invent booking information.
+NONE:
+Use when no navigation is needed.
 
-Never invent payment information.
+==================================================
+VERY IMPORTANT: WHEN TO ASK
+==================================================
 
-Never claim that a booking, payment, procurement, weighing event or notification happened unless it exists in the supplied database context.
+Ask a clarification question only when there are genuinely multiple plausible meanings.
 
-You may explain information contained in the supplied database context.
+Example:
 
-You cannot directly create or modify bookings, payments, farmers or other records.
+Farmer:
+"history"
 
-When the user asks to perform an operation, choose the appropriate OPEN_* action and explain that the relevant page will be opened.
+Good answer:
+"Sure. Do you mean your procurement history or your payment history?"
 
-LANGUAGE RULE:
+Do not ask clarification when the intention is obvious.
 
-Reply in the language most appropriate for the user's message.
+Example:
 
-If the user speaks Hindi, reply in Hindi.
+Farmer:
+"where is my payment history"
 
-If the user speaks Telugu, reply in Telugu.
+Good:
+"Your payment history is in Payments. I'll open it for you."
 
-If the user uses English, reply in English.
+Example:
 
-For mixed language, naturally use the same style.
+Farmer:
+"notification button kaha hai"
 
-Keep replies short, clear and farmer-friendly.
+Good:
+"Your notifications are on the Farmer Home page, in the bell icon at the top-right. I'll take you there."
 
-Do not use technical jargon unless necessary.
+==================================================
+PERSONAL DATA
+==================================================
 
-Current requested language preference:
+Use supplied farmer data.
+
+Never invent:
+- token
+- payment amount
+- payment reference
+- booking date
+- booking status
+- center
+- farmer details
+
+If there is no data:
+
+Say that the information is currently unavailable.
+
+Do not fabricate an answer.
+
+==================================================
+PAYMENT QUESTIONS
+==================================================
+
+If asked about payment history:
+Use PAYMENT data.
+
+If asked whether payment was received:
+Use payment status and amount.
+
+If asked for a payment reference:
+Use the reference from payment data.
+
+If payment is pending:
+Say it is pending.
+
+If no payment records exist:
+Tell the farmer there are currently no payment records.
+
+==================================================
+BOOKING QUESTIONS
+==================================================
+
+If asked about current booking status:
+Use BOOKINGS.
+
+If asked about upcoming booking:
+Use booking date and status.
+
+If asked to create a new booking:
+OPEN_BOOKING.
+
+Do not pretend that a booking has been created merely because the farmer asked.
+
+==================================================
+TOKEN QUESTIONS
+==================================================
+
+If the farmer has bookings:
+Use the most relevant/latest booking token.
+
+If there is no token:
+Say that no token is currently available.
+
+==================================================
+NOTIFICATION QUESTIONS
+==================================================
+
+If asked where notifications are:
+
+Explain:
+"They are on the Farmer Home page in the bell icon at the top-right."
+
+Then use:
+OPEN_NOTIFICATIONS
+
+If asked what their latest notification says:
+Use NOTIFICATIONS data.
+
+==================================================
+SETTINGS QUESTIONS
+==================================================
+
+If asked to change profile information:
+OPEN_SETTINGS.
+
+Do not pretend a profile change happened unless an actual application operation was performed.
+
+==================================================
+HELP QUESTIONS
+==================================================
+
+You understand the help content:
+
+- booking
+- crop selection
+- quantity estimates
+- procurement center
+- arrival window
+- token
+- late arrival
+- weighing
+- procurement
+- payments
+- SMS
+- low connectivity
+- FAQs
+- support center
+
+==================================================
+LANGUAGE
+==================================================
+
+Language preference:
 ${language}
 
-FARMER INFORMATION:
-${farmerContext}
+Respond naturally in the user's language.
 
-RECENT BOOKINGS:
-${JSON.stringify(
-  bookings
+English:
+English
+
+Hindi:
+Hindi
+
+Telugu:
+Telugu
+
+Hinglish:
+Natural Hinglish
+
+Mixed Hindi-English:
+Natural mixed Hindi-English
+
+Mixed Telugu-English:
+Natural mixed Telugu-English
+
+Do not force overly formal translations.
+
+==================================================
+FARMER
+==================================================
+
+${truncateAssistantText(
+  JSON.stringify(
+    context.farmer,
+    null,
+    2
+  ),
+  8000
 )}
 
-RECENT NOTIFICATIONS:
-${JSON.stringify(
-  notifications
+==================================================
+BOOKINGS
+==================================================
+
+${truncateAssistantText(
+  JSON.stringify(
+    context.bookings,
+    null,
+    2
+  ),
+  12000
 )}
 
-AVAILABLE PROCUREMENT CENTERS:
-${JSON.stringify(
-  centers
+==================================================
+PAYMENTS
+==================================================
+
+${truncateAssistantText(
+  JSON.stringify(
+    context.payments,
+    null,
+    2
+  ),
+  12000
 )}
 
-SYSTEM SETTINGS:
-${JSON.stringify(
-  settings
+==================================================
+NOTIFICATIONS
+==================================================
+
+${truncateAssistantText(
+  JSON.stringify(
+    context.notifications,
+    null,
+    2
+  ),
+  12000
 )}
 
-USER MESSAGE:
+==================================================
+PROCUREMENT CENTERS
+==================================================
+
+${truncateAssistantText(
+  JSON.stringify(
+    context.centers,
+    null,
+    2
+  ),
+  8000
+)}
+
+==================================================
+SYSTEM SETTINGS
+==================================================
+
+${truncateAssistantText(
+  JSON.stringify(
+    context.settings,
+    null,
+    2
+  ),
+  8000
+)}
+
+==================================================
+PREVIOUS CONVERSATION
+==================================================
+
+${truncateAssistantText(
+  conversation,
+  9000
+)}
+
+==================================================
+CURRENT FARMER MESSAGE
+==================================================
+
 ${text}
+
+==================================================
+OUTPUT
+==================================================
+
+Return ONLY JSON.
+
+Exactly:
+
+{
+  "reply": "natural conversational answer",
+  "action": "OPEN_HOME | OPEN_BOOKING | OPEN_TOKEN | OPEN_HISTORY | OPEN_PAYMENTS | OPEN_NOTIFICATIONS | OPEN_SETTINGS | OPEN_HELP | NONE"
+}
+
+Rules:
+
+1. reply must be useful.
+2. reply must sound human.
+3. action must be one of the allowed values.
+4. Use action when navigation would help.
+5. Use NONE when no navigation is necessary.
+6. Never invent personal data.
+7. Never mention internal implementation.
+8. Do not output markdown outside the JSON.
       `.trim();
 
 
       const response =
         await gemini.models.generateContent({
+
           model:
             GEMINI_MODEL,
 
           contents:
-            systemPrompt,
+            prompt,
 
           config: {
+
             temperature:
-              0.2,
+              0.35,
 
             maxOutputTokens:
-              300,
+              600,
 
             responseMimeType:
               "application/json",
 
             responseSchema: {
+
               type:
                 Type.OBJECT,
 
               properties: {
+
                 reply: {
+
                   type:
                     Type.STRING,
 
                   description:
-                    "Short natural-language response to the farmer.",
+                    "Natural conversational answer to the farmer.",
+
                 },
 
                 action: {
+
                   type:
                     Type.STRING,
 
-                  enum: [
-                    "OPEN_BOOKING",
-                    "OPEN_TOKEN",
-                    "OPEN_NOTIFICATIONS",
-                    "OPEN_HELP",
-                    "OPEN_SETTINGS",
-                    "OPEN_HOME",
-                    "NONE",
-                  ],
-
                   description:
-                    "Page action the frontend should perform.",
+                    "Navigation action for the website.",
+
+                  enum:
+                    ASSISTANT_ACTIONS,
+
                 },
+
               },
 
               required: [
                 "reply",
                 "action",
               ],
+
             },
+
           },
+
         });
 
 
-      const output =
+      const raw =
         String(
           response?.text ||
           ""
         ).trim();
 
 
-      if (
-        !output
-      ) {
-
-        return res.json({
-          success:
-            true,
-
-          reply:
-            "I could not understand that. Please tell me what you need help with.",
-
-          action:
-            "NONE",
-        });
-
-      }
-
-
       let parsed;
 
-      try {
 
-        parsed =
-          JSON.parse(
-            output
-          );
-
-      } catch (
-        error
+      if (
+        raw
       ) {
 
-        console.error(
-          "Gemini JSON parse error:",
-          error
-        );
+        try {
 
-        console.error(
-          "Gemini raw response:",
-          output
-        );
+          parsed =
+            JSON.parse(
+              raw
+            );
 
-        return res.json({
-          success:
-            true,
+        } catch (
+          parseError
+        ) {
+
+          console.warn(
+            "Assistant JSON parsing warning:",
+            parseError
+          );
+
+          parsed = {
+
+            reply:
+              raw,
+
+            action:
+              "NONE",
+
+          };
+
+        }
+
+      } else {
+
+        parsed = {
 
           reply:
-            output,
+            "",
 
           action:
             "NONE",
-        });
+
+        };
 
       }
 
 
-      const allowedActions = [
-
-        "OPEN_BOOKING",
-
-        "OPEN_TOKEN",
-
-        "OPEN_NOTIFICATIONS",
-
-        "OPEN_HELP",
-
-        "OPEN_SETTINGS",
-
-        "OPEN_HOME",
-
-        "NONE",
-
-      ];
+      let reply =
+        cleanAssistantText(
+          parsed?.reply
+        );
 
 
-      const action =
-        allowedActions.includes(
-          parsed?.action
+      if (
+        !reply
+      ) {
+
+        reply =
+          getAssistantFallback(
+            text,
+            language,
+            farmer
+          );
+
+      }
+
+
+      let action =
+        repairAssistantAction(
+          parsed?.action,
+          reply,
+          text
+        );
+
+
+      const lower =
+        text.toLowerCase();
+
+
+      if (
+        action ===
+        "NONE"
+      ) {
+
+        if (
+          lower.includes(
+            "notification"
+          ) ||
+          lower.includes(
+            "notif"
+          ) ||
+          lower.includes(
+            "bell"
+          ) ||
+          lower.includes(
+            "alert"
+          )
+        ) {
+
+          action =
+            "OPEN_NOTIFICATIONS";
+
+        } else if (
+          lower.includes(
+            "payment"
+          ) ||
+          lower.includes(
+            "paymnt"
+          ) ||
+          lower.includes(
+            "पेमेंट"
+          ) ||
+          lower.includes(
+            "पैसे"
+          )
+        ) {
+
+          action =
+            "OPEN_PAYMENTS";
+
+        } else if (
+          lower.includes(
+            "token"
+          ) ||
+          lower.includes(
+            "टोकन"
+          ) ||
+          lower.includes(
+            "టోకెన్"
+          )
+        ) {
+
+          action =
+            "OPEN_TOKEN";
+
+        } else if (
+          lower.includes(
+            "history"
+          ) ||
+          lower.includes(
+            " हिस्ट्री"
+          ) ||
+          lower.includes(
+            "చరిత్ర"
+          )
+        ) {
+
+          action =
+            "OPEN_HISTORY";
+
+        }
+
+      }
+
+
+      if (
+        shouldNavigate(
+          action
         )
-          ? parsed.action
-          : "NONE";
+      ) {
+
+        const path =
+          getActionPath(
+            action
+          );
 
 
-      const reply =
-        String(
-          parsed?.reply ||
-          "How can I help you?"
-        ).trim();
+        if (
+          action ===
+          "OPEN_NOTIFICATIONS"
+        ) {
+
+          if (
+            language ===
+            "hi"
+          ) {
+
+            reply =
+              reply ||
+              "आपके notifications Farmer Home के ऊपर दाईं ओर bell icon में हैं।";
+
+          } else if (
+            language ===
+            "te"
+          ) {
+
+            reply =
+              reply ||
+              "మీ notifications Farmer Home పేజీ పై కుడివైపు bell iconలో ఉన్నాయి.";
+
+          } else {
+
+            reply =
+              reply ||
+              "Your notifications are in the bell icon at the top-right of the Farmer Home page.";
+
+          }
+
+        }
+
+
+        return res.json({
+
+          success:
+            true,
+
+          reply,
+
+          action,
+
+          path,
+
+          currentPage:
+            getPageName(
+              currentPath
+            ),
+
+          requestTimeMs:
+            Date.now() -
+            requestStartedAt,
+
+        });
+
+      }
 
 
       return res.json({
@@ -7085,7 +8668,20 @@ ${text}
 
         reply,
 
-        action,
+        action:
+          "NONE",
+
+        path:
+          null,
+
+        currentPage:
+          getPageName(
+            currentPath
+          ),
+
+        requestTimeMs:
+          Date.now() -
+          requestStartedAt,
 
       });
 
@@ -7094,26 +8690,98 @@ ${text}
     ) {
 
       console.error(
-        "Gemini assistant error:",
+        "=========================================="
+      );
+
+      console.error(
+        "KRISHISETU AI ASSISTANT ERROR"
+      );
+
+      console.error(
+        "=========================================="
+      );
+
+      console.error(
         error
       );
 
       console.error(
-        "Gemini error message:",
+        "Message:",
         error?.message
       );
 
-      return res
-        .status(500)
-        .json({
+      console.error(
+        "Status:",
+        error?.status
+      );
 
-          success:
-            false,
+      console.error(
+        "Code:",
+        error?.code
+      );
 
-          message:
-            "The assistant is temporarily unavailable.",
+      console.error(
+        "=========================================="
+      );
 
-        });
+
+      const text =
+        cleanAssistantText(
+          req.body?.text ??
+          req.body?.message
+        );
+
+
+      const language =
+        normalizeAssistantLanguage(
+          req.body?.language
+        );
+
+
+      let fallbackAction =
+        repairAssistantAction(
+          "NONE",
+          "",
+          text
+        );
+
+
+      if (
+        !ASSISTANT_ACTIONS.includes(
+          fallbackAction
+        )
+      ) {
+
+        fallbackAction =
+          "NONE";
+
+      }
+
+
+      return res.json({
+
+        success:
+          true,
+
+        reply:
+          getAssistantFallback(
+            text,
+            language,
+            null
+          ),
+
+        action:
+          fallbackAction,
+
+        path:
+          getActionPath(
+            fallbackAction
+          ),
+
+        degraded:
+          true,
+
+      });
 
     }
 

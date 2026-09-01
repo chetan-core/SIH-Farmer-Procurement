@@ -33,6 +33,7 @@ import PageTransition from "./components/PageTransition";
 import VoiceAssistant from "./components/VoiceAssistant";
 
 
+
 function FarmerPortalPage({
   children,
 }) {
