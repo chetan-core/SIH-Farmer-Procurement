@@ -1,6 +1,10 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import {
+  GoogleGenAI,
+  Type,
+} from "@google/genai";
 
 import db, {
   query,
@@ -29,7 +33,17 @@ const SMS_ENABLED =
   ).toLowerCase() ===
   "true";
 
+const gemini =
+  process.env.GEMINI_API_KEY
+    ? new GoogleGenAI({
+        apiKey:
+          process.env.GEMINI_API_KEY,
+      })
+    : null;
 
+const GEMINI_MODEL =
+  process.env.GEMINI_MODEL ||
+  "gemini-2.5-flash";
 /* =========================================================
    MIDDLEWARE
 ========================================================= */
@@ -6532,7 +6546,579 @@ app.get(
   }
 );
 
+/* =========================================================
+   AI FARMER ASSISTANT
+========================================================= */
 
+/* =========================================================
+   AI FARMER ASSISTANT
+========================================================= */
+
+app.post(
+  "/api/assistant",
+  async (
+    req,
+    res
+  ) => {
+
+    try {
+
+      if (
+        !gemini
+      ) {
+
+        return res
+          .status(503)
+          .json({
+            success:
+              false,
+
+            message:
+              "AI assistant is not configured.",
+          });
+
+      }
+
+
+      const text =
+        String(
+          req.body?.text ||
+          ""
+        ).trim();
+
+
+      const language =
+        String(
+          req.body?.language ||
+          "en"
+        ).trim();
+
+
+      const farmerId =
+        String(
+          req.body?.farmerId ||
+          ""
+        ).trim();
+
+
+      const phone =
+        normalisePhone(
+          req.body?.phone ||
+          ""
+        );
+
+
+      if (
+        !text
+      ) {
+
+        return res
+          .status(400)
+          .json({
+            success:
+              false,
+
+            message:
+              "Assistant input is required.",
+          });
+
+      }
+
+
+      if (
+        text.length >
+        1500
+      ) {
+
+        return res
+          .status(400)
+          .json({
+            success:
+              false,
+
+            message:
+              "Assistant input is too long.",
+          });
+
+      }
+
+
+      const farmer =
+        await resolveFarmer({
+          farmerId,
+          phone,
+        });
+
+
+      let farmerContext =
+        "No farmer account is currently identified.";
+
+
+      if (
+        farmer
+      ) {
+
+        farmerContext = `
+Farmer ID: ${farmer.id}
+Name: ${farmer.name || "Unknown"}
+Phone: ${farmer.phone || "Unknown"}
+Village: ${farmer.village || "Unknown"}
+Language: ${farmer.language || language}
+Preferred center: ${farmer.preferred_center_id || "None"}
+Primary crop: ${farmer.primary_crop || "Unknown"}
+Estimated quantity: ${farmer.estimated_quantity || 0} kg
+        `.trim();
+
+      }
+
+
+      const bookings =
+        farmer
+          ? await all(
+              `
+                SELECT
+                  id,
+                  token,
+                  center_id,
+                  crop,
+                  estimated_quantity,
+                  actual_quantity,
+                  date,
+                  slot_start,
+                  slot_end,
+                  status,
+                  quality,
+                  created_at
+                FROM bookings
+                WHERE farmer_id = $1
+                ORDER BY
+                  created_at DESC,
+                  id DESC
+                LIMIT 10
+              `,
+              [
+                farmer.id,
+              ]
+            )
+          : [];
+
+
+      const notifications =
+        farmer
+          ? await all(
+              `
+                SELECT
+                  id,
+                  booking_id,
+                  type,
+                  title,
+                  message,
+                  channel,
+                  status,
+                  read_at,
+                  created_at
+                FROM notifications
+                WHERE farmer_id = $1
+                ORDER BY
+                  created_at DESC,
+                  id DESC
+                LIMIT 10
+              `,
+              [
+                farmer.id,
+              ]
+            )
+          : [];
+
+
+      const centers =
+        await all(
+          `
+            SELECT
+              id,
+              name,
+              village,
+              address,
+              capacity,
+              active,
+              opening_time,
+              closing_time
+            FROM centers
+            WHERE active = 1
+            ORDER BY name ASC
+          `
+        );
+
+
+      const settings =
+        await getSettings();
+
+
+      const systemPrompt = `
+You are the official KrishiSetu farmer assistant.
+
+Your role is to help farmers understand and use the KrishiSetu website.
+
+You must understand:
+
+- English
+- Hindi
+- Telugu
+- Hinglish
+- mixed English/Hindi/Telugu
+- transliterated Indian languages
+- informal speech
+- speech-to-text errors
+- spelling mistakes
+- missing words
+- repeated words
+- incorrect grammar
+- casual farmer language
+
+Never require exact keywords.
+
+Infer the user's intended meaning from context.
+
+Examples:
+
+"i wanna book slot"
+"i want bok a slot"
+"slot buk krna hai"
+"mujhe slot book karna he"
+"slot kavali"
+"naaku slot book cheyali"
+
+All of these can mean that the farmer wants to open the booking page.
+
+KrishiSetu supports:
+
+- farmer registration
+- procurement slot booking
+- digital token
+- booking status
+- arrival status
+- weighing
+- procurement status
+- payment status
+- notifications
+- procurement center information
+- help
+- account settings
+
+AVAILABLE ACTIONS:
+
+OPEN_BOOKING
+OPEN_TOKEN
+OPEN_NOTIFICATIONS
+OPEN_HELP
+OPEN_SETTINGS
+OPEN_HOME
+NONE
+
+ACTION RULES:
+
+Use OPEN_BOOKING when the farmer wants to:
+- book a slot
+- make a booking
+- schedule procurement
+- reserve a procurement window
+- choose a date or time
+- create a new booking
+
+Use OPEN_TOKEN when the farmer wants to:
+- see their token
+- check token
+- show booking token
+- find token number
+
+Use OPEN_NOTIFICATIONS when the farmer wants:
+- notifications
+- updates
+- alerts
+- recent messages
+
+Use OPEN_HELP when the farmer asks:
+- how to use KrishiSetu
+- what to do
+- needs help
+- does not understand the process
+
+Use OPEN_SETTINGS when the farmer wants:
+- profile
+- settings
+- change phone
+- change language
+- change personal details
+
+Use OPEN_HOME when the farmer wants:
+- dashboard
+- home
+- main page
+
+Use NONE when:
+- answering a normal question is enough
+- no page needs to be opened
+- the user is simply greeting the assistant
+
+IMPORTANT SAFETY / DATA RULES:
+
+Never invent farmer information.
+
+Never invent booking information.
+
+Never invent payment information.
+
+Never claim that a booking, payment, procurement, weighing event or notification happened unless it exists in the supplied database context.
+
+You may explain information contained in the supplied database context.
+
+You cannot directly create or modify bookings, payments, farmers or other records.
+
+When the user asks to perform an operation, choose the appropriate OPEN_* action and explain that the relevant page will be opened.
+
+LANGUAGE RULE:
+
+Reply in the language most appropriate for the user's message.
+
+If the user speaks Hindi, reply in Hindi.
+
+If the user speaks Telugu, reply in Telugu.
+
+If the user uses English, reply in English.
+
+For mixed language, naturally use the same style.
+
+Keep replies short, clear and farmer-friendly.
+
+Do not use technical jargon unless necessary.
+
+Current requested language preference:
+${language}
+
+FARMER INFORMATION:
+${farmerContext}
+
+RECENT BOOKINGS:
+${JSON.stringify(
+  bookings
+)}
+
+RECENT NOTIFICATIONS:
+${JSON.stringify(
+  notifications
+)}
+
+AVAILABLE PROCUREMENT CENTERS:
+${JSON.stringify(
+  centers
+)}
+
+SYSTEM SETTINGS:
+${JSON.stringify(
+  settings
+)}
+
+USER MESSAGE:
+${text}
+      `.trim();
+
+
+      const response =
+        await gemini.models.generateContent({
+          model:
+            GEMINI_MODEL,
+
+          contents:
+            systemPrompt,
+
+          config: {
+            temperature:
+              0.2,
+
+            maxOutputTokens:
+              300,
+
+            responseMimeType:
+              "application/json",
+
+            responseSchema: {
+              type:
+                Type.OBJECT,
+
+              properties: {
+                reply: {
+                  type:
+                    Type.STRING,
+
+                  description:
+                    "Short natural-language response to the farmer.",
+                },
+
+                action: {
+                  type:
+                    Type.STRING,
+
+                  enum: [
+                    "OPEN_BOOKING",
+                    "OPEN_TOKEN",
+                    "OPEN_NOTIFICATIONS",
+                    "OPEN_HELP",
+                    "OPEN_SETTINGS",
+                    "OPEN_HOME",
+                    "NONE",
+                  ],
+
+                  description:
+                    "Page action the frontend should perform.",
+                },
+              },
+
+              required: [
+                "reply",
+                "action",
+              ],
+            },
+          },
+        });
+
+
+      const output =
+        String(
+          response?.text ||
+          ""
+        ).trim();
+
+
+      if (
+        !output
+      ) {
+
+        return res.json({
+          success:
+            true,
+
+          reply:
+            "I could not understand that. Please tell me what you need help with.",
+
+          action:
+            "NONE",
+        });
+
+      }
+
+
+      let parsed;
+
+      try {
+
+        parsed =
+          JSON.parse(
+            output
+          );
+
+      } catch (
+        error
+      ) {
+
+        console.error(
+          "Gemini JSON parse error:",
+          error
+        );
+
+        console.error(
+          "Gemini raw response:",
+          output
+        );
+
+        return res.json({
+          success:
+            true,
+
+          reply:
+            output,
+
+          action:
+            "NONE",
+        });
+
+      }
+
+
+      const allowedActions = [
+
+        "OPEN_BOOKING",
+
+        "OPEN_TOKEN",
+
+        "OPEN_NOTIFICATIONS",
+
+        "OPEN_HELP",
+
+        "OPEN_SETTINGS",
+
+        "OPEN_HOME",
+
+        "NONE",
+
+      ];
+
+
+      const action =
+        allowedActions.includes(
+          parsed?.action
+        )
+          ? parsed.action
+          : "NONE";
+
+
+      const reply =
+        String(
+          parsed?.reply ||
+          "How can I help you?"
+        ).trim();
+
+
+      return res.json({
+
+        success:
+          true,
+
+        reply,
+
+        action,
+
+      });
+
+    } catch (
+      error
+    ) {
+
+      console.error(
+        "Gemini assistant error:",
+        error
+      );
+
+      console.error(
+        "Gemini error message:",
+        error?.message
+      );
+
+      return res
+        .status(500)
+        .json({
+
+          success:
+            false,
+
+          message:
+            "The assistant is temporarily unavailable.",
+
+        });
+
+    }
+
+  }
+);
 /* =========================================================
    FARMER NOTIFICATIONS
 ========================================================= */

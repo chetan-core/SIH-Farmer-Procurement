@@ -1,1745 +1,1189 @@
 import {
-  Mic,
-  MicOff,
-  Volume2,
-  VolumeX,
-  X,
-  MessageCircle,
-  ChevronDown,
-  LoaderCircle,
+Mic,
+MicOff,
+Volume2,
+VolumeX,
+X,
+MessageCircle,
+LoaderCircle,
+Send,
 } from "lucide-react";
 
 import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
+useEffect,
+useRef,
+useState,
 } from "react";
 
 import {
-  useLocation,
-  useNavigate,
+useLocation,
+useNavigate,
 } from "react-router";
 
 import {
-  useLanguage,
+useLanguage,
 } from "../translations/LanguageContext";
 
-
 const LANGUAGE_CONFIG = {
-  en: {
-    recognition: "en-IN",
+en: {
+recognition: "en-IN",
+title: "KrishiSetu Voice Assistant",
+subtitle: "Speak or type naturally.",
+listening: "Listening...",
+processing: "Understanding...",
+ready: "Speak or type your request.",
+unsupported: "Voice input is not supported in this browser.",
+permission: "Please allow microphone access.",
+noSpeech: "I didn't hear anything. Please try again.",
+error: "Something went wrong.",
+close: "Close",
+start: "Start listening",
+stop: "Stop listening",
+mute: "Mute",
+unmute: "Enable voice",
+youSaid: "You said",
+assistant: "KrishiSetu",
+placeholder: "Type your question or request...",
+send: "Send",
+examples: [
+"Book a procurement slot",
+"Show my token",
+"Open my notifications",
+"Go to help",
+],
+},
 
-    title:
-      "KrishiSetu Voice Assistant",
+hi: {
+recognition: "hi-IN",
+title: "कृषि सेतु वॉइस सहायक",
+subtitle: "स्वाभाविक रूप से बोलें या लिखें।",
+listening: "सुन रहा हूँ...",
+processing: "समझ रहा हूँ...",
+ready: "बोलें या अपना अनुरोध लिखें।",
+unsupported: "इस ब्राउज़र में वॉइस इनपुट उपलब्ध नहीं है।",
+permission: "कृपया माइक्रोफोन की अनुमति दें।",
+noSpeech: "मुझे कुछ सुनाई नहीं दिया। फिर से बोलें।",
+error: "कुछ समस्या हुई।",
+close: "बंद करें",
+start: "सुनना शुरू करें",
+stop: "सुनना बंद करें",
+mute: "आवाज़ बंद करें",
+unmute: "आवाज़ चालू करें",
+youSaid: "आपने कहा",
+assistant: "कृषि सेतु",
+placeholder: "अपना सवाल या अनुरोध लिखें...",
+send: "भेजें",
+examples: [
+"बुकिंग करनी है",
+"मेरा टोकन दिखाओ",
+"मेरे नोटिफिकेशन खोलो",
+"मदद चाहिए",
+],
+},
 
-    subtitle:
-      "Speak naturally. I will help you navigate.",
+te: {
+recognition: "te-IN",
+title: "కృషిసేతు వాయిస్ అసిస్టెంట్",
+subtitle: "సహజంగా మాట్లాడండి లేదా టైప్ చేయండి.",
+listening: "వింటున్నాను...",
+processing: "అర్థం చేసుకుంటున్నాను...",
+ready: "మాట్లాడండి లేదా మీ అభ్యర్థనను టైప్ చేయండి.",
+unsupported: "ఈ బ్రౌజర్‌లో వాయిస్ ఇన్‌పుట్ అందుబాటులో లేదు.",
+permission: "మైక్రోఫోన్ అనుమతిని ఇవ్వండి.",
+noSpeech: "మీ మాట వినిపించలేదు. మళ్లీ ప్రయత్నించండి.",
+error: "ఏదో సమస్య ఏర్పడింది.",
+close: "మూసివేయండి",
+start: "వినడం ప్రారంభించండి",
+stop: "వినడం ఆపండి",
+mute: "వాయిస్ ఆపండి",
+unmute: "వాయిస్ ప్రారంభించండి",
+youSaid: "మీరు చెప్పారు",
+assistant: "కృషిసేతు",
+placeholder: "మీ ప్రశ్న లేదా అభ్యర్థనను టైప్ చేయండి...",
+send: "పంపండి",
+examples: [
+"బుకింగ్ చేయాలి",
+"నా టోకెన్ చూపించు",
+"నోటిఫికేషన్స్ తెరువు",
+"సహాయం కావాలి",
+],
+},
+};
 
-    listening:
-      "Listening...",
+function getRecognition() {
+if (
+typeof window === "undefined"
+) {
+return null;
+}
 
-    processing:
-      "Understanding...",
+const Recognition =
+window.SpeechRecognition ||
+window.webkitSpeechRecognition;
 
-    ready:
-      "Tap the microphone and speak.",
+return Recognition || null;
+}
 
-    unsupported:
-      "Voice recognition is not supported on this browser.",
+function cleanText(value) {
+return String(
+value || ""
+)
+.trim()
+.replace(
+/\s+/g,
+" "
+);
+}
 
-    permission:
-      "Microphone permission is required.",
+function includesOne(
+text,
+values
+) {
+const lower =
+text.toLowerCase();
 
-    notUnderstood:
-      "I couldn't understand that. Please try again.",
+return values.some(
+value =>
+lower.includes(
+String(value).toLowerCase()
+)
+);
+}
 
-    noSpeech:
-      "I didn't hear anything. Please try again.",
+function VoiceAssistant() {
+const navigate =
+useNavigate();
 
-    error:
-      "Something went wrong with voice recognition.",
+const location =
+useLocation();
 
-    microphone:
-      "Microphone",
+const {
+language,
+} = useLanguage();
 
-    close:
-      "Close",
+const config =
+LANGUAGE_CONFIG[language] ||
+LANGUAGE_CONFIG.en;
 
-    stop:
-      "Stop listening",
+const [
+open,
+setOpen,
+] = useState(false);
 
-    start:
-      "Start listening",
+const [
+listening,
+setListening,
+] = useState(false);
 
-    mute:
-      "Mute voice",
+const [
+processing,
+setProcessing,
+] = useState(false);
 
-    unmute:
-      "Enable voice",
+const [
+input,
+setInput,
+] = useState("");
 
-    youSaid:
-      "You said",
+const [
+transcript,
+setTranscript,
+] = useState("");
 
-    assistant:
-      "KrishiSetu",
+const [
+response,
+setResponse,
+] = useState("");
 
-    examples: [
-      "Book a procurement slot",
-      "Show my token",
-      "Open notifications",
-      "Go to help",
-    ],
-  },
+const [
+error,
+setError,
+] = useState("");
 
-  hi: {
-    recognition: "hi-IN",
+const [
+voiceEnabled,
+setVoiceEnabled,
+] = useState(true);
 
-    title:
-      "कृषि सेतु वॉइस सहायक",
+const recognitionRef =
+useRef(null);
 
-    subtitle:
-      "स्वाभाविक रूप से बोलें। मैं आपकी मदद करूंगा।",
+useEffect(() => {
+return () => {
+try {
+recognitionRef.current?.stop();
+} catch {
+}
 
-    listening:
-      "सुन रहा हूँ...",
 
-    processing:
-      "समझ रहा हूँ...",
-
-    ready:
-      "माइक्रोफोन दबाकर बोलें।",
-
-    unsupported:
-      "इस ब्राउज़र में वॉइस रिकग्निशन उपलब्ध नहीं है।",
-
-    permission:
-      "माइक्रोफोन की अनुमति आवश्यक है।",
-
-    notUnderstood:
-      "मैं समझ नहीं पाया। कृपया फिर से बोलें।",
-
-    noSpeech:
-      "मुझे आपकी आवाज़ नहीं सुनाई दी। फिर से बोलें।",
-
-    error:
-      "वॉइस रिकग्निशन में समस्या हुई।",
-
-    microphone:
-      "माइक्रोफोन",
-
-    close:
-      "बंद करें",
-
-    stop:
-      "सुनना बंद करें",
-
-    start:
-      "सुनना शुरू करें",
-
-    mute:
-      "आवाज़ बंद करें",
-
-    unmute:
-      "आवाज़ चालू करें",
-
-    youSaid:
-      "आपने कहा",
-
-    assistant:
-      "कृषि सेतु",
-
-    examples: [
-      "बुकिंग करना है",
-      "मेरा टोकन दिखाओ",
-      "नोटिफिकेशन खोलो",
-      "मदद चाहिए",
-    ],
-  },
-
-  te: {
-    recognition: "te-IN",
-
-    title:
-      "కృషిసేతు వాయిస్ అసిస్టెంట్",
-
-    subtitle:
-      "సహజంగా మాట్లాడండి. నేను మీకు సహాయం చేస్తాను.",
-
-    listening:
-      "వింటున్నాను...",
-
-    processing:
-      "అర్థం చేసుకుంటున్నాను...",
-
-    ready:
-      "మైక్రోఫోన్ నొక్కి మాట్లాడండి.",
-
-    unsupported:
-      "ఈ బ్రౌజర్‌లో వాయిస్ రికగ్నిషన్ అందుబాటులో లేదు.",
-
-    permission:
-      "మైక్రోఫోన్ అనుమతి అవసరం.",
-
-    notUnderstood:
-      "నేను అర్థం చేసుకోలేకపోయాను. మళ్లీ ప్రయత్నించండి.",
-
-    noSpeech:
-      "మీ మాట వినిపించలేదు. మళ్లీ మాట్లాడండి.",
-
-    error:
-      "వాయిస్ రికగ్నిషన్‌లో సమస్య ఏర్పడింది.",
-
-    microphone:
-      "మైక్రోఫోన్",
-
-    close:
-      "మూసివేయండి",
-
-    stop:
-      "వినడం ఆపండి",
-
-    start:
-      "వినడం ప్రారంభించండి",
-
-    mute:
-      "వాయిస్ ఆపండి",
-
-    unmute:
-      "వాయిస్ ప్రారంభించండి",
-
-    youSaid:
-      "మీరు చెప్పారు",
-
-    assistant:
-      "కృషిసేతు",
-
-    examples: [
-      "బుకింగ్ చేయాలి",
-      "నా టోకెన్ చూపించు",
-      "నోటిఫికేషన్స్ తెరువు",
-      "సహాయం కావాలి",
-    ],
-  },
+  if (
+    typeof window !== "undefined" &&
+    window.speechSynthesis
+  ) {
+    window.speechSynthesis.cancel();
+  }
 };
 
 
-function getSpeechRecognition() {
-  if (
-    typeof window ===
-    "undefined"
-  ) {
-    return null;
+}, []);
+
+function speak(text) {
+if (
+!voiceEnabled ||
+!text ||
+typeof window === "undefined" ||
+!window.speechSynthesis
+) {
+return;
+}
+
+
+window.speechSynthesis.cancel();
+
+const utterance =
+  new SpeechSynthesisUtterance(
+    text
+  );
+
+utterance.lang =
+  config.recognition;
+
+utterance.rate =
+  language === "te"
+    ? 0.9
+    : 0.95;
+
+utterance.pitch = 1;
+utterance.volume = 1;
+
+window.speechSynthesis.speak(
+  utterance
+);
+
+
+}
+
+function navigateAndReply(
+text,
+path
+) {
+setResponse(text);
+setProcessing(false);
+
+
+speak(text);
+
+if (path) {
+  window.setTimeout(
+    () => {
+      navigate(path);
+    },
+    600
+  );
+}
+
+
+}
+
+async function askAssistant(
+message
+) {
+const text =
+cleanText(message);
+
+
+if (!text) {
+  return;
+}
+
+setProcessing(true);
+setError("");
+
+try {
+  const result =
+    await fetch(
+      "/api/assistant",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+
+        body:
+          JSON.stringify({
+            message: text,
+            language,
+            currentPath:
+              location.pathname,
+          }),
+      }
+    );
+
+  let data = {};
+
+  try {
+    data =
+      await result.json();
+  } catch {
+    data = {};
   }
 
-  return (
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition ||
-    null
+  if (!result.ok) {
+    throw new Error(
+      data?.message ||
+      "Assistant request failed."
+    );
+  }
+
+  const reply =
+    cleanText(
+      data?.reply ||
+      data?.message
+    );
+
+  if (!reply) {
+    throw new Error(
+      "The assistant did not return a response."
+    );
+  }
+
+  setResponse(reply);
+  setProcessing(false);
+
+  speak(reply);
+
+  if (
+    data?.path
+  ) {
+    window.setTimeout(
+      () => {
+        navigate(data.path);
+      },
+      600
+    );
+  }
+
+} catch (
+  assistantError
+) {
+  console.error(
+    "Assistant error:",
+    assistantError
+  );
+
+  setProcessing(false);
+
+  setError(
+    assistantError?.message ||
+    "Unable to reach the assistant."
   );
 }
 
 
-function normalizeText(
-  value
+}
+
+function handleCommand(
+message
 ) {
-  return String(
-    value || ""
+const text =
+cleanText(message);
+
+
+if (!text) {
+  return;
+}
+
+setTranscript(text);
+setInput("");
+setError("");
+
+const normalized =
+  text.toLowerCase();
+
+
+if (
+  language === "en" &&
+  includesOne(
+    normalized,
+    [
+      "book",
+      "booking",
+      "reserve",
+      "procurement slot",
+    ]
   )
-    .toLowerCase()
-    .trim()
-    .replace(
-      /[.,!?;:'"।॥]/g,
-      " "
-    )
-    .replace(
-      /\s+/g,
-      " "
-    );
-}
-
-
-function containsAny(
-  text,
-  words
 ) {
-  return words.some(
-    word =>
-      text.includes(
-        normalizeText(word)
-      )
+  navigateAndReply(
+    "Opening the booking page.",
+    "/farmer/book"
   );
+
+  return;
 }
 
 
-function VoiceAssistant() {
+if (
+  language === "en" &&
+  includesOne(
+    normalized,
+    [
+      "token",
+      "my token",
+      "digital token",
+    ]
+  )
+) {
+  navigateAndReply(
+    "Opening your token page.",
+    "/farmer/token"
+  );
 
-  const navigate =
-    useNavigate();
-
-  const location =
-    useLocation();
-
-  const {
-    language,
-  } =
-    useLanguage();
-
-
-  const currentLanguage =
-    LANGUAGE_CONFIG[
-      language
-    ] ||
-    LANGUAGE_CONFIG.en;
-
-
-  const [
-    open,
-    setOpen,
-  ] =
-    useState(false);
+  return;
+}
 
 
-  const [
-    listening,
-    setListening,
-  ] =
-    useState(false);
+if (
+  language === "en" &&
+  includesOne(
+    normalized,
+    [
+      "help",
+      "support",
+    ]
+  )
+) {
+  navigateAndReply(
+    "Opening farmer help.",
+    "/farmer/help"
+  );
+
+  return;
+}
 
 
-  const [
-    processing,
-    setProcessing,
-  ] =
-    useState(false);
+if (
+  language === "en" &&
+  includesOne(
+    normalized,
+    [
+      "setting",
+      "settings",
+      "profile",
+      "account",
+    ]
+  )
+) {
+  navigateAndReply(
+    "Opening your account settings.",
+    "/farmer/settings"
+  );
+
+  return;
+}
 
 
-  const [
-    transcript,
-    setTranscript,
-  ] =
-    useState("");
+if (
+  language === "en" &&
+  includesOne(
+    normalized,
+    [
+      "home",
+      "dashboard",
+    ]
+  )
+) {
+  navigateAndReply(
+    "Opening your farmer home.",
+    "/farmer/home"
+  );
+
+  return;
+}
 
 
-  const [
-    responseText,
-    setResponseText,
-  ] =
-    useState("");
+if (
+  language === "hi" &&
+  includesOne(
+    text,
+    [
+      "बुक",
+      "बुकिंग",
+      "स्लॉट",
+      "आरक्षित",
+    ]
+  )
+) {
+  navigateAndReply(
+    "बुकिंग पेज खोल रहा हूँ।",
+    "/farmer/book"
+  );
+
+  return;
+}
 
 
-  const [
-    voiceEnabled,
-    setVoiceEnabled,
-  ] =
-    useState(true);
+if (
+  language === "hi" &&
+  includesOne(
+    text,
+    [
+      "टोकन",
+      "मेरा टोकन",
+    ]
+  )
+) {
+  navigateAndReply(
+    "आपका टोकन पेज खोल रहा हूँ।",
+    "/farmer/token"
+  );
+
+  return;
+}
 
 
-  const [
-    errorMessage,
-    setErrorMessage,
-  ] =
-    useState("");
+if (
+  language === "hi" &&
+  includesOne(
+    text,
+    [
+      "मदद",
+      "सहायता",
+      "हेल्प",
+    ]
+  )
+) {
+  navigateAndReply(
+    "किसान सहायता खोल रहा हूँ।",
+    "/farmer/help"
+  );
+
+  return;
+}
 
 
-  const recognitionRef =
-    useRef(null);
+if (
+  language === "hi" &&
+  includesOne(
+    text,
+    [
+      "सेटिंग",
+      "प्रोफाइल",
+      "खाता",
+    ]
+  )
+) {
+  navigateAndReply(
+    "आपकी खाता सेटिंग्स खोल रहा हूँ।",
+    "/farmer/settings"
+  );
+
+  return;
+}
 
 
-  const speechQueueRef =
-    useRef([]);
+if (
+  language === "te" &&
+  includesOne(
+    text,
+    [
+      "బుక్",
+      "బుకింగ్",
+      "స్లాట్",
+      "రిజర్వ్",
+    ]
+  )
+) {
+  navigateAndReply(
+    "బుకింగ్ పేజీని తెరుస్తున్నాను.",
+    "/farmer/book"
+  );
+
+  return;
+}
 
 
-  const supported =
-    useMemo(
-      () =>
-        Boolean(
-          getSpeechRecognition()
-        ),
-      []
-    );
+if (
+  language === "te" &&
+  includesOne(
+    text,
+    [
+      "టోకెన్",
+      "నా టోకెన్",
+    ]
+  )
+) {
+  navigateAndReply(
+    "మీ టోకెన్ పేజీని తెరుస్తున్నాను.",
+    "/farmer/token"
+  );
+
+  return;
+}
 
 
-  /*
-   * -------------------------------------------------------
-   * ONLY SHOW ON FARMER PAGES
-   * -------------------------------------------------------
-   */
+if (
+  language === "te" &&
+  includesOne(
+    text,
+    [
+      "సహాయం",
+      "హెల్ప్",
+      "సపోర్ట్",
+    ]
+  )
+) {
+  navigateAndReply(
+    "రైతు సహాయ పేజీని తెరుస్తున్నాను.",
+    "/farmer/help"
+  );
 
-  const isFarmerPage =
-    location.pathname.startsWith(
-      "/farmer"
-    );
+  return;
+}
 
 
-  /*
-   * -------------------------------------------------------
-   * CLEANUP
-   * -------------------------------------------------------
-   */
+askAssistant(text);
 
-  useEffect(() => {
 
-    return () => {
+}
 
-      try {
+function startListening() {
+const Recognition =
+getRecognition();
 
-        recognitionRef.current?.stop();
 
-      } catch {
-      }
+if (!Recognition) {
+  setOpen(true);
+  setError(
+    config.unsupported
+  );
+  return;
+}
 
-      window.speechSynthesis?.cancel();
+if (listening) {
+  stopListening();
+  return;
+}
 
+setError("");
+setTranscript("");
+setResponse("");
+
+try {
+  if (
+    typeof window !== "undefined" &&
+    window.speechSynthesis
+  ) {
+    window.speechSynthesis.cancel();
+  }
+
+  const recognition =
+    new Recognition();
+
+  recognition.lang =
+    config.recognition;
+
+  recognition.continuous =
+    false;
+
+  recognition.interimResults =
+    true;
+
+  recognition.maxAlternatives =
+    1;
+
+
+  recognition.onstart =
+    () => {
+      setListening(true);
+      setProcessing(false);
+      setError("");
     };
 
-  }, []);
 
+  recognition.onresult =
+    event => {
+      let finalText =
+        "";
 
-  /*
-   * -------------------------------------------------------
-   * SPEECH RECOGNITION SETUP
-   * -------------------------------------------------------
-   */
+      let interimText =
+        "";
 
-  function createRecognition() {
+      for (
+        let index = 0;
+        index <
+        event.results.length;
+        index++
+      ) {
+        const result =
+          event.results[index];
 
-    const Recognition =
-      getSpeechRecognition();
-
-
-    if (
-      !Recognition
-    ) {
-
-      return null;
-
-    }
-
-
-    const recognition =
-      new Recognition();
-
-
-    recognition.continuous =
-      false;
-
-
-    recognition.interimResults =
-      true;
-
-
-    recognition.lang =
-      currentLanguage.recognition;
-
-
-    recognition.maxAlternatives =
-      3;
-
-
-    recognition.onstart =
-      () => {
-
-        setListening(
-          true
-        );
-
-        setProcessing(
-          false
-        );
-
-        setErrorMessage(
-          ""
-        );
-
-        setTranscript(
-          ""
-        );
-
-      };
-
-
-    recognition.onresult =
-      event => {
-
-        let finalText =
+        const text =
+          result[0]?.transcript ||
           "";
 
-
-        let interimText =
-          "";
-
-
-        for (
-          let index = 0;
-          index <
-          event.results.length;
-          index++
-        ) {
-
-          const result =
-            event.results[index];
-
-
-          const text =
-            result[0]?.transcript ||
-            "";
-
-
-          if (
-            result.isFinal
-          ) {
-
-            finalText +=
-              `${text} `;
-
-          } else {
-
-            interimText +=
-              `${text} `;
-
-          }
-
-        }
-
-
-        const displayedText =
-          (
-            finalText ||
-            interimText
-          ).trim();
-
-
-        setTranscript(
-          displayedText
-        );
-
-
         if (
-          finalText.trim()
+          result.isFinal
         ) {
-
-          setProcessing(
-            true
-          );
-
-
-          handleCommand(
-            finalText.trim()
-          );
-
-        }
-
-      };
-
-
-    recognition.onerror =
-      event => {
-
-        setListening(
-          false
-        );
-
-        setProcessing(
-          false
-        );
-
-
-        const error =
-          event?.error;
-
-
-        if (
-          error ===
-          "not-allowed" ||
-          error ===
-          "service-not-allowed"
-        ) {
-
-          setErrorMessage(
-            currentLanguage.permission
-          );
-
-        } else if (
-          error ===
-          "no-speech"
-        ) {
-
-          setErrorMessage(
-            currentLanguage.noSpeech
-          );
-
+          finalText +=
+            `${text} `;
         } else {
-
-          setErrorMessage(
-            currentLanguage.error
-          );
-
+          interimText +=
+            `${text} `;
         }
+      }
 
-      };
-
-
-    recognition.onend =
-      () => {
-
-        setListening(
-          false
+      const displayed =
+        cleanText(
+          finalText ||
+          interimText
         );
 
-      };
-
-
-    return recognition;
-
-  }
-
-
-  /*
-   * -------------------------------------------------------
-   * START / STOP LISTENING
-   * -------------------------------------------------------
-   */
-
-  function startListening() {
-
-    if (
-      !supported
-    ) {
-
-      setErrorMessage(
-        currentLanguage.unsupported
+      setTranscript(
+        displayed
       );
 
-      setOpen(
-        true
-      );
+      if (
+        finalText.trim()
+      ) {
+        setListening(false);
+        handleCommand(
+          finalText
+        );
+      }
+    };
 
-      return;
 
-    }
+  recognition.onerror =
+    event => {
+      setListening(false);
+      setProcessing(false);
+
+      if (
+        event?.error ===
+          "not-allowed" ||
+        event?.error ===
+          "service-not-allowed"
+      ) {
+        setError(
+          config.permission
+        );
+      } else if (
+        event?.error ===
+        "no-speech"
+      ) {
+        setError(
+          config.noSpeech
+        );
+      } else {
+        setError(
+          config.error
+        );
+      }
+    };
 
 
-    if (
+  recognition.onend =
+    () => {
+      setListening(false);
+    };
+
+
+  recognitionRef.current =
+    recognition;
+
+  recognition.start();
+
+} catch (
+  recognitionError
+) {
+  console.error(
+    "Recognition error:",
+    recognitionError
+  );
+
+  setListening(false);
+  setError(
+    config.error
+  );
+}
+
+
+}
+
+function stopListening() {
+try {
+recognitionRef.current?.stop();
+} catch {
+}
+
+
+setListening(false);
+
+
+}
+
+function handleSubmit(
+event
+) {
+event.preventDefault();
+
+
+if (
+  processing
+) {
+  return;
+}
+
+const text =
+  input.trim();
+
+if (!text) {
+  return;
+}
+
+handleCommand(text);
+
+
+}
+
+function useExample(
+example
+) {
+handleCommand(example);
+}
+
+const isFarmerPage =
+location.pathname.startsWith(
+"/farmer"
+);
+
+if (!isFarmerPage) {
+return null;
+}
+
+return (
+<>
+<button
+type="button"
+className={
+listening
+? "voice-assistant-floating listening"
+: "voice-assistant-floating"
+}
+onClick={() => {
+setOpen(true);
+
+
+      if (listening) {
+        stopListening();
+      } else {
+        startListening();
+      }
+    }}
+    aria-label={
       listening
-    ) {
-
-      stopListening();
-
-      return;
-
+        ? config.stop
+        : config.start
     }
-
-
-    setErrorMessage(
-      ""
-    );
-
-    setTranscript(
-      ""
-    );
-
-    setResponseText(
-      ""
-    );
-
-
-    try {
-
-      window.speechSynthesis?.cancel();
-
-
-      const recognition =
-        createRecognition();
-
-
-      if (
-        !recognition
-      ) {
-
-        setErrorMessage(
-          currentLanguage.unsupported
-        );
-
-        return;
-
-      }
-
-
-      recognitionRef.current =
-        recognition;
-
-
-      recognition.start();
-
-    } catch (
-      error
-    ) {
-
-      console.error(
-        "Voice recognition start error:",
-        error
-      );
-
-
-      setListening(
-        false
-      );
-
-
-      setErrorMessage(
-        currentLanguage.error
-      );
-
-    }
-
-  }
-
-
-  function stopListening() {
-
-    try {
-
-      recognitionRef.current?.stop();
-
-    } catch {
-    }
-
-    setListening(
-      false
-    );
-
-  }
-
-
-  /*
-   * -------------------------------------------------------
-   * TEXT TO SPEECH
-   * -------------------------------------------------------
-   */
-
-  function speak(
-    text
-  ) {
-
-    if (
-      !voiceEnabled ||
-      !text ||
-      typeof window ===
-      "undefined" ||
-      !window.speechSynthesis
-    ) {
-
-      return;
-
-    }
-
-
-    window.speechSynthesis.cancel();
-
-
-    const utterance =
-      new SpeechSynthesisUtterance(
-        text
-      );
-
-
-    utterance.lang =
-      currentLanguage.recognition;
-
-
-    utterance.rate =
-      language ===
-      "te"
-        ? 0.9
-        : 0.95;
-
-
-    utterance.pitch =
-      1;
-
-
-    utterance.volume =
-      1;
-
-
-    speechQueueRef.current =
-      [
-        utterance,
-      ];
-
-
-    window.speechSynthesis.speak(
-      utterance
-    );
-
-  }
-
-
-  /*
-   * -------------------------------------------------------
-   * COMMAND EXECUTION
-   * -------------------------------------------------------
-   */
-
-  function reply(
-    text,
-    path = null
-  ) {
-
-    setResponseText(
-      text
-    );
-
-
-    setProcessing(
-      false
-    );
-
-
-    speak(
-      text
-    );
-
-
-    if (
-      path
-    ) {
-
-      window.setTimeout(
-        () => {
-
-          navigate(
-            path
-          );
-
-        },
-        650
-      );
-
-    }
-
-  }
-
-
-  function handleCommand(
-    rawText
-  ) {
-
-    const text =
-      normalizeText(
-        rawText
-      );
-
-
-    /*
-     * ENGLISH
-     */
-
-    if (
-      language ===
-      "en"
-    ) {
-
-      if (
-        containsAny(
-          text,
-          [
-            "book",
-            "booking",
-            "book a slot",
-            "reserve",
-            "reserve a slot",
-            "procurement slot",
-            "new booking",
-          ]
-        )
-      ) {
-
-        reply(
-          "Opening the booking page.",
-          "/farmer/book"
-        );
-
-        return;
-
-      }
-
-
-      if (
-        containsAny(
-          text,
-          [
-            "token",
-            "my token",
-            "show token",
-            "digital token",
-          ]
-        )
-      ) {
-
-        reply(
-          "Opening your token page.",
-          "/farmer/token"
-        );
-
-        return;
-
-      }
-
-
-      if (
-        containsAny(
-          text,
-          [
-            "notification",
-            "notifications",
-            "updates",
-            "messages",
-          ]
-        )
-      ) {
-
-        reply(
-          "Opening your notifications.",
-          "/farmer/notifications"
-        );
-
-        return;
-
-      }
-
-
-      if (
-        containsAny(
-          text,
-          [
-            "help",
-            "support",
-            "need help",
-            "how do i",
-          ]
-        )
-      ) {
-
-        reply(
-          "Opening farmer help.",
-          "/farmer/help"
-        );
-
-        return;
-
-      }
-
-
-      if (
-        containsAny(
-          text,
-          [
-            "setting",
-            "settings",
-            "profile",
-            "account",
-          ]
-        )
-      ) {
-
-        reply(
-          "Opening your account settings.",
-          "/farmer/settings"
-        );
-
-        return;
-
-      }
-
-
-      if (
-        containsAny(
-          text,
-          [
-            "home",
-            "dashboard",
-            "farmer home",
-            "go home",
-          ]
-        )
-      ) {
-
-        reply(
-          "Opening your farmer home.",
-          "/farmer/home"
-        );
-
-        return;
-
-      }
-
-
-      if (
-        containsAny(
-          text,
-          [
-            "close",
-            "exit",
-            "bye",
-          ]
-        )
-      ) {
-
-        reply(
-          "Okay.",
-          null
-        );
-
-        return;
-
-      }
-
-    }
-
-
-    /*
-     * HINDI
-     */
-
-    if (
-      language ===
-      "hi"
-    ) {
-
-      if (
-        containsAny(
-          text,
-          [
-            "बुक",
-            "बुकिंग",
-            "स्लॉट",
-            "समय बुक",
-            "समय लेना",
-            "आरक्षित",
-          ]
-        )
-      ) {
-
-        reply(
-          "बुकिंग पेज खोल रहा हूँ।",
-          "/farmer/book"
-        );
-
-        return;
-
-      }
-
-
-      if (
-        containsAny(
-          text,
-          [
-            "टोकन",
-            "मेरा टोकन",
-            "डिजिटल टोकन",
-          ]
-        )
-      ) {
-
-        reply(
-          "आपका टोकन पेज खोल रहा हूँ।",
-          "/farmer/token"
-        );
-
-        return;
-
-      }
-
-
-      if (
-        containsAny(
-          text,
-          [
-            "नोटिफिकेशन",
-            "सूचना",
-            "अपडेट",
-            "संदेश",
-          ]
-        )
-      ) {
-
-        reply(
-          "आपके नोटिफिकेशन खोल रहा हूँ।",
-          "/farmer/notifications"
-        );
-
-        return;
-
-      }
-
-
-      if (
-        containsAny(
-          text,
-          [
-            "मदद",
-            "सहायता",
-            "हेल्प",
-          ]
-        )
-      ) {
-
-        reply(
-          "किसान सहायता खोल रहा हूँ।",
-          "/farmer/help"
-        );
-
-        return;
-
-      }
-
-
-      if (
-        containsAny(
-          text,
-          [
-            "सेटिंग",
-            "सेटिंग्स",
-            "प्रोफाइल",
-            "खाता",
-          ]
-        )
-      ) {
-
-        reply(
-          "आपकी खाता सेटिंग्स खोल रहा हूँ।",
-          "/farmer/settings"
-        );
-
-        return;
-
-      }
-
-
-      if (
-        containsAny(
-          text,
-          [
-            "होम",
-            "मुख्य पेज",
-            "डैशबोर्ड",
-          ]
-        )
-      ) {
-
-        reply(
-          "किसान होम खोल रहा हूँ।",
-          "/farmer/home"
-        );
-
-        return;
-
-      }
-
-    }
-
-
-    /*
-     * TELUGU
-     */
-
-    if (
-      language ===
-      "te"
-    ) {
-
-      if (
-        containsAny(
-          text,
-          [
-            "బుకింగ్",
-            "బుక్",
-            "స్లాట్",
-            "సమయం బుక్",
-            "రిజర్వ్",
-          ]
-        )
-      ) {
-
-        reply(
-          "బుకింగ్ పేజీని తెరుస్తున్నాను.",
-          "/farmer/book"
-        );
-
-        return;
-
-      }
-
-
-      if (
-        containsAny(
-          text,
-          [
-            "టోకెన్",
-            "నా టోకెన్",
-            "డిజిటల్ టోకెన్",
-          ]
-        )
-      ) {
-
-        reply(
-          "మీ టోకెన్ పేజీని తెరుస్తున్నాను.",
-          "/farmer/token"
-        );
-
-        return;
-
-      }
-
-
-      if (
-        containsAny(
-          text,
-          [
-            "నోటిఫికేషన్",
-            "నోటిఫికేషన్స్",
-            "అప్‌డేట్స్",
-            "సందేశాలు",
-          ]
-        )
-      ) {
-
-        reply(
-          "మీ నోటిఫికేషన్స్ తెరుస్తున్నాను.",
-          "/farmer/notifications"
-        );
-
-        return;
-
-      }
-
-
-      if (
-        containsAny(
-          text,
-          [
-            "సహాయం",
-            "హెల్ప్",
-            "సపోర్ట్",
-          ]
-        )
-      ) {
-
-        reply(
-          "రైతు సహాయ పేజీని తెరుస్తున్నాను.",
-          "/farmer/help"
-        );
-
-        return;
-
-      }
-
-
-      if (
-        containsAny(
-          text,
-          [
-            "సెట్టింగ్స్",
-            "సెట్టింగ్",
-            "ప్రొఫైల్",
-            "ఖాతా",
-          ]
-        )
-      ) {
-
-        reply(
-          "మీ ఖాతా సెట్టింగ్స్ తెరుస్తున్నాను.",
-          "/farmer/settings"
-        );
-
-        return;
-
-      }
-
-
-      if (
-        containsAny(
-          text,
-          [
-            "హోమ్",
-            "ముఖ్య పేజీ",
-            "డాష్‌బోర్డ్",
-          ]
-        )
-      ) {
-
-        reply(
-          "రైతు హోమ్ పేజీని తెరుస్తున్నాను.",
-          "/farmer/home"
-        );
-
-        return;
-
-      }
-
-    }
-
-
-    /*
-     * COMMON FALLBACK
-     */
-
-    reply(
-      currentLanguage.notUnderstood
-    );
-
-  }
-
-
-  /*
-   * -------------------------------------------------------
-   * QUICK COMMAND
-   * -------------------------------------------------------
-   */
-
-  function runExample(
-    example
-  ) {
-
-    setTranscript(
-      example
-    );
-
-
-    handleCommand(
-      example
-    );
-
-  }
-
-
-  if (
-    !isFarmerPage
-  ) {
-
-    return null;
-
-  }
-
-
-  /*
-   * -------------------------------------------------------
-   * RENDER
-   * -------------------------------------------------------
-   */
-
-  return (
-
-    <>
-
-      <button
-        type="button"
-        className={
-          listening
-            ? "voice-assistant-floating listening"
-            : "voice-assistant-floating"
-        }
-        onClick={() => {
-
-          setOpen(
-            true
-          );
-
-          startListening();
-
-        }}
-        aria-label={
-          currentLanguage.start
-        }
-        title={
-          currentLanguage.start
-        }
-      >
-
-        {listening ? (
-
-          <>
-
-            <span className="voice-assistant-pulse" />
-
-            <MicOff
-              size={21}
+  >
+    {listening ? (
+      <MicOff size={21} />
+    ) : (
+      <Mic size={21} />
+    )}
+  </button>
+
+
+  {open && (
+    <div className="voice-assistant-panel">
+
+      <div className="voice-assistant-panel-header">
+
+        <div className="voice-assistant-heading">
+
+          <div className="voice-assistant-heading-icon">
+            <MessageCircle size={19} />
+          </div>
+
+          <div>
+            <strong>
+              {config.title}
+            </strong>
+
+            <span>
+              {config.subtitle}
+            </span>
+          </div>
+
+        </div>
+
+
+        <button
+          type="button"
+          className="voice-assistant-close"
+          onClick={() => {
+            stopListening();
+
+            if (
+              typeof window !== "undefined" &&
+              window.speechSynthesis
+            ) {
+              window.speechSynthesis.cancel();
+            }
+
+            setOpen(false);
+          }}
+          aria-label={
+            config.close
+          }
+        >
+          <X size={18} />
+        </button>
+
+      </div>
+
+
+      <div className="voice-assistant-body">
+
+        <div
+          className={
+            listening
+              ? "voice-assistant-orb listening"
+              : processing
+                ? "voice-assistant-orb processing"
+                : "voice-assistant-orb"
+          }
+        >
+          {processing ? (
+            <LoaderCircle
+              size={28}
+              className="voice-assistant-spin"
             />
+          ) : listening ? (
+            <MicOff size={28} />
+          ) : (
+            <Mic size={28} />
+          )}
+        </div>
 
-          </>
 
-        ) : (
+        <div className="voice-assistant-state">
 
-          <Mic
-            size={21}
-          />
+          <strong>
+            {listening
+              ? config.listening
+              : processing
+                ? config.processing
+                : config.ready}
+          </strong>
 
+        </div>
+
+
+        {transcript && (
+          <div className="voice-assistant-transcript">
+
+            <span>
+              {config.youSaid}
+            </span>
+
+            <p>
+              "{transcript}"
+            </p>
+
+          </div>
         )}
 
-      </button>
 
+        {response && (
+          <div className="voice-assistant-response">
 
-      {open && (
-
-        <div className="voice-assistant-panel">
-
-          <div className="voice-assistant-panel-header">
-
-            <div className="voice-assistant-heading">
-
-              <div className="voice-assistant-heading-icon">
-
-                <MessageCircle
-                  size={19}
-                />
-
-              </div>
-
-
-              <div>
-
-                <strong>
-                  {
-                    currentLanguage.title
-                  }
-                </strong>
-
-                <span>
-                  {
-                    currentLanguage.subtitle
-                  }
-                </span>
-
-              </div>
-
+            <div className="voice-assistant-response-icon">
+              <MessageCircle size={15} />
             </div>
 
+            <div>
+              <span>
+                {config.assistant}
+              </span>
 
-            <button
-              type="button"
-              className="voice-assistant-close"
-              onClick={() => {
+              <p>
+                {response}
+              </p>
+            </div>
 
-                stopListening();
+          </div>
+        )}
 
-                window.speechSynthesis?.cancel();
 
-                setOpen(
-                  false
-                );
+        {error && (
+          <div className="voice-assistant-error-card">
+            {error}
+          </div>
+        )}
 
-              }}
-              aria-label={
-                currentLanguage.close
-              }
-            >
 
-              <X
-                size={18}
+        <form
+          className="voice-assistant-text-form"
+          onSubmit={
+            handleSubmit
+          }
+        >
+
+          <input
+            type="text"
+            value={input}
+            onChange={event =>
+              setInput(
+                event.target.value
+              )
+            }
+            placeholder={
+              config.placeholder
+            }
+            disabled={
+              processing
+            }
+            autoComplete="off"
+          />
+
+
+          <button
+            type="submit"
+            disabled={
+              processing ||
+              !input.trim()
+            }
+            aria-label={
+              config.send
+            }
+          >
+            {processing ? (
+              <LoaderCircle
+                size={17}
+                className="voice-assistant-spin"
               />
-
-            </button>
-
-          </div>
-
-
-          <div className="voice-assistant-body">
-
-            <div
-              className={
-                listening
-                  ? "voice-assistant-orb listening"
-                  : "voice-assistant-orb"
-              }
-            >
-
-              {listening ? (
-
-                <>
-
-                  <span className="voice-orb-wave wave-one" />
-                  <span className="voice-orb-wave wave-two" />
-                  <span className="voice-orb-wave wave-three" />
-
-                </>
-
-              ) : (
-
-                <Mic
-                  size={28}
-                />
-
-              )}
-
-            </div>
-
-
-            <div className="voice-assistant-state">
-
-              <strong>
-
-                {
-                  listening
-                    ? currentLanguage.listening
-                    : processing
-                      ? currentLanguage.processing
-                      : currentLanguage.ready
-                }
-
-              </strong>
-
-
-              {!supported && (
-
-                <span className="voice-assistant-error">
-
-                  {
-                    currentLanguage.unsupported
-                  }
-
-                </span>
-
-              )}
-
-            </div>
-
-
-            {transcript && (
-
-              <div className="voice-assistant-transcript">
-
-                <span>
-                  {
-                    currentLanguage.youSaid
-                  }
-                </span>
-
-
-                <p>
-                  “{transcript}”
-                </p>
-
-              </div>
-
+            ) : (
+              <Send size={17} />
             )}
-
-
-            {responseText && (
-
-              <div className="voice-assistant-response">
-
-                <div className="voice-assistant-response-icon">
-
-                  <MessageCircle
-                    size={15}
-                  />
-
-                </div>
-
-
-                <div>
-
-                  <span>
-                    {
-                      currentLanguage.assistant
-                    }
-                  </span>
-
-
-                  <p>
-                    {
-                      responseText
-                    }
-                  </p>
-
-                </div>
-
-              </div>
-
-            )}
-
-
-            {errorMessage && (
-
-              <div className="voice-assistant-error-card">
-
-                {
-                  errorMessage
-                }
-
-              </div>
-
-            )}
-
-
-            <button
-              type="button"
-              className={
-                listening
-                  ? "voice-assistant-main-button stop"
-                  : "voice-assistant-main-button"
-              }
-              onClick={
-                startListening
-              }
-              disabled={
-                processing
-              }
-            >
-
-              {processing ? (
-
-                <LoaderCircle
-                  size={18}
-                  className="voice-assistant-spin"
-                />
-
-              ) : listening ? (
-
-                <MicOff
-                  size={18}
-                />
-
-              ) : (
-
-                <Mic
-                  size={18}
-                />
-
-              )}
-
-
-              <span>
-
-                {
-                  listening
-                    ? currentLanguage.stop
-                    : currentLanguage.start
-                }
-
-              </span>
-
-            </button>
-
-
-            <div className="voice-assistant-examples">
-
-              <div className="voice-assistant-examples-heading">
-
-                <span>
-                  Try saying
-                </span>
-
-              </div>
-
-
-              <div className="voice-assistant-example-list">
-
-                {
-                  currentLanguage.examples.map(
-                    example => (
-
-                      <button
-                        key={
-                          example
-                        }
-                        type="button"
-                        onClick={() =>
-                          runExample(
-                            example
-                          )
-                        }
-                      >
-                        {
-                          example
-                        }
-                      </button>
-
-                    )
-                  )
-                }
-
-              </div>
-
-            </div>
-
-          </div>
-
-
-          <div className="voice-assistant-footer">
-
-            <button
-              type="button"
-              onClick={() => {
-
-                setVoiceEnabled(
-                  current =>
-                    !current
-                );
-
-                if (
-                  voiceEnabled
-                ) {
-
-                  window.speechSynthesis?.cancel();
-
-                }
-
-              }}
-              title={
-                voiceEnabled
-                  ? currentLanguage.mute
-                  : currentLanguage.unmute
-              }
-            >
-
-              {voiceEnabled ? (
-
-                <Volume2
-                  size={15}
-                />
-
-              ) : (
-
-                <VolumeX
-                  size={15}
-                />
-
-              )}
-
-              <span>
-
-                {
-                  voiceEnabled
-                    ? currentLanguage.mute
-                    : currentLanguage.unmute
-                }
-
-              </span>
-
-            </button>
-
-            <span className="voice-assistant-language">
-
-              {
-                currentLanguage.recognition
-              }
-
+          </button>
+
+        </form>
+
+
+        <button
+          type="button"
+          className={
+            listening
+              ? "voice-assistant-main-button stop"
+              : "voice-assistant-main-button"
+          }
+          onClick={
+            startListening
+          }
+          disabled={
+            processing
+          }
+        >
+
+          {listening ? (
+            <MicOff size={18} />
+          ) : (
+            <Mic size={18} />
+          )}
+
+          <span>
+            {listening
+              ? config.stop
+              : config.start}
+          </span>
+
+        </button>
+
+
+        <div className="voice-assistant-examples">
+
+          <div className="voice-assistant-examples-heading">
+            <span>
+              Try saying
             </span>
+          </div>
+
+
+          <div className="voice-assistant-example-list">
+
+            {config.examples.map(
+              example => (
+                <button
+                  key={example}
+                  type="button"
+                  onClick={() =>
+                    useExample(
+                      example
+                    )
+                  }
+                >
+                  {example}
+                </button>
+              )
+            )}
 
           </div>
 
         </div>
 
-      )}
+      </div>
 
-    </>
 
-  );
+      <div className="voice-assistant-footer">
 
+        <button
+          type="button"
+          onClick={() => {
+            setVoiceEnabled(
+              value => !value
+            );
+
+            if (
+              voiceEnabled &&
+              typeof window !== "undefined" &&
+              window.speechSynthesis
+            ) {
+              window.speechSynthesis.cancel();
+            }
+          }}
+        >
+
+          {voiceEnabled ? (
+            <Volume2 size={15} />
+          ) : (
+            <VolumeX size={15} />
+          )}
+
+          <span>
+            {voiceEnabled
+              ? config.mute
+              : config.unmute}
+          </span>
+
+        </button>
+
+
+        <span className="voice-assistant-language">
+          {config.recognition}
+        </span>
+
+      </div>
+
+    </div>
+  )}
+
+</>
+
+
+);
 }
-
 
 export default VoiceAssistant;
