@@ -24,6 +24,7 @@ import {
 
 import {
   Link,
+  useLocation,
   useNavigate,
 } from "react-router";
 
@@ -766,6 +767,9 @@ function FarmerBook() {
   const navigate =
     useNavigate();
 
+  const location =
+  useLocation();
+
 
   const {
     t,
@@ -1010,7 +1014,104 @@ function FarmerBook() {
           },
         ];
 
+        useEffect(() => {
 
+  const assistantBooking =
+    location.state?.assistantBooking;
+
+
+  if (
+    !assistantBooking ||
+    typeof assistantBooking !==
+      "object"
+  ) {
+
+    return;
+
+  }
+
+
+  const requestedCrop =
+    String(
+      assistantBooking.crop ||
+      ""
+    )
+      .trim()
+      .toLowerCase();
+
+
+  const requestedQuantity =
+    Number(
+      assistantBooking.quantity
+    );
+
+
+  if (
+    requestedCrop
+  ) {
+
+    const matchingCrop =
+      crops.find(
+        item =>
+          String(
+            item?.id ||
+            ""
+          )
+            .trim()
+            .toLowerCase() ===
+          requestedCrop
+      );
+
+
+    if (
+      matchingCrop
+    ) {
+
+      setCrop(
+        matchingCrop.id
+      );
+
+    }
+
+  }
+
+
+  if (
+    Number.isFinite(
+      requestedQuantity
+    ) &&
+    requestedQuantity > 0
+  ) {
+
+    setQuantity(
+      String(
+        requestedQuantity
+      )
+    );
+
+  }
+
+
+  setAvailable(
+    false
+  );
+
+  setSelectedSlot(
+    null
+  );
+
+  setAvailabilityCheckedAt(
+    null
+  );
+
+  setError(
+    ""
+  );
+
+}, [
+  location.state,
+  crops,
+]);
   /*
    * ========================================================
    * ACTIVE CENTERS
@@ -1039,47 +1140,242 @@ function FarmerBook() {
    * ========================================================
    */
 
+    useEffect(() => {
+
+  const assistantBooking =
+    location.state?.assistantBooking;
+
+
+  const assistantCrop =
+    String(
+      assistantBooking?.crop ||
+      ""
+    )
+      .trim()
+      .toLowerCase();
+
+
+  const assistantCropExists =
+    assistantCrop &&
+    crops.some(
+      item =>
+        String(
+          item?.id ||
+          ""
+        )
+          .trim()
+          .toLowerCase() ===
+        assistantCrop
+    );
+
+
+  if (
+    assistantCropExists
+  ) {
+
+    return;
+
+  }
+
+
+  if (
+    !crop &&
+    crops.length > 0
+  ) {
+
+    const preferredCrop =
+      farmer?.primaryCrop ||
+      farmer?.primary_crop;
+
+
+    const cropExists =
+      crops.some(
+        item =>
+          String(
+            item.id
+          ) ===
+          String(
+            preferredCrop
+          )
+      );
+
+
+    setCrop(
+      cropExists
+        ? preferredCrop
+        : crops[0].id
+    );
+
+  }
+
+}, [
+  crops,
+  crop,
+  farmer?.primaryCrop,
+  farmer?.primary_crop,
+  location.state,
+]);
+    /*
+   * ========================================================
+   * AI ASSISTANT PREFILL
+   * ========================================================
+   *
+   * Example:
+   *
+   * "book 50 kg of paddy"
+   *
+   * VoiceAssistant navigates here with:
+   *
+   * location.state.assistantBooking = {
+   *   crop: "paddy",
+   *   quantity: 50
+   * }
+   *
+   * We copy those values into the same React state
+   * used by the normal booking form.
+   */
+
   useEffect(() => {
 
+    const assistantBooking =
+      location.state?.assistantBooking;
+
     if (
-      !crop &&
-      crops.length > 0
+      !assistantBooking ||
+      typeof assistantBooking !==
+        "object"
     ) {
 
-      const preferredCrop =
-        farmer?.primaryCrop ||
-        farmer?.primary_crop;
+      return;
+
+    }
 
 
-      const cropExists =
-        crops.some(
-          item =>
-            String(
-              item.id
-            ) ===
-            String(
-              preferredCrop
-            )
-        );
+    /*
+     * Wait until crops are available so that
+     * we only accept a crop that actually exists
+     * in the booking form.
+     */
 
+    if (
+      crops.length === 0
+    ) {
+
+      return;
+
+    }
+
+
+    const requestedCrop =
+      String(
+        assistantBooking.crop ||
+        ""
+      )
+        .trim()
+        .toLowerCase();
+
+
+    const matchingCrop =
+      crops.find(
+        item =>
+          String(
+            item?.id ||
+            ""
+          )
+            .trim()
+            .toLowerCase() ===
+          requestedCrop
+      );
+
+
+    if (
+      matchingCrop
+    ) {
 
       setCrop(
-        cropExists
-          ? preferredCrop
-          : crops[0].id
+        matchingCrop.id
       );
 
     }
 
+
+    const requestedQuantity =
+      Number(
+        assistantBooking.quantity
+      );
+
+
+    if (
+      Number.isFinite(
+        requestedQuantity
+      ) &&
+      requestedQuantity > 0
+    ) {
+
+      setQuantity(
+        String(
+          requestedQuantity
+        )
+      );
+
+    }
+
+
+    /*
+     * Make sure the user sees that the assistant
+     * has filled the form.
+     */
+
+    setAvailable(
+      false
+    );
+
+    setSelectedSlot(
+      null
+    );
+
+    setAvailabilityCheckedAt(
+      null
+    );
+
+    setError(
+      ""
+
+    );
+
   }, [
+    location.state,
     crops,
-    crop,
-    farmer?.primaryCrop,
-    farmer?.primary_crop,
   ]);
 
 
-  useEffect(() => {
+    useEffect(() => {
+
+    const assistantBooking =
+      location.state?.assistantBooking;
+
+
+    const assistantQuantity =
+      Number(
+        assistantBooking?.quantity
+      );
+
+
+    /*
+     * Assistant quantity has priority.
+     */
+
+    if (
+      Number.isFinite(
+        assistantQuantity
+      ) &&
+      assistantQuantity > 0
+    ) {
+
+      return;
+
+    }
+
 
     const farmerQuantity =
       farmer?.estimatedQuantity ??
@@ -1106,8 +1402,8 @@ function FarmerBook() {
     farmer?.estimatedQuantity,
     farmer?.estimated_quantity,
     quantity,
+    location.state,
   ]);
-
 
   /*
    * ========================================================
