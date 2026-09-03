@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -49,6 +50,10 @@ import {
 const API_URL =
   import.meta.env.VITE_API_URL;
 
+
+/* =========================================================
+   LANGUAGE COPY
+========================================================= */
 
 const languageCopy = {
 
@@ -762,13 +767,18 @@ const languageCopy = {
 };
 
 
+/* =========================================================
+   FARMER BOOK
+========================================================= */
+
 function FarmerBook() {
 
   const navigate =
     useNavigate();
 
+
   const location =
-  useLocation();
+    useLocation();
 
 
   const {
@@ -793,193 +803,190 @@ function FarmerBook() {
     languageCopy.en;
 
 
+  /* =======================================================
+     STATE
+  ======================================================= */
+
   const [
     settings,
     setSettings,
   ] =
-    useState({
-      slotDuration:
-        30,
+  useState({
+    slotDuration:
+      30,
 
-      advanceBookingDays:
-        7,
+    advanceBookingDays:
+      7,
 
-      maxQuantity:
-        5000,
+    maxQuantity:
+      5000,
 
-      defaultCapacity:
-        20,
-    });
+    defaultCapacity:
+      20,
+  });
 
 
   const [
     settingsLoading,
     setSettingsLoading,
   ] =
-    useState(true);
+  useState(true);
 
 
   const [
     settingsError,
     setSettingsError,
   ] =
-    useState("");
+  useState("");
 
 
   const [
     centers,
     setCenters,
   ] =
-    useState([]);
+  useState([]);
 
 
   const [
     centersLoading,
     setCentersLoading,
   ] =
-    useState(true);
+  useState(true);
 
 
   const [
     crop,
     setCrop,
   ] =
-    useState(
-      ""
-    );
+  useState("");
 
 
   const [
     quantity,
     setQuantity,
   ] =
-    useState(
-      ""
-    );
+  useState("");
 
 
   const [
     centerId,
     setCenterId,
   ] =
-    useState(
-      ""
-    );
+  useState("");
 
 
   const [
     date,
     setDate,
   ] =
-    useState(
-      ""
-    );
+  useState("");
 
 
   const [
     openMenu,
     setOpenMenu,
   ] =
-    useState(
-      null
-    );
+  useState(null);
 
 
   const [
     available,
     setAvailable,
   ] =
-    useState(
-      false
-    );
+  useState(false);
 
 
   const [
     selectedSlot,
     setSelectedSlot,
   ] =
-    useState(
-      null
-    );
+  useState(null);
 
 
   const [
     bookings,
     setBookings,
   ] =
-    useState(
-      []
-    );
+  useState([]);
 
 
   const [
     loadingBookings,
     setLoadingBookings,
   ] =
-    useState(
-      true
-    );
+  useState(true);
 
 
   const [
     loadingAvailability,
     setLoadingAvailability,
   ] =
-    useState(
-      false
-    );
+  useState(false);
 
 
   const [
     confirming,
     setConfirming,
   ] =
-    useState(
-      false
-    );
+  useState(false);
 
 
   const [
     error,
     setError,
   ] =
-    useState(
-      ""
-    );
+  useState("");
 
 
   const [
     centerSwitchMessage,
     setCenterSwitchMessage,
   ] =
-    useState(
-      ""
-    );
+  useState("");
 
 
   const [
     availabilityCheckedAt,
     setAvailabilityCheckedAt,
   ] =
-    useState(
-      null
-    );
+  useState(null);
 
 
   const [
     bookingConfirmed,
     setBookingConfirmed,
   ] =
-    useState(
-      false
-    );
+  useState(false);
 
 
-  /*
-   * ========================================================
-   * CROPS
-   * ========================================================
-   */
+  /* =======================================================
+     ASSISTANT BOOKING STATE
+  ======================================================= */
+
+  const assistantBooking =
+    location.state?.assistantBooking ||
+    null;
+
+
+  const assistantBookingKey =
+    assistantBooking
+      ? JSON.stringify(
+          assistantBooking
+        )
+      : "";
+
+
+  const appliedAssistantBookingRef =
+    useRef("");
+
+
+  const assistantSlotAppliedRef =
+    useRef(false);
+
+
+  /* =======================================================
+     CROPS
+  ======================================================= */
 
   const crops =
     Array.isArray(
@@ -1014,109 +1021,10 @@ function FarmerBook() {
           },
         ];
 
-        useEffect(() => {
 
-  const assistantBooking =
-    location.state?.assistantBooking;
-
-
-  if (
-    !assistantBooking ||
-    typeof assistantBooking !==
-      "object"
-  ) {
-
-    return;
-
-  }
-
-
-  const requestedCrop =
-    String(
-      assistantBooking.crop ||
-      ""
-    )
-      .trim()
-      .toLowerCase();
-
-
-  const requestedQuantity =
-    Number(
-      assistantBooking.quantity
-    );
-
-
-  if (
-    requestedCrop
-  ) {
-
-    const matchingCrop =
-      crops.find(
-        item =>
-          String(
-            item?.id ||
-            ""
-          )
-            .trim()
-            .toLowerCase() ===
-          requestedCrop
-      );
-
-
-    if (
-      matchingCrop
-    ) {
-
-      setCrop(
-        matchingCrop.id
-      );
-
-    }
-
-  }
-
-
-  if (
-    Number.isFinite(
-      requestedQuantity
-    ) &&
-    requestedQuantity > 0
-  ) {
-
-    setQuantity(
-      String(
-        requestedQuantity
-      )
-    );
-
-  }
-
-
-  setAvailable(
-    false
-  );
-
-  setSelectedSlot(
-    null
-  );
-
-  setAvailabilityCheckedAt(
-    null
-  );
-
-  setError(
-    ""
-  );
-
-}, [
-  location.state,
-  crops,
-]);
-  /*
-   * ========================================================
-   * ACTIVE CENTERS
-   * ========================================================
-   */
+  /* =======================================================
+     ACTIVE CENTERS
+  ======================================================= */
 
   const availableCenters =
     useMemo(
@@ -1134,54 +1042,22 @@ function FarmerBook() {
     );
 
 
-  /*
-   * ========================================================
-   * INITIAL FORM VALUES
-   * ========================================================
-   */
+  /* =======================================================
+     INITIAL CROP
+  ======================================================= */
 
-    useEffect(() => {
+  useEffect(() => {
 
-  const assistantBooking =
-    location.state?.assistantBooking;
+    if (
+      crop ||
+      crops.length ===
+        0
+    ) {
 
+      return;
 
-  const assistantCrop =
-    String(
-      assistantBooking?.crop ||
-      ""
-    )
-      .trim()
-      .toLowerCase();
+    }
 
-
-  const assistantCropExists =
-    assistantCrop &&
-    crops.some(
-      item =>
-        String(
-          item?.id ||
-          ""
-        )
-          .trim()
-          .toLowerCase() ===
-        assistantCrop
-    );
-
-
-  if (
-    assistantCropExists
-  ) {
-
-    return;
-
-  }
-
-
-  if (
-    !crop &&
-    crops.length > 0
-  ) {
 
     const preferredCrop =
       farmer?.primaryCrop ||
@@ -1206,176 +1082,19 @@ function FarmerBook() {
         : crops[0].id
     );
 
-  }
-
-}, [
-  crops,
-  crop,
-  farmer?.primaryCrop,
-  farmer?.primary_crop,
-  location.state,
-]);
-    /*
-   * ========================================================
-   * AI ASSISTANT PREFILL
-   * ========================================================
-   *
-   * Example:
-   *
-   * "book 50 kg of paddy"
-   *
-   * VoiceAssistant navigates here with:
-   *
-   * location.state.assistantBooking = {
-   *   crop: "paddy",
-   *   quantity: 50
-   * }
-   *
-   * We copy those values into the same React state
-   * used by the normal booking form.
-   */
-
-  useEffect(() => {
-
-    const assistantBooking =
-      location.state?.assistantBooking;
-
-    if (
-      !assistantBooking ||
-      typeof assistantBooking !==
-        "object"
-    ) {
-
-      return;
-
-    }
-
-
-    /*
-     * Wait until crops are available so that
-     * we only accept a crop that actually exists
-     * in the booking form.
-     */
-
-    if (
-      crops.length === 0
-    ) {
-
-      return;
-
-    }
-
-
-    const requestedCrop =
-      String(
-        assistantBooking.crop ||
-        ""
-      )
-        .trim()
-        .toLowerCase();
-
-
-    const matchingCrop =
-      crops.find(
-        item =>
-          String(
-            item?.id ||
-            ""
-          )
-            .trim()
-            .toLowerCase() ===
-          requestedCrop
-      );
-
-
-    if (
-      matchingCrop
-    ) {
-
-      setCrop(
-        matchingCrop.id
-      );
-
-    }
-
-
-    const requestedQuantity =
-      Number(
-        assistantBooking.quantity
-      );
-
-
-    if (
-      Number.isFinite(
-        requestedQuantity
-      ) &&
-      requestedQuantity > 0
-    ) {
-
-      setQuantity(
-        String(
-          requestedQuantity
-        )
-      );
-
-    }
-
-
-    /*
-     * Make sure the user sees that the assistant
-     * has filled the form.
-     */
-
-    setAvailable(
-      false
-    );
-
-    setSelectedSlot(
-      null
-    );
-
-    setAvailabilityCheckedAt(
-      null
-    );
-
-    setError(
-      ""
-
-    );
-
   }, [
-    location.state,
     crops,
+    crop,
+    farmer?.primaryCrop,
+    farmer?.primary_crop,
   ]);
 
 
-    useEffect(() => {
+  /* =======================================================
+     INITIAL QUANTITY
+  ======================================================= */
 
-    const assistantBooking =
-      location.state?.assistantBooking;
-
-
-    const assistantQuantity =
-      Number(
-        assistantBooking?.quantity
-      );
-
-
-    /*
-     * Assistant quantity has priority.
-     */
-
-    if (
-      Number.isFinite(
-        assistantQuantity
-      ) &&
-      assistantQuantity > 0
-    ) {
-
-      return;
-
-    }
-
+  useEffect(() => {
 
     const farmerQuantity =
       farmer?.estimatedQuantity ??
@@ -1402,14 +1121,217 @@ function FarmerBook() {
     farmer?.estimatedQuantity,
     farmer?.estimated_quantity,
     quantity,
-    location.state,
   ]);
 
-  /*
-   * ========================================================
-   * LOAD CENTERS
-   * ========================================================
-   */
+
+  /* =======================================================
+     APPLY ASSISTANT BOOKING
+  ======================================================= */
+
+  useEffect(() => {
+
+    if (
+      !assistantBooking ||
+      !assistantBookingKey
+    ) {
+
+      return;
+
+    }
+
+
+    if (
+      appliedAssistantBookingRef.current ===
+      assistantBookingKey
+    ) {
+
+      return;
+
+    }
+
+
+    /*
+     * Crop
+     */
+
+    if (
+      assistantBooking.crop
+    ) {
+
+      const requestedCrop =
+        String(
+          assistantBooking.crop
+        )
+          .trim()
+          .toLowerCase();
+
+
+      const matchingCrop =
+        crops.find(
+          item =>
+            String(
+              item.id
+            )
+              .trim()
+              .toLowerCase() ===
+            requestedCrop
+        );
+
+
+      if (
+        matchingCrop
+      ) {
+
+        setCrop(
+          matchingCrop.id
+        );
+
+      }
+
+    }
+
+
+    /*
+     * Quantity
+     */
+
+    const requestedQuantity =
+      Number(
+        assistantBooking.quantity ??
+        assistantBooking.estimatedQuantity
+      );
+
+
+    if (
+      Number.isFinite(
+        requestedQuantity
+      ) &&
+      requestedQuantity >
+        0
+    ) {
+
+      setQuantity(
+        String(
+          requestedQuantity
+        )
+      );
+
+    }
+
+
+    /*
+     * Center
+     */
+
+    if (
+      assistantBooking.centerId !==
+        undefined &&
+      assistantBooking.centerId !==
+        null
+    ) {
+
+      const requestedCenterId =
+        String(
+          assistantBooking.centerId
+        );
+
+
+      const matchingCenter =
+        availableCenters.find(
+          center =>
+            String(
+              center.id
+            ) ===
+            requestedCenterId
+        );
+
+
+      if (
+        matchingCenter
+      ) {
+
+        setCenterId(
+          matchingCenter.id
+        );
+
+      }
+
+    }
+
+
+    /*
+     * Date
+     *
+     * assistantBooking.date should normally be:
+     *
+     * YYYY-MM-DD
+     */
+
+    if (
+      assistantBooking.date
+    ) {
+
+      const requestedDate =
+        String(
+          assistantBooking.date
+        );
+
+
+      const matchingDate =
+        dates.find(
+          item =>
+            item.date ===
+              requestedDate ||
+            item.id ===
+              requestedDate
+        );
+
+
+      if (
+        matchingDate
+      ) {
+
+        setDate(
+          matchingDate.id
+        );
+
+      }
+
+    }
+
+
+    /*
+     * Mark as applied.
+     */
+
+    appliedAssistantBookingRef.current =
+      assistantBookingKey;
+
+
+    assistantSlotAppliedRef.current =
+      false;
+
+
+    setError(
+      ""
+    );
+
+    setCenterSwitchMessage(
+      ""
+
+    );
+
+  }, [
+    assistantBooking,
+    assistantBookingKey,
+    availableCenters,
+    crops,
+  ]);
+
+
+  /* =======================================================
+     LOAD CENTERS
+  ======================================================= */
 
   useEffect(() => {
 
@@ -1544,13 +1466,57 @@ function FarmerBook() {
   }, []);
 
 
-  /*
-   * ========================================================
-   * SELECT VALID CENTER
-   * ========================================================
-   */
+  /* =======================================================
+     SELECT VALID CENTER
+  ======================================================= */
 
   useEffect(() => {
+
+    /*
+     * Assistant-selected center gets priority.
+     */
+
+    if (
+      assistantBooking?.centerId
+    ) {
+
+      const assistantCenter =
+        availableCenters.find(
+          center =>
+            String(
+              center.id
+            ) ===
+            String(
+              assistantBooking.centerId
+            )
+        );
+
+
+      if (
+        assistantCenter
+      ) {
+
+        if (
+          String(
+            centerId
+          ) !==
+          String(
+            assistantCenter.id
+          )
+        ) {
+
+          setCenterId(
+            assistantCenter.id
+          );
+
+        }
+
+        return;
+
+      }
+
+    }
+
 
     if (
       availableCenters.length ===
@@ -1625,14 +1591,13 @@ function FarmerBook() {
     centerId,
     farmer?.preferredCenterId,
     farmer?.preferred_center_id,
+    assistantBooking?.centerId,
   ]);
 
 
-  /*
-   * ========================================================
-   * SELECTED CENTER
-   * ========================================================
-   */
+  /* =======================================================
+     SELECTED CENTER
+  ======================================================= */
 
   const selectedCenter =
     useMemo(
@@ -1655,11 +1620,9 @@ function FarmerBook() {
     );
 
 
-  /*
-   * ========================================================
-   * SETTINGS
-   * ========================================================
-   */
+  /* =======================================================
+     SETTINGS
+  ======================================================= */
 
   useEffect(() => {
 
@@ -1781,11 +1744,9 @@ function FarmerBook() {
   }, []);
 
 
-  /*
-   * ========================================================
-   * DATES
-   * ========================================================
-   */
+  /* =======================================================
+     DATES
+  ======================================================= */
 
   const dates =
     useMemo(
@@ -1803,6 +1764,50 @@ function FarmerBook() {
 
 
   useEffect(() => {
+
+    /*
+     * Assistant-selected date gets priority.
+     */
+
+    if (
+      assistantBooking?.date
+    ) {
+
+      const matchingDate =
+        dates.find(
+          item =>
+            item.date ===
+              String(
+                assistantBooking.date
+              ) ||
+            item.id ===
+              String(
+                assistantBooking.date
+              )
+        );
+
+
+      if (
+        matchingDate
+      ) {
+
+        if (
+          date !==
+          matchingDate.id
+        ) {
+
+          setDate(
+            matchingDate.id
+          );
+
+        }
+
+        return;
+
+      }
+
+    }
+
 
     if (
       dates.length ===
@@ -1839,6 +1844,7 @@ function FarmerBook() {
   }, [
     dates,
     date,
+    assistantBooking?.date,
   ]);
 
 
@@ -1859,11 +1865,9 @@ function FarmerBook() {
     );
 
 
-  /*
-   * ========================================================
-   * SELECTED CROP
-   * ========================================================
-   */
+  /* =======================================================
+     SELECTED CROP
+  ======================================================= */
 
   const selectedCrop =
     useMemo(
@@ -1886,11 +1890,9 @@ function FarmerBook() {
     );
 
 
-  /*
-   * ========================================================
-   * AVAILABILITY TEMPLATE
-   * ========================================================
-   */
+  /* =======================================================
+     AVAILABILITY TEMPLATE
+  ======================================================= */
 
   const availabilityTemplate =
     useMemo(
@@ -1946,11 +1948,9 @@ function FarmerBook() {
     );
 
 
-  /*
-   * ========================================================
-   * QUANTITY
-   * ========================================================
-   */
+  /* =======================================================
+     QUANTITY
+  ======================================================= */
 
   const estimatedQuantity =
     Number(
@@ -1959,11 +1959,9 @@ function FarmerBook() {
     );
 
 
-  /*
-   * ========================================================
-   * AVAILABILITY
-   * ========================================================
-   */
+  /* =======================================================
+     AVAILABILITY
+  ======================================================= */
 
   const availability =
     useMemo(
@@ -2125,11 +2123,159 @@ function FarmerBook() {
     );
 
 
-  /*
-   * ========================================================
-   * SELECTED SLOT
-   * ========================================================
-   */
+  /* =======================================================
+     APPLY ASSISTANT SLOT
+  ======================================================= */
+
+  useEffect(() => {
+
+    if (
+      !assistantBooking ||
+      !availability.length
+    ) {
+
+      return;
+
+    }
+
+
+    const requestedStart =
+      assistantBooking.slotStart ||
+      assistantBooking.start ||
+      "";
+
+
+    const requestedEnd =
+      assistantBooking.slotEnd ||
+      assistantBooking.end ||
+      "";
+
+
+    const requestedSlotId =
+      assistantBooking.slotId ||
+      "";
+
+
+    if (
+      !requestedStart &&
+      !requestedEnd &&
+      !requestedSlotId
+    ) {
+
+      return;
+
+    }
+
+
+    if (
+      assistantSlotAppliedRef.current
+    ) {
+
+      return;
+
+    }
+
+
+    const matchingSlot =
+      availability.find(
+        slot => {
+
+          if (
+            requestedSlotId &&
+            slot.id ===
+              requestedSlotId
+          ) {
+
+            return true;
+
+          }
+
+
+          if (
+            requestedStart &&
+            requestedEnd &&
+            slot.start ===
+              requestedStart &&
+            slot.end ===
+              requestedEnd
+          ) {
+
+            return true;
+
+          }
+
+
+          return false;
+
+        }
+      );
+
+
+    if (
+      !matchingSlot
+    ) {
+
+      return;
+
+    }
+
+
+    if (
+      matchingSlot.loadClass ===
+        "past" ||
+      matchingSlot.remaining <=
+        0
+    ) {
+
+      setError(
+        language ===
+          "hi"
+          ? "सहायक द्वारा चुना गया स्लॉट अब उपलब्ध नहीं है। कृपया दूसरा स्लॉट चुनें।"
+          : language ===
+              "te"
+            ? "అసిస్టెంట్ ఎంచుకున్న స్లాట్ ఇప్పుడు అందుబాటులో లేదు. దయచేసి మరో స్లాట్ ఎంచుకోండి."
+            : "The slot selected by the assistant is no longer available. Please choose another slot."
+      );
+
+
+      return;
+
+    }
+
+
+    setAvailable(
+      true
+    );
+
+
+    setSelectedSlot(
+      matchingSlot
+    );
+
+
+    setAvailabilityCheckedAt(
+      new Date()
+    );
+
+
+    assistantSlotAppliedRef.current =
+      true;
+
+
+    setError(
+      ""
+    );
+
+  }, [
+    assistantBooking,
+    availability,
+    language,
+  ]);
+
+
+  /* =======================================================
+     SELECTED SLOT
+  ======================================================= */
 
   const selectedSlotRecord =
     useMemo(
@@ -2163,6 +2309,16 @@ function FarmerBook() {
         }
 
 
+        if (
+          record?.remaining <=
+          0
+        ) {
+
+          return null;
+
+        }
+
+
         return record;
 
       },
@@ -2188,11 +2344,9 @@ function FarmerBook() {
     );
 
 
-  /*
-   * ========================================================
-   * BOOKING LOAD
-   * ========================================================
-   */
+  /* =======================================================
+     BOOKING LOAD
+  ======================================================= */
 
   useEffect(() => {
 
@@ -2336,11 +2490,9 @@ function FarmerBook() {
   ]);
 
 
-  /*
-   * ========================================================
-   * RESET WHEN SELECTION CHANGES
-   * ========================================================
-   */
+  /* =======================================================
+     RESET WHEN SELECTION CHANGES
+  ======================================================= */
 
   useEffect(() => {
 
@@ -2357,8 +2509,17 @@ function FarmerBook() {
     );
 
     setCenterSwitchMessage(
-      ""
+      "" 
     );
+
+
+    /*
+     * Allow an assistant-provided slot to be reapplied
+     * when its date/center/crop changes.
+     */
+
+    assistantSlotAppliedRef.current =
+      false;
 
   }, [
     crop,
@@ -2368,11 +2529,9 @@ function FarmerBook() {
   ]);
 
 
-  /*
-   * ========================================================
-   * HELPERS
-   * ========================================================
-   */
+  /* =======================================================
+     HELPERS
+  ======================================================= */
 
   function tr(
     key,
@@ -2784,7 +2943,9 @@ function FarmerBook() {
       ) {
 
         return {
+
           slot,
+
           remaining:
             Math.max(
               capacity -
@@ -2794,6 +2955,7 @@ function FarmerBook() {
               ),
               0
             ),
+
         };
 
       }
@@ -2893,6 +3055,7 @@ function FarmerBook() {
         alternatives
           .map(
             center => ({
+
               center,
 
               availability:
@@ -2934,9 +3097,11 @@ function FarmerBook() {
 
 
         setCenterSwitchMessage(
-          language === "hi"
+          language ===
+            "hi"
             ? `चयनित केंद्र भर गया है। आपको ${alternative.center.name} पर उपलब्ध स्लॉट दिखाए जा रहे हैं।`
-            : language === "te"
+            : language ===
+                "te"
               ? `ఎంచుకున్న కేంద్రం నిండిపోయింది. ${alternative.center.name}లో అందుబాటులో ఉన్న స్లాట్‌లను చూపిస్తున్నాము.`
               : `The selected center is full. We switched you to ${alternative.center.name}, where slots are available.`
         );
@@ -2958,9 +3123,11 @@ function FarmerBook() {
 
 
       setError(
-        language === "hi"
+        language ===
+          "hi"
           ? "इस तारीख के लिए किसी भी सक्रिय खरीद केंद्र में कोई समय उपलब्ध नहीं है। कृपया दूसरी तारीख चुनें।"
-          : language === "te"
+          : language ===
+              "te"
             ? "ఈ తేదీకి ఏ యాక్టివ్ కొనుగోలు కేంద్రంలోనూ సమయం అందుబాటులో లేదు. దయచేసి మరొక తేదీని ఎంచుకోండి."
             : "No arrival windows are available at any active procurement center for this date. Please choose another date."
       );
@@ -3206,6 +3373,7 @@ function FarmerBook() {
             )
             .map(
               center => ({
+
                 center,
 
                 availability:
@@ -3246,9 +3414,11 @@ function FarmerBook() {
 
 
           setCenterSwitchMessage(
-            language === "hi"
+            language ===
+              "hi"
               ? `यह स्लॉट अभी भर गया। आपको ${alternative.center.name} पर भेज दिया गया है।`
-              : language === "te"
+              : language ===
+                  "te"
                 ? `ఈ స్లాట్ ఇప్పుడే నిండిపోయింది. మిమ్మల్ని ${alternative.center.name}కు మార్చాము.`
                 : `This slot was just filled. We switched you to ${alternative.center.name}.`
           );
@@ -3420,7 +3590,9 @@ function FarmerBook() {
       try {
 
         syncBookingToPrototype(
+
           {
+
             id:
               savedBooking.id,
 
@@ -3497,6 +3669,7 @@ function FarmerBook() {
           selectedCenter,
 
           selectedCrop
+
         );
 
       } catch (
@@ -3598,11 +3771,9 @@ function FarmerBook() {
   }
 
 
-  /*
-   * ========================================================
-   * RENDER
-   * ========================================================
-   */
+  /* =======================================================
+     RENDER
+  ======================================================= */
 
   return (
 
@@ -3627,9 +3798,11 @@ function FarmerBook() {
               <span className="page-eyebrow">
 
                 {
-                  language === "hi"
+                  language ===
+                    "hi"
                     ? "बुकिंग सफल"
-                    : language === "te"
+                    : language ===
+                        "te"
                       ? "బుకింగ్ విజయవంతం"
                       : "BOOKING CONFIRMED"
                 }
@@ -3640,9 +3813,11 @@ function FarmerBook() {
               <h2>
 
                 {
-                  language === "hi"
+                  language ===
+                    "hi"
                     ? "आपकी बुकिंग सफलतापूर्वक सेव हो गई"
-                    : language === "te"
+                    : language ===
+                        "te"
                       ? "మీ బుకింగ్ విజయవంతంగా సేవ్ చేయబడింది"
                       : "Your booking is confirmed"
                 }
@@ -3653,9 +3828,11 @@ function FarmerBook() {
               <p>
 
                 {
-                  language === "hi"
+                  language ===
+                    "hi"
                     ? "आपका डिजिटल टोकन तैयार किया जा रहा है..."
-                    : language === "te"
+                    : language ===
+                        "te"
                       ? "మీ డిజిటల్ టోకెన్ సిద్ధం అవుతోంది..."
                       : "Your digital token is being prepared..."
                 }
@@ -3755,9 +3932,11 @@ function FarmerBook() {
               {
                 tr(
                   "booking.details",
-                  language === "hi"
+                  language ===
+                    "hi"
                     ? "विवरण"
-                    : language === "te"
+                    : language ===
+                        "te"
                       ? "వివరాలు"
                       : "Details"
                 )
@@ -3786,9 +3965,11 @@ function FarmerBook() {
               {
                 tr(
                   "booking.availability",
-                  language === "hi"
+                  language ===
+                    "hi"
                     ? "उपलब्धता"
-                    : language === "te"
+                    : language ===
+                        "te"
                       ? "అందుబాటు"
                       : "Availability"
                 )
@@ -3817,9 +3998,11 @@ function FarmerBook() {
               {
                 tr(
                   "booking.confirm",
-                  language === "hi"
+                  language ===
+                    "hi"
                     ? "पुष्टि"
-                    : language === "te"
+                    : language ===
+                        "te"
                       ? "నిర్ధారణ"
                       : "Confirm"
                 )
@@ -4670,23 +4853,29 @@ function FarmerBook() {
                         >
 
                           <span className="date-weekday">
+
                             {
                               item.label
                             }
+
                           </span>
 
 
                           <strong>
+
                             {
                               item.day
                             }
+
                           </strong>
 
 
                           <small>
+
                             {
                               item.month
                             }
+
                           </small>
 
 
@@ -4732,23 +4921,29 @@ function FarmerBook() {
               <div className="booking-check-copy">
 
                 <span>
+
                   {
                     copy.readyCheck
                   }
+
                 </span>
 
 
                 <h3>
+
                   {
                     copy.findWindow
                   }
+
                 </h3>
 
 
                 <p>
+
                   {
                     copy.checkText
                   }
+
                 </p>
 
               </div>
@@ -4828,9 +5023,11 @@ function FarmerBook() {
 
 
                   <span>
+
                     {
                       centerSwitchMessage
                     }
+
                   </span>
 
                 </div>
@@ -4850,9 +5047,11 @@ function FarmerBook() {
 
 
                   <span>
+
                     {
                       error
                     }
+
                   </span>
 
                 </div>
@@ -4872,9 +5071,11 @@ function FarmerBook() {
 
 
                   <span>
+
                     {
                       settingsError
                     }
+
                   </span>
 
                 </div>
@@ -5024,9 +5225,11 @@ function FarmerBook() {
                   label={
                     tr(
                       "booking.arrivalWindow",
-                      language === "hi"
+                      language ===
+                        "hi"
                         ? "आने का समय"
-                        : language === "te"
+                        : language ===
+                            "te"
                           ? "రాక సమయం"
                           : "Arrival window"
                     )
@@ -5089,9 +5292,11 @@ function FarmerBook() {
                 />
 
                 <span>
+
                   {
                     copy.finalSecurity
                   }
+
                 </span>
 
               </div>
@@ -5190,16 +5395,20 @@ function FarmerBook() {
 
 
                   <h2>
+
                     {
                       copy.chooseArrivalWindow
                     }
+
                   </h2>
 
 
                   <p>
+
                     {
                       copy.availabilityText
                     }
+
                   </p>
 
                 </div>
@@ -5215,9 +5424,11 @@ function FarmerBook() {
                   <div>
 
                     <span>
+
                       {
                         copy.selectedDate
                       }
+
                     </span>
 
 
@@ -5264,9 +5475,11 @@ function FarmerBook() {
                   <div>
 
                     <span>
+
                       {
                         copy.availableWindows
                       }
+
                     </span>
 
 
@@ -5301,23 +5514,29 @@ function FarmerBook() {
                   <div>
 
                     <span>
+
                       {
                         copy.openCapacity
                       }
+
                     </span>
 
 
                     <strong>
+
                       {
                         totalRemaining
                       }
+
                     </strong>
 
 
                     <small>
+
                       {
                         copy.placesRemaining
                       }
+
                     </small>
 
                   </div>
@@ -5339,9 +5558,11 @@ function FarmerBook() {
                   <div>
 
                     <span>
+
                       {
                         copy.center
                       }
+
                     </span>
 
 
@@ -5378,9 +5599,11 @@ function FarmerBook() {
                         <span>
 
                           {
-                            language === "hi"
+                            language ===
+                              "hi"
                               ? "अंतिम जांच"
-                              : language === "te"
+                              : language ===
+                                  "te"
                                 ? "చివరి తనిఖీ"
                                 : "Last checked"
                           }
@@ -5392,9 +5615,11 @@ function FarmerBook() {
 
                           {
                             availabilityCheckedAt.toLocaleTimeString(
-                              language === "hi"
+                              language ===
+                                "hi"
                                 ? "hi-IN"
-                                : language === "te"
+                                : language ===
+                                    "te"
                                   ? "te-IN"
                                   : "en-IN",
                               {
@@ -5435,10 +5660,10 @@ function FarmerBook() {
 
                   {
                     language ===
-                    "hi"
+                      "hi"
                       ? "हर समय स्लॉट में सीमित बुकिंग उपलब्ध हैं। अपनी यात्रा के अनुसार सबसे उपयुक्त समय चुनें।"
                       : language ===
-                        "te"
+                          "te"
                         ? "ప్రతి సమయ స్లాట్‌లో పరిమిత బుకింగ్‌లు ఉంటాయి. మీ ప్రయాణానికి అనుకూలమైన సమయాన్ని ఎంచుకోండి."
                         : "Each window has a limited number of bookings. Select the slot that best fits your travel time."
                   }
@@ -5479,9 +5704,11 @@ function FarmerBook() {
                       ) {
 
                         availabilityLabel =
-                          language === "hi"
+                          language ===
+                            "hi"
                             ? "समय निकल चुका"
-                            : language === "te"
+                            : language ===
+                                "te"
                               ? "సమయం ముగిసింది"
                               : "Past";
 
@@ -5574,9 +5801,11 @@ function FarmerBook() {
                           <div className="slot-card-time">
 
                             <strong>
+
                               {
                                 slot.display
                               }
+
                             </strong>
 
                           </div>
@@ -5644,9 +5873,11 @@ function FarmerBook() {
                               {
                                 isPast
                                   ? (
-                                      language === "hi"
+                                      language ===
+                                        "hi"
                                         ? "समय निकल चुका"
-                                        : language === "te"
+                                        : language ===
+                                            "te"
                                           ? "సమయం ముగిసింది"
                                           : "Time passed"
                                     )
@@ -5704,16 +5935,20 @@ function FarmerBook() {
                     <div>
 
                       <span>
+
                         {
                           copy.selectedWindow
                         }
+
                       </span>
 
 
                       <strong>
+
                         {
                           selectedSlotRecord.display
                         }
+
                       </strong>
 
                     </div>
@@ -5756,23 +5991,29 @@ function FarmerBook() {
                 <div>
 
                   <span className="page-eyebrow">
+
                     {
                       copy.finalStep
                     }
+
                   </span>
 
 
                   <h2>
+
                     {
                       copy.checkEverything
                     }
+
                   </h2>
 
 
                   <p>
+
                     {
                       copy.finalText
                     }
+
                   </p>
 
                 </div>
@@ -5851,9 +6092,11 @@ function FarmerBook() {
                   title={
                     tr(
                       "booking.date",
-                      language === "hi"
+                      language ===
+                        "hi"
                         ? "तारीख"
-                        : language === "te"
+                        : language ===
+                            "te"
                           ? "తేదీ"
                           : "Date"
                     )
@@ -5911,16 +6154,20 @@ function FarmerBook() {
                 <div>
 
                   <strong>
+
                     {
                       copy.whatHappens
                     }
+
                   </strong>
 
 
                   <p>
+
                     {
                       copy.afterText
                     }
+
                   </p>
 
                 </div>
@@ -5938,9 +6185,11 @@ function FarmerBook() {
                     />
 
                     <span>
+
                       {
                         error
                       }
+
                     </span>
 
                   </div>
@@ -5958,9 +6207,11 @@ function FarmerBook() {
                   />
 
                   <span>
+
                     {
                       copy.arriveText
                     }
+
                   </span>
 
                 </div>
@@ -5999,6 +6250,7 @@ function FarmerBook() {
                           copy.confirm
                         }
 
+
                         <ArrowRight
                           size={18}
                         />
@@ -6034,16 +6286,20 @@ function FarmerBook() {
             <div>
 
               <strong>
+
                 {
                   copy.traceable
                 }
+
               </strong>
 
 
               <span>
+
                 {
                   copy.traceableText
                 }
+
               </span>
 
             </div>
@@ -6065,16 +6321,20 @@ function FarmerBook() {
             <div>
 
               <strong>
+
                 {
                   copy.arriveDuring
                 }
+
               </strong>
 
 
               <span>
+
                 {
                   copy.arriveDuringText
                 }
+
               </span>
 
             </div>
@@ -6099,16 +6359,20 @@ function FarmerBook() {
             <div>
 
               <strong>
+
                 {
                   copy.assistance
                 }
+
               </strong>
 
 
               <span>
+
                 {
                   copy.assistanceText
                 }
+
               </span>
 
             </div>
@@ -6540,18 +6804,21 @@ function isSlotInPast(
   const todayString =
     [
       today.getFullYear(),
+
       String(
         today.getMonth() + 1
       ).padStart(
         2,
         "0"
       ),
+
       String(
         today.getDate()
       ).padStart(
         2,
         "0"
       ),
+
     ].join("-");
 
 
