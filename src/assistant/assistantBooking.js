@@ -1,789 +1,174 @@
 /* =========================================================
-   KRISHISETU AI BOOKING CONVERSATION
-=========================================================
-
-   PURPOSE
-
-   This module manages the conversational state of a farmer
-   procurement booking.
-
-   It does NOT:
-   - render JSX
-   - navigate
-   - call the backend
-   - submit the booking
-
-   It DOES:
-   - extract booking details from natural language
-   - remember partially completed booking details
-   - determine which details are missing
-   - interpret date/slot-related questions
-   - produce the next conversational step
-   - prepare a clean booking object for the controller
+   KRISHISETU AI BOOKING
+   Conversational booking state + live availability bridge.
 ========================================================= */
 
-import {
-  cleanText,
-  normalizeText,
-  sanitizeActionParams,
-  readStorageJson,
-  writeStorageJson,
-  removeStorage,
-} from "./assistantUtils";
-
-
-/* =========================================================
-   CONSTANTS
-========================================================= */
-
-export const BOOKING_STATE_KEY =
-  "krishisetu_ai_booking_state";
-
-
-export const BOOKING_STATUS = {
-
-  EMPTY:
-    "EMPTY",
-
-  COLLECTING:
-    "COLLECTING",
-
-  READY:
-    "READY",
-
-  CONFIRMATION:
-    "CONFIRMATION",
-
-  COMPLETED:
-    "COMPLETED",
-
+export const BOOKING_FIELDS = {
+  CROP: "crop",
+  QUANTITY: "quantity",
+  CENTER: "centerId",
+  DATE: "date",
+  SLOT: "slot",
 };
 
+export const BOOKING_STAGES = {
+  EMPTY: "EMPTY",
+  DETAILS: "DETAILS",
+  CENTER: "CENTER",
+  DATE: "DATE",
+  AVAILABILITY: "AVAILABILITY",
+  SLOT: "SLOT",
+  CONFIRM: "CONFIRM",
+  COMPLETE: "COMPLETE",
+};
 
-/* =========================================================
-   CROPS
-========================================================= */
+export const BOOKING_STEPS = {
+  DETAILS: "DETAILS",
+  CENTER: "CENTER",
+  DATE: "DATE",
+  AVAILABILITY: "AVAILABILITY",
+  SLOT: "SLOT",
+  REVIEW: "REVIEW",
+  CONFIRM: "CONFIRM",
+  COMPLETE: "COMPLETE",
+};
+
+export const BOOKING_ENGINE_VERSION = "2026-09-09-one-shot";
+
+export const BOOKING_INTENTS = {
+  NONE: "NONE",
+  START: "START",
+  UPDATE: "UPDATE",
+  SHOW_STATE: "SHOW_STATE",
+  SHOW_CENTERS: "SHOW_CENTERS",
+  ASK_DATES: "ASK_DATES",
+  SELECT_DATE: "SELECT_DATE",
+  ASK_SLOTS: "ASK_SLOTS",
+  SELECT_SLOT: "SELECT_SLOT",
+  REVIEW: "REVIEW",
+  CONFIRM: "CONFIRM",
+  CANCEL: "CANCEL",
+};
+
+export const BOOKING_STORAGE_KEY = "krishisetu_ai_booking_draft";
+export const BOOKING_STATE_STORAGE_KEY = "krishisetu_ai_booking_state";
+export const BOOKING_AVAILABILITY_STORAGE_KEY =
+  "krishisetu_ai_booking_availability";
+export const BOOKING_SCHEMA_VERSION = 2;
+
+const AVAILABILITY_TTL = 5 * 60 * 1000;
+const MAX_QUANTITY = 50000;
+
+const EVENT_BOOKING = "krishisetu:assistant-booking-updated";
+const EVENT_AVAILABILITY =
+  "krishisetu:assistant-availability-updated";
+const EVENT_REQUEST_AVAILABILITY =
+  "krishisetu:assistant-request-availability";
 
 const CROP_ALIASES = {
-
   wheat: [
-
     "wheat",
-    "wheat crop",
-    "gehu",
     "gehun",
+    "gehu",
     "गेहूं",
-    "गेहूँ",
     "गेहू",
-    "गहूं",
+    "गेहूँ",
     "గోధుమ",
-    "గోధుమలు",
-
   ],
-
   paddy: [
-
     "paddy",
     "rice",
     "dhan",
     "धान",
-    "धान की फसल",
     "चावल",
     "వరి",
     "బియ్యం",
-
   ],
-
   maize: [
-
     "maize",
     "corn",
     "maka",
     "मक्का",
     "మొక్కజొన్న",
-
   ],
-
   cotton: [
-
     "cotton",
     "kapas",
     "कपास",
     "పత్తి",
-
   ],
-
 };
-
-
-/* =========================================================
-   CROP DISPLAY NAMES
-========================================================= */
 
 const CROP_NAMES = {
-
   en: {
-
-    wheat:
-      "wheat",
-
-    paddy:
-      "paddy",
-
-    maize:
-      "maize",
-
-    cotton:
-      "cotton",
-
+    wheat: "wheat",
+    paddy: "paddy",
+    maize: "maize",
+    cotton: "cotton",
   },
-
   hi: {
-
-    wheat:
-      "गेहूं",
-
-    paddy:
-      "धान",
-
-    maize:
-      "मक्का",
-
-    cotton:
-      "कपास",
-
+    wheat: "गेहूं",
+    paddy: "धान",
+    maize: "मक्का",
+    cotton: "कपास",
   },
-
   te: {
-
-    wheat:
-      "గోధుమ",
-
-    paddy:
-      "వరి",
-
-    maize:
-      "మొక్కజొన్న",
-
-    cotton:
-      "పత్తి",
-
+    wheat: "గోధుమ",
+    paddy: "వరి",
+    maize: "మొక్కజొన్న",
+    cotton: "పత్తి",
   },
-
 };
 
-
-/* =========================================================
-   DATE LANGUAGE
-========================================================= */
-
-const RELATIVE_DATES = {
-
-  today: [
-
-    "today",
-    "aaj",
-    "आज",
-    "आज ही",
-    "నేడు",
-    "ఈరోజు",
-
-  ],
-
-  tomorrow: [
-
-    "tomorrow",
-    "tmrw",
-    "kal",
-    "कल",
-    "कल ही",
-    "రేపు",
-    "రేపే",
-
-  ],
-
-  dayAfterTomorrow: [
-
-    "day after tomorrow",
-    "day-after-tomorrow",
-    "परसों",
-    "परसों को",
-    "ఎల్లుండి",
-
-  ],
-
-};
-
-
-/* =========================================================
-   TIME LANGUAGE
-========================================================= */
-
-const TIME_HINTS = [
-
-  "am",
-  "pm",
-  "morning",
-  "afternoon",
-  "evening",
-  "night",
-  "सुबह",
-  "दोपहर",
-  "शाम",
-  "रात",
-  "ఉదయం",
-  "మధ్యాహ్నం",
-  "సాయంత్రం",
-  "రాత్రి",
-
-];
-
-
-/* =========================================================
-   GENERIC PHRASES
-========================================================= */
-
-const BOOKING_TERMS = [
-
-  "book",
-  "booking",
-  "slot",
-  "procurement",
-  "sell crop",
-  "sell produce",
-  "फसल बेच",
-  "बुक",
-  "बुकिंग",
-  "स्लॉट",
-  "खरीद",
-  "पंट అమ్మకం",
-  "బుక్",
-  "బుకింగ్",
-  "స్లాట్",
-  "పంట అమ్మకం",
-
-];
-
-
-/* =========================================================
-   STATE
-========================================================= */
-
-export function createEmptyBookingState() {
-
-  return {
-
-    status:
-      BOOKING_STATUS.EMPTY,
-
-    crop:
-      null,
-
-    quantity:
-      null,
-
-    centerId:
-      null,
-
-    centerName:
-      null,
-
-    date:
-      null,
-
-    dateLabel:
-      null,
-
-    slotStart:
-      null,
-
-    slotEnd:
-      null,
-
-    slotLabel:
-      null,
-
-    availableDates:
-      [],
-
-    availableSlots:
-      [],
-
-    lastQuestion:
-      null,
-
-    lastUserMessage:
-      null,
-
-    confirmationRequested:
-      false,
-
-    confirmed:
-      false,
-
-    updatedAt:
-      Date.now(),
-
-  };
-
+function clean(value) {
+  return String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ");
 }
 
-
-/* =========================================================
-   STATE NORMALIZATION
-========================================================= */
-
-export function normalizeBookingState(
-  state
-) {
-
-  const base =
-    createEmptyBookingState();
-
-
-  if (
-    !state ||
-    typeof state !==
-      "object"
-  ) {
-
-    return base;
-
-  }
-
-
-  const quantity =
-    Number(
-      state.quantity
-    );
-
-
-  const safeQuantity =
-    Number.isFinite(
-      quantity
-    ) &&
-    quantity > 0 &&
-    quantity <= 50000
-      ? quantity
-      : null;
-
-
-  return {
-
-    ...base,
-
-    crop:
-      typeof state.crop ===
-        "string" &&
-      state.crop.trim()
-        ? cleanText(
-            state.crop
-          )
-        : null,
-
-    quantity:
-      safeQuantity,
-
-    centerId:
-      state.centerId ??
-      null,
-
-    centerName:
-      typeof state.centerName ===
-        "string"
-        ? cleanText(
-            state.centerName
-          )
-        : null,
-
-    date:
-      typeof state.date ===
-        "string" &&
-      state.date.trim()
-        ? cleanText(
-            state.date
-          )
-        : null,
-
-    dateLabel:
-      typeof state.dateLabel ===
-        "string"
-        ? cleanText(
-            state.dateLabel
-          )
-        : null,
-
-    slotStart:
-      typeof state.slotStart ===
-        "string"
-        ? cleanText(
-            state.slotStart
-          )
-        : null,
-
-    slotEnd:
-      typeof state.slotEnd ===
-        "string"
-        ? cleanText(
-            state.slotEnd
-          )
-        : null,
-
-    slotLabel:
-      typeof state.slotLabel ===
-        "string"
-        ? cleanText(
-            state.slotLabel
-          )
-        : null,
-
-    availableDates:
-      Array.isArray(
-        state.availableDates
-      )
-        ? state.availableDates
-        : [],
-
-    availableSlots:
-      Array.isArray(
-        state.availableSlots
-      )
-        ? state.availableSlots
-        : [],
-
-    lastQuestion:
-      typeof state.lastQuestion ===
-        "string"
-        ? cleanText(
-            state.lastQuestion
-          )
-        : null,
-
-    lastUserMessage:
-      typeof state.lastUserMessage ===
-        "string"
-        ? cleanText(
-            state.lastUserMessage
-          )
-        : null,
-
-    confirmationRequested:
-      Boolean(
-        state.confirmationRequested
-      ),
-
-    confirmed:
-      Boolean(
-        state.confirmed
-      ),
-
-    status:
-      Object.values(
-        BOOKING_STATUS
-      ).includes(
-        state.status
-      )
-        ? state.status
-        : BOOKING_STATUS.EMPTY,
-
-    updatedAt:
-      Number(
-        state.updatedAt
-      ) ||
-      Date.now(),
-
-  };
-
+function norm(value) {
+  return clean(value)
+    .toLowerCase()
+    .normalize("NFKC")
+    .replace(/[^\p{L}\p{N}\s:/.,'\-–—]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
+function languageCode(value) {
+  const code = clean(value).toLowerCase();
 
-/* =========================================================
-   PERSISTENCE
-========================================================= */
-
-export function loadBookingState() {
-
-  const stored =
-    readStorageJson(
-      BOOKING_STATE_KEY,
-      null
-    );
-
-
-  if (
-    !stored
-  ) {
-
-    return createEmptyBookingState();
-
+  if (code.startsWith("hi")) {
+    return "hi";
   }
 
+  if (code.startsWith("te")) {
+    return "te";
+  }
 
-  return normalizeBookingState(
-    stored
+  return "en";
+}
+
+function validQuantity(value, max = MAX_QUANTITY) {
+  const number = Number(value);
+
+  return (
+    Number.isFinite(number) &&
+    number > 0 &&
+    number <= Number(max)
   );
-
 }
 
-
-export function saveBookingState(
-  state
-) {
-
-  const normalized =
-    normalizeBookingState(
-      state
-    );
-
-
-  normalized.updatedAt =
-    Date.now();
-
-
-  writeStorageJson(
-    BOOKING_STATE_KEY,
-    normalized
-  );
-
-
-  return normalized;
-
-}
-
-
-export function clearBookingState() {
-
-  removeStorage(
-    BOOKING_STATE_KEY
-  );
-
-
-  return createEmptyBookingState();
-
-}
-
-
-/* =========================================================
-   CROP EXTRACTION
-========================================================= */
-
-export function extractCrop(
-  message
-) {
-
-  const text =
-    normalizeText(
-      message
-    );
-
-
-  if (
-    !text
-  ) {
-
-    return null;
-
-  }
-
-
-  for (
-    const [
-      crop,
-      aliases,
-    ] of Object.entries(
-      CROP_ALIASES
-    )
-  ) {
-
-    for (
-      const alias of aliases
-    ) {
-
-      const target =
-        normalizeText(
-          alias
-        );
-
-
-      if (
-        !target
-      ) {
-
-        continue;
-
-      }
-
-
-      if (
-        text.includes(
-          target
-        )
-      ) {
-
-        return crop;
-
-      }
-
-    }
-
-  }
-
-
-  return null;
-
-}
-
-
-/* =========================================================
-   QUANTITY EXTRACTION
-========================================================= */
-
-export function extractQuantity(
-  message
-) {
-
-  const text =
-    normalizeText(
-      message
-    );
-
-
-  if (
-    !text
-  ) {
-
-    return null;
-
-  }
-
-
-  const explicit =
-    text.match(
-      /(\d+(?:\.\d+)?)\s*(kg|kgs|kilo|kilos|kilogram|kilograms|किलो|किलोग्राम|కిలో|కిలోలు)\b/i
-    );
-
-
-  const match =
-    explicit ||
-    text.match(
-      /\b(\d+(?:\.\d+)?)\b/
-    );
-
-
-  if (
-    !match
-  ) {
-
-    return null;
-
-  }
-
-
-  const quantity =
-    Number(
-      match[1]
-    );
-
-
-  if (
-    !Number.isFinite(
-      quantity
-    ) ||
-    quantity <= 0 ||
-    quantity > 50000
-  ) {
-
-    return null;
-
-  }
-
-
-  return quantity;
-
-}
-
-
-/* =========================================================
-   BOOKING LANGUAGE DETECTION
-========================================================= */
-
-export function containsBookingTerm(
-  message
-) {
-
-  const text =
-    normalizeText(
-      message
-    );
-
-
-  if (
-    !text
-  ) {
-
-    return false;
-
-  }
-
-
-  return BOOKING_TERMS.some(
-    term =>
-      text.includes(
-        normalizeText(
-          term
-        )
-      )
-  );
-
-}
-
-
-/* =========================================================
-   DATE HELPERS
-========================================================= */
-
-function pad(
-  value
-) {
-
-  return String(
-    value
-  ).padStart(
-    2,
-    "0"
-  );
-
-}
-
-
-function dateToIso(
-  date
-) {
-
+function isoDate(date) {
   return [
-
     date.getFullYear(),
-
-    pad(
-      date.getMonth() + 1
-    ),
-
-    pad(
-      date.getDate()
-    ),
-
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
   ].join("-");
-
 }
 
-
-function getRelativeDate(
-  kind
-) {
-
-  const date =
-    new Date();
-
+function dayStart(value = new Date()) {
+  const date = new Date(value);
 
   date.setHours(
     0,
@@ -792,1822 +177,3320 @@ function getRelativeDate(
     0
   );
 
+  return date;
+}
 
-  if (
-    kind ===
-    "tomorrow"
-  ) {
+function addDays(days, now = new Date()) {
+  const date = dayStart(now);
 
-    date.setDate(
-      date.getDate() + 1
-    );
-
-  }
-
-
-  if (
-    kind ===
-    "dayAfterTomorrow"
-  ) {
-
-    date.setDate(
-      date.getDate() + 2
-    );
-
-  }
-
+  date.setDate(
+    date.getDate() + Number(days)
+  );
 
   return date;
-
 }
 
+function parseDate(value) {
+  const text = clean(value);
 
-/* =========================================================
-   EXTRACT DATE
-========================================================= */
-
-export function extractDate(
-  message
-) {
-
-  const text =
-    normalizeText(
-      message
-    );
-
-
-  if (
-    !text
-  ) {
-
+  if (!text) {
     return null;
-
   }
 
+  const normalized =
+    normalizeBookingDate(text);
+
+  if (!normalized) {
+    return null;
+  }
+
+  const date =
+    new Date(`${normalized}T00:00:00`);
+
+  return Number.isNaN(
+    date.getTime()
+  )
+    ? null
+    : date;
+}
+
+function dispatch(name, detail) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    window.dispatchEvent(
+      new CustomEvent(
+        name,
+        {
+          detail,
+        }
+      )
+    );
+  } catch {
+    try {
+      window.dispatchEvent(
+        new Event(name)
+      );
+    } catch {}
+  }
+}
+
+function readJson(
+  key,
+  fallback = null
+) {
+  if (typeof window === "undefined") {
+    return fallback;
+  }
+
+  try {
+    const raw =
+      localStorage.getItem(key);
+
+    return raw
+      ? JSON.parse(raw)
+      : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writeJson(
+  key,
+  value
+) {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  try {
+    localStorage.setItem(
+      key,
+      JSON.stringify(value)
+    );
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function removeKey(key) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    localStorage.removeItem(key);
+  } catch {}
+}
+
+/* =========================================================
+   CROP
+========================================================= */
+
+export function extractBookingCrop(
+  message
+) {
+  const text = norm(message);
+
+  if (!text) {
+    return null;
+  }
 
   for (
-    const [
-      kind,
-      aliases,
-    ] of Object.entries(
-      RELATIVE_DATES
-    )
+    const [crop, aliases]
+    of Object.entries(CROP_ALIASES)
   ) {
-
-    for (
-      const alias of aliases
-    ) {
-
-      if (
-        text.includes(
-          normalizeText(
-            alias
-          )
-        )
-      ) {
-
-        const date =
-          getRelativeDate(
-            kind
-          );
-
-
-        return {
-
-          date:
-            dateToIso(
-              date
-            ),
-
-          kind,
-
-        };
-
-      }
-
-    }
-
-  }
-
-
-  /*
-   * yyyy-mm-dd
-   */
-
-  const isoMatch =
-    text.match(
-      /\b(20\d{2})-(\d{1,2})-(\d{1,2})\b/
-    );
-
-
-  if (
-    isoMatch
-  ) {
-
-    const year =
-      Number(
-        isoMatch[1]
-      );
-
-
-    const month =
-      Number(
-        isoMatch[2]
-      );
-
-
-    const day =
-      Number(
-        isoMatch[3]
-      );
-
-
-    const date =
-      new Date(
-        year,
-        month - 1,
-        day
-      );
-
-
     if (
-      date.getFullYear() ===
-        year &&
-      date.getMonth() ===
-        month - 1 &&
-      date.getDate() ===
-        day
+      aliases.some(
+        alias =>
+          text === norm(alias) ||
+          text.includes(norm(alias))
+      )
     ) {
-
-      return {
-
-        date:
-          dateToIso(
-            date
-          ),
-
-        kind:
-          "explicit",
-
-      };
-
+      return crop;
     }
-
   }
-
-
-  /*
-   * dd/mm/yyyy
-   */
-
-  const slashMatch =
-    text.match(
-      /\b(\d{1,2})\/(\d{1,2})\/(20\d{2})\b/
-    );
-
-
-  if (
-    slashMatch
-  ) {
-
-    const day =
-      Number(
-        slashMatch[1]
-      );
-
-
-    const month =
-      Number(
-        slashMatch[2]
-      );
-
-
-    const year =
-      Number(
-        slashMatch[3]
-      );
-
-
-    const date =
-      new Date(
-        year,
-        month - 1,
-        day
-      );
-
-
-    if (
-      date.getFullYear() ===
-        year &&
-      date.getMonth() ===
-        month - 1 &&
-      date.getDate() ===
-        day
-    ) {
-
-      return {
-
-        date:
-          dateToIso(
-            date
-          ),
-
-        kind:
-          "explicit",
-
-      };
-
-    }
-
-  }
-
 
   return null;
-
 }
 
+export const extractCrop =
+  extractBookingCrop;
 
 /* =========================================================
-   DATE QUESTION
+   QUANTITY
 ========================================================= */
 
-export function isDateQuestion(
+export function extractBookingQuantity(
   message
 ) {
+  const text = norm(message);
 
-  const text =
-    normalizeText(
-      message
-    );
-
-
-  if (
-    !text
-  ) {
-
-    return false;
-
-  }
-
-
-  const patterns = [
-
-    "what dates are available",
-    "which dates are available",
-    "available dates",
-    "availability dates",
-    "what date can i book",
-    "which date can i book",
-    "when can i book",
-    "what day can i book",
-    "which days are available",
-    "dates available",
-    "book on which date",
-
-    "कौन सी तारीख उपलब्ध है",
-    "कौन सी तारीखें उपलब्ध हैं",
-    "उपलब्ध तारीख",
-    "उपलब्ध तारीखें",
-    "किस तारीख को बुक कर सकता हूँ",
-    "कब बुक कर सकता हूँ",
-
-    "ఏ తేదీలు అందుబాటులో ఉన్నాయి",
-    "ఏ తేదీన బుక్ చేయవచ్చు",
-    "అందుబాటులో ఉన్న తేదీలు",
-
-  ];
-
-
-  return patterns.some(
-    pattern =>
-      text.includes(
-        normalizeText(
-          pattern
-        )
-      )
-  );
-
-}
-
-
-/* =========================================================
-   SLOT QUESTION
-========================================================= */
-
-export function isSlotQuestion(
-  message
-) {
-
-  const text =
-    normalizeText(
-      message
-    );
-
-
-  if (
-    !text
-  ) {
-
-    return false;
-
-  }
-
-
-  const patterns = [
-
-    "what slots are available",
-    "which slots are available",
-    "available slots",
-    "what time slots",
-    "which time",
-    "what times are available",
-    "arrival times",
-    "available timings",
-    "available timing",
-    "what time can i come",
-    "when can i arrive",
-    "which slot can i book",
-    "book which slot",
-
-    "कौन से स्लॉट उपलब्ध हैं",
-    "उपलब्ध स्लॉट",
-    "कौन सा समय उपलब्ध है",
-    "किस समय आना है",
-    "कौन सा टाइम",
-    "कौन सा स्लॉट",
-
-    "ఏ స్లాట్లు అందుబాటులో ఉన్నాయి",
-    "అందుబాటులో ఉన్న స్లాట్లు",
-    "ఏ సమయాల్లో రావచ్చు",
-    "ఏ సమయం అందుబాటులో ఉంది",
-
-  ];
-
-
-  return patterns.some(
-    pattern =>
-      text.includes(
-        normalizeText(
-          pattern
-        )
-      )
-  );
-
-}
-
-
-/* =========================================================
-   TIME EXTRACTION
-========================================================= */
-
-export function extractTime(
-  message
-) {
-
-  const text =
-    normalizeText(
-      message
-    );
-
-
-  if (
-    !text
-  ) {
-
+  if (!text) {
     return null;
-
   }
 
+  const explicit =
+    text.match(
+      /(\d+(?:\.\d+)?)\s*(kg|kgs|kilo|kilos|kilogram|kilograms|किलो|किलोग्राम|కిలో|కిలోలు)\b/i
+    );
 
-  /*
-   * 10:30
-   * 10:30 am
-   * 5 pm
-   */
+  if (explicit) {
+    const value =
+      Number(explicit[1]);
+
+    return validQuantity(value)
+      ? value
+      : null;
+  }
+
+  if (
+    !/^\d+(?:\.\d+)?$/.test(text)
+  ) {
+    return null;
+  }
+
+  const value =
+    Number(text);
+
+  return validQuantity(value)
+    ? value
+    : null;
+}
+
+export const extractQuantity =
+  extractBookingQuantity;
+
+/* =========================================================
+   CENTER
+========================================================= */
+
+export function normalizeCenter(
+  value
+) {
+  const text =
+    clean(value);
+
+  return text || null;
+}
+
+/* =========================================================
+   DATE
+========================================================= */
+
+export function normalizeBookingDate(
+  value
+) {
+  if (!value) {
+    return null;
+  }
+
+  const text =
+    clean(value);
+
+  if (
+    /^\d{4}-\d{1,2}-\d{1,2}$/.test(text)
+  ) {
+    const [
+      year,
+      month,
+      day,
+    ] = text
+      .split("-")
+      .map(Number);
+
+    const date =
+      new Date(
+        year,
+        month - 1,
+        day
+      );
+
+    if (
+      date.getFullYear() === year &&
+      date.getMonth() === month - 1 &&
+      date.getDate() === day
+    ) {
+      return isoDate(date);
+    }
+  }
+
+  const slash =
+    text.match(
+      /^(\d{1,2})\/(\d{1,2})\/(20\d{2})$/
+    );
+
+  if (slash) {
+    const day =
+      Number(slash[1]);
+
+    const month =
+      Number(slash[2]);
+
+    const year =
+      Number(slash[3]);
+
+    const date =
+      new Date(
+        year,
+        month - 1,
+        day
+      );
+
+    if (
+      date.getFullYear() === year &&
+      date.getMonth() === month - 1 &&
+      date.getDate() === day
+    ) {
+      return isoDate(date);
+    }
+  }
+
+  return null;
+}
+
+export function extractNaturalBookingDate(
+  message,
+  now = new Date()
+) {
+  const text =
+    norm(message);
+
+  if (!text) {
+    return null;
+  }
+
+  if (
+    /\b(today|aaj|आज|ఈ రోజు|నేడు)\b/i.test(text)
+  ) {
+    return isoDate(
+      new Date(now)
+    );
+  }
+
+  if (
+    /\b(tomorrow|kal|कल|రేపు)\b/i.test(text)
+  ) {
+    return isoDate(
+      addDays(1, now)
+    );
+  }
+
+  if (
+    /\b(day after tomorrow|परसों|ఎల్లుండి)\b/i.test(text)
+  ) {
+    return isoDate(
+      addDays(2, now)
+    );
+  }
+
+  const inDays =
+    text.match(
+      /\bin\s+(\d{1,3})\s+(day|days|दिन|రోజులు)\b/i
+    );
+
+  if (inDays) {
+    return isoDate(
+      addDays(
+        Number(inDays[1]),
+        now
+      )
+    );
+  }
+
+  const explicit =
+    normalizeBookingDate(text);
+
+  if (explicit) {
+    return explicit;
+  }
+
+  return null;
+}
+
+export function getDateReference(
+  value
+) {
+  const dateText =
+    normalizeBookingDate(value);
+
+  const date =
+    parseDate(dateText);
+
+  if (!date) {
+    return null;
+  }
+
+  return {
+    date: dateText,
+
+    year:
+      date.getFullYear(),
+
+    month:
+      date.getMonth() + 1,
+
+    day:
+      date.getDate(),
+
+    weekday:
+      date.toLocaleDateString(
+        "en-IN",
+        {
+          weekday: "long",
+        }
+      ),
+
+    label:
+      date.toLocaleDateString(
+        "en-IN",
+        {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }
+      ),
+  };
+}
+
+/* =========================================================
+   TIME
+========================================================= */
+
+function time24(value) {
+  const text =
+    clean(value).toLowerCase();
 
   const match =
     text.match(
-      /\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b/i
+      /^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i
     );
 
-
-  if (
-    !match
-  ) {
-
+  if (!match) {
     return null;
-
   }
-
 
   let hour =
-    Number(
-      match[1]
-    );
+    Number(match[1]);
 
+  const minute =
+    Number(match[2] || 0);
 
-  let minute =
-    Number(
-      match[2] ||
-      0
-    );
+  const meridiem =
+    match[3]?.toLowerCase();
 
-
-  const period =
-    match[3]
-      ? match[3].toLowerCase()
-      : null;
-
-
-  if (
-    !Number.isFinite(
-      hour
-    ) ||
-    !Number.isFinite(
-      minute
-    ) ||
-    minute > 59
-  ) {
-
+  if (minute > 59) {
     return null;
-
   }
 
-
-  if (
-    period ===
-    "am"
-  ) {
-
+  if (meridiem) {
     if (
-      hour ===
-      12
+      hour < 1 ||
+      hour > 12
     ) {
-
-      hour =
-        0;
-
+      return null;
     }
 
-  } else if (
-    period ===
-    "pm"
-  ) {
-
     if (
-      hour !==
-      12
+      meridiem === "pm" &&
+      hour !== 12
     ) {
-
-      hour +=
-        12;
-
+      hour += 12;
     }
 
+    if (
+      meridiem === "am" &&
+      hour === 12
+    ) {
+      hour = 0;
+    }
+  } else if (hour > 23) {
+    return null;
   }
 
+  return (
+    `${String(hour).padStart(2, "0")}:` +
+    `${String(minute).padStart(2, "0")}`
+  );
+}
+
+export function normalizeBookingSlot(
+  value
+) {
+  if (!value) {
+    return null;
+  }
 
   if (
-    hour >
-    23
+    typeof value === "object"
   ) {
+    const start =
+      time24(value.start) ||
+      clean(value.start);
 
-    return null;
+    const end =
+      time24(value.end) ||
+      clean(value.end);
 
+    if (!start && !end) {
+      return null;
+    }
+
+    return {
+      id:
+        value.id ||
+        `${start}-${end}`,
+
+      start,
+
+      end,
+
+      display:
+        clean(value.display) ||
+        `${start}${end ? ` – ${end}` : ""}`,
+    };
   }
 
+  const text =
+    clean(value);
+
+  const range =
+    text.match(
+      /(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\s*(?:-|to|–|—)\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/i
+    );
+
+  if (range) {
+    const start =
+      time24(range[1]);
+
+    const end =
+      time24(range[2]);
+
+    if (start && end) {
+      return {
+        id:
+          `${start}-${end}`,
+
+        start,
+
+        end,
+
+        display:
+          `${start} – ${end}`,
+      };
+    }
+  }
+
+  const single =
+    time24(text);
+
+  if (single) {
+    return {
+      id: single,
+      start: single,
+      end: "",
+      display: single,
+    };
+  }
 
   return {
-
-    hour,
-
-    minute,
-
-    value:
-      `${pad(hour)}:${pad(minute)}`,
-
+    id: text,
+    start: text,
+    end: "",
+    display: text,
   };
-
 }
 
-
-/* =========================================================
-   TIME QUESTION
-========================================================= */
-
-export function containsTimeHint(
+export function extractTimeReference(
   message
 ) {
-
   const text =
-    normalizeText(
-      message
+    norm(message);
+
+  const range =
+    text.match(
+      /(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\s*(?:-|to|–|—)\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/i
     );
 
+  if (range) {
+    return normalizeBookingSlot(
+      `${range[1]}-${range[2]}`
+    );
+  }
 
-  return TIME_HINTS.some(
-    hint =>
-      text.includes(
-        normalizeText(
-          hint
-        )
-      )
-  );
+  const twelve =
+    text.match(
+      /\b(\d{1,2}(?::\d{2})?\s*(?:am|pm))\b/i
+    );
 
+  if (twelve) {
+    return normalizeBookingSlot(
+      twelve[1]
+    );
+  }
+
+  const twentyFour =
+    text.match(
+      /\b([01]?\d|2[0-3]):[0-5]\d\b/
+    );
+
+  if (twentyFour) {
+    return normalizeBookingSlot(
+      twentyFour[0]
+    );
+  }
+
+  const contextualHour =
+    text.match(
+      /\b(?:at|around|about|near|approximately)\s+([01]?\d|2[0-3])(?:\s*(?:am|pm))?\b/i
+    );
+
+  if (contextualHour) {
+    const raw =
+      `${contextualHour[1]} ${
+        text.includes("pm")
+          ? "pm"
+          : text.includes("am")
+            ? "am"
+            : ""
+      }`.trim();
+
+    return normalizeBookingSlot(
+      raw
+    );
+  }
+
+  const morning =
+    text.match(
+      /\b(\d{1,2})(?:\s*)\b(?:in the morning|morning)\b/i
+    );
+
+  if (morning) {
+    return normalizeBookingSlot(
+      `${morning[1]} am`
+    );
+  }
+
+  const afternoon =
+    text.match(
+      /\b(\d{1,2})(?:\s*)\b(?:in the afternoon|afternoon)\b/i
+    );
+
+  if (afternoon) {
+    return normalizeBookingSlot(
+      `${afternoon[1]} pm`
+    );
+  }
+
+  return null;
 }
 
-
 /* =========================================================
-   MISSING FIELDS
+   WEEKDAY
 ========================================================= */
 
-export function getMissingBookingFields(
-  state
-) {
+function weekdayIndex(name) {
+  return {
+    sunday: 0,
+    sun: 0,
 
-  const booking =
-    normalizeBookingState(
-      state
-    );
+    monday: 1,
+    mon: 1,
 
+    tuesday: 2,
+    tue: 2,
+    tues: 2,
 
-  const missing = [];
+    wednesday: 3,
+    wed: 3,
 
+    thursday: 4,
+    thu: 4,
+    thurs: 4,
 
-  if (
-    !booking.crop
-  ) {
+    friday: 5,
+    fri: 5,
 
-    missing.push(
-      "crop"
-    );
-
-  }
-
-
-  if (
-    !booking.quantity
-  ) {
-
-    missing.push(
-      "quantity"
-    );
-
-  }
-
-
-  if (
-    !booking.centerId
-  ) {
-
-    missing.push(
-      "center"
-    );
-
-  }
-
-
-  if (
-    !booking.date
-  ) {
-
-    missing.push(
-      "date"
-    );
-
-  }
-
-
-  if (
-    !booking.slotStart
-  ) {
-
-    missing.push(
-      "slot"
-    );
-
-  }
-
-
-  return missing;
-
+    saturday: 6,
+    sat: 6,
+  }[name];
 }
 
-
-/* =========================================================
-   STATE STATUS
-========================================================= */
-
-export function getBookingStatus(
-  state
+export function findAvailableDate(
+  message,
+  availableDates = [],
+  now = new Date()
 ) {
-
-  const booking =
-    normalizeBookingState(
-      state
-    );
-
-
-  if (
-    booking.confirmed
-  ) {
-
-    return BOOKING_STATUS.COMPLETED;
-
-  }
-
-
-  if (
-    booking.confirmationRequested
-  ) {
-
-    return BOOKING_STATUS.CONFIRMATION;
-
-  }
-
-
-  const missing =
-    getMissingBookingFields(
-      booking
-    );
-
-
-  if (
-    missing.length ===
-    0
-  ) {
-
-    return BOOKING_STATUS.READY;
-
-  }
-
-
-  if (
-    booking.crop ||
-    booking.quantity ||
-    booking.centerId ||
-    booking.date ||
-    booking.slotStart
-  ) {
-
-    return BOOKING_STATUS.COLLECTING;
-
-  }
-
-
-  return BOOKING_STATUS.EMPTY;
-
-}
-
-
-/* =========================================================
-   APPLY MESSAGE TO STATE
-========================================================= */
-
-export function updateBookingFromMessage(
-  state,
-  message
-) {
-
-  const current =
-    normalizeBookingState(
-      state
-    );
-
-
   const text =
-    cleanText(
-      message
-    );
+    norm(message);
 
+  if (
+    !text ||
+    !Array.isArray(availableDates)
+  ) {
+    return null;
+  }
 
-  const next = {
-
-    ...current,
-
-    lastUserMessage:
+  const natural =
+    extractNaturalBookingDate(
       text,
-
-    confirmationRequested:
-      false,
-
-    updatedAt:
-      Date.now(),
-
-  };
-
-
-  const crop =
-    extractCrop(
-      text
+      now
     );
 
-
-  if (
-    crop
-  ) {
-
-    next.crop =
-      crop;
-
+  if (natural) {
+    return (
+      availableDates.find(
+        item =>
+          String(
+            item.date || item.id
+          ) === natural
+      ) || null
+    );
   }
 
-
-  const quantity =
-    extractQuantity(
-      text
+  const dayMatch =
+    text.match(
+      /\b(sunday|sun|monday|mon|tuesday|tue|tues|wednesday|wed|thursday|thu|thurs|friday|fri|saturday|sat)\b/i
     );
 
+  if (dayMatch) {
+    const index =
+      weekdayIndex(
+        dayMatch[1].toLowerCase()
+      );
 
-  if (
-    quantity
-  ) {
+    const today =
+      new Date(now).getDay();
 
-    next.quantity =
-      quantity;
+    const wantsNext =
+      /\bnext\s+/.test(text);
 
+    let delta =
+      (index - today + 7) % 7;
+
+    if (
+      delta === 0 ||
+      wantsNext
+    ) {
+      delta += 7;
+    }
+
+    const target =
+      isoDate(
+        addDays(
+          delta,
+          now
+        )
+      );
+
+    return (
+      availableDates.find(
+        item =>
+          String(
+            item.date || item.id
+          ) === target
+      ) || null
+    );
   }
 
+  return (
+    availableDates.find(
+      item => {
+        const label =
+          norm(
+            item.label ||
+            item.date ||
+            item.id
+          );
 
-  const date =
-    extractDate(
-      text
-    );
+        return (
+          label &&
+          text.includes(label)
+        );
+      }
+    ) || null
+  );
+}
 
+/* =========================================================
+   CENTER MATCHING
+========================================================= */
+
+export function findAvailableCenter(
+  message,
+  availableCenters = []
+) {
+  const text =
+    norm(message);
 
   if (
-    date
+    !text ||
+    !Array.isArray(availableCenters)
   ) {
-
-    next.date =
-      date.date;
-
-    next.dateLabel =
-      date.kind;
-
+    return null;
   }
 
+  return (
+    availableCenters.find(
+      center => {
+        const id =
+          norm(center?.id);
 
-  const time =
-    extractTime(
+        const name =
+          norm(center?.name);
+
+        return (
+          (id &&
+            text.includes(id)) ||
+          (name &&
+            text.includes(name))
+        );
+      }
+    ) || null
+  );
+}
+
+/* =========================================================
+   SLOT MATCHING
+========================================================= */
+
+export function findSlotReference(
+  message,
+  availableSlots = []
+) {
+  const text =
+    norm(message);
+
+  if (
+    !text ||
+    !Array.isArray(availableSlots)
+  ) {
+    return null;
+  }
+
+  let requested =
+    extractTimeReference(
       text
     );
 
+  if (
+    !requested &&
+    /^\d{1,2}(?::\d{2})?$/.test(text)
+  ) {
+    requested =
+      normalizeBookingSlot(
+        text
+      );
+  }
+
+  if (requested) {
+    const exact =
+      availableSlots.find(
+        item =>
+          String(item.start) ===
+            String(requested.start) &&
+          (
+            !requested.end ||
+            String(item.end) ===
+              String(requested.end)
+          )
+      );
+
+    if (exact) {
+      return exact;
+    }
+
+    return (
+      availableSlots.find(
+        item =>
+          String(item.start) ===
+          String(requested.start)
+      ) || null
+    );
+  }
 
   if (
-    time &&
-    !isSlotQuestion(
+    /\b(first|earliest|first available)\b/i.test(
       text
     )
   ) {
-
-    next.slotStart =
-      time.value;
-
+    return (
+      availableSlots[0] ||
+      null
+    );
   }
-
-
-  next.status =
-    getBookingStatus(
-      next
-    );
-
-
-  return next;
-
-}
-
-
-/* =========================================================
-   SET CENTER
-========================================================= */
-
-export function setBookingCenter(
-  state,
-  center
-) {
-
-  const current =
-    normalizeBookingState(
-      state
-    );
-
 
   if (
-    !center
+    /\b(morning|सुबह|ఉదయం)\b/i.test(text)
   ) {
-
-    return current;
-
+    return (
+      availableSlots.find(
+        item =>
+          Number(
+            String(item.start).slice(
+              0,
+              2
+            )
+          ) < 12
+      ) || null
+    );
   }
 
+  if (
+    /\b(afternoon|दोपहर|మధ్యాహ్నం)\b/i.test(text)
+  ) {
+    return (
+      availableSlots.find(
+        item => {
+          const hour =
+            Number(
+              String(
+                item.start
+              ).slice(0, 2)
+            );
 
-  const next = {
+          return (
+            hour >= 12 &&
+            hour < 17
+          );
+        }
+      ) || null
+    );
+  }
 
-    ...current,
+  if (
+    /\b(evening|शाम|సాయంత్రం)\b/i.test(text)
+  ) {
+    return (
+      availableSlots.find(
+        item =>
+          Number(
+            String(
+              item.start
+            ).slice(0, 2)
+          ) >= 17
+      ) || null
+    );
+  }
+
+  return null;
+}
+
+/* =========================================================
+   SLOT FIELDS
+========================================================= */
+
+function slotFromFields(
+  source = {}
+) {
+  if (source.slot) {
+    return normalizeBookingSlot(
+      source.slot
+    );
+  }
+
+  if (
+    source.slotStart ||
+    source.slotEnd ||
+    source.slotId ||
+    source.slotDisplay
+  ) {
+    return normalizeBookingSlot({
+      id:
+        source.slotId,
+
+      start:
+        source.slotStart,
+
+      end:
+        source.slotEnd,
+
+      display:
+        source.slotDisplay,
+    });
+  }
+
+  return null;
+}
+
+/* =========================================================
+   REQUIRED FIELDS
+========================================================= */
+
+export function getMissingBookingFields(
+  draft = {}
+) {
+  const missing = [];
+
+  if (!draft.crop) {
+    missing.push(
+      BOOKING_FIELDS.CROP
+    );
+  }
+
+  if (
+    !validQuantity(
+      draft.quantity
+    )
+  ) {
+    missing.push(
+      BOOKING_FIELDS.QUANTITY
+    );
+  }
+
+  if (!draft.centerId) {
+    missing.push(
+      BOOKING_FIELDS.CENTER
+    );
+  }
+
+  if (!draft.date) {
+    missing.push(
+      BOOKING_FIELDS.DATE
+    );
+  }
+
+  if (!slotFromFields(draft)) {
+    missing.push(
+      BOOKING_FIELDS.SLOT
+    );
+  }
+
+  return missing;
+}
+
+export const getMissingDetails =
+  getMissingBookingFields;
+
+/* =========================================================
+   STAGE
+========================================================= */
+
+export function getBookingStage(
+  draft = {}
+) {
+  if (draft.confirmed) {
+    return BOOKING_STAGES.COMPLETE;
+  }
+
+  if (
+    slotFromFields(draft)
+  ) {
+    return BOOKING_STAGES.CONFIRM;
+  }
+
+  if (
+    draft.availabilityChecked
+  ) {
+    return BOOKING_STAGES.SLOT;
+  }
+
+  if (draft.date) {
+    return BOOKING_STAGES.AVAILABILITY;
+  }
+
+  if (
+    draft.crop &&
+    validQuantity(draft.quantity) &&
+    !draft.centerId
+  ) {
+    return BOOKING_STAGES.CENTER;
+  }
+
+  if (
+    draft.crop &&
+    validQuantity(draft.quantity)
+  ) {
+    return BOOKING_STAGES.DATE;
+  }
+
+  return (
+    draft.crop ||
+    draft.quantity
+  )
+    ? BOOKING_STAGES.DETAILS
+    : BOOKING_STAGES.EMPTY;
+}
+
+export const getBookingStep =
+  getBookingStage;
+
+/* =========================================================
+   NEXT FIELD
+========================================================= */
+
+export function getNextBookingField(
+  draft = {}
+) {
+  if (!draft.crop) {
+    return BOOKING_FIELDS.CROP;
+  }
+
+  if (
+    !validQuantity(
+      draft.quantity
+    )
+  ) {
+    return BOOKING_FIELDS.QUANTITY;
+  }
+
+  if (!draft.centerId) {
+    return BOOKING_FIELDS.CENTER;
+  }
+
+  if (!draft.date) {
+    return BOOKING_FIELDS.DATE;
+  }
+
+  if (!slotFromFields(draft)) {
+    return BOOKING_FIELDS.SLOT;
+  }
+
+  return null;
+}
+
+/* =========================================================
+   VALIDATION
+========================================================= */
+
+export function validateBookingDraft(
+  draft = {},
+  options = {}
+) {
+  const maxQuantity =
+    Number(
+      options.maxQuantity ||
+      MAX_QUANTITY
+    );
+
+  const errors = {};
+
+  if (!draft.crop) {
+    errors.crop =
+      "Crop is required.";
+  }
+
+  if (
+    !validQuantity(
+      draft.quantity,
+      maxQuantity
+    )
+  ) {
+    errors.quantity =
+      "A valid quantity is required.";
+  }
+
+  if (!draft.centerId) {
+    errors.centerId =
+      "Procurement center is required.";
+  }
+
+  if (!draft.date) {
+    errors.date =
+      "Arrival date is required.";
+  }
+
+  if (!slotFromFields(draft)) {
+    errors.slot =
+      "Arrival window is required.";
+  }
+
+  return {
+    valid:
+      Object.keys(errors)
+        .length === 0,
+
+    errors,
+  };
+}
+
+/* =========================================================
+   CREATE DRAFT
+========================================================= */
+
+export function createBookingDraft(
+  values = {}
+) {
+  const source =
+    values &&
+    typeof values === "object"
+      ? values
+      : {};
+
+  const slot =
+    slotFromFields(source);
+
+  const draft = {
+    schemaVersion:
+      BOOKING_SCHEMA_VERSION,
+
+    active:
+      source.active !== false,
+
+    assistantManaged:
+      source.assistantManaged === true,
+
+    crop:
+      source.crop ||
+      null,
+
+    quantity:
+      validQuantity(
+        source.quantity
+      )
+        ? Number(source.quantity)
+        : null,
 
     centerId:
-      center.id ??
-      null,
+      source.centerId == null
+        ? null
+        : normalizeCenter(
+            source.centerId
+          ),
 
     centerName:
-      center.name ??
-      null,
-
-    updatedAt:
-      Date.now(),
-
-  };
-
-
-  next.status =
-    getBookingStatus(
-      next
-    );
-
-
-  return next;
-
-}
-
-
-/* =========================================================
-   SET DATE
-========================================================= */
-
-export function setBookingDate(
-  state,
-  date,
-  label = null
-) {
-
-  const current =
-    normalizeBookingState(
-      state
-    );
-
-
-  const next = {
-
-    ...current,
+      source.centerName
+        ? clean(
+            source.centerName
+          )
+        : null,
 
     date:
-      cleanText(
-        date
-      ) ||
-      null,
+      normalizeBookingDate(
+        source.date
+      ),
 
     dateLabel:
-      label
-        ? cleanText(
-            label
-          )
-        : current.dateLabel,
+      source.dateLabel ||
+      null,
 
-    updatedAt:
-      Date.now(),
+    slot,
 
-  };
-
-
-  next.status =
-    getBookingStatus(
-      next
-    );
-
-
-  return next;
-
-}
-
-
-/* =========================================================
-   SET SLOT
-========================================================= */
-
-export function setBookingSlot(
-  state,
-  slot
-) {
-
-  const current =
-    normalizeBookingState(
-      state
-    );
-
-
-  if (
-    !slot
-  ) {
-
-    return current;
-
-  }
-
-
-  const next = {
-
-    ...current,
+    slotId:
+      slot?.id ||
+      null,
 
     slotStart:
-      slot.start ??
-      slot.slotStart ??
+      slot?.start ||
       null,
 
     slotEnd:
-      slot.end ??
-      slot.slotEnd ??
+      slot?.end ||
       null,
 
-    slotLabel:
-      slot.display ??
-      slot.label ??
+    slotDisplay:
+      slot?.display ||
       null,
 
-    updatedAt:
-      Date.now(),
-
-  };
-
-
-  next.status =
-    getBookingStatus(
-      next
-    );
-
-
-  return next;
-
-}
-
-
-/* =========================================================
-   AVAILABLE DATES
-========================================================= */
-
-export function setAvailableDates(
-  state,
-  dates
-) {
-
-  const current =
-    normalizeBookingState(
-      state
-    );
-
-
-  return {
-
-    ...current,
-
-    availableDates:
-      Array.isArray(
-        dates
-      )
-        ? dates
-        : [],
-
-    updatedAt:
-      Date.now(),
-
-  };
-
-}
-
-
-/* =========================================================
-   AVAILABLE SLOTS
-========================================================= */
-
-export function setAvailableSlots(
-  state,
-  slots
-) {
-
-  const current =
-    normalizeBookingState(
-      state
-    );
-
-
-  return {
-
-    ...current,
-
-    availableSlots:
-      Array.isArray(
-        slots
-      )
-        ? slots
-        : [],
-
-    updatedAt:
-      Date.now(),
-
-  };
-
-}
-
-
-/* =========================================================
-   CONFIRMATION
-========================================================= */
-
-export function requestBookingConfirmation(
-  state
-) {
-
-  const current =
-    normalizeBookingState(
-      state
-    );
-
-
-  const missing =
-    getMissingBookingFields(
-      current
-    );
-
-
-  if (
-    missing.length >
-    0
-  ) {
-
-    return {
-
-      state:
-        current,
-
-      ready:
-        false,
-
-      missing,
-
-    };
-
-  }
-
-
-  const next = {
-
-    ...current,
-
-    status:
-      BOOKING_STATUS.CONFIRMATION,
-
-    confirmationRequested:
-      true,
-
-    updatedAt:
-      Date.now(),
-
-  };
-
-
-  return {
-
-    state:
-      next,
-
-    ready:
-      true,
-
-    missing: [],
-
-  };
-
-}
-
-
-/* =========================================================
-   MARK COMPLETED
-========================================================= */
-
-export function markBookingCompleted(
-  state
-) {
-
-  const current =
-    normalizeBookingState(
-      state
-    );
-
-
-  return {
-
-    ...current,
-
-    status:
-      BOOKING_STATUS.COMPLETED,
+    availabilityChecked:
+      Boolean(
+        source.availabilityChecked
+      ),
 
     confirmed:
-      true,
+      Boolean(
+        source.confirmed
+      ),
 
-    confirmationRequested:
+    awaitingConfirmation:
+      Boolean(
+        source.awaitingConfirmation
+      ),
+
+    readyForConfirmation:
       false,
 
     updatedAt:
       Date.now(),
-
   };
 
-}
+  draft.readyForConfirmation =
+    getMissingBookingFields(
+      draft
+    ).length === 0;
 
+  draft.step =
+    getBookingStage(draft);
+
+  if (
+    !draft.dateLabel &&
+    draft.date
+  ) {
+    draft.dateLabel =
+      getDateReference(
+        draft.date
+      )?.label || null;
+  }
+
+  return draft;
+}
 
 /* =========================================================
-   BOOKING PARAMS
+   EMPTY
 ========================================================= */
 
-export function getBookingParams(
-  state
+export function createEmpty(
+  values = {}
 ) {
+  return createBookingDraft({
+    ...values,
 
-  const booking =
-    normalizeBookingState(
-      state
-    );
+    active:
+      false,
 
-
-  const params = {
-
+    assistantManaged:
+      false,
 
     crop:
-      booking.crop,
+      null,
 
     quantity:
-      booking.quantity,
+      null,
 
     centerId:
-      booking.centerId,
+      null,
 
     centerName:
-      booking.centerName,
+      null,
 
     date:
-      booking.date,
+      null,
 
     dateLabel:
-      booking.dateLabel,
+      null,
+
+    slot:
+      null,
+
+    slotId:
+      null,
 
     slotStart:
-      booking.slotStart,
+      null,
 
     slotEnd:
-      booking.slotEnd,
+      null,
 
-    slotLabel:
-      booking.slotLabel,
+    slotDisplay:
+      null,
 
-  };
+    availabilityChecked:
+      false,
 
+    confirmed:
+      false,
 
-  return sanitizeActionParams(
-    {
-      crop:
-        params.crop,
-
-      quantity:
-        params.quantity,
-
-    }
-  )
-    ? params
-    : {
-
-        ...params,
-
-      };
-
+    awaitingConfirmation:
+      false,
+  });
 }
 
+/* =========================================================
+   NORMALIZE
+========================================================= */
+
+export function normalize(
+  values = {}
+) {
+  return createBookingDraft(
+    values
+  );
+}
+
+export const normalizeBookingState =
+  normalize;
+
+/* =========================================================
+   MERGE
+========================================================= */
+
+export function mergeBookingDraft(
+  current = {},
+  updates = {}
+) {
+  return createBookingDraft({
+    ...current,
+    ...updates,
+  });
+}
+
+/* =========================================================
+   UPDATE EXTRACTION
+========================================================= */
+
+export function extractBookingUpdates(
+  message,
+  options = {}
+) {
+  const text =
+    clean(message);
+
+  const updates = {};
+
+  const crop =
+    extractBookingCrop(
+      text
+    );
+
+  const quantity =
+    extractBookingQuantity(
+      text
+    );
+
+  const date =
+    extractNaturalBookingDate(
+      text,
+      options.now ||
+        new Date()
+    );
+
+  const slot =
+    extractTimeReference(
+      text
+    );
+
+  if (crop) {
+    updates.crop = crop;
+  }
+
+  if (quantity) {
+    updates.quantity =
+      quantity;
+  }
+
+  if (date) {
+    updates.date = date;
+  }
+
+  if (slot) {
+    updates.slot = slot;
+  }
+
+  return updates;
+}
+
+/* =========================================================
+   STORAGE
+========================================================= */
+
+export function saveBookingDraft(
+  draft
+) {
+  return writeJson(
+    BOOKING_STORAGE_KEY,
+    createBookingDraft(draft)
+  );
+}
+
+export function loadBookingDraft() {
+  const stored =
+    readJson(
+      BOOKING_STORAGE_KEY,
+      null
+    );
+
+  return (
+    stored &&
+    typeof stored ===
+      "object"
+  )
+    ? normalize(stored)
+    : null;
+}
+
+function loadBookingState() {
+  const draft =
+    readJson(
+      BOOKING_STORAGE_KEY,
+      null
+    );
+
+  if (
+    draft &&
+    typeof draft ===
+      "object"
+  ) {
+    return normalize(draft);
+  }
+
+  const stored =
+    readJson(
+      BOOKING_STATE_STORAGE_KEY,
+      null
+    );
+
+  return (
+    stored &&
+    typeof stored ===
+      "object"
+  )
+    ? normalize(stored)
+    : createEmpty();
+}
+
+function persistState(
+  state,
+  notify = true
+) {
+  const normalized =
+    normalize(state);
+
+  writeJson(
+    BOOKING_STATE_STORAGE_KEY,
+    normalized
+  );
+
+  writeJson(
+    BOOKING_STORAGE_KEY,
+    normalized
+  );
+
+  if (notify) {
+    dispatch(
+      EVENT_BOOKING,
+      normalized
+    );
+  }
+
+  return normalized;
+}
+
+export function updateBookingDraft(
+  updates = {}
+) {
+  const current =
+    loadBookingDraft() ||
+    loadBookingState();
+
+  return persistState(
+    {
+      ...current,
+      ...updates,
+      active: true,
+    },
+    true
+  );
+}
+
+export function saveBookingState(
+  state
+) {
+  return persistState(
+    state,
+    true
+  );
+}
+
+export function clearBookingDraft() {
+  removeKey(
+    BOOKING_STORAGE_KEY
+  );
+
+  removeKey(
+    BOOKING_STATE_STORAGE_KEY
+  );
+
+  removeKey(
+    BOOKING_AVAILABILITY_STORAGE_KEY
+  );
+
+  dispatch(
+    EVENT_BOOKING,
+    createEmpty()
+  );
+
+  return true;
+}
+
+/* =========================================================
+   AVAILABILITY STORAGE
+========================================================= */
+
+export function saveBookingAvailabilityContext(
+  context = {}
+) {
+  const value = {
+    availableDates:
+      Array.isArray(
+        context.availableDates
+      )
+        ? context.availableDates
+        : [],
+
+    availableSlots:
+      Array.isArray(
+        context.availableSlots
+      )
+        ? context.availableSlots
+        : [],
+
+    availableCenters:
+      Array.isArray(
+        context.availableCenters
+      )
+        ? context.availableCenters
+        : [],
+
+    selectedDate:
+      context.selectedDate ||
+      null,
+
+    selectedCenterId:
+      context.selectedCenterId ||
+      null,
+
+    updatedAt:
+      Date.now(),
+  };
+
+  const ok =
+    writeJson(
+      BOOKING_AVAILABILITY_STORAGE_KEY,
+      value
+    );
+
+  if (ok) {
+    dispatch(
+      EVENT_AVAILABILITY,
+      value
+    );
+  }
+
+  return ok;
+}
+
+export function getBookingAvailabilityContext() {
+  const empty = {
+    availableDates: [],
+    availableSlots: [],
+    availableCenters: [],
+    selectedDate: null,
+    selectedCenterId: null,
+  };
+
+  const value =
+    readJson(
+      BOOKING_AVAILABILITY_STORAGE_KEY,
+      null
+    );
+
+  if (
+    !value ||
+    typeof value !==
+      "object"
+  ) {
+    return empty;
+  }
+
+  const updatedAt =
+    Number(
+      value.updatedAt ||
+      0
+    );
+
+  if (
+    updatedAt &&
+    Date.now() -
+      updatedAt >
+      AVAILABILITY_TTL
+  ) {
+    removeKey(
+      BOOKING_AVAILABILITY_STORAGE_KEY
+    );
+
+    return empty;
+  }
+
+  return {
+    availableDates:
+      Array.isArray(
+        value.availableDates
+      )
+        ? value.availableDates
+        : [],
+
+    availableSlots:
+      Array.isArray(
+        value.availableSlots
+      )
+        ? value.availableSlots
+        : [],
+
+    availableCenters:
+      Array.isArray(
+        value.availableCenters
+      )
+        ? value.availableCenters
+        : [],
+
+    selectedDate:
+      value.selectedDate ||
+      null,
+
+    selectedCenterId:
+      value.selectedCenterId ||
+      null,
+
+    updatedAt,
+  };
+}
+
+export function requestBookingAvailabilitySync() {
+  if (
+    typeof window !==
+    "undefined"
+  ) {
+    dispatch(
+      EVENT_REQUEST_AVAILABILITY
+    );
+  }
+
+  return getBookingAvailabilityContext();
+}
+
+/* =========================================================
+   INTENT DETECTION
+========================================================= */
+
+function isBookingStart(
+  text
+) {
+  return (
+    /\b(book|booking|reserve|reservation|procurement|sell)\b/i.test(
+      text
+    ) ||
+    /\b(बुक|बुकिंग|రిజర్వ్|బుక్|బుకింగ్)\b/i.test(
+      text
+    )
+  );
+}
+
+function isConfirmation(
+  text
+) {
+  return /^(yes|yeah|yep|ok|okay|confirm|confirmed|book it|do it|go ahead|haan|हां|हाँ|ठीक|ठीक है|అవును|సరే)\b/i.test(
+    text
+  );
+}
+
+function isCancellation(
+  text
+) {
+  return /\b(cancel|cancel booking|stop booking|never mind|रद्द|रद्द करो|రద్దు|వద్దు)\b/i.test(
+    text
+  );
+}
+
+function asksForState(
+  text
+) {
+  return (
+    /\b(what have i|what did i|show my|my booking|booking details|selected|what have we selected)\b/i.test(
+      text
+    ) ||
+    /क्या.*चुना|बुकिंग.*विवरण/i.test(
+      text
+    )
+  );
+}
+
+function asksForDates(
+  text
+) {
+  return (
+    /\b(what|which|show|tell|give).*(date|dates)\b|\bavailable dates\b|\bdates available\b|\bwhich dates\b/i.test(
+      text
+    ) ||
+    /तारीख.*उपलब्ध|तारीखें.*बताओ|తేదీలు.*అందుబాటులో/i.test(
+      text
+    )
+  );
+}
+
+function asksForSlots(text) {
+  return /\b(what|which|show|tell).*(time|times|slot|slots)\b|\bavailable (time|times|slots)\b|\bwhat time\b|\b(there are|they are|i see|i can see).*(available|slots|times)\b|\b(available|slots|times).*(there|here|already)\b/i.test(text) ||
+    /समय.*उपलब्ध|समय.*बताओ|स्लॉट.*उपलब्ध|సమయం.*అందుబాటులో|స్లాట్లు.*అందుబాటులో/i.test(text);
+}
+
+function asksForCenters(
+  text
+) {
+  return (
+    /\b(what|which|show|tell|give|list).*(center|centers|procurement center|procurement centers)\b|\bavailable (center|centers)\b/i.test(
+      text
+    ) ||
+    /केंद्र.*उपलब्ध|केंद्र.*बताओ|కేంద్రాలు.*అందుబాటులో|కేంద్రాలు.*చెప్పు/i.test(
+      text
+    )
+  );
+}
+
+function asksForCenterTimings(
+  text
+) {
+  const centerWords =
+    /\b(center|centers|procurement|location|locations)\b/i.test(
+      text
+    );
+
+  const timingWords =
+    /\b(time|times|timing|timings|hours|opening|closing|open|close)\b/i.test(
+      text
+    );
+
+  return (
+    centerWords &&
+    timingWords
+  );
+}
+
+function asksForReview(
+  text
+) {
+  return /\b(review|summary|summarize|show details|read it back|final details)\b/i.test(
+    text
+  );
+}
+
+/* =========================================================
+   DISPLAY HELPERS
+========================================================= */
+
+function makeDateText(
+  dates = []
+) {
+  return dates
+    .map(item => {
+      const ref =
+        getDateReference(
+          item.date ||
+          item.id
+        );
+
+      const label =
+        clean(item.label);
+
+      if (
+        ref?.label &&
+        label &&
+        !/^\d/.test(label)
+      ) {
+        return (
+          `${label} (${ref.label})`
+        );
+      }
+
+      return (
+        ref?.label ||
+        label ||
+        item.date ||
+        item.id
+      );
+    })
+    .filter(Boolean)
+    .join(", ");
+}
+
+function makeSlotText(
+  slots = []
+) {
+  return slots
+    .map(
+      item =>
+        item.display ||
+        `${item.start || ""}${
+          item.end
+            ? ` – ${item.end}`
+            : ""
+        }`
+    )
+    .filter(Boolean)
+    .join(", ");
+}
+
+/* =========================================================
+   CENTER DISPLAY
+========================================================= */
+
+export function formatCenterOptions(
+  centers = [],
+  language = "en"
+) {
+  const rows =
+    Array.isArray(centers)
+      ? centers
+      : [];
+
+  if (!rows.length) {
+    if (language === "hi") {
+      return "अभी कोई सक्रिय खरीद केंद्र नहीं मिला।";
+    }
+
+    if (language === "te") {
+      return "ప్రస్తుతం యాక్టివ్ కొనుగోలు కేంద్రాలు ఏవీ లభించలేదు.";
+    }
+
+    return "I couldn't find any active procurement centers right now.";
+  }
+
+  return rows
+    .map(
+      (center, index) => {
+        const name =
+          clean(center?.name) ||
+          `Center ${index + 1}`;
+
+        const open =
+          clean(
+            center?.openingTime ||
+            center?.opening_time
+          );
+
+        const close =
+          clean(
+            center?.closingTime ||
+            center?.closing_time
+          );
+
+        const timing =
+          open && close
+            ? ` — ${open} to ${close}`
+            : "";
+
+        return (
+          `${index + 1}. ${name}${timing}`
+        );
+      }
+    )
+    .join("; ");
+}
 
 /* =========================================================
    BOOKING SUMMARY
 ========================================================= */
 
 export function getBookingSummary(
-  state,
+  draft = {},
   language = "en"
 ) {
+  const safe =
+    normalize(draft);
 
-  const booking =
-    normalizeBookingState(
-      state
+  const code =
+    languageCode(
+      language
     );
 
-
-  const names =
-    CROP_NAMES[
-      language
-    ] ||
-    CROP_NAMES.en;
-
-
-  const cropName =
-    booking.crop
-      ? names[
-          booking.crop
-        ] ||
-        booking.crop
-      : null;
-
+  const date =
+    getDateReference(
+      safe.date
+    );
 
   return {
-
     crop:
-      cropName,
+      CROP_NAMES[code]?.[
+        safe.crop
+      ] ||
+      safe.crop ||
+      null,
 
     quantity:
-      booking.quantity
-        ? `${booking.quantity} kg`
-        : null,
+      safe.quantity ||
+      null,
 
-    center:
-      booking.centerName ||
+    centerId:
+      safe.centerId ||
+      null,
+
+    centerName:
+      safe.centerName ||
       null,
 
     date:
-      booking.dateLabel ||
-      booking.date ||
+      date?.label ||
+      safe.dateLabel ||
+      null,
+
+    rawDate:
+      safe.date ||
       null,
 
     slot:
-      booking.slotLabel ||
-      (
-        booking.slotStart
-          ? booking.slotEnd
-            ? `${booking.slotStart} – ${booking.slotEnd}`
-            : booking.slotStart
-          : null
-      ),
+      safe.slotDisplay ||
+      safe.slotStart ||
+      null,
 
     complete:
       getMissingBookingFields(
-        booking
-      ).length ===
-      0,
+        safe
+      ).length === 0,
 
-    missing:
-      getMissingBookingFields(
-        booking
+    stage:
+      getBookingStage(
+        safe
       ),
-
   };
-
 }
 
-
-/* =========================================================
-   NEXT REQUIRED FIELD
-========================================================= */
-
-export function getNextBookingField(
-  state
-) {
-
-  const missing =
-    getMissingBookingFields(
-      state
-    );
-
-
-  return missing[0] ||
-    null;
-
-}
-
-
-/* =========================================================
-   HUMAN-READABLE FIELD NAME
-========================================================= */
-
-export function getBookingFieldLabel(
-  field,
+export function formatBookingProgress(
+  draft = {},
   language = "en"
 ) {
+  const summary =
+    getBookingSummary(
+      draft,
+      language
+    );
 
-  const labels = {
+  const code =
+    languageCode(
+      language
+    );
 
+  const label =
+    code === "hi"
+      ? [
+          "फसल",
+          "मात्रा",
+          "केंद्र",
+          "तारीख",
+          "समय",
+        ]
+      : code === "te"
+        ? [
+            "పంట",
+            "పరిమాణం",
+            "కేంద్రం",
+            "తేదీ",
+            "సమయం",
+          ]
+        : [
+            "Crop",
+            "Quantity",
+            "Center",
+            "Date",
+            "Time",
+          ];
+
+  const value = [
+    summary.crop ||
+      "not selected",
+
+    summary.quantity
+      ? `${summary.quantity} kg`
+      : "not provided",
+
+    summary.centerName ||
+      summary.centerId ||
+      "not selected",
+
+    summary.date ||
+      "not selected",
+
+    summary.slot ||
+      "not selected",
+  ];
+
+  return label
+    .map(
+      (item, index) =>
+        `${item}: ${value[index]}`
+    )
+    .join("\n");
+}
+
+export const getStateSummary =
+  formatBookingProgress;
+
+export const getBookingProgress =
+  formatBookingProgress;
+
+/* =========================================================
+   NEXT QUESTION
+========================================================= */
+
+export function getNextBookingQuestion(
+  draft = {},
+  language = "en"
+) {
+  const code =
+    languageCode(
+      language
+    );
+
+  const copy = {
     en: {
-
       crop:
-        "crop",
+        "Which crop would you like to book?",
 
       quantity:
-        "quantity",
+        "How much produce are you bringing? Please give the quantity in kilograms.",
 
       center:
-        "procurement center",
+        "Which procurement center would you like to use?",
 
       date:
-        "date",
+        "Which date would you like to arrive? I can check the available dates for you.",
 
       slot:
-        "arrival time slot",
+        "Which arrival time works for you? I can show the available slots for your selected date.",
 
+      complete:
+        "All booking details are complete. I’ll show you the details before the final confirmation.",
     },
 
     hi: {
-
       crop:
-        "फसल",
+        "आप कौन सी फसल बुक करना चाहते हैं?",
 
       quantity:
-        "मात्रा",
+        "कितनी मात्रा में फसल लानी है? मात्रा किलो में बताएं।",
 
       center:
-        "खरीद केंद्र",
+        "आप किस खरीद केंद्र पर जाना चाहते हैं?",
 
       date:
-        "तारीख",
+        "आप किस तारीख को आना चाहते हैं? मैं उपलब्ध तारीखें देखकर बता सकता हूँ।",
 
       slot:
-        "आने का समय",
+        "आप किस समय आना चाहते हैं? मैं उपलब्ध स्लॉट दिखा सकता हूँ।",
 
+      complete:
+        "आपकी बुकिंग की सारी जानकारी तैयार है। अंतिम पुष्टि से पहले मैं विवरण दिखाऊँगा।",
     },
 
     te: {
-
       crop:
-        "పంట",
+        "మీరు ఏ పంటను బుక్ చేయాలనుకుంటున్నారు?",
 
       quantity:
-        "పరిమాణం",
+        "ఎంత పరిమాణంలో పంట తీసుకువస్తారు? కిలోల్లో చెప్పండి.",
 
       center:
-        "కొనుగోలు కేంద్రం",
+        "మీరు ఏ కొనుగోలు కేంద్రాన్ని ఉపయోగించాలనుకుంటున్నారు?",
 
       date:
-        "తేదీ",
+        "మీరు ఏ తేదీన రావాలనుకుంటున్నారు? అందుబాటులో ఉన్న తేదీలను చూస్తాను.",
 
       slot:
-        "రాక సమయం",
+        "మీరు ఏ సమయంలో రావాలనుకుంటున్నారు? అందుబాటులో ఉన్న స్లాట్‌లను చూపగలను.",
 
+      complete:
+        "మీ బుకింగ్ వివరాలన్నీ సిద్ధంగా ఉన్నాయి. తుది నిర్ధారణకు ముందు పూర్తి వివరాలను చూపిస్తాను.",
     },
-
   };
 
+  const field =
+    getNextBookingField(
+      draft
+    );
 
   return (
-    labels[
-      language
-    ]?.[
-      field
-    ] ||
-    labels.en[
-      field
-    ] ||
-    field
+    copy[code][field] ||
+    copy[code].complete
   );
-
 }
 
+export const nextPrompt =
+  getNextBookingQuestion;
 
 /* =========================================================
-   CONVERSATIONAL STEP
+   REVIEW
 ========================================================= */
 
-export function getNextBookingStep(
-  state
+export function review(
+  draft = {},
+  language = "en"
 ) {
-
-  const booking =
-    normalizeBookingState(
-      state
-    );
-
-
-  const missing =
-    getMissingBookingFields(
-      booking
-    );
-
-
-  if (
-    missing.length ===
-    0
-  ) {
-
-    return {
-
-      type:
-        "CONFIRMATION",
-
-      field:
-        null,
-
-    };
-
-  }
-
+  const safe =
+    normalize(draft);
 
   return {
+    ...getBookingSummary(
+      safe,
+      language
+    ),
 
-    type:
-      "COLLECT",
-
-    field:
-      missing[0],
-
+    valid:
+      getMissingBookingFields(
+        safe
+      ).length === 0,
   };
-
 }
 
-
 /* =========================================================
-   SET CONFIRMATION STATE
-========================================================= */
-
-export function beginConfirmation(
-  state
-) {
-
-  const result =
-    requestBookingConfirmation(
-      state
-    );
-
-
-  if (
-    !result.ready
-  ) {
-
-    return {
-
-      state:
-        result.state,
-
-      ready:
-        false,
-
-      missing:
-        result.missing,
-
-    };
-
-  }
-
-
-  return {
-
-    state:
-      saveBookingState(
-        result.state
-      ),
-
-    ready:
-      true,
-
-    missing: [],
-
-  };
-
-}
-
-
-/* =========================================================
-   RESET CONFIRMATION
-========================================================= */
-
-export function resetConfirmation(
-  state
-) {
-
-  const current =
-    normalizeBookingState(
-      state
-    );
-
-
-  return saveBookingState({
-
-    ...current,
-
-    confirmationRequested:
-      false,
-
-    confirmed:
-      false,
-
-    status:
-      getBookingStatus(
-        {
-          ...current,
-          confirmationRequested:
-            false,
-          confirmed:
-            false,
-        }
-      ),
-
-  });
-
-}
-
-
-/* =========================================================
-   BUILD BOOKING CONTEXT
+   CONTEXT
 ========================================================= */
 
 export function buildBookingContext(
-  state,
+  draft = {},
   language = "en"
 ) {
-
-  const booking =
-    normalizeBookingState(
-      state
-    );
-
-
-  const summary =
-    getBookingSummary(
-      booking,
-      language
-    );
-
-
-  const nextStep =
-    getNextBookingStep(
-      booking
-    );
-
+  const safe =
+    normalize(draft);
 
   return {
+    draft:
+      safe,
 
-    status:
-      getBookingStatus(
-        booking
-      ),
-
-    booking,
-
-    summary,
-
-    nextStep,
-
-    missingFields:
-      getMissingBookingFields(
-        booking
+    stage:
+      getBookingStage(
+        safe
       ),
 
     nextField:
       getNextBookingField(
-        booking
+        safe
       ),
 
-    nextFieldLabel:
-      getBookingFieldLabel(
-        getNextBookingField(
-          booking
-        ),
+    missingFields:
+      getMissingBookingFields(
+        safe
+      ),
+
+    summary:
+      getBookingSummary(
+        safe,
         language
       ),
 
-    availableDates:
-      booking.availableDates,
+    nextQuestion:
+      getNextBookingQuestion(
+        safe,
+        language
+      ),
 
-    availableSlots:
-      booking.availableSlots,
-
+    valid:
+      validateBookingDraft(
+        safe
+      ),
   };
-
 }
 
-
 /* =========================================================
-   BOOKING REQUEST DETECTION
+   ROUTE STATE
 ========================================================= */
 
-export function looksLikeBookingRequest(
-  message
+export function buildBookingRouteState(
+  draft = {}
 ) {
+  const safe =
+    normalize(draft);
 
+  return {
+    assistantBooking:
+      safe,
+
+    assistantAction:
+      "OPEN_BOOKING",
+  };
+}
+
+export function readBookingRouteState(
+  locationState
+) {
+  return locationState?.assistantBooking
+    ? normalize(
+        locationState.assistantBooking
+      )
+    : null;
+}
+
+/* =========================================================
+   MAIN BOOKING PROCESSOR
+========================================================= */
+
+export function processBookingConversation(
+  currentState,
+  message,
+  options = {}
+) {
   const text =
-    normalizeText(
-      message
-    );
+    clean(message);
 
+  const normalized =
+    norm(text);
+
+  const now =
+    options.now ||
+    new Date();
+
+  let availability =
+    getBookingAvailabilityContext();
 
   if (
-    !text
+    !Array.isArray(
+      options.availableDates
+    ) ||
+    !Array.isArray(
+      options.availableSlots
+    )
   ) {
-
-    return false;
-
+    availability =
+      requestBookingAvailabilitySync();
   }
 
+  const availableDates =
+    Array.isArray(
+      options.availableDates
+    )
+      ? options.availableDates
+      : availability.availableDates;
+
+  const availableSlots =
+    Array.isArray(
+      options.availableSlots
+    )
+      ? options.availableSlots
+      : availability.availableSlots;
+
+  const availableCenters =
+    Array.isArray(
+      options.availableCenters
+    )
+      ? options.availableCenters
+      : availability.availableCenters;
+
+  const previous =
+    normalize(
+      currentState ||
+        loadBookingState()
+    );
+
+  const crop =
+    extractBookingCrop(
+      text
+    );
+
+  const quantity =
+    extractBookingQuantity(
+      text
+    );
+
+  /*
+    A command like:
+
+      book 50kg maize
+
+    MUST start a new conversation.
+
+    It must not inherit a stale date,
+    stale slot, or stale confirmation
+    from an older booking.
+  */
+  const startingFresh =
+    isBookingStart(
+      normalized
+    ) &&
+    Boolean(
+      crop ||
+      quantity
+    );
+
+  const preferredCenterId =
+    previous.centerId ||
+    availability.selectedCenterId ||
+    availableCenters[0]?.id ||
+    null;
+
+  const preferredCenter =
+    availableCenters.find(
+      item =>
+        String(item?.id) ===
+        String(
+          preferredCenterId
+        )
+    ) || null;
+
+  let state =
+    startingFresh
+      ? createBookingDraft({
+          active: true,
+
+          assistantManaged:
+            true,
+
+          crop,
+
+          quantity,
+
+          centerId:
+            preferredCenterId,
+
+          centerName:
+            preferredCenter?.name ||
+            null,
+        })
+      : previous;
+
+  if (!text) {
+    return {
+      handled: false,
+      intent:
+        BOOKING_INTENTS.NONE,
+      state,
+    };
+  }
+
+  /* =======================================================
+     CANCEL
+  ======================================================= */
 
   if (
-    containsBookingTerm(
+    isCancellation(
+      normalized
+    )
+  ) {
+    const empty =
+      createEmpty();
+
+    persistState(
+      empty
+    );
+
+    return {
+      handled: true,
+
+      intent:
+        BOOKING_INTENTS.CANCEL,
+
+      state:
+        empty,
+
+      nextStep:
+        BOOKING_STEPS.DETAILS,
+    };
+  }
+
+  /* =======================================================
+     CONFIRM
+  ======================================================= */
+
+  if (
+    isConfirmation(
+      normalized
+    )
+  ) {
+    if (
+      state.readyForConfirmation &&
+      validateBookingDraft(
+        state
+      ).valid
+    ) {
+      state =
+        createBookingDraft({
+          ...state,
+
+          confirmed:
+            true,
+
+          awaitingConfirmation:
+            false,
+        });
+
+      persistState(
+        state
+      );
+
+      return {
+        handled: true,
+
+        intent:
+          BOOKING_INTENTS.CONFIRM,
+
+        state,
+
+        booking:
+          state,
+
+        nextStep:
+          BOOKING_STEPS.COMPLETE,
+      };
+    }
+
+    return {
+      handled: true,
+
+      intent:
+        BOOKING_INTENTS.UPDATE,
+
+      state,
+
+      missing:
+        getMissingBookingFields(
+          state
+        ),
+
+      nextStep:
+        getBookingStage(
+          state
+        ),
+
+      confirmationBlocked:
+        true,
+    };
+  }
+
+  /* =======================================================
+     SHOW CURRENT STATE
+  ======================================================= */
+
+  if (
+    asksForState(
+      normalized
+    )
+  ) {
+    persistState(
+      state
+    );
+
+    return {
+      handled: true,
+
+      intent:
+        BOOKING_INTENTS.SHOW_STATE,
+
+      state,
+
+      summary:
+        getBookingSummary(
+          state,
+          options.language ||
+            "en"
+        ),
+
+      progress:
+        formatBookingProgress(
+          state,
+          options.language ||
+            "en"
+        ),
+
+      missing:
+        getMissingBookingFields(
+          state
+        ),
+
+      nextStep:
+        getBookingStage(
+          state
+        ),
+    };
+  }
+
+  /* =======================================================
+     CENTERS / CENTER TIMINGS
+  ======================================================= */
+
+  if (
+    asksForCenters(
+      normalized
+    ) ||
+    asksForCenterTimings(
+      normalized
+    )
+  ) {
+    persistState(
+      state
+    );
+
+    return {
+      handled: true,
+
+      intent:
+        BOOKING_INTENTS.SHOW_CENTERS,
+
+      state,
+
+      centers:
+        availableCenters,
+
+      centerText:
+        formatCenterOptions(
+          availableCenters,
+          options.language ||
+            "en"
+        ),
+
+      dates:
+        availableDates,
+
+      dateText:
+        makeDateText(
+          availableDates
+        ),
+    };
+  }
+
+  /* =======================================================
+     DATES
+  ======================================================= */
+
+  if (
+    asksForDates(
+      normalized
+    )
+  ) {
+    persistState(
+      state
+    );
+
+    return {
+      handled: true,
+
+      intent:
+        BOOKING_INTENTS.ASK_DATES,
+
+      state,
+
+      dates:
+        availableDates,
+
+      dateText:
+        makeDateText(
+          availableDates
+        ),
+    };
+  }
+
+  /* =======================================================
+     SLOTS
+  ======================================================= */
+
+  if (
+    asksForSlots(
+      normalized
+    )
+  ) {
+    persistState(
+      state
+    );
+
+    return {
+      handled: true,
+
+      intent:
+        BOOKING_INTENTS.ASK_SLOTS,
+
+      state,
+
+      slots:
+        availableSlots,
+
+      slotText:
+        makeSlotText(
+          availableSlots
+        ),
+    };
+  }
+
+  /* =======================================================
+     CENTER SELECTION
+  ======================================================= */
+
+  let center =
+    findAvailableCenter(
+      text,
+      availableCenters
+    );
+
+  if (
+    !center &&
+    /\b(first|earliest|nearest|default)\s+(center|centre)\b/i.test(
       text
     )
   ) {
-
-    return true;
-
+    center =
+      availableCenters[0] ||
+      null;
   }
 
-
-  const crop =
-    extractCrop(
+  if (
+    !center &&
+    /\b(another|different|other)\s+(center|centre)\b/i.test(
       text
-    );
-
-
-  const quantity =
-    extractQuantity(
-      text
-    );
-
-
-  return Boolean(
-    crop &&
-    quantity
-  );
-
-}
-
-
-/* =========================================================
-   UPDATE + SAVE
-========================================================= */
-
-export function applyBookingMessage(
-  message,
-  state =
-    null
-) {
-
-  const current =
-    state
-      ? normalizeBookingState(
-          state
-        )
-      : loadBookingState();
-
-
-  const next =
-    updateBookingFromMessage(
-      current,
-      message
-    );
-
-
-  return saveBookingState(
-    next
-  );
-
-}
-
-
-/* =========================================================
-   EXPORT OBJECT
-========================================================= */
-
-export const assistantBooking = {
-
-  createEmptyBookingState,
-
-  normalizeBookingState,
-
-  loadBookingState,
-
-  saveBookingState,
-
-  clearBookingState,
-
-  extractCrop,
-
-  extractQuantity,
-
-  extractDate,
-
-  extractTime,
-
-  isDateQuestion,
-
-  isSlotQuestion,
-
-  containsTimeHint,
-
-  containsBookingTerm,
-
-  looksLikeBookingRequest,
-
-  getMissingBookingFields,
-
-  getBookingStatus,
-
-  getNextBookingField,
-
-  getNextBookingStep,
-
-  getBookingFieldLabel,
-
-  updateBookingFromMessage,
-
-  applyBookingMessage,
-
-  setBookingCenter,
-
-  setBookingDate,
-
-  setBookingSlot,
-
-  setAvailableDates,
-
-  setAvailableSlots,
-
-  requestBookingConfirmation,
-
-  beginConfirmation,
-
-  resetConfirmation,
-
-  markBookingCompleted,
-
-  getBookingParams,
-
-  getBookingSummary,
-
-  buildBookingContext,
-
-};
-
-
-/* =========================================================
-   DEVELOPMENT TESTS
-========================================================= */
-
-if (
-  typeof import.meta !==
-    "undefined" &&
-  import.meta.env?.DEV
-) {
-
-  const examples = [
-
-    "book 50 kg paddy",
-
-    "book 500kg wheat",
-
-    "I want to sell 100 kg maize",
-
-    "tomorrow",
-
-    "show available dates",
-
-    "what slots are available",
-
-    "10:30 am",
-
-  ];
-
-
-  for (
-    const example of
-    examples
+    ) &&
+    state.centerId
   ) {
+    center =
+      availableCenters.find(
+        item =>
+          String(item?.id) !==
+          String(
+            state.centerId
+          )
+      ) || null;
+  }
 
-    console.debug(
-      "[KrishiSetu Booking]",
-      example,
+  if (center) {
+    state =
+      mergeBookingDraft(
+        state,
+        {
+          centerId:
+            center.id,
+
+          centerName:
+            center.name ||
+            null,
+
+          slot:
+            null,
+
+          slotStart:
+            null,
+
+          slotEnd:
+            null,
+
+          slotDisplay:
+            null,
+
+          availabilityChecked:
+            false,
+
+          confirmed:
+            false,
+
+          awaitingConfirmation:
+            false,
+        }
+      );
+
+    persistState(
+      state
+    );
+
+    return {
+      handled: true,
+
+      intent:
+        BOOKING_INTENTS.UPDATE,
+
+      state,
+
+      nextStep:
+        getBookingStage(
+          state
+        ),
+
+      missing:
+        getMissingBookingFields(
+          state
+        ),
+    };
+  }
+
+  /* =======================================================
+     EXTRACT DETAILS
+  ======================================================= */
+
+  const updates =
+    extractBookingUpdates(
+      text,
       {
-        crop:
-          extractCrop(
-            example
-          ),
-
-        quantity:
-          extractQuantity(
-            example
-          ),
-
-        date:
-          extractDate(
-            example
-          ),
-
-        time:
-          extractTime(
-            example
-          ),
-
-        dateQuestion:
-          isDateQuestion(
-            example
-          ),
-
-        slotQuestion:
-          isSlotQuestion(
-            example
-          ),
-
+        now,
       }
     );
 
+  /* =======================================================
+     NATURAL DATE
+  ======================================================= */
+
+  if (updates.date) {
+    if (!availableDates.length) {
+      persistState(
+        state
+      );
+
+      return {
+        handled: true,
+
+        intent:
+          BOOKING_INTENTS.ASK_DATES,
+
+        state,
+
+        dates: [],
+
+        dateText:
+          "",
+
+        unavailableDate:
+          updates.date,
+
+        needsAvailability:
+          true,
+      };
+    }
+
+    const selectedDate =
+      availableDates.find(
+        item =>
+          String(
+            item.date ||
+              item.id
+          ) ===
+          String(
+            updates.date
+          )
+      );
+
+    if (!selectedDate) {
+      persistState(
+        state
+      );
+
+      return {
+        handled: true,
+
+        intent:
+          BOOKING_INTENTS.ASK_DATES,
+
+        state,
+
+        dates:
+          availableDates,
+
+        dateText:
+          makeDateText(
+            availableDates
+          ),
+
+        unavailableDate:
+          updates.date,
+      };
+    }
+
+    state =
+      mergeBookingDraft(
+        state,
+        {
+          ...updates,
+
+          date:
+            selectedDate.date ||
+            selectedDate.id,
+
+          slot:
+            null,
+
+          slotStart:
+            null,
+
+          slotEnd:
+            null,
+
+          slotDisplay:
+            null,
+
+          availabilityChecked:
+            false,
+
+          confirmed:
+            false,
+
+          awaitingConfirmation:
+            false,
+        }
+      );
+
+    persistState(
+      state
+    );
+
+    return {
+      handled: true,
+
+      intent:
+        BOOKING_INTENTS.SELECT_DATE,
+
+      state,
+
+      selectedDate,
+
+      nextStep:
+        BOOKING_STEPS.SLOT,
+    };
   }
 
+  /* =======================================================
+     DATE BY NAME / WEEKDAY
+  ======================================================= */
+
+  const selectedDate =
+    findAvailableDate(
+      text,
+      availableDates,
+      now
+    );
+
+  if (selectedDate) {
+    state =
+      mergeBookingDraft(
+        state,
+        {
+          date:
+            selectedDate.date ||
+            selectedDate.id,
+
+          slot:
+            null,
+
+          slotStart:
+            null,
+
+          slotEnd:
+            null,
+
+          slotDisplay:
+            null,
+
+          availabilityChecked:
+            false,
+
+          confirmed:
+            false,
+
+          awaitingConfirmation:
+            false,
+        }
+      );
+
+    persistState(
+      state
+    );
+
+    return {
+      handled: true,
+
+      intent:
+        BOOKING_INTENTS.SELECT_DATE,
+
+      state,
+
+      selectedDate,
+
+      nextStep:
+        BOOKING_STEPS.SLOT,
+    };
+  }
+
+  /* =======================================================
+     DATE-LIKE MESSAGE BUT UNAVAILABLE
+  ======================================================= */
+
+  const looksLikeDateChoice =
+    Boolean(
+      extractNaturalBookingDate(
+        text,
+        now
+      )
+    ) ||
+    /\b(today|tomorrow|day after tomorrow|next|monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|tues|wed|thu|thurs|fri|sat|sun)\b/i.test(
+      text
+    );
+
+  if (
+    looksLikeDateChoice
+  ) {
+    persistState(
+      state
+    );
+
+    return {
+      handled: true,
+
+      intent:
+        BOOKING_INTENTS.ASK_DATES,
+
+      state,
+
+      dates:
+        availableDates,
+
+      dateText:
+        makeDateText(
+          availableDates
+        ),
+
+      unavailableDate:
+        text,
+    };
+  }
+
+  /* =======================================================
+     SLOT SELECTION
+  ======================================================= */
+
+  const selectedSlot =
+    findSlotReference(
+      text,
+      availableSlots
+    );
+
+  if (selectedSlot) {
+    state =
+      mergeBookingDraft(
+        state,
+        {
+          slot:
+            selectedSlot,
+
+          availabilityChecked:
+            true,
+
+          confirmed:
+            false,
+
+          awaitingConfirmation:
+            false,
+        }
+      );
+
+    persistState(
+      state
+    );
+
+    return {
+      handled: true,
+
+      intent:
+        BOOKING_INTENTS.SELECT_SLOT,
+
+      state,
+
+      selectedSlot,
+
+      review:
+        review(
+          state,
+          options.language ||
+            "en"
+        ),
+
+      nextStep:
+        state.readyForConfirmation
+          ? BOOKING_STEPS.REVIEW
+          : getBookingStage(
+              state
+            ),
+    };
+  }
+
+  /* =======================================================
+     TIME WAS REQUESTED BUT NOT AVAILABLE
+  ======================================================= */
+
+  if (
+    extractTimeReference(
+      text
+    )
+  ) {
+    persistState(
+      state
+    );
+
+    return {
+      handled: true,
+
+      intent:
+        BOOKING_INTENTS.ASK_SLOTS,
+
+      state,
+
+      slots:
+        availableSlots,
+
+      slotText:
+        makeSlotText(
+          availableSlots
+        ),
+
+      unavailableSlot:
+        extractTimeReference(
+          text
+        ),
+    };
+  }
+
+  /* =======================================================
+     REVIEW
+  ======================================================= */
+
+  if (
+    asksForReview(
+      normalized
+    )
+  ) {
+    persistState(
+      state
+    );
+
+    return {
+      handled: true,
+
+      intent:
+        BOOKING_INTENTS.REVIEW,
+
+      state,
+
+      review:
+        review(
+          state,
+          options.language ||
+            "en"
+        ),
+
+      nextStep:
+        state.readyForConfirmation
+          ? BOOKING_STEPS.REVIEW
+          : getBookingStage(
+              state
+            ),
+    };
+  }
+
+  /* =======================================================
+     GENERIC FIELD UPDATES
+  ======================================================= */
+
+  if (
+    Object.keys(
+      updates
+    ).length
+  ) {
+    const dateChanged =
+      Boolean(
+        updates.date
+      );
+
+    state =
+      mergeBookingDraft(
+        state,
+        {
+          ...updates,
+
+          availabilityChecked:
+            dateChanged
+              ? false
+              : state.availabilityChecked,
+
+          slot:
+            dateChanged
+              ? null
+              : state.slot,
+
+          slotStart:
+            dateChanged
+              ? null
+              : state.slotStart,
+
+          slotEnd:
+            dateChanged
+              ? null
+              : state.slotEnd,
+
+          slotDisplay:
+            dateChanged
+              ? null
+              : state.slotDisplay,
+
+          confirmed:
+            false,
+
+          awaitingConfirmation:
+            false,
+        }
+      );
+
+    persistState(
+      state
+    );
+
+    return {
+      handled: true,
+
+      intent:
+        startingFresh
+          ? BOOKING_INTENTS.START
+          : BOOKING_INTENTS.UPDATE,
+
+      state,
+
+      missing:
+        getMissingBookingFields(
+          state
+        ),
+
+      nextStep:
+        getBookingStage(
+          state
+        ),
+    };
+  }
+
+  /* =======================================================
+     NEW BOOKING
+  ======================================================= */
+
+  if (startingFresh) {
+    persistState(
+      state
+    );
+
+    return {
+      handled: true,
+
+      intent:
+        BOOKING_INTENTS.START,
+
+      state,
+
+      missing:
+        getMissingBookingFields(
+          state
+        ),
+
+      nextStep:
+        getBookingStage(
+          state
+        ),
+    };
+  }
+
+  return {
+    handled: false,
+
+    intent:
+      BOOKING_INTENTS.NONE,
+
+    state,
+  };
 }
+
+export const process =
+  processBookingConversation;
+
+/* =========================================================
+   DEFAULT OBJECT
+========================================================= */
+
+export const assistantBooking = {
+  BOOKING_ENGINE_VERSION,
+
+  BOOKING_FIELDS,
+
+  BOOKING_STAGES,
+
+  BOOKING_STEPS,
+
+  BOOKING_INTENTS,
+
+  BOOKING_STORAGE_KEY,
+
+  BOOKING_STATE_STORAGE_KEY,
+
+  BOOKING_AVAILABILITY_STORAGE_KEY,
+
+  BOOKING_SCHEMA_VERSION,
+
+  extractBookingCrop,
+
+  extractCrop,
+
+  extractBookingQuantity,
+
+  extractQuantity,
+
+  normalizeCenter,
+
+  findAvailableCenter,
+
+  normalizeBookingDate,
+
+  extractNaturalBookingDate,
+
+  getDateReference,
+
+  normalizeBookingSlot,
+
+  extractTimeReference,
+
+  findAvailableDate,
+
+  findSlotReference,
+
+  createBookingDraft,
+
+  createEmpty,
+
+  normalize,
+
+  normalizeBookingState,
+
+  mergeBookingDraft,
+
+  getMissingBookingFields,
+
+  getMissingDetails,
+
+  getBookingStage,
+
+  getBookingStep,
+
+  getNextBookingField,
+
+  validateBookingDraft,
+
+  extractBookingUpdates,
+
+  saveBookingDraft,
+
+  loadBookingDraft,
+
+  updateBookingDraft,
+
+  saveBookingState,
+
+  clearBookingDraft,
+
+  saveBookingAvailabilityContext,
+
+  getBookingAvailabilityContext,
+
+  requestBookingAvailabilitySync,
+
+  buildBookingRouteState,
+
+  readBookingRouteState,
+
+  formatCenterOptions,
+
+  getBookingSummary,
+
+  getStateSummary,
+
+  getNextBookingQuestion,
+
+  nextPrompt,
+
+  formatBookingProgress,
+
+  getBookingProgress,
+
+  review,
+
+  buildBookingContext,
+
+  processBookingConversation,
+
+  process,
+};
+
+export default assistantBooking;

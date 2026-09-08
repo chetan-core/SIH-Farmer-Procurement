@@ -46,6 +46,16 @@ import {
   syncBookingToPrototype,
 } from "../../data/bookingBridge";
 
+import {
+  loadBookingDraft,
+  updateBookingDraft,
+  clearBookingDraft,
+  saveBookingAvailabilityContext,
+} from "../../assistant/assistantBooking";
+
+import {
+  getBookingState,
+} from "../../assistant/assistantController";
 
 const API_URL =
   import.meta.env.VITE_API_URL;
@@ -931,6 +941,10 @@ function FarmerBook() {
   useState(false);
 
 
+  const confirmingRef =
+    useRef(false);
+
+
   const [
     error,
     setError,
@@ -975,13 +989,30 @@ function FarmerBook() {
         )
       : "";
 
+  const assistantAutoConfirm =
+    Boolean(
+      location.state?.assistantAutoConfirm
+    );
+
 
   const appliedAssistantBookingRef =
     useRef("");
 
+  const assistantAutoConfirmKeyRef =
+    useRef("");
+
+  const assistantConfirmRequestRef =
+    useRef(null);
+
 
   const assistantSlotAppliedRef =
-    useRef(false);
+    useRef("");
+
+
+  const assistantManagedRef =
+    useRef(
+      Boolean(assistantBooking)
+    );
 
 
   /* =======================================================
@@ -1042,6 +1073,216 @@ function FarmerBook() {
     );
 
 
+  useEffect(() => {
+    const syncAssistantBooking = event => {
+      const explicitClear =
+        Boolean(event?.detail) &&
+        event.detail.active === false;
+
+      const storedBooking =
+        explicitClear
+          ? null
+          : getBookingState();
+
+      const booking =
+        storedBooking?.active
+          ? storedBooking
+          : !event && assistantBooking?.active
+            ? assistantBooking
+            : null;
+
+      if (!booking) {
+        if (explicitClear) {
+          assistantManagedRef.current = false;
+          setCrop('');
+          setQuantity('');
+          setCenterId('');
+          setDate('');
+          setSelectedSlot(current =>
+            current ? null : current
+          );
+          setAvailable(false);
+          setAvailabilityCheckedAt(null);
+          setCenterSwitchMessage('');
+          return;
+        }
+
+        if (!assistantBooking?.active) {
+          assistantManagedRef.current = false;
+        }
+
+        return;
+      }
+
+      assistantManagedRef.current =
+        booking.assistantManaged === true ||
+        Boolean(assistantBooking?.active);
+
+      if (booking.crop) {
+        const matchedCrop = crops.find(
+          item =>
+            String(item.id) === String(booking.crop) ||
+            String(item.name || '').toLowerCase() ===
+              String(booking.crop).toLowerCase()
+        );
+
+        if (matchedCrop) {
+          setCrop(current =>
+            String(current) === String(matchedCrop.id)
+              ? current
+              : matchedCrop.id
+          );
+        }
+      }
+
+      if (booking.quantity != null) {
+        const nextQuantity = String(booking.quantity);
+        setQuantity(current =>
+          current === nextQuantity ? current : nextQuantity
+        );
+      }
+
+      if (booking.centerId) {
+        const nextCenterId = String(booking.centerId);
+        setCenterId(current =>
+          String(current) === nextCenterId
+            ? current
+            : nextCenterId
+        );
+      }
+
+      if (booking.date) {
+        const nextDate = dateToOptionId(booking.date);
+        if (nextDate) {
+          setDate(current =>
+            current === nextDate ? current : nextDate
+          );
+        }
+      }
+
+      if (booking.slotStart) {
+        const nextSlot = {
+          id:
+            booking.slotId ||
+            String(booking.slotStart).replace(':', '-'),
+          start: String(booking.slotStart),
+          end: String(booking.slotEnd || ''),
+          display:
+            booking.slotDisplay ||
+            (booking.slotEnd
+              ? `${booking.slotStart} – ${booking.slotEnd}`
+              : String(booking.slotStart)),
+        };
+
+        setSelectedSlot(current =>
+          sameSlot(current, nextSlot) ? current : nextSlot
+        );
+      } else {
+        setSelectedSlot(current =>
+          current ? null : current
+        );
+      }
+    };
+
+    syncAssistantBooking();
+
+    window.addEventListener(
+      'krishisetu:assistant-booking-updated',
+      syncAssistantBooking
+    );
+
+    return () => {
+      window.removeEventListener(
+        'krishisetu:assistant-booking-updated',
+        syncAssistantBooking
+      );
+    };
+  }, [crops, assistantBooking]);
+
+  useEffect(() => {
+  if (assistantBooking?.active) return;
+
+  const draft = loadBookingDraft();
+
+  if (!draft) return;
+
+  if (draft.assistantManaged === true) {
+    assistantManagedRef.current = true;
+  }
+
+  if (draft.crop) {
+    const matchedCrop = crops.find(
+      (item) =>
+        item.id === draft.crop ||
+        item.name?.toLowerCase() === draft.crop?.toLowerCase()
+    );
+
+    if (matchedCrop) {
+      setCrop(matchedCrop.id);
+    }
+  }
+
+  if (draft.quantity) {
+    setQuantity(String(draft.quantity));
+  }
+
+  if (draft.centerId) {
+    setCenterId(String(draft.centerId));
+  }
+
+  if (draft.date) {
+    setDate(dateToOptionId(draft.date));
+  }
+
+  if (draft.slotStart) {
+    setSelectedSlot({
+      id:
+        draft.slotId ||
+        String(draft.slotStart).replace(':', '-'),
+      start: draft.slotStart,
+      end: draft.slotEnd || '',
+      display:
+        draft.slotDisplay ||
+        (draft.slotEnd
+          ? `${draft.slotStart} – ${draft.slotEnd}`
+          : String(draft.slotStart)),
+    });
+  }
+}, [crops]);
+
+  useEffect(() => {
+  if (
+    assistantBookingKey &&
+    appliedAssistantBookingRef.current !== assistantBookingKey
+  ) {
+    return;
+  }
+
+  if (!crop && !quantity && !centerId && !date) return;
+
+  const updates = {
+    crop: crop || null,
+    quantity: quantity ? Number(quantity) : null,
+    centerId: centerId || null,
+    date: dateOptionIdToIso(date),
+    slotStart: selectedSlot?.start || null,
+    slotEnd: selectedSlot?.end || null,
+  };
+
+  if (
+    assistantManagedRef.current
+  ) {
+    updates.assistantManaged = true;
+  }
+
+  updateBookingDraft(updates);
+}, [
+  crop,
+  quantity,
+  centerId,
+  date,
+  selectedSlot,
+]);
   /* =======================================================
      INITIAL CROP
   ======================================================= */
@@ -1051,7 +1292,8 @@ function FarmerBook() {
     if (
       crop ||
       crops.length ===
-        0
+        0 ||
+      assistantManagedRef.current
     ) {
 
       return;
@@ -1106,7 +1348,8 @@ function FarmerBook() {
       quantity === "" &&
       Number(
         farmerQuantity
-      ) > 0
+      ) > 0 &&
+      !assistantManagedRef.current
     ) {
 
       setQuantity(
@@ -1139,7 +1382,6 @@ function FarmerBook() {
 
     }
 
-
     if (
       appliedAssistantBookingRef.current ===
       assistantBookingKey
@@ -1149,185 +1391,95 @@ function FarmerBook() {
 
     }
 
+    assistantManagedRef.current = true;
 
-    /*
-     * Crop
-     */
-
-    if (
-      assistantBooking.crop
-    ) {
-
+    if (assistantBooking.crop) {
       const requestedCrop =
-        String(
-          assistantBooking.crop
-        )
+        String(assistantBooking.crop)
           .trim()
           .toLowerCase();
-
 
       const matchingCrop =
         crops.find(
           item =>
-            String(
-              item.id
-            )
+            String(item.id)
               .trim()
-              .toLowerCase() ===
-            requestedCrop
+              .toLowerCase() === requestedCrop
         );
 
-
-      if (
-        matchingCrop
-      ) {
-
-        setCrop(
-          matchingCrop.id
-        );
-
-      }
-
-    }
-
-
-    /*
-     * Quantity
-     */
-
-    const requestedQuantity =
-      Number(
-        assistantBooking.quantity ??
-        assistantBooking.estimatedQuantity
+      setCrop(
+        matchingCrop?.id || ''
       );
+    } else {
+      setCrop('');
+    }
 
+    const requestedQuantity = Number(
+      assistantBooking.quantity ??
+      assistantBooking.estimatedQuantity
+    );
+
+    setQuantity(
+      Number.isFinite(requestedQuantity) &&
+        requestedQuantity > 0
+        ? String(requestedQuantity)
+        : ''
+    );
 
     if (
-      Number.isFinite(
-        requestedQuantity
-      ) &&
-      requestedQuantity >
-        0
+      assistantBooking.centerId !== undefined &&
+      assistantBooking.centerId !== null &&
+      String(assistantBooking.centerId)
     ) {
-
-      setQuantity(
-        String(
-          requestedQuantity
-        )
+      setCenterId(
+        String(assistantBooking.centerId)
       );
-
+    } else {
+      setCenterId('');
     }
 
-
-    /*
-     * Center
-     */
-
-    if (
-      assistantBooking.centerId !==
-        undefined &&
-      assistantBooking.centerId !==
-        null
-    ) {
-
-      const requestedCenterId =
-        String(
-          assistantBooking.centerId
-        );
-
-
-      const matchingCenter =
-        availableCenters.find(
-          center =>
-            String(
-              center.id
-            ) ===
-            requestedCenterId
-        );
-
-
-      if (
-        matchingCenter
-      ) {
-
-        setCenterId(
-          matchingCenter.id
-        );
-
-      }
-
+    if (assistantBooking.date) {
+      setDate(
+        dateToOptionId(assistantBooking.date)
+      );
+    } else {
+      setDate('');
     }
 
+    if (assistantBooking.slotStart) {
+      const slot = {
+        id:
+          assistantBooking.slotId ||
+          String(assistantBooking.slotStart).replace(':', '-'),
+        start: String(assistantBooking.slotStart),
+        end: String(assistantBooking.slotEnd || ''),
+        display:
+          assistantBooking.slotDisplay ||
+          (assistantBooking.slotEnd
+            ? `${assistantBooking.slotStart} – ${assistantBooking.slotEnd}`
+            : String(assistantBooking.slotStart)),
+      };
 
-    /*
-     * Date
-     *
-     * assistantBooking.date should normally be:
-     *
-     * YYYY-MM-DD
-     */
-
-    if (
-      assistantBooking.date
-    ) {
-
-      const requestedDate =
-        String(
-          assistantBooking.date
-        );
-
-
-      const matchingDate =
-        dates.find(
-          item =>
-            item.date ===
-              requestedDate ||
-            item.id ===
-              requestedDate
-        );
-
-
-      if (
-        matchingDate
-      ) {
-
-        setDate(
-          matchingDate.id
-        );
-
-      }
-
+      setSelectedSlot(slot);
+    } else {
+      setSelectedSlot(null);
     }
 
+    setAvailable(
+      Boolean(assistantBooking.slotStart)
+    );
 
-    /*
-     * Mark as applied.
-     */
-
+    assistantSlotAppliedRef.current = '';
     appliedAssistantBookingRef.current =
       assistantBookingKey;
 
-
-    assistantSlotAppliedRef.current =
-      false;
-
-
-    setError(
-      ""
-    );
-
-    setCenterSwitchMessage(
-      ""
-
-    );
-
+    setError('');
+    setCenterSwitchMessage('');
   }, [
     assistantBooking,
     assistantBookingKey,
-    availableCenters,
     crops,
   ]);
-
 
   /* =======================================================
      LOAD CENTERS
@@ -1472,128 +1624,62 @@ function FarmerBook() {
 
   useEffect(() => {
 
-    /*
-     * Assistant-selected center gets priority.
-     */
-
-    if (
-      assistantBooking?.centerId
-    ) {
-
-      const assistantCenter =
-        availableCenters.find(
-          center =>
-            String(
-              center.id
-            ) ===
-            String(
-              assistantBooking.centerId
-            )
-        );
-
-
-      if (
-        assistantCenter
-      ) {
-
-        if (
-          String(
-            centerId
-          ) !==
-          String(
-            assistantCenter.id
-          )
-        ) {
-
-          setCenterId(
-            assistantCenter.id
-          );
-
-        }
-
-        return;
-
+    if (availableCenters.length === 0) {
+      if (!assistantManagedRef.current) {
+        setCenterId('');
       }
-
-    }
-
-
-    if (
-      availableCenters.length ===
-      0
-    ) {
-
-      setCenterId(
-        ""
-      );
-
       return;
-
     }
 
+    /*
+     * In assistant mode, never silently replace a missing or requested
+     * center with the first center. The assistant must be allowed to
+     * ask the farmer to choose one. A requested center may also arrive
+     * before the API has finished loading the centers, so keep the id
+     * untouched while we wait.
+     */
+    if (assistantManagedRef.current) {
+      return;
+    }
 
     const preferredCenter =
       farmer?.preferredCenterId ||
       farmer?.preferred_center_id ||
-      "";
-
+      '';
 
     const preferredExists =
       availableCenters.some(
         center =>
-          String(
-            center.id
-          ) ===
-          String(
-            preferredCenter
-          )
+          String(center.id) ===
+          String(preferredCenter)
       );
-
 
     const currentExists =
       availableCenters.some(
         center =>
-          String(
-            center.id
-          ) ===
-          String(
-            centerId
-          )
+          String(center.id) ===
+          String(centerId)
       );
-
 
     if (
       preferredExists &&
       !currentExists
     ) {
-
-      setCenterId(
-        preferredCenter
-      );
-
+      setCenterId(preferredCenter);
       return;
-
     }
 
-
-    if (
-      !currentExists
-    ) {
-
+    if (!currentExists) {
       setCenterId(
         availableCenters[0].id
       );
-
     }
-
   }, [
     availableCenters,
     centerId,
     farmer?.preferredCenterId,
     farmer?.preferred_center_id,
-    assistantBooking?.centerId,
   ]);
-
 
   /* =======================================================
      SELECTED CENTER
@@ -1601,21 +1687,26 @@ function FarmerBook() {
 
   const selectedCenter =
     useMemo(
-      () =>
-        availableCenters.find(
-          center =>
-            String(
-              center.id
-            ) ===
-            String(
-              centerId
-            )
-        ) ||
-        availableCenters[0] ||
-        null,
+      () => {
+        const match =
+          availableCenters.find(
+            center =>
+              String(center.id) ===
+              String(centerId)
+          ) || null;
+
+        if (match) return match;
+
+        if (assistantManagedRef.current) {
+          return null;
+        }
+
+        return availableCenters[0] || null;
+      },
       [
         availableCenters,
         centerId,
+        assistantBookingKey,
       ]
     );
 
@@ -1765,99 +1856,80 @@ function FarmerBook() {
 
   useEffect(() => {
 
-    /*
-     * Assistant-selected date gets priority.
-     */
+    const assistantState =
+      getBookingState();
 
-    if (
-      assistantBooking?.date
-    ) {
+    if (assistantManagedRef.current) {
+      const assistantDate =
+        assistantState?.assistantManaged
+          ? assistantState.date
+          : null;
 
-      const matchingDate =
-        dates.find(
-          item =>
-            item.date ===
-              String(
-                assistantBooking.date
-              ) ||
-            item.id ===
-              String(
-                assistantBooking.date
-              )
-        );
-
-
-      if (
-        matchingDate
-      ) {
-
-        if (
-          date !==
-          matchingDate.id
-        ) {
-
-          setDate(
-            matchingDate.id
+      if (assistantDate) {
+        const matchingDate =
+          dates.find(
+            item =>
+              item.date === String(assistantDate) ||
+              item.id === String(assistantDate)
           );
 
+        if (
+          matchingDate &&
+          date !== matchingDate.id
+        ) {
+          setDate(matchingDate.id);
         }
-
-        return;
-
       }
 
-    }
-
-
-    if (
-      dates.length ===
-      0
-    ) {
-
-      setDate(
-        ""
-      );
-
+      /*
+       * Do not clear a farmer-selected date merely because the static
+       * route state has no date. Manual changes are persisted into the
+       * canonical assistant draft by the handlers below.
+       */
       return;
-
     }
 
+    if (dates.length === 0) {
+      if (date !== '') {
+        setDate('');
+      }
+      return;
+    }
 
     const valid =
       dates.some(
         item =>
-          item.id ===
-          date
+          item.id === date
       );
 
-
-    if (
-      !valid
-    ) {
-
+    if (!valid) {
       setDate(
         dates[0].id
       );
-
     }
-
   }, [
     dates,
-    date,
-    assistantBooking?.date,
   ]);
-
 
   const selectedDate =
     useMemo(
-      () =>
-        dates.find(
-          item =>
-            item.id ===
-            date
-        ) ||
-        dates[0] ||
-        null,
+      () => {
+        const match =
+          dates.find(
+            item =>
+              item.id === date
+          );
+
+        if (match) return match;
+
+        if (
+          assistantManagedRef.current
+        ) {
+          return null;
+        }
+
+        return dates[0] || null;
+      },
       [
         dates,
         date,
@@ -1871,21 +1943,26 @@ function FarmerBook() {
 
   const selectedCrop =
     useMemo(
-      () =>
-        crops.find(
-          item =>
-            String(
-              item?.id
-            ) ===
-            String(
-              crop
-            )
-        ) ||
-        crops[0] ||
-        null,
+      () => {
+        const match =
+          crops.find(
+            item =>
+              String(item?.id) ===
+              String(crop)
+          ) || null;
+
+        if (match) return match;
+
+        if (assistantManagedRef.current && !crop) {
+          return null;
+        }
+
+        return crops[0] || null;
+      },
       [
         crops,
         crop,
+        assistantBookingKey,
       ]
     );
 
@@ -2124,13 +2201,139 @@ function FarmerBook() {
 
 
   /* =======================================================
+     ASSISTANT LIVE AVAILABILITY BRIDGE
+  ======================================================= */
+
+  useEffect(() => {
+    const buildAvailabilityContext = () => {
+      const liveAvailableDates =
+        dates.filter(day => {
+          return availableCenters.some(center => {
+            const openingTime =
+              center.opening_time ||
+              center.openingTime ||
+              "09:00";
+
+            const closingTime =
+              center.closing_time ||
+              center.closingTime ||
+              "17:00";
+
+            const duration =
+              Number(
+                settings?.slotDuration ||
+                30
+              );
+
+            const capacity =
+              getCenterCapacity(
+                center,
+                settings
+              );
+
+            const slots =
+              generateTimeSlots(
+                openingTime,
+                closingTime,
+                duration,
+                capacity
+              );
+
+            return slots.some(slot => {
+              if (
+                isSlotInPast(
+                  slot,
+                  day
+                )
+              ) {
+                return false;
+              }
+
+              const booked =
+                getBookedCount(
+                  bookings,
+                  center.id,
+                  day.date,
+                  slot.start,
+                  slot.end
+                );
+
+              return booked < capacity;
+            });
+          });
+        });
+
+      const liveAvailableSlots =
+        selectedDate
+          ? availability.filter(
+              slot =>
+                Number(slot.remaining) > 0 &&
+                slot.loadClass !== "past"
+            )
+          : [];
+
+      saveBookingAvailabilityContext({
+        availableDates:
+          liveAvailableDates,
+        availableSlots:
+          liveAvailableSlots,
+        availableCenters:
+          availableCenters.map(center => ({
+            id: center.id,
+            name: center.name,
+            openingTime:
+              center.opening_time ||
+              center.openingTime ||
+              "09:00",
+            closingTime:
+              center.closing_time ||
+              center.closingTime ||
+              "17:00",
+            capacity:
+              getCenterCapacity(
+                center,
+                settings
+              ),
+          })),
+        selectedDate:
+          selectedDate?.date || null,
+        selectedCenterId:
+          selectedCenter?.id || null,
+      });
+    };
+
+    buildAvailabilityContext();
+
+    window.addEventListener(
+      "krishisetu:assistant-request-availability",
+      buildAvailabilityContext
+    );
+
+    return () => {
+      window.removeEventListener(
+        "krishisetu:assistant-request-availability",
+        buildAvailabilityContext
+      );
+    };
+  }, [
+    dates,
+    availability,
+    availableCenters,
+    bookings,
+    settings,
+    selectedDate?.date,
+    selectedCenter?.id,
+  ]);
+
+
+  /* =======================================================
      APPLY ASSISTANT SLOT
   ======================================================= */
 
   useEffect(() => {
 
     if (
-      !assistantBooking ||
+      !assistantManagedRef.current ||
       !availability.length
     ) {
 
@@ -2138,140 +2341,88 @@ function FarmerBook() {
 
     }
 
+    const booking = getBookingState();
 
     const requestedStart =
-      assistantBooking.slotStart ||
-      assistantBooking.start ||
-      "";
-
+      booking?.slotStart || '';
 
     const requestedEnd =
-      assistantBooking.slotEnd ||
-      assistantBooking.end ||
-      "";
-
+      booking?.slotEnd || '';
 
     const requestedSlotId =
-      assistantBooking.slotId ||
-      "";
+      booking?.slotId || '';
 
-
-    if (
-      !requestedStart &&
-      !requestedEnd &&
-      !requestedSlotId
-    ) {
-
+    if (!requestedStart) {
+      assistantSlotAppliedRef.current = '';
       return;
-
     }
 
-
-    if (
-      assistantSlotAppliedRef.current
-    ) {
-
-      return;
-
-    }
-
+    const signature = [
+      booking?.date || '',
+      booking?.centerId || '',
+      requestedSlotId || '',
+      requestedStart,
+      requestedEnd,
+    ].join('|');
 
     const matchingSlot =
-      availability.find(
-        slot => {
-
-          if (
-            requestedSlotId &&
-            slot.id ===
-              requestedSlotId
-          ) {
-
-            return true;
-
-          }
-
-
-          if (
-            requestedStart &&
-            requestedEnd &&
-            slot.start ===
-              requestedStart &&
-            slot.end ===
-              requestedEnd
-          ) {
-
-            return true;
-
-          }
-
-
-          return false;
-
+      availability.find(slot => {
+        if (
+          requestedSlotId &&
+          String(slot.id) === String(requestedSlotId)
+        ) {
+          return true;
         }
-      );
 
+        return (
+          String(slot.start) === String(requestedStart) &&
+          (!requestedEnd ||
+            String(slot.end) === String(requestedEnd))
+        );
+      });
 
-    if (
-      !matchingSlot
-    ) {
-
+    if (!matchingSlot) {
       return;
-
     }
 
-
     if (
-      matchingSlot.loadClass ===
-        "past" ||
-      matchingSlot.remaining <=
-        0
+      matchingSlot.loadClass === 'past' ||
+      Number(matchingSlot.remaining) <= 0
     ) {
+      setSelectedSlot(null);
+      setAvailable(true);
 
       setError(
-        language ===
-          "hi"
-          ? "सहायक द्वारा चुना गया स्लॉट अब उपलब्ध नहीं है। कृपया दूसरा स्लॉट चुनें।"
-          : language ===
-              "te"
-            ? "అసిస్టెంట్ ఎంచుకున్న స్లాట్ ఇప్పుడు అందుబాటులో లేదు. దయచేసి మరో స్లాట్ ఎంచుకోండి."
-            : "The slot selected by the assistant is no longer available. Please choose another slot."
+        language === 'hi'
+          ? 'चुना गया समय अब उपलब्ध नहीं है। कृपया दूसरा स्लॉट चुनें।'
+          : language === 'te'
+            ? 'ఎంచుకున్న సమయం ఇప్పుడు అందుబాటులో లేదు. దయచేసి మరో స్లాట్ ఎంచుకోండి.'
+            : 'The selected arrival window is no longer available. Please choose another slot.'
       );
 
-
       return;
-
     }
 
-
-    setAvailable(
-      true
-    );
-
-
-    setSelectedSlot(
-      matchingSlot
-    );
-
-
+    setAvailable(true);
     setAvailabilityCheckedAt(
-      new Date()
+      current => current || new Date()
     );
 
+    setSelectedSlot(current =>
+      sameSlot(current, matchingSlot)
+        ? current
+        : matchingSlot
+    );
 
+    setError('');
     assistantSlotAppliedRef.current =
-      true;
-
-
-    setError(
-      ""
-    );
-
+      signature;
   }, [
-    assistantBooking,
     availability,
     language,
+    selectedDate?.date,
+    selectedCenter?.id,
   ]);
-
 
   /* =======================================================
      SELECTED SLOT
@@ -2519,7 +2670,7 @@ function FarmerBook() {
      */
 
     assistantSlotAppliedRef.current =
-      false;
+      '';
 
   }, [
     crop,
@@ -2727,21 +2878,28 @@ function FarmerBook() {
       event.target.value
         .replace(
           /[^0-9.]/g,
-          ""
+          ''
         )
         .slice(
           0,
           8
         );
 
+    setQuantity(value);
 
-    setQuantity(
-      value
-    );
-
+    updateBookingDraft({
+      crop: crop || null,
+      quantity: value ? Number(value) : null,
+      centerId: centerId || null,
+      date: selectedDate?.date || null,
+      slot: null,
+      slotStart: null,
+      slotEnd: null,
+      assistantManaged:
+        assistantManagedRef.current,
+    });
 
     resetAvailability();
-
   }
 
 
@@ -2749,16 +2907,22 @@ function FarmerBook() {
     id
   ) {
 
-    setCrop(
-      id
-    );
+    setCrop(id);
+    setOpenMenu(null);
 
-    setOpenMenu(
-      null
-    );
+    updateBookingDraft({
+      crop: id || null,
+      quantity: quantity ? Number(quantity) : null,
+      centerId: centerId || null,
+      date: selectedDate?.date || null,
+      slot: null,
+      slotStart: null,
+      slotEnd: null,
+      assistantManaged:
+        assistantManagedRef.current,
+    });
 
     resetAvailability();
-
   }
 
 
@@ -2766,16 +2930,22 @@ function FarmerBook() {
     id
   ) {
 
-    setCenterId(
-      id
-    );
+    setCenterId(id);
+    setOpenMenu(null);
 
-    setOpenMenu(
-      null
-    );
+    updateBookingDraft({
+      crop: crop || null,
+      quantity: quantity ? Number(quantity) : null,
+      centerId: id || null,
+      date: selectedDate?.date || null,
+      slot: null,
+      slotStart: null,
+      slotEnd: null,
+      assistantManaged:
+        assistantManagedRef.current,
+    });
 
     resetAvailability();
-
   }
 
 
@@ -2783,12 +2953,31 @@ function FarmerBook() {
     id
   ) {
 
-    setDate(
-      id
-    );
+    const selected =
+      dates.find(
+        item =>
+          String(item.id) === String(id)
+      );
 
+    const nextDate =
+      selected?.date || null;
+
+    setDate(id);
+
+    updateBookingDraft({
+      crop: crop || null,
+      quantity: quantity ? Number(quantity) : null,
+      centerId: centerId || null,
+      date: nextDate,
+      slot: null,
+      slotStart: null,
+      slotEnd: null,
+      assistantManaged:
+        assistantManagedRef.current,
+    });
+
+    assistantSlotAppliedRef.current = '';
     resetAvailability();
-
   }
 
 
@@ -3182,10 +3371,24 @@ function FarmerBook() {
     }
 
 
-    setSelectedSlot(
-      slot
-    );
+    
 
+    setSelectedSlot(slot);
+
+    updateBookingDraft({
+      crop: crop || null,
+      quantity: quantity ? Number(quantity) : null,
+      centerId: centerId || null,
+      date: selectedDate?.date || date || null,
+      slot: {
+        id: slot.id,
+        start: slot.start,
+        end: slot.end,
+        display: slot.display,
+      },
+      assistantManaged:
+        assistantManagedRef.current,
+    });
 
     setError(
       ""
@@ -3197,7 +3400,8 @@ function FarmerBook() {
   async function handleConfirmBooking() {
 
     if (
-      confirming
+      confirming ||
+      confirmingRef.current
     ) {
 
       return;
@@ -3263,6 +3467,8 @@ function FarmerBook() {
 
     }
 
+
+    confirmingRef.current = true;
 
     setConfirming(
       true
@@ -3725,6 +3931,7 @@ function FarmerBook() {
         true
       );
 
+      clearBookingDraft();
 
       await new Promise(
         resolve =>
@@ -3762,6 +3969,8 @@ function FarmerBook() {
 
     } finally {
 
+      confirmingRef.current = false;
+
       setConfirming(
         false
       );
@@ -3769,6 +3978,183 @@ function FarmerBook() {
     }
 
   }
+
+
+  /* =======================================================
+     ASSISTANT CONFIRMATION HANDOFF
+  ======================================================= */
+
+  useEffect(() => {
+    const handleAssistantConfirm = event => {
+      const requestedBooking =
+        event?.detail?.booking ||
+        event?.detail?.assistantBooking ||
+        null;
+
+      if (!assistantManagedRef.current) return;
+
+      assistantConfirmRequestRef.current =
+        requestedBooking ||
+        getBookingState();
+
+      const booking =
+        assistantConfirmRequestRef.current;
+
+      if (booking?.crop) {
+        const matchedCrop = crops.find(
+          item =>
+            String(item?.id) === String(booking.crop) ||
+            String(item?.name || "").toLowerCase() ===
+              String(booking.crop).toLowerCase()
+        );
+
+        if (matchedCrop) setCrop(matchedCrop.id);
+      }
+
+      if (booking?.quantity != null) {
+        setQuantity(String(booking.quantity));
+      }
+
+      if (booking?.centerId != null) {
+        setCenterId(String(booking.centerId));
+      }
+
+      if (booking?.date) {
+        setDate(
+          dateToOptionId(booking.date)
+        );
+      }
+
+      if (booking?.slotStart) {
+        setSelectedSlot({
+          id:
+            booking.slotId ||
+            String(booking.slotStart).replace(':', '-'),
+          start: String(booking.slotStart),
+          end: String(booking.slotEnd || ''),
+          display:
+            booking.slotDisplay ||
+            (booking.slotEnd
+              ? `${booking.slotStart} – ${booking.slotEnd}`
+              : String(booking.slotStart)),
+        });
+        setAvailable(true);
+      }
+    };
+
+    window.addEventListener(
+      "krishisetu:assistant-confirm-booking",
+      handleAssistantConfirm
+    );
+
+    return () => {
+      window.removeEventListener(
+        "krishisetu:assistant-confirm-booking",
+        handleAssistantConfirm
+      );
+    };
+  }, [crops]);
+
+
+  useEffect(() => {
+    const requested = assistantConfirmRequestRef.current;
+
+    if (!requested) return;
+    if (!assistantManagedRef.current) return;
+    if (!selectedCenter || !selectedDate || !selectedSlotRecord) return;
+    if (!crop || !quantity) return;
+
+    const requestedDate = String(requested.date || "");
+    const selectedDateValue = String(selectedDate.date || "");
+    const requestedStart = String(requested.slotStart || requested.slot?.start || "");
+    const requestedEnd = String(requested.slotEnd || requested.slot?.end || "");
+
+    if (requestedDate && requestedDate !== selectedDateValue) return;
+    if (requested.centerId && String(requested.centerId) !== String(selectedCenter.id)) return;
+    if (requested.crop && String(requested.crop) !== String(crop)) return;
+    if (requested.quantity != null && Number(requested.quantity) !== Number(quantity)) return;
+    if (requestedStart && String(selectedSlotRecord.start) !== requestedStart) return;
+    if (requestedEnd && String(selectedSlotRecord.end) !== requestedEnd) return;
+
+    const availableSlot =
+      availability.find(
+        slot =>
+          String(slot.start) === String(selectedSlotRecord.start) &&
+          String(slot.end) === String(selectedSlotRecord.end) &&
+          Number(slot.remaining) > 0 &&
+          slot.loadClass !== "past"
+      );
+
+    if (!availableSlot) return;
+
+    assistantConfirmRequestRef.current = null;
+    handleConfirmBooking();
+  }, [
+    selectedCenter?.id,
+    selectedDate?.date,
+    selectedSlotRecord?.start,
+    selectedSlotRecord?.end,
+    availability,
+    crop,
+    quantity,
+  ]);
+
+
+  useEffect(() => {
+    if (
+      !assistantAutoConfirm ||
+      !assistantBookingKey ||
+      assistantAutoConfirmKeyRef.current === assistantBookingKey
+    ) {
+      return;
+    }
+
+    if (
+      !assistantManagedRef.current ||
+      !selectedCenter ||
+      !selectedDate ||
+      !selectedSlotRecord ||
+      !crop ||
+      !quantity
+    ) {
+      return;
+    }
+
+    const availableSlot =
+      availability.find(
+        slot =>
+          String(slot.start) ===
+            String(selectedSlotRecord.start) &&
+          String(slot.end) ===
+            String(selectedSlotRecord.end) &&
+          Number(slot.remaining) > 0 &&
+          slot.loadClass !== "past"
+      );
+
+    if (!availableSlot) return;
+
+    assistantAutoConfirmKeyRef.current =
+      assistantBookingKey;
+
+    const timer =
+      setTimeout(() => {
+        handleConfirmBooking();
+      }, 0);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [
+    assistantAutoConfirm,
+    assistantBookingKey,
+    selectedCenter?.id,
+    selectedDate?.date,
+    selectedSlotRecord?.start,
+    selectedSlotRecord?.end,
+    availability,
+    crop,
+    quantity,
+  ]);
 
 
   /* =======================================================
@@ -6545,6 +6931,122 @@ function SummaryRow({
 }
 
 
+function sameSlot(a, b) {
+
+  if (!a || !b) {
+    return !a && !b;
+  }
+
+  return (
+    String(a.id || '') === String(b.id || '') &&
+    String(a.start || '') === String(b.start || '') &&
+    String(a.end || '') === String(b.end || '')
+  );
+}
+
+
+function dateOptionIdToIso(value) {
+
+  const text =
+    String(value || '').trim().toLowerCase();
+
+  if (!text) {
+    return null;
+  }
+
+  if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(text)) {
+    return text;
+  }
+
+  const match =
+    text.match(/^(\d{1,2})-(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)$/);
+
+  if (!match) {
+    return null;
+  }
+
+  const months = {
+    jan: 0,
+    feb: 1,
+    mar: 2,
+    apr: 3,
+    may: 4,
+    jun: 5,
+    jul: 6,
+    aug: 7,
+    sep: 8,
+    oct: 9,
+    nov: 10,
+    dec: 11,
+  };
+
+  const day = Number(match[1]);
+  const month = months[match[2]];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  let candidate =
+    new Date(
+      today.getFullYear(),
+      month,
+      day
+    );
+
+  candidate.setHours(0, 0, 0, 0);
+
+  if (candidate < today) {
+    candidate =
+      new Date(
+        today.getFullYear() + 1,
+        month,
+        day
+      );
+  }
+
+  return [
+    candidate.getFullYear(),
+    String(candidate.getMonth() + 1).padStart(2, '0'),
+    String(candidate.getDate()).padStart(2, '0'),
+  ].join('-');
+}
+
+
+function dateToOptionId(value) {
+
+  const text =
+    String(value || '').trim();
+
+  const match =
+    text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+
+  if (!match) {
+    return text;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+
+  const dateValue =
+    new Date(year, month - 1, day);
+
+  if (
+    dateValue.getFullYear() !== year ||
+    dateValue.getMonth() !== month - 1 ||
+    dateValue.getDate() !== day
+  ) {
+    return text;
+  }
+
+  const monthName =
+    dateValue
+      .toLocaleString('en-US', { month: 'short' })
+      .toLowerCase();
+
+  return `${String(day).padStart(2, '0')}-${monthName}`;
+}
+
+
 /* =========================================================
    CENTER CAPACITY
 ========================================================= */
@@ -6649,6 +7151,13 @@ function getBookedCount(
         );
 
 
+      const ignoredStatuses = new Set([
+        'CANCELLED',
+        'CANCELED',
+        'REJECTED',
+        'EXPIRED',
+      ]);
+
       return (
 
         bookingCenterId ===
@@ -6671,8 +7180,7 @@ function getBookedCount(
           slotEnd
         ) &&
 
-        status !==
-        "PAYMENT_SENT"
+        !ignoredStatuses.has(status)
 
       );
 
