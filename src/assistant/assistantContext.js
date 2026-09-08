@@ -31,6 +31,11 @@ import {
 } from "./assistantActions";
 
 import {
+  getCurrentFarmer,
+  getState,
+} from "../data/appStore";
+
+import {
   cleanText,
   createId,
   getLastAssistantMessage,
@@ -880,28 +885,65 @@ export function getConversationRelation(
 
 export function getFarmerContext() {
 
-  const farmer =
-    getStoredFarmer();
+  const farmer = getStoredFarmer();
+  const currentFarmer = getCurrentFarmer();
+  const appState = getState();
+  const farmerId = String(farmer.farmerId || currentFarmer?.id || "");
 
+  const farmerBookings = Array.isArray(appState?.bookings)
+    ? appState.bookings.filter(item => {
+        const id = item?.farmerId || item?.farmer_id;
+        return !farmerId || String(id || "") === farmerId;
+      })
+    : [];
+
+  const recentBookings = farmerBookings.slice().sort((a, b) =>
+    String(b?.date || b?.createdAt || b?.created_at || "").localeCompare(
+      String(a?.date || a?.createdAt || a?.created_at || "")
+    )
+  ).slice(0, 20);
+
+  const currentToken = recentBookings.find(item => {
+    const status = String(item?.status || "").toUpperCase();
+    return item?.token && !["CANCELLED", "CANCELED", "REJECTED", "EXPIRED", "PROCURED", "PAYMENT_SENT"].includes(status);
+  }) || null;
 
   return {
-
-    authenticated:
-      Boolean(
-        farmer.farmerId ||
-        farmer.phone
-      ),
-
-    farmerId:
-      farmer.farmerId ||
-      "",
-
-    phone:
-      farmer.phone ||
-      "",
-
+    authenticated: Boolean(farmer.farmerId || farmer.phone || currentFarmer?.id),
+    farmerId: farmer.farmerId || currentFarmer?.id || "",
+    phone: farmer.phone || currentFarmer?.phone || "",
+    profile: currentFarmer ? {
+      id: currentFarmer.id,
+      name: currentFarmer.name,
+      village: currentFarmer.village,
+      stateId: currentFarmer.stateId || currentFarmer.state_id,
+      districtId: currentFarmer.districtId || currentFarmer.district_id,
+      mandalId: currentFarmer.mandalId || currentFarmer.mandal_id,
+      preferredCenterId: currentFarmer.preferredCenterId || currentFarmer.preferred_center_id,
+      primaryCrop: currentFarmer.primaryCrop || currentFarmer.primary_crop,
+      estimatedQuantity: currentFarmer.estimatedQuantity || currentFarmer.estimated_quantity,
+    } : null,
+    crops: Array.isArray(appState?.crops) ? appState.crops.map(c => ({ id: c.id, name: c.name })) : [],
+    bookings: recentBookings,
+    currentToken: currentToken ? {
+      id: currentToken.id,
+      token: currentToken.token,
+      date: currentToken.date,
+      status: currentToken.status,
+      centerId: currentToken.centerId || currentToken.center_id,
+      crop: currentToken.crop,
+    } : null,
+    recentPayments: recentBookings
+      .filter(item => item?.payment || item?.payment_status || item?.payment_reference)
+      .map(item => ({
+        bookingId: item.id,
+        token: item.token,
+        amount: item.payment?.amount ?? item.payment_amount ?? null,
+        status: item.payment?.status ?? item.payment_status ?? null,
+        reference: item.payment?.reference ?? item.payment_reference ?? null,
+        date: item.date,
+      })),
   };
-
 }
 
 

@@ -99,6 +99,10 @@ function FarmerToken() {
       "booking"
     );
 
+  const assistantTokenAction =
+    searchParams.get("assistantAction") ||
+    "";
+
 
   const [
     booking,
@@ -679,6 +683,44 @@ function FarmerToken() {
         currentTime,
       ]
     );
+
+
+  /*
+   * ========================================================
+   * ASSISTANT TOKEN ACTIONS
+   * ========================================================
+   */
+
+  useEffect(() => {
+    if (!booking?.id || !assistantTokenAction) return;
+
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        if (assistantTokenAction === "download-qr" && qrCodeUrl && !cancelled) {
+          const anchor = document.createElement("a");
+          anchor.href = qrCodeUrl;
+          anchor.download = `KrishiSetu-${booking.token || booking.id}-QR.png`;
+          document.body.appendChild(anchor);
+          anchor.click();
+          anchor.remove();
+        } else if (assistantTokenAction === "download-receipt" && !cancelled) {
+          await downloadProcurementReceipt();
+        }
+      } catch (error) {
+        console.error("Assistant token action failed:", error);
+      }
+    };
+
+    if (assistantTokenAction === "download-qr") {
+      if (qrCodeUrl) run();
+    } else {
+      run();
+    }
+
+    return () => { cancelled = true; };
+  }, [booking?.id, assistantTokenAction, qrCodeUrl]);
 
 
   /*

@@ -2880,6 +2880,87 @@ app.get(
 
 
 /* =========================================================
+   BOOKING AVAILABILITY
+========================================================= */
+
+app.get(
+  "/api/booking-availability",
+  async (req, res) => {
+    try {
+      const settings = await getSettings();
+      const date = String(req.query?.date || "").trim();
+      const requestedCenterId = String(req.query?.centerId || "").trim();
+
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return res.status(400).json({ success: false, message: "A valid date (YYYY-MM-DD) is required." });
+      }
+
+      const centers = await all(`
+        SELECT * FROM centers
+        WHERE COALESCE(active, 1) = 1
+        ${requestedCenterId ? "AND id = $2" : ""}
+        ORDER BY name ASC
+      `, requestedCenterId ? [date, requestedCenterId] : [date]);
+
+      const bookings = await all(`
+        SELECT center_id, date, slot_start, slot_end, status
+        FROM bookings
+        WHERE date = $1
+      `, [date]);
+
+      const ignored = new Set(["CANCELLED", "CANCELED", "REJECTED", "EXPIRED", "PAYMENT_SENT"]);
+      const slots = [];
+
+      const toMinutes = value => {
+        const m = String(value || "").match(/^(\d{1,2}):(\d{2})$/);
+        if (!m) return null;
+        const h = Number(m[1]), min = Number(m[2]);
+        return Number.isFinite(h) && Number.isFinite(min) && h >= 0 && h <= 23 && min >= 0 && min <= 59
+          ? h * 60 + min
+          : null;
+      };
+
+      for (const center of centers) {
+        const capacity = Math.max(1, Number(center.capacity || settings.defaultCapacity || 20));
+        const duration = Math.max(5, Number(settings.slotDuration || 30));
+        let cursor = toMinutes(center.opening_time || "09:00");
+        const closing = toMinutes(center.closing_time || "17:00");
+        if (cursor == null || closing == null || closing <= cursor) continue;
+
+        while (cursor + duration <= closing) {
+          const fmt = n => `${String(Math.floor(n / 60)).padStart(2, "0")}:${String(n % 60).padStart(2, "0")}`;
+          const start = fmt(cursor), end = fmt(cursor + duration);
+          const booked = bookings.filter(b =>
+            String(b.center_id) === String(center.id) &&
+            String(b.date) === date &&
+            String(b.slot_start) === start &&
+            String(b.slot_end) === end &&
+            !ignored.has(String(b.status || "").toUpperCase())
+          ).length;
+          slots.push({
+            id: `${center.id}:${start.replace(":", "-")}`,
+            centerId: center.id,
+            centerName: center.name,
+            start,
+            end,
+            capacity,
+            booked,
+            remaining: Math.max(capacity - booked, 0),
+          });
+          cursor += duration;
+        }
+      }
+
+      res.json({ success: true, date, centers, slots });
+    } catch (error) {
+      console.error("Booking availability error:", error);
+      res.status(500).json({ success: false, message: "Failed to load booking availability." });
+    }
+  }
+);
+
+
+/* =========================================================
    CREATE BOOKING
 ========================================================= */
 

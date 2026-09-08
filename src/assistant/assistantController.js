@@ -2904,6 +2904,9 @@ export async function handleAssistantCommand(
     bookingState.active ||
     incomingCrop ||
     incomingQuantity ||
+    assistantBooking.isBookingInformationRequest?.(
+      normalized.message
+    ) ||
     /\b(book|booking|reserve|reservation|procurement|sell)\b/i.test(
       normalized.message
     ) ||

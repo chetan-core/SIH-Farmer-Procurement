@@ -473,7 +473,7 @@ export function extractNaturalBookingDate(
   }
 
   if (
-    /\b(tomorrow|kal|कल|రేపు)\b/i.test(text)
+    /\b(tomorrow|tommorow|tommorrow|tomorow|tmrw|kal|कल|రేపు)\b/i.test(text)
   ) {
     return isoDate(
       addDays(1, now)
@@ -481,7 +481,7 @@ export function extractNaturalBookingDate(
   }
 
   if (
-    /\b(day after tomorrow|परसों|ఎల్లుండి)\b/i.test(text)
+    /\b(day after tomorrow|day after tommorrow|परसों|ఎల్లుండి)\b/i.test(text)
   ) {
     return isoDate(
       addDays(2, now)
@@ -1903,7 +1903,7 @@ function asksForDates(
   text
 ) {
   return (
-    /\b(what|which|show|tell|give).*(date|dates)\b|\bavailable dates\b|\bdates available\b|\bwhich dates\b/i.test(
+    /\b(what|which|show|tell|give).*(date|dates)\b|\bavailable dates\b|\bdates available\b|\bwhich dates\b|\bdates?\b/i.test(
       text
     ) ||
     /तारीख.*उपलब्ध|तारीखें.*बताओ|తేదీలు.*అందుబాటులో/i.test(
@@ -1921,7 +1921,7 @@ function asksForCenters(
   text
 ) {
   return (
-    /\b(what|which|show|tell|give|list).*(center|centers|procurement center|procurement centers)\b|\bavailable (center|centers)\b/i.test(
+    /\b(what|which|show|tell|give|list).*(center|centers|centre|centres|centeers|procurement center|procurement centers)\b|\bavailable (center|centers|centre|centres)\b|\bcenters?\b|\bcentres?\b|\bcenteers?\b/i.test(
       text
     ) ||
     /केंद्र.*उपलब्ध|केंद्र.*बताओ|కేంద్రాలు.*అందుబాటులో|కేంద్రాలు.*చెప్పు/i.test(
@@ -1934,18 +1934,35 @@ function asksForCenterTimings(
   text
 ) {
   const centerWords =
-    /\b(center|centers|procurement|location|locations)\b/i.test(
+    /\b(center|centers|centre|centres|centeers|procurement|location|locations)\b/i.test(
       text
     );
 
   const timingWords =
-    /\b(time|times|timing|timings|hours|opening|closing|open|close)\b/i.test(
+    /\b(time|times|timing|timings|timming|timmings|hours|opening|closing|open|close)\b/i.test(
       text
     );
 
+  const standaloneTiming =
+    /^(time|times|timing|timings|timming|timmings|hours|opening|closing)$/i.test(
+      text.trim()
+    );
+
   return (
-    centerWords &&
-    timingWords
+    (centerWords && timingWords) ||
+    standaloneTiming
+  );
+}
+
+export function isBookingInformationRequest(text) {
+  const value = norm(text);
+  if (!value) return false;
+
+  return (
+    asksForCenters(value) ||
+    asksForCenterTimings(value) ||
+    asksForDates(value) ||
+    asksForSlots(value)
   );
 }
 
@@ -3489,6 +3506,8 @@ export const assistantBooking = {
   buildBookingContext,
 
   processBookingConversation,
+
+  isBookingInformationRequest,
 
   process,
 };

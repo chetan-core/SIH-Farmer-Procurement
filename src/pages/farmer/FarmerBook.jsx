@@ -2642,43 +2642,14 @@ function FarmerBook() {
 
 
   /* =======================================================
-     RESET WHEN SELECTION CHANGES
-  ======================================================= */
+     SELECTION RESET
+  =======================================================
 
-  useEffect(() => {
-
-    setAvailable(
-      false
-    );
-
-    setSelectedSlot(
-      null
-    );
-
-    setAvailabilityCheckedAt(
-      null
-    );
-
-    setCenterSwitchMessage(
-      "" 
-    );
-
-
-    /*
-     * Allow an assistant-provided slot to be reapplied
-     * when its date/center/crop changes.
-     */
-
-    assistantSlotAppliedRef.current =
-      '';
-
-  }, [
-    crop,
-    quantity,
-    centerId,
-    date,
-  ]);
-
+     Availability is reset explicitly by the selection handlers.
+     Do not reset it from an effect keyed to the same selection
+     values: assistant state hydration and React effects can race
+     with manual date/slot clicks and clear a fresh selection.
+  */
 
   /* =======================================================
      HELPERS

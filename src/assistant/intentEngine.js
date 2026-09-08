@@ -1584,6 +1584,52 @@ export function detectIntent(
 
   /*
    * -------------------------------------------------------
+   * BOOKING INFORMATION QUESTIONS
+   * -------------------------------------------------------
+   * Keep these local so the backend AI cannot turn simple
+   * center/date/timing questions into generic help text.
+   */
+
+  if (
+    /\b(centeers?|centers?|centres?|procurement centers?|procurement centres?)\b/i.test(text)
+  ) {
+    return createResult(
+      "OPEN_BOOKING",
+      0.98,
+      {
+        semanticTopic: "booking-centers",
+      }
+    );
+  }
+
+  if (
+    /\b(available dates|dates available|which dates|dates?)\b/i.test(text) &&
+    !extractBookingDetails(text)
+  ) {
+    return createResult(
+      "OPEN_BOOKING",
+      0.97,
+      {
+        semanticTopic: "booking-dates",
+      }
+    );
+  }
+
+  if (
+    /\b(timings?|hours|opening|closing)\b/i.test(text) &&
+    /\b(center|centers|centre|centres|centeers?|procurement)\b/i.test(text)
+  ) {
+    return createResult(
+      "OPEN_BOOKING",
+      0.98,
+      {
+        semanticTopic: "booking-center-timings",
+      }
+    );
+  }
+
+  /*
+   * -------------------------------------------------------
    * OTHER DESTINATIONS
    * -------------------------------------------------------
    */
