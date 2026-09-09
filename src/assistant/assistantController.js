@@ -4666,47 +4666,294 @@ function extractAffirmative(
 function isBookingDataQuestion(
   text
 ) {
-
   const value =
     String(
       text ||
       ""
     )
-      .toLowerCase();
+      .toLowerCase()
+      .trim();
 
+  if (!value) {
+    return false;
+  }
 
-  return (
+  /*
+   * ---------------------------------------------------------
+   * TOKEN / CURRENT BOOKING
+   * ---------------------------------------------------------
+   */
 
-    /\b(my|show|what|where|give|tell|see)\b.*\b(latest|current|recent)?\b.*\b(token|booking|history|payment|receipt|qr)\b/i.test(
+  if (
+    /\b(latest|current|recent|last|my|this)\b.*\btoken\b/i.test(
       value
     ) ||
-
-    /\b(latest|current|recent)\s+(token|booking|payment)\b/i.test(
+    /\bshow\s+my\s+token\b/i.test(
       value
     ) ||
+    /\bwhat('?s| is)\s+my\s+token\b/i.test(
+      value
+    )
+  ) {
+    return true;
+  }
 
-    /\bwhat('?s| is)\s+my\s+booking\b/i.test(
+
+  /*
+   * ---------------------------------------------------------
+   * BOOKING HISTORY
+   * ---------------------------------------------------------
+   */
+
+  if (
+    /\b(last|latest|recent|previous|past|old)\b.*\b(bookings?|procurement|purchases?|records?)\b/i.test(
       value
     ) ||
-
-    /\bmy\s+booking\b/i.test(
+    /\b(bookings?|procurement|purchase)\s+(history|records?)\b/i.test(
       value
     ) ||
-
     /\bmy\s+history\b/i.test(
       value
     ) ||
-
-    /\bmy\s+payments?\b/i.test(
+    /\bwhat\s+(were|was)\s+my\b.*\b(bookings?|procurement|purchases?)\b/i.test(
       value
     ) ||
+    /\bhow\s+many\s+(bookings?|times)\b/i.test(
+      value
+    ) ||
+    /\blast\s+\d+\s+bookings?\b/i.test(
+      value
+    )
+  ) {
+    return true;
+  }
 
-    /\b(recent|latest|last)\s+payments?\b/i.test(
+
+  /*
+   * ---------------------------------------------------------
+   * PAYMENT QUESTIONS
+   * ---------------------------------------------------------
+   */
+
+  if (
+    /\b(payment|payments|paid|pay|money|amount|payment\s+status)\b/i.test(
+      value
+    ) &&
+    /\b(my|last|latest|recent|previous|current|history|status|admin|farmer|booking|cotton|wheat|paddy|maize)\b/i.test(
+      value
+    )
+  ) {
+    return true;
+  }
+
+
+  /*
+   * ---------------------------------------------------------
+   * RECEIPT / QR
+   * ---------------------------------------------------------
+   */
+
+  if (
+    /\b(receipt|qr|qr\s+code)\b/i.test(
+      value
+    ) &&
+    /\b(my|this|that|last|latest|recent|booking|token|download|show|get|open|view)\b/i.test(
+      value
+    )
+  ) {
+    return true;
+  }
+
+
+  /*
+   * ---------------------------------------------------------
+   * PROCUREMENT TOTALS / STATISTICS
+   *
+   * Examples:
+   *
+   * how much did I procure this month?
+   * how much produce did I sell this month?
+   * how many kg have I procured?
+   * what did I procure this month?
+   * ---------------------------------------------------------
+   */
+
+  if (
+    /\b(how\s+much|how\s+many|total|sum|quantity|amount|what)\b/i.test(
+      value
+    ) &&
+    /\b(procure|procured|procurement|produce|sold|sale|sales|purchase|purchased|booked|booking)\b/i.test(
+      value
+    )
+  ) {
+    return true;
+  }
+
+
+  /*
+   * ---------------------------------------------------------
+   * DATE-SPECIFIC FARMER RECORDS
+   *
+   * Examples:
+   * booking of yesterday
+   * last booking
+   * booking from monday
+   * payment for last booking
+   * ---------------------------------------------------------
+   */
+
+  if (
+    /\b(yesterday|today|tomorrow|last|latest|recent|previous)\b/i.test(
+      value
+    ) &&
+    /\b(booking|token|payment|receipt|procurement|purchase)\b/i.test(
+      value
+    )
+  ) {
+    return true;
+  }
+
+
+  return false;
+}
+
+function isExplicitNavigationRequest(
+  text
+) {
+  const value =
+    String(
+      text ||
+      ""
+    )
+      .toLowerCase()
+      .trim();
+
+  if (!value) {
+    return false;
+  }
+
+  return (
+
+    /\b(take me|send me|bring me|go to|goto|navigate to|open|show me|head to|move to|return to)\b/i.test(
+      value
+    ) &&
+
+    /\b(home|homepage|dashboard|booking|book|token|history|payments?|payment|settings?|help|notifications?|notification)\b/i.test(
       value
     )
 
-  );
+  ) ||
 
+  /^(home|homepage|dashboard|booking|book|token|history|payments?|settings?|help|notifications?)$/i.test(
+    value
+  );
+}
+
+
+function isActuallyBookingRelated(
+  text
+) {
+  const value =
+    String(
+      text ||
+      ""
+    )
+      .toLowerCase()
+      .trim();
+
+  if (!value) {
+    return false;
+  }
+
+  /*
+   * Navigation is not booking continuation.
+   */
+
+  if (
+    isExplicitNavigationRequest(
+      value
+    )
+  ) {
+    return false;
+  }
+
+
+  /*
+   * Farmer-data questions are not booking continuation.
+   */
+
+  if (
+    isBookingDataQuestion(
+      value
+    )
+  ) {
+    return false;
+  }
+
+
+  /*
+   * Actual booking language.
+   */
+
+  if (
+    /\b(book|booking|reserve|reservation|procurement|sell|slot|arrival\s+time|arrival\s+date)\b/i.test(
+      value
+    )
+  ) {
+    return true;
+  }
+
+
+  /*
+   * Booking field updates.
+   */
+
+  if (
+    assistantBooking.extractCrop(
+      value
+    ) ||
+    assistantBooking.extractQuantity(
+      value
+    ) ||
+    assistantBooking.extractNaturalBookingDate(
+      value,
+      new Date()
+    ) ||
+    assistantBooking.extractTimeReference(
+      value
+    )
+  ) {
+    return true;
+  }
+
+
+  /*
+   * Booking questions.
+   */
+
+  if (
+    /\b(available\s+dates?|dates?\s+available|available\s+times?|available\s+timings?|available\s+slots?|which\s+center|what\s+center|centers?|centres?)\b/i.test(
+      value
+    )
+  ) {
+    return true;
+  }
+
+
+  /*
+   * Explicit cancellation of the booking conversation.
+   */
+
+  if (
+    /\b(cancel|cancel\s+booking|stop\s+booking|never\s+mind\s+the\s+booking)\b/i.test(
+      value
+    )
+  ) {
+    return true;
+  }
+
+
+  return false;
 }
 
 
@@ -7116,14 +7363,199 @@ export async function handleAssistantCommand(
     extractAffirmative(
       normalized.message
     );
+  /* =======================================================
+   INTENT PRIORITY FIREWALL
+======================================================= */
+
+const messageText =
+  normalized.message;
 
 
+/*
+ * -------------------------------------------------------
+ * 1. EXPLICIT NAVIGATION ALWAYS WINS
+ *
+ * An unfinished booking must NEVER intercept:
+ *
+ * "take me to home"
+ * "go to payments"
+ * "open history"
+ * "show my token page"
+ * "no take me to home page"
+ * -------------------------------------------------------
+ */
+
+const navigationDecision =
+  routeAssistantCommand(
+    messageText,
+    {
+      currentPath:
+        normalized.currentPath,
+
+      language:
+        normalized.language,
+
+      pendingAction:
+        null,
+
+      bookingState:
+        null,
+    }
+  );
+
+
+if (
+  navigationDecision &&
+  (
+    navigationDecision.type ===
+      "NAVIGATE" ||
+    navigationDecision.type ===
+      "GO_BACK"
+  ) &&
+  navigationDecision.action !==
+    "OPEN_BOOKING"
+) {
+
+  return executeLocalDecision(
+    navigationDecision,
+    normalized
+  );
+
+}
+
+
+/*
+ * -------------------------------------------------------
+ * 2. FARMER DATA QUESTIONS ALSO WIN
+ *
+ * An unfinished booking must NEVER intercept:
+ *
+ * "what was my last three bookings"
+ * "what is my payment history"
+ * "did admin pay me"
+ * "how much did I procure this month"
+ * -------------------------------------------------------
+ */
+
+const farmerDataRequest =
+  isBookingDataQuestion(
+    messageText
+  );
+
+
+if (
+  farmerDataRequest
+) {
+
+  const farmerData =
+    await handleFarmerDataRequest(
+      messageText,
+      normalized,
+      bookingState
+    );
+
+
+  if (
+    farmerData
+  ) {
+
+    return farmerData;
+
+  }
+
+}
+
+
+/*
+ * -------------------------------------------------------
+ * 3. ONLY NOW may the booking state become relevant.
+ * -------------------------------------------------------
+ */
+  const explicitNavigation =
+  isExplicitNavigationRequest(
+    normalized.message
+  );
+
+const farmerDataQuestion =
+  isBookingDataQuestion(
+    normalized.message
+  );
+
+const bookingRelated =
+  isActuallyBookingRelated(
+    normalized.message
+  );
   const immediateBookingApproval =
     isImmediateBookingApproval(
       normalized.message
     );
 
+  /* =======================================================
+   INTENT FIREWALL
 
+   An active booking draft is CONTEXT.
+   It must never hijack unrelated user commands.
+======================================================= */
+
+if (
+  explicitNavigation &&
+  !affirmative
+) {
+  const local =
+    routeLocalCommand(
+      normalized.message,
+      {
+        ...normalized,
+
+        bookingState:
+          undefined,
+
+        bookingContext:
+          normalized.bookingContext,
+      }
+    );
+
+  if (
+    local?.decision &&
+    local.decision.type !==
+      "ASK_AI"
+  ) {
+    return executeLocalDecision(
+      local.decision,
+      normalized
+    );
+  }
+}
+
+
+/*
+ * Farmer-specific information requests must bypass
+ * the booking engine completely.
+ */
+
+if (
+  farmerDataQuestion &&
+  !bookingRelated
+) {
+  const farmerData =
+    await handleFarmerDataRequest(
+      normalized.message,
+      normalized,
+      bookingState
+    );
+
+  if (
+    farmerData
+  ) {
+    return farmerData;
+  }
+
+  /*
+   * No local answer available.
+   *
+   * Let backend AI answer using the rich farmer context.
+   */
+}
   /* =======================================================
      1. FARMER-SPECIFIC DATA
   ======================================================= */
