@@ -4660,229 +4660,814 @@ function extractAffirmative(
 
 
 /* =========================================================
-   FARMER DATA QUESTION
+   FARMER QUERY CLASSIFICATION + INTENT FIREWALL
 ========================================================= */
+
+function normalizeFarmerQuery(
+  value
+) {
+
+  return String(
+    value ||
+    ""
+  )
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(
+      /[^\p{L}\p{N}]+/gu,
+      " "
+    )
+    .replace(
+      /\s+/g,
+      " "
+    )
+    .trim();
+
+}
+
+
+function farmerEditDistance(
+  left,
+  right
+) {
+
+  const a =
+    String(
+      left ||
+      ""
+    );
+
+  const b =
+    String(
+      right ||
+      ""
+    );
+
+  if (
+    a ===
+    b
+  ) {
+    return 0;
+  }
+
+  if (
+    !a
+  ) {
+    return b.length;
+  }
+
+  if (
+    !b
+  ) {
+    return a.length;
+  }
+
+  const previous =
+    Array.from(
+      {
+        length:
+          b.length +
+          1,
+      },
+      (
+        _,
+        index
+      ) =>
+        index
+    );
+
+  for (
+    let i =
+      1;
+    i <=
+      a.length;
+    i +=
+      1
+  ) {
+
+    const current =
+      [
+        i,
+      ];
+
+    for (
+      let j =
+        1;
+      j <=
+        b.length;
+      j +=
+        1
+    ) {
+
+      const cost =
+        a[i - 1] ===
+        b[j - 1]
+          ? 0
+          : 1;
+
+      current[j] =
+        Math.min(
+          current[j - 1] +
+            1,
+          previous[j] +
+            1,
+          previous[j - 1] +
+            cost
+        );
+
+    }
+
+    for (
+      let j =
+        0;
+      j <=
+        b.length;
+      j +=
+        1
+    ) {
+
+      previous[j] =
+        current[j];
+
+    }
+
+  }
+
+  return previous[
+    b.length
+  ];
+
+}
+
+
+function farmerWords(
+  text
+) {
+
+  return normalizeFarmerQuery(
+    text
+  )
+    .split(" ")
+    .filter(
+      Boolean
+    );
+
+}
+
+
+function hasFuzzyFarmerWord(
+  text,
+  targets,
+  maxDistance = 1
+) {
+
+  const words =
+    farmerWords(
+      text
+    );
+
+  const wanted =
+    Array.isArray(
+      targets
+    )
+      ? targets
+      : [
+          targets,
+        ];
+
+  return words.some(
+    word =>
+      wanted.some(
+        target => {
+          const normalizedTarget =
+            normalizeFarmerQuery(
+              target
+            );
+
+          const distance =
+            farmerEditDistance(
+              word,
+              normalizedTarget
+            );
+
+          /*
+           * Do not let short common words such as "my", "a",
+           * "to", "me" accidentally match domain words.
+           *
+           * Longer typo-prone words may use a slightly wider
+           * distance, e.g.:
+           *   laas -> last
+           *   tokeeen -> token
+           *   nummmber -> number
+           */
+          const shortestLength =
+            Math.min(
+              word.length,
+              normalizedTarget.length
+            );
+
+          const allowedDistance =
+            shortestLength <=
+              3
+              ? 0
+              : shortestLength <=
+                  4
+                ? Math.min(
+                    1,
+                    maxDistance
+                  )
+                : Math.min(
+                    2,
+                    maxDistance
+                  );
+
+          return distance <=
+            allowedDistance;
+        }
+      )
+  );
+
+}
+
+
+function hasAnyFarmerWord(
+  text,
+  targets,
+  maxDistance = 1
+) {
+
+  return hasFuzzyFarmerWord(
+    text,
+    targets,
+    maxDistance
+  );
+
+}
+
+
+function hasFarmerPhrase(
+  text,
+  patterns
+) {
+
+  const value =
+    normalizeFarmerQuery(
+      text
+    );
+
+  return (
+    Array.isArray(
+      patterns
+    ) &&
+    patterns.some(
+      pattern =>
+        pattern instanceof RegExp
+          ? pattern.test(
+              value
+            )
+          : value.includes(
+              normalizeFarmerQuery(
+                pattern
+              )
+            )
+    )
+  );
+
+}
+
+
+function getFarmerDataKind(
+  text
+) {
+
+  const value =
+    normalizeFarmerQuery(
+      text
+    );
+
+  if (
+    !value
+  ) {
+    return null;
+  }
+
+  const words =
+    value.split(
+      " "
+    );
+
+  const firstPerson =
+    hasAnyFarmerWord(
+      value,
+      [
+        "my",
+        "i",
+        "me",
+        "mine",
+        "we",
+        "our",
+        "admin",
+      ],
+      1
+    );
+
+  const historical =
+    hasAnyFarmerWord(
+      value,
+      [
+        "last",
+        "latest",
+        "recent",
+        "previous",
+        "past",
+        "old",
+        "yesterday",
+        "today",
+        "current",
+        "this",
+        "laas",
+        "las",
+      ],
+      2
+    );
+
+  const tokenLike =
+    hasAnyFarmerWord(
+      value,
+      [
+        "token",
+        "tokens",
+        "token number",
+        "number",
+        "टोकन",
+        "టోకెన్",
+      ],
+      2
+    );
+
+  const bookingLike =
+    hasAnyFarmerWord(
+      value,
+      [
+        "booking",
+        "bookings",
+        "booked",
+        "book",
+        "record",
+        "records",
+      ],
+      1
+    );
+
+  const procurementLike =
+    hasAnyFarmerWord(
+      value,
+      [
+        "procure",
+        "procured",
+        "procurement",
+        "produce",
+        "produced",
+        "purchase",
+        "purchased",
+        "sell",
+        "sold",
+        "sale",
+        "sales",
+      ],
+      2
+    );
+
+  const paymentLike =
+    hasAnyFarmerWord(
+      value,
+      [
+        "payment",
+        "payments",
+        "paid",
+        "pay",
+        "money",
+        "amount",
+        "earning",
+        "earnings",
+        "income",
+        "received",
+        "receive",
+        "admin",
+      ],
+      2
+    );
+
+  const cropLike =
+    hasAnyFarmerWord(
+      value,
+      [
+        "crop",
+        "crops",
+      ],
+      1
+    );
+
+  const quantityLike =
+    hasAnyFarmerWord(
+      value,
+      [
+        "much",
+        "many",
+        "total",
+        "sum",
+        "quantity",
+        "amount",
+        "kg",
+        "kilo",
+        "kilos",
+      ],
+      1
+    );
+
+  const successLike =
+    hasAnyFarmerWord(
+      value,
+      [
+        "success",
+        "successful",
+        "successfully",
+        "completed",
+        "complete",
+        "confirmed",
+        "approved",
+      ],
+      2
+    );
+
+  const monthYearLike =
+    hasAnyFarmerWord(
+      value,
+      [
+        "month",
+        "year",
+        "week",
+      ],
+      1
+    );
+
+  const explicitHistory =
+    (
+      /\blast\s+(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+bookings?\b/i.test(
+        value
+      ) ||
+      /\b(recent|previous|past|old)\s+bookings?\b/i.test(
+        value
+      ) ||
+      /\b(bookings?|procurement|purchase)\s+(history|records?)\b/i.test(
+        value
+      ) ||
+      /\bmy\s+history\b/i.test(
+        value
+      )
+    );
+
+  /*
+   * "what is a token?" is educational, not account data.
+   */
+  const educationalToken =
+    /\bwhat\s+(?:is|are)\b.*\btoken\b/i.test(
+      value
+    ) &&
+    !(
+      firstPerson ||
+      historical ||
+      /\b(my|latest|last|recent|current)\b/i.test(
+        value
+      )
+    );
+
+  if (
+    tokenLike &&
+    !educationalToken
+  ) {
+    if (
+      /\b(crop|which\s+crop|what\s+crop)\b/i.test(
+        value
+      ) &&
+      bookingLike
+    ) {
+      return "crop";
+    }
+
+    return "token";
+  }
+
+  if (
+    explicitHistory
+  ) {
+    return "history";
+  }
+
+  if (
+    cropLike &&
+    bookingLike &&
+    (
+      firstPerson ||
+      historical
+    )
+  ) {
+    return "crop";
+  }
+
+  if (
+    paymentLike &&
+    (
+      firstPerson ||
+      historical ||
+      hasFarmerPhrase(
+        value,
+        [
+          "payment history",
+          "payment status",
+          "did admin pay",
+          "how much money",
+          "how much did i earn",
+          "how much did we earn",
+        ]
+      )
+    )
+  ) {
+    return "payment";
+  }
+
+  if (
+    procurementLike &&
+    (
+      firstPerson ||
+      historical ||
+      quantityLike ||
+      successLike ||
+      monthYearLike
+    )
+  ) {
+    return "procurement";
+  }
+
+  if (
+    bookingLike &&
+    (
+      firstPerson ||
+      historical ||
+      /\bwhat\s+(was|were|is|are)\b/i.test(
+        value
+      )
+    )
+  ) {
+    return "booking";
+  }
+
+  if (
+    historical &&
+    (
+      bookingLike ||
+      procurementLike ||
+      paymentLike
+    )
+  ) {
+    return (
+      paymentLike
+        ? "payment"
+        : procurementLike
+          ? "procurement"
+          : "history"
+    );
+  }
+
+  if (
+    hasFarmerPhrase(
+      value,
+      [
+        "booking history",
+        "booking records",
+        "procurement history",
+        "purchase history",
+        "my history",
+      ]
+    )
+  ) {
+    return "history";
+  }
+
+  if (
+    /\blast\s+\d+\b.*\b(bookings?|records?)\b/i.test(
+      value
+    )
+  ) {
+    return "history";
+  }
+
+  return null;
+
+}
+
 
 function isBookingDataQuestion(
   text
 ) {
-  const value =
-    String(
-      text ||
-      ""
+
+  return Boolean(
+    getFarmerDataKind(
+      text
     )
-      .toLowerCase()
-      .trim();
+  );
 
-  if (!value) {
-    return false;
-  }
-
-  /*
-   * ---------------------------------------------------------
-   * TOKEN / CURRENT BOOKING
-   * ---------------------------------------------------------
-   */
-
-  if (
-    /\b(latest|current|recent|last|my|this)\b.*\btoken\b/i.test(
-      value
-    ) ||
-    /\bshow\s+my\s+token\b/i.test(
-      value
-    ) ||
-    /\bwhat('?s| is)\s+my\s+token\b/i.test(
-      value
-    )
-  ) {
-    return true;
-  }
-
-
-  /*
-   * ---------------------------------------------------------
-   * BOOKING HISTORY
-   * ---------------------------------------------------------
-   */
-
-  if (
-    /\b(last|latest|recent|previous|past|old)\b.*\b(bookings?|procurement|purchases?|records?)\b/i.test(
-      value
-    ) ||
-    /\b(bookings?|procurement|purchase)\s+(history|records?)\b/i.test(
-      value
-    ) ||
-    /\bmy\s+history\b/i.test(
-      value
-    ) ||
-    /\bwhat\s+(were|was)\s+my\b.*\b(bookings?|procurement|purchases?)\b/i.test(
-      value
-    ) ||
-    /\bhow\s+many\s+(bookings?|times)\b/i.test(
-      value
-    ) ||
-    /\blast\s+\d+\s+bookings?\b/i.test(
-      value
-    )
-  ) {
-    return true;
-  }
-
-
-  /*
-   * ---------------------------------------------------------
-   * PAYMENT QUESTIONS
-   * ---------------------------------------------------------
-   */
-
-  if (
-    /\b(payment|payments|paid|pay|money|amount|payment\s+status)\b/i.test(
-      value
-    ) &&
-    /\b(my|last|latest|recent|previous|current|history|status|admin|farmer|booking|cotton|wheat|paddy|maize)\b/i.test(
-      value
-    )
-  ) {
-    return true;
-  }
-
-
-  /*
-   * ---------------------------------------------------------
-   * RECEIPT / QR
-   * ---------------------------------------------------------
-   */
-
-  if (
-    /\b(receipt|qr|qr\s+code)\b/i.test(
-      value
-    ) &&
-    /\b(my|this|that|last|latest|recent|booking|token|download|show|get|open|view)\b/i.test(
-      value
-    )
-  ) {
-    return true;
-  }
-
-
-  /*
-   * ---------------------------------------------------------
-   * PROCUREMENT TOTALS / STATISTICS
-   *
-   * Examples:
-   *
-   * how much did I procure this month?
-   * how much produce did I sell this month?
-   * how many kg have I procured?
-   * what did I procure this month?
-   * ---------------------------------------------------------
-   */
-
-  if (
-    /\b(how\s+much|how\s+many|total|sum|quantity|amount|what)\b/i.test(
-      value
-    ) &&
-    /\b(procure|procured|procurement|produce|sold|sale|sales|purchase|purchased|booked|booking)\b/i.test(
-      value
-    )
-  ) {
-    return true;
-  }
-
-
-  /*
-   * ---------------------------------------------------------
-   * DATE-SPECIFIC FARMER RECORDS
-   *
-   * Examples:
-   * booking of yesterday
-   * last booking
-   * booking from monday
-   * payment for last booking
-   * ---------------------------------------------------------
-   */
-
-  if (
-    /\b(yesterday|today|tomorrow|last|latest|recent|previous)\b/i.test(
-      value
-    ) &&
-    /\b(booking|token|payment|receipt|procurement|purchase)\b/i.test(
-      value
-    )
-  ) {
-    return true;
-  }
-
-
-  return false;
 }
+
 
 function isExplicitNavigationRequest(
   text
 ) {
-  const value =
-    String(
-      text ||
-      ""
-    )
-      .toLowerCase()
-      .trim();
 
-  if (!value) {
+  const value =
+    normalizeFarmerQuery(
+      text
+    );
+
+  if (
+    !value
+  ) {
     return false;
   }
 
+  const navigationVerb =
+    hasFarmerPhrase(
+      value,
+      [
+        "take me",
+        "send me",
+        "bring me",
+        "go to",
+        "goto",
+        "navigate to",
+        "open",
+        "show me",
+        "head to",
+        "move to",
+        "return to",
+      ]
+    );
+
+  const destination =
+    hasAnyFarmerWord(
+      value,
+      [
+        "home",
+        "homepage",
+        "dashboard",
+        "booking",
+        "book",
+        "token",
+        "history",
+        "payment",
+        "payments",
+        "settings",
+        "help",
+        "notification",
+        "notifications",
+      ],
+      1
+    );
+
   return (
-
-    /\b(take me|send me|bring me|go to|goto|navigate to|open|show me|head to|move to|return to)\b/i.test(
-      value
-    ) &&
-
-    /\b(home|homepage|dashboard|booking|book|token|history|payments?|payment|settings?|help|notifications?|notification)\b/i.test(
+    (
+      navigationVerb &&
+      destination
+    ) ||
+    [
+      "home",
+      "homepage",
+      "dashboard",
+      "booking",
+      "book",
+      "token",
+      "history",
+      "payments",
+      "payment",
+      "settings",
+      "help",
+      "notifications",
+    ].includes(
       value
     )
-
-  ) ||
-
-  /^(home|homepage|dashboard|booking|book|token|history|payments?|settings?|help|notifications?)$/i.test(
-    value
   );
+
+}
+
+
+function isBookingFollowUpMessage(
+  text,
+  bookingState
+) {
+
+  if (
+    !bookingState?.active
+  ) {
+    return false;
+  }
+
+  if (
+    isBookingDataQuestion(
+      text
+    ) ||
+    isExplicitNavigationRequest(
+      text
+    )
+  ) {
+    return false;
+  }
+
+  const value =
+    normalizeFarmerQuery(
+      text
+    );
+
+  if (
+    !value
+  ) {
+    return false;
+  }
+
+  if (
+    extractAffirmative(
+      value
+    )
+  ) {
+    return Boolean(
+      bookingState.readyForConfirmation ||
+      bookingState.awaitingConfirmation
+    );
+  }
+
+  if (
+    /\b(cancel|cancelar|never\s+mind|stop)\b/i.test(
+      value
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    /\b(today|tomorrow|day\s+after\s+tomorrow|yesterday|aaj|kal|कल|आज|रविवार|सोमवार|मंगलवार|बुधवार|गुरुवार|शुक्रवार|शनिवार)\b/i.test(
+      value
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    /\b(time|timing|timings|slot|slots|arrival|when|morning|afternoon|evening)\b/i.test(
+      value
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    /\b(center|centre|procurement\s+center|procurement\s+centre)\b/i.test(
+      value
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    /^\d{1,2}(?:\s*(?:to|-|–)\s*\d{1,4})?$/i.test(
+      value
+    )
+  ) {
+    return true;
+  }
+
+  return false;
+
 }
 
 
 function isActuallyBookingRelated(
   text
 ) {
+
   const value =
-    String(
-      text ||
-      ""
-    )
-      .toLowerCase()
-      .trim();
-
-  if (!value) {
-    return false;
-  }
-
-  /*
-   * Navigation is not booking continuation.
-   */
+    normalizeFarmerQuery(
+      text
+    );
 
   if (
-    isExplicitNavigationRequest(
-      value
-    )
+    !value
   ) {
     return false;
   }
 
-
-  /*
-   * Farmer-data questions are not booking continuation.
-   */
-
   if (
+    isExplicitNavigationRequest(
+      value
+    ) ||
     isBookingDataQuestion(
       value
     )
@@ -4890,23 +5475,13 @@ function isActuallyBookingRelated(
     return false;
   }
 
-
-  /*
-   * Actual booking language.
-   */
-
   if (
-    /\b(book|booking|reserve|reservation|procurement|sell|slot|arrival\s+time|arrival\s+date)\b/i.test(
+    /\b(book|booking|reserve|reservation|procurement|slot|slots|arrival\s+time|arrival\s+date)\b/i.test(
       value
     )
   ) {
     return true;
   }
-
-
-  /*
-   * Booking field updates.
-   */
 
   if (
     assistantBooking.extractCrop(
@@ -4926,23 +5501,13 @@ function isActuallyBookingRelated(
     return true;
   }
 
-
-  /*
-   * Booking questions.
-   */
-
   if (
-    /\b(available\s+dates?|dates?\s+available|available\s+times?|available\s+timings?|available\s+slots?|which\s+center|what\s+center|centers?|centres?)\b/i.test(
+    /\b(available\s+dates?|dates?\s+available|available\s+times?|available\s+timings?|available\s+slots?|which\s+center|which\s+centre|procurement\s+center|procurement\s+centre)\b/i.test(
       value
     )
   ) {
     return true;
   }
-
-
-  /*
-   * Explicit cancellation of the booking conversation.
-   */
 
   if (
     /\b(cancel|cancel\s+booking|stop\s+booking|never\s+mind\s+the\s+booking)\b/i.test(
@@ -4952,10 +5517,9 @@ function isActuallyBookingRelated(
     return true;
   }
 
-
   return false;
-}
 
+}
 
 /* =========================================================
    RESOLVE FARMER BOOKINGS
@@ -5828,6 +6392,648 @@ function bookingSummaryLine(
    FARMER DATA REQUEST
 ========================================================= */
 
+function farmerBookingDate(
+  booking
+) {
+
+  return (
+    booking?.booking_date ||
+    booking?.bookingDate ||
+    booking?.date ||
+    booking?.arrival_date ||
+    booking?.arrivalDate ||
+    ""
+  );
+
+}
+
+
+function farmerBookingCrop(
+  booking
+) {
+
+  return (
+    booking?.crop ||
+    booking?.crop_name ||
+    booking?.cropName ||
+    booking?.produce ||
+    booking?.produce_name ||
+    booking?.produceName ||
+    ""
+  );
+
+}
+
+
+function farmerBookingQuantity(
+  booking
+) {
+
+  const value =
+    booking?.quantity ??
+    booking?.estimated_quantity ??
+    booking?.estimatedQuantity ??
+    booking?.quantity_kg ??
+    booking?.quantityKg ??
+    booking?.weight ??
+    0;
+
+  const number =
+    Number(
+      value
+    );
+
+  return Number.isFinite(
+    number
+  )
+    ? number
+    : 0;
+
+}
+
+
+function farmerBookingToken(
+  booking
+) {
+
+  return (
+    booking?.token ||
+    booking?.tokenNumber ||
+    booking?.token_number ||
+    booking?.tokenNo ||
+    ""
+  );
+
+}
+
+
+function farmerBookingStatus(
+  booking
+) {
+
+  return String(
+    booking?.status ||
+    booking?.booking_status ||
+    booking?.bookingStatus ||
+    ""
+  )
+    .trim()
+    .toUpperCase();
+
+}
+
+
+function farmerPaymentAmount(
+  booking
+) {
+
+  const payment =
+    booking?.payment ||
+    booking?.latestPayment ||
+    booking?.latest_payment ||
+    {};
+
+  const value =
+    booking?.payment_amount ??
+    booking?.paymentAmount ??
+    booking?.paid_amount ??
+    booking?.paidAmount ??
+    booking?.amount_paid ??
+    booking?.amountPaid ??
+    payment?.amount ??
+    payment?.paidAmount ??
+    payment?.total ??
+    0;
+
+  const number =
+    Number(
+      value
+    );
+
+  return Number.isFinite(
+    number
+  )
+    ? number
+    : 0;
+
+}
+
+
+function farmerPaymentStatus(
+  booking
+) {
+
+  const payment =
+    booking?.payment ||
+    booking?.latestPayment ||
+    booking?.latest_payment ||
+    {};
+
+  return String(
+    booking?.payment_status ??
+    booking?.paymentStatus ??
+    payment?.status ??
+    ""
+  )
+    .trim()
+    .toUpperCase();
+
+}
+
+
+function farmerPaymentDate(
+  booking
+) {
+
+  const payment =
+    booking?.payment ||
+    booking?.latestPayment ||
+    booking?.latest_payment ||
+    {};
+
+  return (
+    booking?.payment_date ||
+    booking?.paymentDate ||
+    booking?.payment_updated_at ||
+    booking?.paymentUpdatedAt ||
+    payment?.date ||
+    payment?.paymentDate ||
+    payment?.updatedAt ||
+    farmerBookingDate(
+      booking
+    ) ||
+    booking?.created_at ||
+    booking?.createdAt ||
+    ""
+  );
+
+}
+
+
+function isFarmerPaymentCompleted(
+  booking
+) {
+
+  const status =
+    farmerPaymentStatus(
+      booking
+    );
+
+  if (
+    [
+      "PAID",
+      "PAYMENT_SENT",
+      "COMPLETED",
+      "SUCCESS",
+      "SUCCESSFUL",
+      "SETTLED",
+      "RELEASED",
+      "TRANSFERRED",
+    ].includes(
+      status
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    booking?.payment_completed ===
+      true ||
+    booking?.paymentCompleted ===
+      true ||
+    booking?.is_paid ===
+      true ||
+    booking?.isPaid ===
+      true
+  ) {
+    return true;
+  }
+
+  return false;
+
+}
+
+
+function isFarmerSuccessfulBooking(
+  booking
+) {
+
+  const status =
+    farmerBookingStatus(
+      booking
+    );
+
+  if (
+    [
+      "COMPLETED",
+      "SUCCESS",
+      "SUCCESSFUL",
+      "CONFIRMED",
+      "APPROVED",
+      "PROCURED",
+      "COMPLETED_SUCCESSFULLY",
+    ].includes(
+      status
+    )
+  ) {
+    return true;
+  }
+
+  return false;
+
+}
+
+
+function farmerNumberFromText(
+  text,
+  fallback = 5
+) {
+
+  const match =
+    String(
+      text ||
+      ""
+    ).match(
+      /\b(?:last|latest|show|get)\s+(\d{1,2})\b/i
+    );
+
+  const number =
+    Number(
+      match?.[1] ||
+      fallback
+    );
+
+  return Math.min(
+    Math.max(
+      Number.isFinite(
+        number
+      )
+        ? number
+        : fallback,
+      1
+    ),
+    20
+  );
+
+}
+
+
+function farmerPeriodFromText(
+  text
+) {
+
+  const value =
+    normalizeFarmerQuery(
+      text
+    );
+
+  if (
+    /\blast\s+month\b/i.test(
+      value
+    )
+  ) {
+    return "lastMonth";
+  }
+
+  if (
+    /\bthis\s+month\b/i.test(
+      value
+    )
+  ) {
+    return "thisMonth";
+  }
+
+  if (
+    /\blast\s+year\b/i.test(
+      value
+    )
+  ) {
+    return "lastYear";
+  }
+
+  if (
+    /\bthis\s+year\b/i.test(
+      value
+    )
+  ) {
+    return "thisYear";
+  }
+
+  if (
+    /\blast\s+week\b/i.test(
+      value
+    )
+  ) {
+    return "lastWeek";
+  }
+
+  if (
+    /\bthis\s+week\b/i.test(
+      value
+    )
+  ) {
+    return "thisWeek";
+  }
+
+  return null;
+
+}
+
+
+function farmerDateRange(
+  period
+) {
+
+  const now =
+    new Date();
+
+  const start =
+    new Date(
+      now
+    );
+
+  const end =
+    new Date(
+      now
+    );
+
+  if (
+    period ===
+    "lastMonth"
+  ) {
+
+    start.setDate(
+      1
+    );
+
+    start.setMonth(
+      start.getMonth() -
+        1
+    );
+
+    end.setDate(
+      1
+    );
+
+    end.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+  } else if (
+    period ===
+    "thisMonth"
+  ) {
+
+    start.setDate(
+      1
+    );
+
+    end.setMonth(
+      end.getMonth() +
+        1,
+      1
+    );
+
+  } else if (
+    period ===
+    "lastYear"
+  ) {
+
+    start.setMonth(
+      0,
+      1
+    );
+
+    start.setFullYear(
+      start.getFullYear() -
+        1
+    );
+
+    end.setMonth(
+      0,
+      1
+    );
+
+  } else if (
+    period ===
+    "thisYear"
+  ) {
+
+    start.setMonth(
+      0,
+      1
+    );
+
+    end.setFullYear(
+      end.getFullYear() +
+        1,
+      0,
+      1
+    );
+
+  } else if (
+    period ===
+    "lastWeek"
+  ) {
+
+    const day =
+      start.getDay();
+
+    const distance =
+      day ===
+      0
+        ? 6
+        : day - 1;
+
+    start.setDate(
+      start.getDate() -
+        distance -
+        7
+    );
+
+    start.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+    end.setTime(
+      start.getTime()
+    );
+
+    end.setDate(
+      end.getDate() +
+        7
+    );
+
+  } else if (
+    period ===
+    "thisWeek"
+  ) {
+
+    const day =
+      start.getDay();
+
+    const distance =
+      day ===
+      0
+        ? 6
+        : day - 1;
+
+    start.setDate(
+      start.getDate() -
+        distance
+    );
+
+    start.setHours(
+      0,
+      0,
+      0,
+      0
+    );
+
+    end.setTime(
+      start.getTime()
+    );
+
+    end.setDate(
+      end.getDate() +
+        7
+    );
+
+  } else {
+
+    return null;
+
+  }
+
+  return {
+    start,
+    end,
+  };
+
+}
+
+
+function farmerRecordDateValue(
+  booking,
+  forPayment = false
+) {
+
+  const raw =
+    forPayment
+      ? farmerPaymentDate(
+          booking
+        )
+      : (
+          farmerBookingDate(
+            booking
+          ) ||
+          booking?.created_at ||
+          booking?.createdAt ||
+          ""
+        );
+
+  if (
+    !raw
+  ) {
+    return null;
+  }
+
+  const date =
+    new Date(
+      raw
+    );
+
+  return Number.isNaN(
+    date.getTime()
+  )
+    ? null
+    : date;
+
+}
+
+
+function farmerInPeriod(
+  booking,
+  period,
+  forPayment = false
+) {
+
+  if (
+    !period
+  ) {
+    return true;
+  }
+
+  const range =
+    farmerDateRange(
+      period
+    );
+
+  if (
+    !range
+  ) {
+    return true;
+  }
+
+  const date =
+    farmerRecordDateValue(
+      booking,
+      forPayment
+    );
+
+  if (
+    !date
+  ) {
+    return false;
+  }
+
+  return (
+    date >=
+      range.start &&
+    date <
+      range.end
+  );
+
+}
+
+
+function formatFarmerMoney(
+  value
+) {
+
+  const number =
+    Number(
+      value ||
+      0
+    );
+
+  if (
+    !Number.isFinite(
+      number
+    )
+  ) {
+    return "₹0";
+  }
+
+  return (
+    `₹${number.toLocaleString(
+      "en-IN",
+      {
+        maximumFractionDigits:
+          2,
+      }
+    )}`
+  );
+
+}
+
+
 async function handleFarmerDataRequest(
   message,
   normalized,
@@ -5835,242 +7041,118 @@ async function handleFarmerDataRequest(
 ) {
 
   const text =
-    String(
-      message ||
-      ""
-    ).toLowerCase();
-
-
-  const wantsLatestToken =
-
-    /\b(latest|current|recent|my|this)\b.*\btoken\b/i.test(
-      text
-    ) ||
-
-    /\bshow\s+my\s+token\b/i.test(
-      text
+    normalizeFarmerQuery(
+      message
     );
 
-
-  const wantsBooking =
-
-    /\bwhat('?s| is)\s+my\s+booking\b/i.test(
-      text
-    ) ||
-
-    /\bshow\s+my\s+booking\b/i.test(
-      text
-    ) ||
-
-    /\bmy\s+current\s+booking\b/i.test(
-      text
-    ) ||
-
-    /\bmy\s+latest\s+booking\b/i.test(
+  const kind =
+    getFarmerDataKind(
       text
     );
-
-
-  const wantsHistory =
-
-    /\b(booking|procurement|purchase)\s+history\b/i.test(
-      text
-    ) ||
-
-    /\bmy\s+history\b/i.test(
-      text
-    ) ||
-
-    /\b(past|previous|old)\s+bookings\b/i.test(
-      text
-    ) ||
-
-    /\bbooking\s+records\b/i.test(
-      text
-    );
-
-
-  const wantsPayments =
-
-    /\b(payment|payments|payment status|payment history)\b/i.test(
-      text
-    ) &&
-
-    (
-      /\b(my|recent|latest|current|show|what|when)\b/i.test(
-        text
-      ) ||
-      /\bpayment\s+status\b/i.test(
-        text
-      )
-    );
-
 
   if (
-    !wantsLatestToken &&
-    !wantsBooking &&
-    !wantsHistory &&
-    !wantsPayments
+    !kind
   ) {
-
     return null;
-
   }
 
+  const rows =
+    sortBookings(
+      await getFarmerBookings()
+    );
+
+  const latest =
+    rows[0] ||
+    null;
+
+  const language =
+    normalized.language;
 
   /*
-   * TOKEN / BOOKING
+   * REAL FARMER DATA ALWAYS COMES FROM ACTUAL BOOKING
+   * RECORDS. A draft is never used as the latest token.
    */
 
   if (
-    wantsLatestToken ||
-    wantsBooking
+    kind ===
+    "token"
   ) {
 
-    const booking =
-      await resolveFarmerBookingForAssistant(
-        message,
-        bookingState
-      );
+    const exactToken =
+      text.match(
+        /\b(?:token|टोकन|టోకెన్)\s*(?:no\.?|number|#)?\s*([a-z0-9-]+)\b/i
+      )?.[1] ||
+      null;
 
+    const tokenBooking =
+      exactToken
+        ? await resolveFarmerBookingForAssistant(
+            message,
+            null
+          )
+        : latest ||
+          await resolveFarmerBookingForAssistant(
+            message,
+            null
+          );
 
     if (
-      !booking
+      !tokenBooking
     ) {
 
       return controllerResult(
         CONTROLLER_TYPES.ERROR,
         CONTROLLER_STATUS.FAILED,
         {
-
           action:
             "OPEN_TOKEN",
-
           reply:
-            normalized.language ===
+            language ===
             "hi"
-
-              ? "मुझे आपकी हाल की बुकिंग नहीं मिली।"
-
-              : normalized.language ===
+              ? "मुझे आपकी हाल की बुकिंग या टोकन रिकॉर्ड नहीं मिला।"
+              : language ===
                   "te"
-
-                ? "మీ ఇటీవలి బుకింగ్ దొరకలేదు."
-
-                : "I couldn't find a recent booking for you.",
-
+                ? "మీ ఇటీవలి బుకింగ్ లేదా టోకెన్ రికార్డ్ దొరకలేదు."
+                : "I couldn't find a recent booking or token record for you.",
           shouldNavigate:
             false,
-
           shouldCallAI:
             false,
-
         }
       );
 
     }
 
-
-    if (
-      wantsLatestToken
-    ) {
-
-      const token =
-        booking.token ||
-        booking.tokenNumber ||
-        null;
-
-
-      const reply =
-
-        normalized.language ===
-        "hi"
-
-          ? (
-              `आपका नवीनतम टोकन ` +
-              `${token || "उपलब्ध नहीं"} है.` +
-              `${booking.date ? ` बुकिंग तारीख ${booking.date} है.` : ""}`
-            )
-
-          : normalized.language ===
-              "te"
-
-            ? (
-                `మీ తాజా టోకెన్ ` +
-                `${token || "అందుబాటులో లేదు"}.` +
-                `${booking.date ? ` బుకింగ్ తేదీ ${booking.date}.` : ""}`
-              )
-
-            : (
-                `Your latest token is ` +
-                `${token || "not available"}.` +
-                `${booking.date ? ` The booking date is ${booking.date}.` : ""}`
-              );
-
-
-      return controllerResult(
-        CONTROLLER_TYPES.LOCAL,
-        CONTROLLER_STATUS.SUCCESS,
-        {
-
-          action:
-            "OPEN_TOKEN",
-
-          reply,
-
-          booking,
-
-          token,
-
-          bookingId:
-            booking.id,
-
-          shouldNavigate:
-            false,
-
-          shouldCallAI:
-            false,
-
-        }
-      );
-
-    }
-
+    const token =
+      farmerBookingToken(
+        tokenBooking
+      ) ||
+      "not available";
 
     return controllerResult(
       CONTROLLER_TYPES.LOCAL,
       CONTROLLER_STATUS.SUCCESS,
       {
-
         action:
           "OPEN_TOKEN",
 
         reply:
-          normalized.language ===
+          language ===
           "hi"
-
-            ? `आपकी सबसे हाल की बुकिंग: ${bookingSummaryLine(
-                booking,
-                normalized.language
-              )}.`
-
-            : normalized.language ===
+            ? `आपका नवीनतम टोकन ${token} है${farmerBookingDate(tokenBooking) ? `। बुकिंग तारीख ${farmerBookingDate(tokenBooking)} है।` : "।"}`
+            : language ===
                 "te"
+              ? `మీ తాజా టోకెన్ ${token}${farmerBookingDate(tokenBooking) ? `. బుకింగ్ తేదీ ${farmerBookingDate(tokenBooking)}.` : "."}`
+              : `Your latest token is ${token}${farmerBookingDate(tokenBooking) ? `. The booking date is ${farmerBookingDate(tokenBooking)}.` : "."}`,
 
-              ? `మీ తాజా బుకింగ్: ${bookingSummaryLine(
-                  booking,
-                  normalized.language
-                )}.`
+        booking:
+          tokenBooking,
 
-              : `Your latest booking: ${bookingSummaryLine(
-                  booking,
-                  normalized.language
-                )}.`,
-
-        booking,
+        token,
 
         bookingId:
-          booking.id,
+          tokenBooking.id ||
+          null,
 
         shouldNavigate:
           false,
@@ -6084,66 +7166,180 @@ async function handleFarmerDataRequest(
   }
 
 
-  /*
-   * BOOKING HISTORY
-   */
-
   if (
-    wantsHistory
+    kind ===
+    "crop"
   ) {
 
-    const rows =
-      sortBookings(
-        await getFarmerBookings()
-      );
+    if (
+      !latest
+    ) {
+      return null;
+    }
 
+    const crop =
+      farmerBookingCrop(
+        latest
+      ) ||
+      "not available";
+
+    return controllerResult(
+      CONTROLLER_TYPES.LOCAL,
+      CONTROLLER_STATUS.SUCCESS,
+      {
+        action:
+          "SHOW_FARMER_DATA",
+
+        reply:
+          language ===
+          "hi"
+            ? `आपकी पिछली बुकिंग में फसल ${crop} थी।`
+            : language ===
+                "te"
+              ? `మీ చివరి బుకింగ్‌లో పంట ${crop}.`
+              : `The crop in your last booking was ${crop}.`,
+
+        booking:
+          latest,
+
+        crop,
+
+        bookingId:
+          latest.id ||
+          null,
+
+        shouldNavigate:
+          false,
+
+        shouldCallAI:
+          false,
+
+      }
+    );
+
+  }
+
+
+  if (
+    kind ===
+    "booking"
+  ) {
+
+    let booking =
+      latest;
 
     if (
-      !rows.length
+      /\b(current|this)\s+booking\b/i.test(
+        text
+      )
+    ) {
+
+      const active =
+        rows.find(
+          row =>
+            ![
+              "CANCELLED",
+              "CANCELED",
+              "REJECTED",
+              "EXPIRED",
+            ].includes(
+              farmerBookingStatus(
+                row
+              )
+            )
+        );
+
+      booking =
+        active ||
+        latest;
+
+    }
+
+    if (
+      !booking
+    ) {
+      return null;
+    }
+
+    return controllerResult(
+      CONTROLLER_TYPES.LOCAL,
+      CONTROLLER_STATUS.SUCCESS,
+      {
+        action:
+          "OPEN_HISTORY",
+
+        reply:
+          language ===
+          "hi"
+            ? `आपकी सबसे हाल की बुकिंग: ${bookingSummaryLine(booking, language)}।`
+            : language ===
+                "te"
+              ? `మీ తాజా బుకింగ్: ${bookingSummaryLine(booking, language)}.`
+              : `Your latest booking: ${bookingSummaryLine(booking, language)}.`,
+
+        booking,
+
+        bookingId:
+          booking.id ||
+          null,
+
+        shouldNavigate:
+          false,
+
+        shouldCallAI:
+          false,
+
+      }
+    );
+
+  }
+
+
+  if (
+    kind ===
+    "history"
+  ) {
+
+    const count =
+      farmerNumberFromText(
+        text,
+        5
+      );
+
+    const recent =
+      rows.slice(
+        0,
+        count
+      );
+
+    if (
+      !recent.length
     ) {
 
       return controllerResult(
         CONTROLLER_TYPES.LOCAL,
         CONTROLLER_STATUS.SUCCESS,
         {
-
           action:
             "OPEN_HISTORY",
-
           reply:
-            normalized.language ===
+            language ===
             "hi"
-
               ? "आपकी बुकिंग हिस्ट्री में अभी कोई रिकॉर्ड नहीं मिला।"
-
-              : normalized.language ===
+              : language ===
                   "te"
-
                 ? "మీ బుకింగ్ చరిత్రలో ప్రస్తుతం రికార్డులు లేవు."
-
                 : "I couldn't find any booking records in your history.",
-
           bookings:
             [],
-
           shouldNavigate:
             false,
-
           shouldCallAI:
             false,
-
         }
       );
 
     }
-
-
-    const recent =
-      rows.slice(
-        0,
-        5
-      );
-
 
     const lines =
       recent.map(
@@ -6151,43 +7347,24 @@ async function handleFarmerDataRequest(
           booking,
           index
         ) =>
-          `${index + 1}. ${bookingSummaryLine(
-            booking,
-            normalized.language
-          )}`
+          `${index + 1}. ${bookingSummaryLine(booking, language)}`
       );
-
-
-    const reply =
-
-      normalized.language ===
-      "hi"
-
-        ? `आपकी हाल की बुकिंग:\n${lines.join(
-            "\n"
-          )}`
-
-        : normalized.language ===
-            "te"
-
-          ? `మీ ఇటీవలి బుకింగ్స్:\n${lines.join(
-              "\n"
-            )}`
-
-          : `Your recent bookings:\n${lines.join(
-              "\n"
-            )}`;
-
 
     return controllerResult(
       CONTROLLER_TYPES.LOCAL,
       CONTROLLER_STATUS.SUCCESS,
       {
-
         action:
           "OPEN_HISTORY",
 
-        reply,
+        reply:
+          language ===
+          "hi"
+            ? `आपकी हाल की ${recent.length} बुकिंग:\n${lines.join("\n")}`
+            : language ===
+                "te"
+              ? `మీ ఇటీవలి ${recent.length} బుకింగ్స్:\n${lines.join("\n")}`
+              : `Your recent ${recent.length} bookings:\n${lines.join("\n")}`,
 
         bookings:
           recent,
@@ -6204,119 +7381,81 @@ async function handleFarmerDataRequest(
   }
 
 
-  /*
-   * PAYMENT CONTEXT
-   *
-   * Payment API details are intentionally not invented here.
-   * Use the existing farmer context when available.
-   */
-
   if (
-    wantsPayments
+    kind ===
+    "payment"
   ) {
 
-    const farmer =
-      getFarmerContext();
+    const period =
+      farmerPeriodFromText(
+        text
+      );
 
-
-    const payments =
-      Array.isArray(
-        farmer?.recentPayments
-      )
-        ? farmer.recentPayments
-        : Array.isArray(
-            farmer?.payments
+    const paymentRows =
+      rows.filter(
+        row =>
+          farmerPaymentAmount(
+            row
+          ) >
+          0 &&
+          isFarmerPaymentCompleted(
+            row
           )
-          ? farmer.payments
-          : [];
+      );
 
+    const periodPayments =
+      paymentRows.filter(
+        row =>
+          farmerInPeriod(
+            row,
+            period,
+            true
+          )
+      );
 
     if (
-      payments.length
+      period
     ) {
 
-      const recent =
-        payments.slice(
-          0,
-          5
-        );
-
-
-      const lines =
-        recent.map(
+      const total =
+        periodPayments.reduce(
           (
-            payment,
-            index
-          ) => {
-
-            const amount =
-              payment?.amount ??
-              payment?.paidAmount ??
-              payment?.total ??
-              "";
-
-
-            const date =
-              payment?.date ??
-              payment?.paymentDate ??
-              "";
-
-
-            const status =
-              payment?.status ??
-              payment?.paymentStatus ??
-              "";
-
-
-            return (
-
-              `${index + 1}. ` +
-
-              `${amount ? `₹${amount}` : "Payment"}` +
-
-              `${date ? ` — ${date}` : ""}` +
-
-              `${status ? ` — ${status}` : ""}`
-
-            );
-
-          }
+            sum,
+            row
+          ) =>
+            sum +
+            farmerPaymentAmount(
+              row
+            ),
+          0
         );
 
+      const count =
+        periodPayments.length;
 
       const reply =
-
-        normalized.language ===
+        language ===
         "hi"
-
-          ? `आपके हाल के भुगतान:\n${lines.join(
-              "\n"
-            )}`
-
-          : normalized.language ===
+          ? `उस अवधि में आपको ${count} भुगतान मिला, कुल ${formatFarmerMoney(total)}।`
+          : language ===
               "te"
-
-            ? `మీ ఇటీవలి చెల్లింపులు:\n${lines.join(
-                "\n"
-              )}`
-
-            : `Your recent payments:\n${lines.join(
-                "\n"
-              )}`;
-
+            ? `ఆ కాలంలో మీకు ${count} చెల్లింపులు వచ్చాయి, మొత్తం ${formatFarmerMoney(total)}.`
+            : `You received ${count} payment${count === 1 ? "" : "s"} in that period, totaling ${formatFarmerMoney(total)}.`;
 
       return controllerResult(
         CONTROLLER_TYPES.LOCAL,
         CONTROLLER_STATUS.SUCCESS,
         {
-
           action:
             "OPEN_PAYMENTS",
 
           reply,
 
           payments:
-            recent,
+            periodPayments,
+
+          totalAmount:
+            total,
 
           shouldNavigate:
             false,
@@ -6329,21 +7468,239 @@ async function handleFarmerDataRequest(
 
     }
 
+    const recent =
+      paymentRows.slice(
+        0,
+        5
+      );
 
-    /*
-     * Let backend AI answer from richer context when the
-     * local context does not contain payment records.
-     */
+    if (
+      !recent.length
+    ) {
 
-    return null;
+      return controllerResult(
+        CONTROLLER_TYPES.LOCAL,
+        CONTROLLER_STATUS.SUCCESS,
+        {
+          action:
+            "OPEN_PAYMENTS",
+          reply:
+            language ===
+            "hi"
+              ? "मुझे अभी आपके भुगतान रिकॉर्ड में कोई सफल भुगतान नहीं मिला।"
+              : language ===
+                  "te"
+                ? "మీ చెల్లింపు రికార్డుల్లో ప్రస్తుతం విజయవంతమైన చెల్లింపు దొరకలేదు."
+                : "I couldn't find a completed payment in your records yet.",
+          payments:
+            [],
+          totalAmount:
+            0,
+          shouldNavigate:
+            false,
+          shouldCallAI:
+            false,
+        }
+      );
+
+    }
+
+    const total =
+      recent.reduce(
+        (
+          sum,
+          row
+        ) =>
+          sum +
+          farmerPaymentAmount(
+            row
+          ),
+        0
+      );
+
+    const paymentLines =
+      recent.map(
+        (
+          row,
+          index
+        ) =>
+          `${index + 1}. ${formatFarmerMoney(farmerPaymentAmount(row))}` +
+          `${farmerPaymentDate(row) ? ` — ${farmerPaymentDate(row)}` : ""}` +
+          `${farmerPaymentStatus(row) ? ` — ${farmerPaymentStatus(row)}` : ""}`
+      );
+
+    return controllerResult(
+      CONTROLLER_TYPES.LOCAL,
+      CONTROLLER_STATUS.SUCCESS,
+      {
+        action:
+          "OPEN_PAYMENTS",
+
+        reply:
+          language ===
+          "hi"
+            ? `आपके हाल के भुगतान:\n${paymentLines.join("\n")}\nकुल ${formatFarmerMoney(total)}।`
+            : language ===
+                "te"
+              ? `మీ ఇటీవలి చెల్లింపులు:\n${paymentLines.join("\n")}\nమొత్తం ${formatFarmerMoney(total)}.`
+              : `Your recent payments:\n${paymentLines.join("\n")}\nTotal: ${formatFarmerMoney(total)}.`,
+
+        payments:
+          recent,
+
+        totalAmount:
+          total,
+
+        shouldNavigate:
+          false,
+
+        shouldCallAI:
+          false,
+
+      }
+    );
 
   }
 
 
+  if (
+    kind ===
+    "procurement"
+  ) {
+
+    const period =
+      farmerPeriodFromText(
+        text
+      );
+
+    let records =
+      period
+        ? rows.filter(
+            row =>
+              farmerInPeriod(
+                row,
+                period
+              )
+          )
+        : rows;
+
+    const successful =
+      records.filter(
+        isFarmerSuccessfulBooking
+      );
+
+    const quantity =
+      successful.reduce(
+        (
+          sum,
+          row
+        ) =>
+          sum +
+          farmerBookingQuantity(
+            row
+          ),
+        0
+      );
+
+    const count =
+      successful.length;
+
+    if (
+      /\b(success|successful|successfully|completed|confirmed|approved)\b/i.test(
+        text
+      )
+    ) {
+
+      return controllerResult(
+        CONTROLLER_TYPES.LOCAL,
+        CONTROLLER_STATUS.SUCCESS,
+        {
+          action:
+            "SHOW_FARMER_DATA",
+
+          reply:
+            language ===
+            "hi"
+              ? `सफल खरीद/प्रोक्योरमेंट: ${count} रिकॉर्ड, कुल ${quantity} kg।`
+              : language ===
+                  "te"
+                ? `విజయవంతమైన ప్రొక్యూర్‌మెంట్: ${count} రికార్డులు, మొత్తం ${quantity} kg.`
+                : `Successful procurement: ${count} record${count === 1 ? "" : "s"}, totaling ${quantity} kg.`,
+
+          bookings:
+            successful,
+
+          quantity,
+
+          count,
+
+          shouldNavigate:
+            false,
+
+          shouldCallAI:
+            false,
+
+        }
+      );
+
+    }
+
+    const totalQuantity =
+      records.reduce(
+        (
+          sum,
+          row
+        ) =>
+          sum +
+          farmerBookingQuantity(
+            row
+          ),
+        0
+      );
+
+    return controllerResult(
+      CONTROLLER_TYPES.LOCAL,
+      CONTROLLER_STATUS.SUCCESS,
+      {
+        action:
+          "SHOW_FARMER_DATA",
+
+        reply:
+          language ===
+          "hi"
+            ? `इस अवधि में आपकी कुल प्रोक्योरमेंट मात्रा ${totalQuantity} kg है, ${records.length} रिकॉर्ड के साथ।`
+            : language ===
+                "te"
+              ? `ఈ కాలంలో మీ మొత్తం ప్రొక్యూర్‌మెంట్ పరిమాణం ${totalQuantity} kg, ${records.length} రికార్డులతో.`
+              : `Your total procurement in that period is ${totalQuantity} kg across ${records.length} record${records.length === 1 ? "" : "s"}.`,
+
+        bookings:
+          records,
+
+        quantity:
+          totalQuantity,
+
+        count:
+          records.length,
+
+        shouldNavigate:
+          false,
+
+        shouldCallAI:
+          false,
+
+      }
+    );
+
+  }
+
+  /*
+   * Fall through to backend AI only when the local farmer
+   * records do not cover the question.
+   */
   return null;
 
 }
-
 
 /* =========================================================
    LOCAL ROUTING
@@ -6443,10 +7800,28 @@ export function routeLocalCommand(
     );
 
 
-  if (
+  const bookingFollowUp =
+    isBookingFollowUpMessage(
+      normalized.message,
+      bookingState
+    );
+
+  const explicitBookingCommand =
+    extractExplicitBookingCommand(
+      normalized.message
+    );
+
+  const canUseBookingDetails =
     bookingState.active ||
+    explicitBookingCommand;
+
+  if (
+    bookingFollowUp ||
     bookingInformationRequest ||
-    hasBookingDetails
+    (
+      hasBookingDetails &&
+      canUseBookingDetails
+    )
   ) {
 
     const bookingResult =
@@ -7318,272 +8693,124 @@ export async function handleAssistantCommand(
 
   const normalized =
     normalizeOptions({
-
       ...options,
-
       message,
-
     });
-
 
   if (
     !normalized.message
   ) {
-
     return controllerResult(
       CONTROLLER_TYPES.NONE,
       CONTROLLER_STATUS.SKIPPED,
       {
-
         action:
           "NONE",
-
         reply:
           "",
-
         shouldCallAI:
           false,
-
         shouldNavigate:
           false,
-
       }
     );
-
   }
-
 
   let bookingState =
     getEffectiveBookingState(
       normalized.bookingState
     );
 
-
   const affirmative =
     extractAffirmative(
       normalized.message
     );
-  /* =======================================================
-   INTENT PRIORITY FIREWALL
-======================================================= */
 
-const messageText =
-  normalized.message;
+  /*
+   * =======================================================
+   * INTENT PRIORITY
+   *
+   * 1. Explicit navigation
+   * 2. Farmer's real account/history/payment data
+   * 3. Crop availability
+   * 4. QR / receipt
+   * 5. Booking
+   * 6. Other local commands
+   * 7. Backend AI
+   *
+   * An active booking draft is context only. It never becomes
+   * the user's intent by itself.
+   * =======================================================
+   */
 
+  const messageText =
+    normalized.message;
 
-/*
- * -------------------------------------------------------
- * 1. EXPLICIT NAVIGATION ALWAYS WINS
- *
- * An unfinished booking must NEVER intercept:
- *
- * "take me to home"
- * "go to payments"
- * "open history"
- * "show my token page"
- * "no take me to home page"
- * -------------------------------------------------------
- */
-
-const navigationDecision =
-  routeAssistantCommand(
-    messageText,
-    {
-      currentPath:
-        normalized.currentPath,
-
-      language:
-        normalized.language,
-
-      pendingAction:
-        null,
-
-      bookingState:
-        null,
-    }
-  );
-
-
-if (
-  navigationDecision &&
-  (
-    navigationDecision.type ===
-      "NAVIGATE" ||
-    navigationDecision.type ===
-      "GO_BACK"
-  ) &&
-  navigationDecision.action !==
-    "OPEN_BOOKING"
-) {
-
-  return executeLocalDecision(
-    navigationDecision,
-    normalized
-  );
-
-}
-
-
-/*
- * -------------------------------------------------------
- * 2. FARMER DATA QUESTIONS ALSO WIN
- *
- * An unfinished booking must NEVER intercept:
- *
- * "what was my last three bookings"
- * "what is my payment history"
- * "did admin pay me"
- * "how much did I procure this month"
- * -------------------------------------------------------
- */
-
-const farmerDataRequest =
-  isBookingDataQuestion(
-    messageText
-  );
-
-
-if (
-  farmerDataRequest
-) {
-
-  const farmerData =
-    await handleFarmerDataRequest(
+  const navigationDecision =
+    routeAssistantCommand(
       messageText,
-      normalized,
-      bookingState
-    );
-
-
-  if (
-    farmerData
-  ) {
-
-    return farmerData;
-
-  }
-
-}
-
-
-/*
- * -------------------------------------------------------
- * 3. ONLY NOW may the booking state become relevant.
- * -------------------------------------------------------
- */
-  const explicitNavigation =
-  isExplicitNavigationRequest(
-    normalized.message
-  );
-
-const farmerDataQuestion =
-  isBookingDataQuestion(
-    normalized.message
-  );
-
-const bookingRelated =
-  isActuallyBookingRelated(
-    normalized.message
-  );
-  const immediateBookingApproval =
-    isImmediateBookingApproval(
-      normalized.message
-    );
-
-  /* =======================================================
-   INTENT FIREWALL
-
-   An active booking draft is CONTEXT.
-   It must never hijack unrelated user commands.
-======================================================= */
-
-if (
-  explicitNavigation &&
-  !affirmative
-) {
-  const local =
-    routeLocalCommand(
-      normalized.message,
       {
-        ...normalized,
-
+        currentPath:
+          normalized.currentPath,
+        language:
+          normalized.language,
+        pendingAction:
+          null,
         bookingState:
-          undefined,
-
-        bookingContext:
-          normalized.bookingContext,
+          null,
       }
     );
 
+  /*
+   * "open/go to/show page" is navigation.
+   * Never allow an unfinished booking to hijack it.
+   */
   if (
-    local?.decision &&
-    local.decision.type !==
-      "ASK_AI"
+    navigationDecision &&
+    (
+      navigationDecision.type ===
+        "NAVIGATE" ||
+      navigationDecision.type ===
+        "GO_BACK"
+    ) &&
+    navigationDecision.action !==
+      "OPEN_BOOKING"
   ) {
     return executeLocalDecision(
-      local.decision,
+      navigationDecision,
       normalized
     );
   }
-}
-
-
-/*
- * Farmer-specific information requests must bypass
- * the booking engine completely.
- */
-
-if (
-  farmerDataQuestion &&
-  !bookingRelated
-) {
-  const farmerData =
-    await handleFarmerDataRequest(
-      normalized.message,
-      normalized,
-      bookingState
-    );
-
-  if (
-    farmerData
-  ) {
-    return farmerData;
-  }
 
   /*
-   * No local answer available.
+   * Farmer-specific data wins before booking state.
+   * This fixes questions such as:
    *
-   * Let backend AI answer using the rich farmer context.
+   * "what was my laas tokeeen nummber"
+   * "which crop i booked last time"
+   * "how much money did we earn last month"
+   * "how much procure was successful"
    */
-}
-  /* =======================================================
-     1. FARMER-SPECIFIC DATA
-  ======================================================= */
-
   if (
     isBookingDataQuestion(
-      normalized.message
+      messageText
     )
   ) {
 
     const farmerData =
       await handleFarmerDataRequest(
-        normalized.message,
+        messageText,
         normalized,
         bookingState
       );
 
-
     if (
       farmerData
     ) {
-
       return farmerData;
-
     }
 
   }
-
 
   /* =======================================================
      2. CROP AVAILABILITY
@@ -7787,15 +9014,28 @@ if (
   }
 
 
-  if (
-    affirmative &&
+  const pending =
+  loadPendingAction();
+
+const hasBookingConfirmationPending =
+  Boolean(
+    pending &&
     (
-      bookingState.readyForConfirmation ||
-      bookingState.awaitingConfirmation ||
-      bookingState.step ===
-        BOOKING_STEPS.REVIEW
+      pending.action ===
+        "OPEN_BOOKING" ||
+
+      pending.action ===
+        "CONFIRM_BOOKING"
+    ) &&
+
+    (
+      pending.booking ||
+      pending.params
     )
-  ) {
+  );if (
+  affirmative &&
+  hasBookingConfirmationPending
+) { 
 
     const result =
       processBookingConversation(
@@ -7879,24 +9119,19 @@ if (
     );
 
 
+  const bookingFollowUp =
+    isBookingFollowUpMessage(
+      normalized.message,
+      bookingState
+    );
+
   const bookingLikely =
-
-    bookingState.active ||
-
     explicitBookingStart ||
-
-    Boolean(
-      incomingCrop ||
-      incomingQuantity ||
-      incomingDate ||
-      incomingTime
-    ) ||
-
     bookingInformationRequest ||
-
     extractExplicitBookingCommand(
       normalized.message
-    );
+    ) ||
+    bookingFollowUp;
 
 
   /* =======================================================
@@ -8979,6 +10214,8 @@ if (
   );
 
 }
+
+
 
 
 /* =========================================================
