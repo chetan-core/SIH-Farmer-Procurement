@@ -4525,7 +4525,11 @@ function FarmerToken() {
                       <button
                         type="button"
                         onClick={() =>
-                          navigate("/farmer/transport/request")
+                          navigate(
+                            `/farmer/transport/request?booking=${encodeURIComponent(
+                              booking?.id || bookingId || ""
+                            )}`
+                          )
                         }
                         style={{
                           border: "1px solid #cfe0d5",

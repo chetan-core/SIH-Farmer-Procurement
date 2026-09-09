@@ -1,106 +1,1060 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router";
-import { useLanguage } from "../../translations/LanguageContext";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Clock3,
+  Crosshair,
+  MapPin,
+  Navigation,
+  RefreshCw,
+  ShieldCheck,
+  Truck,
+  UserRound,
+  XCircle,
+  Star,
+  Phone,
+  CalendarDays,
+  Package,
+} from "lucide-react";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import {
+  useNavigate,
+  useSearchParams,
+} from "react-router";
+
+import Header from "../../components/Header";
+import { useLanguage } from "../../translations/LanguageContext";
+import { getCurrentFarmer } from "../../data/appStore";
+
+const RAW_API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+const API_BASE = String(RAW_API_URL)
+  .replace(/\/+$/, "")
+  .replace(/\/api$/i, "");
+
+const API = `${API_BASE}/api`;
+
+const ACTIVE_REQUEST_STATUSES = new Set([
+  "REQUESTED",
+  "ASSIGNED",
+  "EN_ROUTE_TO_FARMER",
+  "CROP_PICKED_UP",
+  "EN_ROUTE_TO_CENTER",
+  "DELIVERED",
+]);
 
 const COPY = {
-  en: { title:"Request Transport", subtitle:"Book a vehicle to move your crop safely to the procurement center.", crop:"Crop", quantity:"Quantity (kg)", pickup:"Pickup location", center:"Procurement center", date:"Pickup date", time:"Preferred time", vehicle:"Vehicle", notes:"Additional instructions", choose:"Select", useGps:"Use current location", gettingGps:"Getting location...", gpsDone:"Current location captured", next:"Continue", back:"Back", review:"Review request", submit:"Confirm transport request", submitting:"Submitting...", success:"Transport request created", successText:"Your request has been sent to eligible transporters.", tracking:"View tracking", logistics:"Go to logistics", required:"Please complete the required fields.", invalidQty:"Enter a valid quantity greater than 0.", pastDate:"Pickup date cannot be in the past.", login:"Please log in as a farmer before requesting transport.", server:"The server could not create the request.", network:"Unable to reach the server. Please try again.", emergency:"Urgent transport", scheduled:"Scheduled request", address:"Farm address / landmark", village:"Village", district:"District", state:"State", requestId:"Request ID", cropDetails:"Crop details", route:"Route", schedule:"Schedule", save:"Save draft", clear:"Clear", draftSaved:"Draft saved on this device." },
-  hi: { title:"परिवहन अनुरोध", subtitle:"अपनी फसल को खरीद केंद्र तक सुरक्षित पहुंचाने के लिए वाहन बुक करें।", crop:"फसल", quantity:"मात्रा (किग्रा)", pickup:"पिकअप स्थान", center:"खरीद केंद्र", date:"पिकअप तारीख", time:"पसंदीदा समय", vehicle:"वाहन", notes:"अतिरिक्त निर्देश", choose:"चुनें", useGps:"वर्तमान स्थान उपयोग करें", gettingGps:"स्थान प्राप्त किया जा रहा है...", gpsDone:"वर्तमान स्थान प्राप्त हो गया", next:"जारी रखें", back:"पीछे", review:"अनुरोध की समीक्षा", submit:"परिवहन अनुरोध की पुष्टि करें", submitting:"भेजा जा रहा है...", success:"परिवहन अनुरोध बन गया", successText:"आपका अनुरोध योग्य ट्रांसपोर्टरों को भेज दिया गया है।", tracking:"ट्रैकिंग देखें", logistics:"लॉजिस्टिक्स पर जाएं", required:"कृपया आवश्यक जानकारी भरें।", invalidQty:"0 से अधिक सही मात्रा दर्ज करें।", pastDate:"पिकअप तारीख पिछली नहीं हो सकती।", login:"परिवहन अनुरोध करने से पहले किसान के रूप में लॉग इन करें।", server:"सर्वर अनुरोध नहीं बना सका।", network:"सर्वर से संपर्क नहीं हो पाया।", emergency:"तत्काल परिवहन", scheduled:"शेड्यूल अनुरोध", address:"खेत का पता / पहचान", village:"गांव", district:"जिला", state:"राज्य", requestId:"अनुरोध आईडी", cropDetails:"फसल विवरण", route:"मार्ग", schedule:"समय", save:"ड्राफ्ट सेव करें", clear:"साफ करें", draftSaved:"ड्राफ्ट इस डिवाइस पर सेव हो गया।" },
-  te: { title:"రవాణా అభ్యర్థన", subtitle:"మీ పంటను సురక్షితంగా కొనుగోలు కేంద్రానికి తరలించడానికి వాహనం బుక్ చేయండి.", crop:"పంట", quantity:"పరిమాణం (కిలోలు)", pickup:"పికప్ స్థానం", center:"కొనుగోలు కేంద్రం", date:"పికప్ తేదీ", time:"ఇష్టమైన సమయం", vehicle:"వాహనం", notes:"అదనపు సూచనలు", choose:"ఎంచుకోండి", useGps:"ప్రస్తుత స్థానాన్ని ఉపయోగించండి", gettingGps:"స్థానం పొందుతోంది...", gpsDone:"ప్రస్తుత స్థానం పొందబడింది", next:"కొనసాగించండి", back:"వెనుకకు", review:"అభ్యర్థన సమీక్ష", submit:"రవాణా అభ్యర్థనను నిర్ధారించండి", submitting:"పంపుతోంది...", success:"రవాణా అభ్యర్థన సృష్టించబడింది", successText:"మీ అభ్యర్థన సరిపడే రవాణాదారులకు పంపబడింది.", tracking:"ట్రాకింగ్ చూడండి", logistics:"లాజిస్టిక్స్‌కు వెళ్లండి", required:"అవసరమైన వివరాలను పూర్తి చేయండి.", invalidQty:"0 కంటే ఎక్కువ సరైన పరిమాణాన్ని నమోదు చేయండి.", pastDate:"పికప్ తేదీ గతంలో ఉండకూడదు.", login:"రవాణా అభ్యర్థించడానికి ముందు రైతుగా లాగిన్ అవ్వండి.", server:"సర్వర్ అభ్యర్థనను సృష్టించలేకపోయింది.", network:"సర్వర్‌ను చేరుకోలేకపోయాం.", emergency:"అత్యవసర రవాణా", scheduled:"షెడ్యూల్ అభ్యర్థన", address:"పొలం చిరునామా / గుర్తు", village:"గ్రామం", district:"జిల్లా", state:"రాష్ట్రం", requestId:"అభ్యర్థన ఐడి", cropDetails:"పంట వివరాలు", route:"మార్గం", schedule:"సమయం", save:"డ్రాఫ్ట్ సేవ్ చేయండి", clear:"క్లియర్", draftSaved:"డ్రాఫ్ట్ ఈ పరికరంలో సేవ్ చేయబడింది." }
+  en: {
+    eyebrow: "KRISHISETU • FARMER",
+    title: "Vehicle for this booking",
+    subtitle: "Your booking details are already linked. We only need the pickup location and final confirmation.",
+    booking: "BOOKING",
+    token: "Token",
+    crop: "Crop",
+    quantity: "Quantity",
+    pickup: "Pickup location",
+    center: "Procurement center",
+    date: "Arrival",
+    route: "Route",
+    fromFarm: "From your farm",
+    toCenter: "To procurement center",
+    location: "Farmer location",
+    accountLocation: "From your farmer profile",
+    useGps: "Use current GPS",
+    locating: "Getting location…",
+    gpsSaved: "GPS location saved",
+    noGps: "GPS not saved. You can still request using your farm address / village.",
+    nearby: "Active transporters near pickup",
+    nearbyText: "Online vehicles with enough capacity are shown first.",
+    noNearby: "No active transporter was found in the current radius yet.",
+    refresh: "Refresh",
+    request: "Request vehicle",
+    requesting: "Sending request…",
+    requested: "Vehicle request created",
+    requestedText: "Your request is now visible to eligible transporters.",
+    requestId: "Request ID",
+    track: "Track transport",
+    manage: "Manage transport",
+    backToken: "Back to token",
+    server: "Unable to create the transport request.",
+    login: "Please log in as a farmer before requesting transport.",
+    load: "Loading booking details…",
+    noBooking: "This transport page was opened without a booking. Go back to your token and use Request Vehicle there.",
+    capacity: "Capacity",
+    distance: "Distance",
+    km: "km",
+    online: "Online",
+    trips: "trips",
+    rating: "rating",
+    waiting: "Waiting for transporter",
+    smart: "Smart matching",
+    smartText: "Matching uses your service region, crop quantity and available vehicles.",
+  },
+  hi: {
+    eyebrow: "KRISHISETU • किसान",
+    title: "इस बुकिंग के लिए वाहन",
+    subtitle: "आपकी बुकिंग पहले से जुड़ी है। अब केवल पिकअप लोकेशन और अंतिम पुष्टि चाहिए।",
+    booking: "बुकिंग",
+    token: "टोकन",
+    crop: "फसल",
+    quantity: "मात्रा",
+    pickup: "पिकअप स्थान",
+    center: "खरीद केंद्र",
+    date: "आगमन",
+    route: "मार्ग",
+    fromFarm: "आपके खेत से",
+    toCenter: "खरीद केंद्र तक",
+    location: "किसान का स्थान",
+    accountLocation: "किसान प्रोफाइल से",
+    useGps: "वर्तमान GPS लें",
+    locating: "लोकेशन मिल रही है…",
+    gpsSaved: "GPS लोकेशन सेव हो गई",
+    noGps: "GPS सेव नहीं है। खेत का पता / गांव फिर भी उपयोग किया जा सकता है।",
+    nearby: "पिकअप के पास सक्रिय ट्रांसपोर्टर",
+    nearbyText: "पर्याप्त क्षमता वाले ऑनलाइन वाहन पहले दिखाए जाते हैं।",
+    noNearby: "अभी इस क्षेत्र में कोई सक्रिय ट्रांसपोर्टर नहीं मिला।",
+    refresh: "रिफ्रेश",
+    request: "वाहन रिक्वेस्ट करें",
+    requesting: "रिक्वेस्ट भेजी जा रही है…",
+    requested: "वाहन रिक्वेस्ट बन गई",
+    requestedText: "आपकी रिक्वेस्ट योग्य ट्रांसपोर्टरों को दिखाई दे रही है।",
+    requestId: "रिक्वेस्ट आईडी",
+    track: "परिवहन ट्रैक करें",
+    manage: "परिवहन प्रबंधित करें",
+    backToken: "टोकन पर वापस",
+    server: "परिवहन रिक्वेस्ट नहीं बन सकी।",
+    login: "परिवहन रिक्वेस्ट करने से पहले किसान के रूप में लॉग इन करें।",
+    load: "बुकिंग विवरण लोड हो रहा है…",
+    noBooking: "यह पेज बिना बुकिंग के खोला गया है। टोकन पर वापस जाएं और Request Vehicle दबाएं।",
+    capacity: "क्षमता",
+    distance: "दूरी",
+    km: "किमी",
+    online: "ऑनलाइन",
+    trips: "यात्राएं",
+    rating: "रेटिंग",
+    waiting: "ट्रांसपोर्टर की प्रतीक्षा",
+    smart: "स्मार्ट मैचिंग",
+    smartText: "मैचिंग आपके क्षेत्र, फसल की मात्रा और उपलब्ध वाहनों के आधार पर होती है।",
+  },
+  te: {
+    eyebrow: "KRISHISETU • రైతు",
+    title: "ఈ బుకింగ్ కోసం వాహనం",
+    subtitle: "మీ బుకింగ్ ఇప్పటికే లింక్ అయింది. పికప్ లొకేషన్ మరియు చివరి నిర్ధారణ మాత్రమే అవసరం.",
+    booking: "బుకింగ్",
+    token: "టోకెన్",
+    crop: "పంట",
+    quantity: "పరిమాణం",
+    pickup: "పికప్ స్థానం",
+    center: "కొనుగోలు కేంద్రం",
+    date: "ఆగమనం",
+    route: "మార్గం",
+    fromFarm: "మీ పొలం నుండి",
+    toCenter: "కొనుగోలు కేంద్రానికి",
+    location: "రైతు స్థానం",
+    accountLocation: "రైతు ప్రొఫైల్ నుండి",
+    useGps: "ప్రస్తుత GPS ఉపయోగించండి",
+    locating: "లొకేషన్ పొందుతోంది…",
+    gpsSaved: "GPS లొకేషన్ సేవ్ అయింది",
+    noGps: "GPS సేవ్ కాలేదు. పొలం చిరునామా / గ్రామాన్ని ఉపయోగించవచ్చు.",
+    nearby: "పికప్ దగ్గర యాక్టివ్ ట్రాన్స్‌పోర్టర్లు",
+    nearbyText: "సరిపడే సామర్థ్యం ఉన్న ఆన్‌లైన్ వాహనాలు ముందుగా కనిపిస్తాయి.",
+    noNearby: "ఈ పరిధిలో ప్రస్తుతం యాక్టివ్ ట్రాన్స్‌పోర్టర్ లభించలేదు.",
+    refresh: "రిఫ్రెష్",
+    request: "వాహనం అభ్యర్థించండి",
+    requesting: "అభ్యర్థన పంపుతోంది…",
+    requested: "వాహన అభ్యర్థన సృష్టించబడింది",
+    requestedText: "మీ అభ్యర్థన సరిపడే ట్రాన్స్‌పోర్టర్లకు కనిపిస్తోంది.",
+    requestId: "అభ్యర్థన ఐడి",
+    track: "రవాణా ట్రాక్ చేయండి",
+    manage: "రవాణా నిర్వహించండి",
+    backToken: "టోకెన్‌కు తిరిగి",
+    server: "రవాణా అభ్యర్థన సృష్టించలేకపోయాము.",
+    login: "రవాణా అభ్యర్థించడానికి ముందు రైతుగా లాగిన్ అవ్వండి.",
+    load: "బుకింగ్ వివరాలు లోడ్ అవుతున్నాయి…",
+    noBooking: "బుకింగ్ లేకుండా ఈ పేజీ తెరవబడింది. టోకెన్‌కు వెళ్లి Request Vehicle నొక్కండి.",
+    capacity: "సామర్థ్యం",
+    distance: "దూరం",
+    km: "కి.మీ",
+    online: "ఆన్‌లైన్",
+    trips: "ట్రిప్స్",
+    rating: "రేటింగ్",
+    waiting: "ట్రాన్స్‌పోర్టర్ కోసం వేచి ఉంది",
+    smart: "స్మార్ట్ మ్యాచ్ింగ్",
+    smartText: "మీ ప్రాంతం, పంట పరిమాణం మరియు అందుబాటులో ఉన్న వాహనాల ఆధారంగా మ్యాచ్ చేస్తుంది.",
+  },
 };
 
-const CROPS = ["Wheat","Rice","Maize","Soybean","Cotton","Bajra","Mustard","Gram","Groundnut","Barley","Other"];
-const VEHICLES = [
-  { value:"TRACTOR", label:"Tractor", capacity:3500 },
-  { value:"MINI_TRUCK", label:"Mini Truck", capacity:3000 },
-  { value:"PICKUP", label:"Pickup", capacity:1500 },
-  { value:"TRUCK", label:"Truck", capacity:10000 },
-  { value:"TEMPO", label:"Tempo", capacity:1000 },
-  { value:"OTHER", label:"Other", capacity:0 }
-];
-
-function getFarmer(){ try{return JSON.parse(localStorage.getItem("krishisetu_farmer")||"null")}catch{return null} }
-function getFarmerId(f){return f?.id||f?.farmerId||f?.farmer_id||localStorage.getItem("farmer_id")||""}
-function getToday(){return new Date().toISOString().slice(0,10)}
-function initialForm(f){return {crop:"",quantityKg:"",village:f?.village||f?.village_name||"",villageId:f?.villageId||f?.village_id||"",district:f?.district||f?.district_name||"",districtId:f?.districtId||f?.district_id||"",state:f?.state||f?.state_name||"",stateId:f?.stateId||f?.state_id||"",pickupAddress:f?.address||"",pickupLat:null,pickupLng:null,centerId:"",centerName:"",centerAddress:"",centerLat:null,centerLng:null,pickupDate:getToday(),pickupTime:"09:00",vehicleType:"",emergency:false,scheduled:true,notes:""}}
-function loadDraft(f){try{const s=localStorage.getItem("krishisetu_transport_request_draft");return s?{...initialForm(f),...JSON.parse(s)}:initialForm(f)}catch{return initialForm(f)}}
-
-async function api(path,options={}){
-  const r=await fetch(`${API_BASE}${path}`,{...options,headers:{"Content-Type":"application/json",...(options.headers||{})}});
-  let d=null; try{d=await r.json()}catch{}
-  if(!r.ok){const e=new Error(d?.message||d?.error||"Request failed");e.status=r.status;throw e} return d;
+function clean(value) {
+  return String(value ?? "").trim();
 }
 
-export default function TransportRequest(){
-  const navigate=useNavigate();
-  const {language}=useLanguage();
-  const t=COPY[COPY[language]?language:"en"];
-  const [farmer,setFarmer]=useState(null);
-  const [form,setForm]=useState(()=>initialForm(null));
-  const [centers,setCenters]=useState([]);
-  const [step,setStep]=useState(1);
-  const [loadingCenters,setLoadingCenters]=useState(false);
-  const [locating,setLocating]=useState(false);
-  const [error,setError]=useState("");
-  const [saving,setSaving]=useState(false);
-  const [draftMessage,setDraftMessage]=useState("");
-  const [createdRequest,setCreatedRequest]=useState(null);
-
-  useEffect(()=>{const f=getFarmer();setFarmer(f);setForm(loadDraft(f))},[]);
-  useEffect(()=>{
-    async function load(){setLoadingCenters(true);try{
-      const id=getFarmerId(farmer); const q=id?`/api/procurement/centers?farmerId=${encodeURIComponent(id)}`:"/api/procurement/centers";
-      const d=await api(q); const list=Array.isArray(d)?d:Array.isArray(d?.centers)?d.centers:Array.isArray(d?.data)?d.data:[];
-      setCenters(list.map(x=>({id:x.id??x.centerId??x.center_id??"",name:x.name??x.center_name??x.centerName??"Procurement Center",address:x.address??x.location??"",lat:x.lat??x.latitude??null,lng:x.lng??x.longitude??null})));
-    }catch{setCenters([])}finally{setLoadingCenters(false)}}
-    if(farmer)load();
-  },[farmer]);
-
-  const selectedVehicle=useMemo(()=>VEHICLES.find(v=>v.value===form.vehicleType),[form.vehicleType]);
-  const setField=(k,v)=>{setForm(x=>({...x,[k]:v}));setError("")};
-  const chooseCenter=c=>setForm(x=>({...x,centerId:c.id,centerName:c.name,centerAddress:c.address,centerLat:c.lat,centerLng:c.lng}));
-  const saveDraft=()=>{localStorage.setItem("krishisetu_transport_request_draft",JSON.stringify(form));setDraftMessage(t.draftSaved);setTimeout(()=>setDraftMessage(""),2200)};
-  const clearDraft=()=>{localStorage.removeItem("krishisetu_transport_request_draft");setForm(initialForm(farmer));setStep(1);setError("")};
-  const captureLocation=()=>{
-    setLocating(true);setError("");
-    if(!navigator.geolocation){setLocating(false);setError("GPS is not supported on this device.");return}
-    navigator.geolocation.getCurrentPosition(p=>{setField("pickupLat",Number(p.coords.latitude.toFixed(7)));setField("pickupLng",Number(p.coords.longitude.toFixed(7)));setLocating(false)},()=>{setLocating(false);setError("Could not capture your current location.")},{enableHighAccuracy:true,timeout:12000,maximumAge:30000});
-  };
-  const validate=target=>{
-    if(!getFarmerId(farmer)){setError(t.login);return false}
-    if(target>=1&&(!form.crop||!form.quantityKg)){setError(t.required);return false}
-    if(target>=1&&(!Number.isFinite(Number(form.quantityKg))||Number(form.quantityKg)<=0)){setError(t.invalidQty);return false}
-    if(target>=2&&(!form.village&&!form.pickupAddress&&form.pickupLat==null)){setError(t.required);return false}
-    if(target>=2&&!form.centerId&&!form.centerName){setError(t.required);return false}
-    if(target>=3&&(!form.pickupDate||!form.pickupTime||!form.vehicleType)){setError(t.required);return false}
-    if(target>=3&&form.pickupDate<getToday()){setError(t.pastDate);return false}
-    const cap=selectedVehicle?.capacity||0;if(target>=3&&cap&&Number(form.quantityKg)>cap){setError(`${selectedVehicle.label} capacity is ${cap} kg.`);return false}
-    setError("");return true;
-  };
-  const submit=async e=>{
-    e.preventDefault(); if(!validate(4))return; const id=getFarmerId(farmer),q=Number(form.quantityKg);
-    const payload={farmerId:id,farmer_id:id,crop:form.crop,cropName:form.crop,quantityKg:q,quantity_kg:q,village:form.village||undefined,villageId:form.villageId||undefined,pickupVillage:form.village||undefined,pickupVillageId:form.villageId||undefined,district:form.district||undefined,districtId:form.districtId||undefined,pickupDistrict:form.district||undefined,pickupDistrictId:form.districtId||undefined,state:form.state||undefined,stateId:form.stateId||undefined,pickupState:form.state||undefined,pickupStateId:form.stateId||undefined,pickupAddress:form.pickupAddress||undefined,pickupLat:form.pickupLat??undefined,pickupLng:form.pickupLng??undefined,centerId:form.centerId||undefined,procurementCenterId:form.centerId||undefined,centerName:form.centerName||undefined,centerAddress:form.centerAddress||undefined,centerLat:form.centerLat??undefined,centerLng:form.centerLng??undefined,vehicleType:form.vehicleType,pickupDate:form.pickupDate,pickupTime:form.pickupTime,scheduledDate:form.pickupDate,scheduledTime:form.pickupTime,emergency:!!form.emergency,isEmergency:!!form.emergency,scheduled:!!form.scheduled,isScheduled:!!form.scheduled,notes:form.notes||undefined};
-    setSaving(true);setError("");
-    try{const r=await api("/api/transport/requests",{method:"POST",body:JSON.stringify(payload)});setCreatedRequest(r?.request||r?.transportRequest||r?.data||r);localStorage.removeItem("krishisetu_transport_request_draft")}
-    catch(err){setError(err?.status>=500?t.server:err?.message||t.network)}finally{setSaving(false)}
-  };
-
-  if(createdRequest){const id=createdRequest.id||createdRequest.requestId||createdRequest.transport_request_id;return <div className="tr-page"><style>{styles}</style><div className="success-card"><div className="success-icon">✓</div><span className="eyebrow">KRISHISETU • LOGISTICS</span><h1>{t.success}</h1><p>{t.successText}</p>{id&&<div className="request-id"><small>{t.requestId}</small><strong>#{id}</strong></div>}<div className="success-actions">{id&&<button className="primary" onClick={()=>navigate(`/farmer/transport/tracking/${id}`)}>{t.tracking}</button>}<button className="secondary" onClick={()=>navigate("/farmer/logistics")}>{t.logistics}</button></div></div></div>}
-
-  return <div className="tr-page"><style>{styles}</style><div className="shell">
-    <header className="header"><button className="back" onClick={()=>navigate(-1)}>←</button><div><span className="eyebrow">KRISHISETU • FARMER</span><h1>{t.title}</h1><p>{t.subtitle}</p></div></header>
-    {!getFarmerId(farmer)&&<div className="alert warning">{t.login}</div>}{error&&<div className="alert error">{error}</div>}{draftMessage&&<div className="alert success">{draftMessage}</div>}
-    <div className="steps">{[1,2,3,4].map(n=><button type="button" key={n} className={step===n?"step active":"step"} onClick={()=>n<step&&setStep(n)}><span>{n}</span><small>{n===1?t.cropDetails:n===2?t.route:n===3?t.schedule:t.review}</small></button>)}</div>
-    <form className="card" onSubmit={submit}>
-      {step===1&&<section><h2>{t.cropDetails}</h2><div className="grid two"><label><span>{t.crop} *</span><select value={form.crop} onChange={e=>setField("crop",e.target.value)}><option value="">{t.choose}</option>{CROPS.map(c=><option key={c}>{c}</option>)}</select></label><label><span>{t.quantity} *</span><input type="number" min="1" step="0.1" value={form.quantityKg} onChange={e=>setField("quantityKg",e.target.value)} placeholder="e.g. 1200"/></label></div></section>}
-      {step===2&&<section><div className="section-head"><div><h2>{t.pickup}</h2><p>Use GPS or enter your farm details.</p></div><button type="button" className="secondary" onClick={captureLocation} disabled={locating}>{locating?t.gettingGps:`⌖ ${t.useGps}`}</button></div>{form.pickupLat!=null&&<div className="gps">✓ {t.gpsDone}: {form.pickupLat}, {form.pickupLng}</div>}<div className="grid three"><label><span>{t.village}</span><input value={form.village} onChange={e=>setField("village",e.target.value)}/></label><label><span>{t.district}</span><input value={form.district} onChange={e=>setField("district",e.target.value)}/></label><label><span>{t.state}</span><input value={form.state} onChange={e=>setField("state",e.target.value)}/></label></div><label><span>{t.address}</span><textarea rows="3" value={form.pickupAddress} onChange={e=>setField("pickupAddress",e.target.value)} placeholder="Farm, road, gate or nearby landmark"/></label><div className="center-head"><h3>{t.center} *</h3>{loadingCenters&&<small>Loading...</small>}</div><div className="centers">{centers.length?centers.map(c=><button type="button" key={c.id||c.name} className={String(form.centerId)===String(c.id)?"center selected":"center"} onClick={()=>chooseCenter(c)}><span className="radio">{String(form.centerId)===String(c.id)?"✓":""}</span><span><strong>{c.name}</strong><small>{c.address||"Procurement center"}</small></span></button>):<div className="empty">No procurement centers were returned by the current backend. You can enter the center name below.</div>}</div><label><span>{t.center} name</span><input value={form.centerName} onChange={e=>setField("centerName",e.target.value)} placeholder="Procurement center name"/></label></section>}
-      {step===3&&<section><h2>{t.schedule}</h2><div className="grid two"><label><span>{t.date} *</span><input type="date" min={getToday()} value={form.pickupDate} onChange={e=>setField("pickupDate",e.target.value)}/></label><label><span>{t.time} *</span><input type="time" value={form.pickupTime} onChange={e=>setField("pickupTime",e.target.value)}/></label></div><label><span>{t.vehicle} *</span><select value={form.vehicleType} onChange={e=>setField("vehicleType",e.target.value)}><option value="">{t.choose}</option>{VEHICLES.map(v=><option key={v.value} value={v.value}>{v.label}{v.capacity?` — ${v.capacity} kg`:""}</option>)}</select></label>{selectedVehicle?.capacity&&<div className="capacity">Vehicle capacity: <strong>{selectedVehicle.capacity.toLocaleString()} kg</strong> • Your crop: <strong>{Number(form.quantityKg||0).toLocaleString()} kg</strong></div>}<div className="toggles"><label className={form.emergency?"toggle selected":"toggle"}><input type="checkbox" checked={form.emergency} onChange={e=>setField("emergency",e.target.checked)}/><strong>⚡ {t.emergency}</strong></label><label className={form.scheduled?"toggle selected":"toggle"}><input type="checkbox" checked={form.scheduled} onChange={e=>setField("scheduled",e.target.checked)}/><strong>◷ {t.scheduled}</strong></label></div><label><span>{t.notes}</span><textarea rows="4" value={form.notes} onChange={e=>setField("notes",e.target.value)} placeholder="Loading instructions, gate details, landmarks..."/></label></section>}
-      {step===4&&<section><h2>{t.review}</h2><div className="review"><div><small>{t.crop}</small><strong>{form.crop}</strong><span>{form.quantityKg} kg</span></div><div><small>{t.pickup}</small><strong>{form.village||form.pickupAddress||"GPS location"}</strong><span>{form.district}, {form.state}</span></div><div><small>{t.center}</small><strong>{form.centerName}</strong><span>{form.centerAddress||"Procurement center"}</span></div><div><small>{t.schedule}</small><strong>{form.pickupDate}</strong><span>{form.pickupTime} • {selectedVehicle?.label||form.vehicleType}</span></div></div><div className="route"><div><span>1</span><strong>{t.pickup}</strong><small>{form.pickupAddress||form.village||"Location captured"}</small></div><div className="arrow">→</div><div><span>2</span><strong>{t.center}</strong><small>{form.centerName||"Procurement center"}</small></div></div></section>}
-      <footer className="actions"><div>{step>1?<button type="button" className="secondary" onClick={()=>setStep(s=>s-1)}>← {t.back}</button>:<button type="button" className="secondary" onClick={clearDraft}>{t.clear}</button>}<button type="button" className="link" onClick={saveDraft}>{t.save}</button></div>{step<4?<button type="button" className="primary" onClick={()=>validate(step)&&setStep(s=>s+1)}>{t.next} →</button>:<button className="primary" type="submit" disabled={saving}>{saving?t.submitting:t.submit}</button>}</footer>
-    </form>
-  </div></div>
+function num(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
 }
 
-const styles=`
-.tr-page{min-height:100vh;padding:30px 16px 60px;background:#f5f8f4;color:#17231a}.shell{width:min(1050px,100%);margin:auto}.header{display:flex;gap:15px;align-items:flex-start;margin-bottom:22px}.back{width:44px;height:44px;border:1px solid #dce6de;border-radius:13px;background:#fff;font-size:21px;cursor:pointer}.eyebrow{font-size:11px;font-weight:900;letter-spacing:.1em;color:#14823e}.header h1{font-size:clamp(30px,4vw,44px);margin:4px 0 7px;letter-spacing:-.03em}.header p{margin:0;color:#647167;line-height:1.5}.alert{padding:13px 15px;border-radius:13px;margin-bottom:15px;font-size:13px}.warning{background:#fff8e8;border:1px solid #f2dea9;color:#76520d}.error{background:#fff0f0;border:1px solid #f2c7c7;color:#8b2929}.success{background:#effbf2;border:1px solid #ccebd4;color:#166534}.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;background:#fff;border:1px solid #e0e8e1;border-radius:20px;padding:15px;margin-bottom:15px}.step{background:none;border:0;text-align:left;color:#7c8980;display:flex;gap:9px;align-items:center}.step span{width:27px;height:27px;border-radius:50%;display:grid;place-items:center;background:#edf2ee;font-weight:850}.step.active{color:#17311f;font-weight:800}.step.active span{background:#dcfce7;color:#166534}.step small{font-size:11px}.card{background:#fff;border:1px solid #e0e8e1;border-radius:24px;overflow:hidden;box-shadow:0 15px 45px rgba(24,55,31,.06)}.card section{padding:31px}.card h2{font-size:24px;margin:0 0 20px}.section-head{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}.section-head p{color:#6b786e;font-size:12px;margin:5px 0 0}.grid{display:grid;gap:16px}.grid.two{grid-template-columns:repeat(2,1fr)}.grid.three{grid-template-columns:repeat(3,1fr)}.card label{display:flex;flex-direction:column;gap:7px;margin-top:17px}.grid label{margin-top:0}.card label span{font-size:12px;font-weight:800;color:#405047}.card input,.card select,.card textarea{box-sizing:border-box;width:100%;border:1px solid #d7e1d9;background:#fbfdfb;border-radius:12px;padding:12px 13px;font:inherit;color:#17231a;outline:none}.card input:focus,.card select:focus,.card textarea:focus{border-color:#41a663;box-shadow:0 0 0 3px rgba(34,197,94,.1);background:#fff}.card textarea{resize:vertical}.primary,.secondary,.link{font:inherit;font-weight:800;border-radius:12px;padding:12px 16px;cursor:pointer}.primary{border:0;background:#16823e;color:#fff;box-shadow:0 8px 20px rgba(22,130,62,.18)}.primary:disabled{opacity:.55;cursor:not-allowed}.secondary{border:1px solid #dbe4dd;background:#f6f8f6;color:#344239}.link{border:0;background:transparent;color:#16823e}.gps,.capacity{padding:12px 14px;border-radius:12px;background:#effbf2;border:1px solid #d2eed9;color:#166534;font-size:12px;margin:10px 0}.center-head{display:flex;justify-content:space-between;align-items:center;margin-top:24px}.center-head h3{font-size:15px;margin:0}.center-head small{color:#7a867e}.centers{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;margin-top:10px}.center{display:flex;gap:11px;text-align:left;border:1px solid #d9e3db;border-radius:15px;background:#fff;padding:15px;cursor:pointer}.center.selected{background:#f2fff5;border-color:#55ad70}.radio{width:23px;height:23px;border:1px solid #cbd7cd;border-radius:50%;display:grid;place-items:center;flex:none;color:#16823e}.center.selected .radio{background:#dcfce7;border-color:#55ad70}.center strong{display:block;font-size:13px}.center small{display:block;color:#768179;font-size:11px;margin-top:3px;line-height:1.4}.empty{grid-column:1/-1;padding:15px;border:1px dashed #cbd8cd;border-radius:14px;color:#68756c;font-size:12px}.toggles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}.toggle{margin-top:0!important;border:1px solid #dbe4dd;padding:15px;border-radius:14px;cursor:pointer}.toggle.selected{background:#f3fff5;border-color:#80c394}.toggle input{accent-color:#16823e}.review{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}.review>div{background:#f9fbf9;border:1px solid #e1e9e2;border-radius:14px;padding:14px}.review small{display:block;color:#78847b;font-size:10px;text-transform:uppercase;font-weight:850}.review strong{display:block;margin-top:7px;font-size:14px}.review span{display:block;margin-top:3px;color:#718077;font-size:11px}.route{display:grid;grid-template-columns:1fr 55px 1fr;align-items:center;margin-top:20px}.route>div:not(.arrow){padding:15px;border:1px solid #dde6df;border-radius:14px}.route span{display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:#dcfce7;color:#166534;font-size:11px;font-weight:900}.route strong{display:block;margin-top:8px;font-size:13px}.route small{display:block;margin-top:3px;color:#718077;font-size:11px}.arrow{text-align:center;color:#16823e;font-weight:900}.actions{border-top:1px solid #e4ebe5;padding:17px 24px;display:flex;justify-content:space-between;align-items:center;gap:12px;background:#fcfdfc}.actions>div{display:flex;align-items:center;gap:8px}.success-card{width:min(600px,100%);margin:10vh auto 0;background:#fff;border:1px solid #e0e8e1;border-radius:28px;padding:45px 30px;text-align:center;box-shadow:0 15px 50px rgba(25,55,32,.08)}.success-icon{width:70px;height:70px;display:grid;place-items:center;border-radius:50%;margin:0 auto 18px;background:#dcfce7;color:#15803d;font-size:34px;font-weight:900}.success-card h1{margin:7px 0;font-size:30px}.success-card p{color:#647167;line-height:1.55}.request-id{display:inline-flex;flex-direction:column;gap:3px;padding:12px 20px;background:#fafcfb;border:1px solid #e1e8e2;border-radius:13px;margin:18px 0}.request-id small{color:#7b877e;font-size:9px;font-weight:900;text-transform:uppercase}.request-id strong{font-size:18px}.success-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}@media(max-width:820px){.grid.three,.review{grid-template-columns:repeat(2,1fr)}}@media(max-width:620px){.tr-page{padding:18px 10px 35px}.steps{grid-template-columns:repeat(2,1fr)}.card section{padding:22px 17px}.grid.two,.grid.three,.centers,.toggles,.review{grid-template-columns:1fr}.section-head,.actions{flex-direction:column;align-items:stretch}.actions>div{justify-content:space-between}.route{grid-template-columns:1fr;gap:8px}.arrow{transform:rotate(90deg)}}`;
+function first(...values) {
+  for (const value of values) {
+    if (clean(value)) return value;
+  }
+  return "";
+}
+
+function farmerIdOf(farmer) {
+  return first(
+    farmer?.id,
+    farmer?.farmerId,
+    farmer?.farmer_id
+  );
+}
+
+function tokenOf(booking) {
+  return first(
+    booking?.token,
+    booking?.booking_token,
+    booking?.bookingToken
+  );
+}
+
+function cropLabel(value) {
+  const raw = clean(value);
+  if (!raw) return "Produce";
+  return raw
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function formatDate(value, language) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return clean(value);
+  return d.toLocaleDateString(
+    language === "hi" ? "hi-IN" : language === "te" ? "te-IN" : "en-IN",
+    { day: "numeric", month: "short", year: "numeric" }
+  );
+}
+
+function formatTime(value) {
+  const raw = clean(value);
+  if (!raw) return "";
+  const match = raw.match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return raw;
+  let h = Number(match[1]);
+  const m = match[2];
+  const suffix = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+  return `${h}:${m} ${suffix}`;
+}
+
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const a = num(lat1);
+  const b = num(lng1);
+  const c = num(lat2);
+  const d = num(lng2);
+  if ([a, b, c, d].some(v => v === null)) return null;
+  const R = 6371;
+  const p1 = a * Math.PI / 180;
+  const p2 = c * Math.PI / 180;
+  const dp = (c - a) * Math.PI / 180;
+  const dl = (d - b) * Math.PI / 180;
+  const x =
+    Math.sin(dp / 2) ** 2 +
+    Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+}
+
+function locationFromFarmer(farmer) {
+  return {
+    village: first(farmer?.village, farmer?.village_name),
+    villageId: first(farmer?.villageId, farmer?.village_id),
+    mandal: first(farmer?.mandal, farmer?.mandal_name),
+    mandalId: first(farmer?.mandalId, farmer?.mandal_id),
+    district: first(farmer?.district, farmer?.district_name),
+    districtId: first(farmer?.districtId, farmer?.district_id),
+    state: first(farmer?.state, farmer?.state_name),
+    stateId: first(farmer?.stateId, farmer?.state_id),
+    address: first(
+      farmer?.address,
+      farmer?.farmAddress,
+      farmer?.farm_address,
+      farmer?.pickupAddress,
+      farmer?.pickup_address
+    ),
+    lat: first(
+      farmer?.pickupLat,
+      farmer?.pickup_lat,
+      farmer?.latitude,
+      farmer?.lat,
+      farmer?.currentLat,
+      farmer?.current_lat
+    ),
+    lng: first(
+      farmer?.pickupLng,
+      farmer?.pickup_lng,
+      farmer?.longitude,
+      farmer?.lng,
+      farmer?.currentLng,
+      farmer?.current_lng
+    ),
+  };
+}
+
+function displayPickup(location) {
+  const parts = [
+    location?.address,
+    location?.village,
+    location?.mandal,
+    location?.district,
+    location?.state,
+  ].filter(Boolean);
+  return parts.join(", ") || "Farmer pickup location";
+}
+
+async function api(path, options = {}) {
+  const response = await fetch(`${API}${path}`, {
+    ...options,
+    headers: {
+      Accept: "application/json",
+      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...(options.headers || {}),
+    },
+  });
+
+  let data = null;
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data?.message || data?.error?.message || `Request failed (${response.status})`
+    );
+  }
+
+  return data || {};
+}
+
+function transporterDistance(transporter, location) {
+  const backendDistance = num(
+    first(
+      transporter?.distanceKm,
+      transporter?.distance_km
+    )
+  );
+
+  if (backendDistance !== null) return backendDistance;
+
+  return haversineKm(
+    location?.lat,
+    location?.lng,
+    first(transporter?.current_lat, transporter?.currentLat),
+    first(transporter?.current_lng, transporter?.currentLng)
+  );
+}
+
+function sameRegion(transporter, location) {
+  const fv = clean(location?.villageId);
+  const fd = clean(location?.districtId);
+  const fs = clean(location?.stateId);
+
+  const tv = clean(first(transporter?.village_id, transporter?.villageId));
+  const td = clean(first(transporter?.district_id, transporter?.districtId));
+  const ts = clean(first(transporter?.state_id, transporter?.stateId));
+
+  if (fv && fd && fs && tv && td && ts) {
+    return fv.toLowerCase() === tv.toLowerCase()
+      && fd.toLowerCase() === td.toLowerCase()
+      && fs.toLowerCase() === ts.toLowerCase();
+  }
+
+  const fvn = clean(location?.village).toLowerCase();
+  const fdn = clean(location?.district).toLowerCase();
+  const fsn = clean(location?.state).toLowerCase();
+  const tvn = clean(first(transporter?.village, transporter?.village_name)).toLowerCase();
+  const tdn = clean(first(transporter?.district, transporter?.district_name)).toLowerCase();
+  const tsn = clean(first(transporter?.state, transporter?.state_name)).toLowerCase();
+
+  if (fvn && fdn && fsn && tvn && tdn && tsn) {
+    return fvn === tvn && fdn === tdn && fsn === tsn;
+  }
+
+  return false;
+}
+
+function filterNearbyTransporters(list, location, quantityKg) {
+  const quantity = Number(quantityKg) || 0;
+
+  return list
+    .map(item => {
+      const capacity = Number(
+        first(item?.capacity_kg, item?.capacityKg, 0)
+      ) || 0;
+      const distance = transporterDistance(item, location);
+      const serviceRadius = Number(
+        first(item?.service_radius_km, item?.serviceRadiusKm, 0)
+      ) || 0;
+      return {
+        ...item,
+        _capacity: capacity,
+        _distance: distance,
+        _radius: serviceRadius,
+      };
+    })
+    .filter(item => {
+      if (item.is_online === false) return false;
+      if (item._capacity < quantity) return false;
+      if (!sameRegion(item, location)) return false;
+      if (item._distance !== null && item._radius > 0) {
+        return item._distance <= item._radius;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      const ad = a._distance ?? Number.POSITIVE_INFINITY;
+      const bd = b._distance ?? Number.POSITIVE_INFINITY;
+      if (ad !== bd) return ad - bd;
+      return Number(b.rating || 0) - Number(a.rating || 0);
+    });
+}
+
+export default function TransportRequest() {
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const { language } = useLanguage();
+  const t = COPY[COPY[language] ? language : "en"];
+
+  const bookingId = clean(params.get("booking"));
+  const currentFarmer = useMemo(() => getCurrentFarmer(), []);
+
+  const [farmer, setFarmer] = useState(currentFarmer);
+  const [booking, setBooking] = useState(null);
+  const [centers, setCenters] = useState([]);
+  const [location, setLocation] = useState(locationFromFarmer(currentFarmer));
+  const [transporters, setTransporters] = useState([]);
+  const [loading, setLoading] = useState(Boolean(bookingId));
+  const [loadingTransporters, setLoadingTransporters] = useState(false);
+  const [locating, setLocating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [createdRequest, setCreatedRequest] = useState(null);
+
+  const farmerId = farmerIdOf(farmer);
+
+  const bookingCenter = useMemo(() => {
+    if (!booking?.center_id && !booking?.centerId) return null;
+    const id = String(first(booking?.center_id, booking?.centerId));
+    return centers.find(item => String(item.id) === id) || null;
+  }, [booking, centers]);
+
+  const crop = first(booking?.crop_name, booking?.cropName, booking?.crop);
+  const quantity = Number(
+    first(
+      booking?.actual_quantity,
+      booking?.actualQuantity,
+      booking?.estimated_quantity,
+      booking?.estimatedQuantity,
+      0
+    )
+  );
+  const centerName = first(
+    booking?.center_name,
+    booking?.centerName,
+    bookingCenter?.name,
+    booking?.center_id,
+    "Procurement center"
+  );
+  const centerAddress = first(
+    booking?.center_address,
+    booking?.centerAddress,
+    bookingCenter?.address,
+    bookingCenter?.village
+  );
+  const requestedDate = first(booking?.date, booking?.requested_date);
+  const requestedStart = first(booking?.slot_start, booking?.requested_slot_start);
+  const requestedEnd = first(booking?.slot_end, booking?.requested_slot_end);
+  const token = tokenOf(booking);
+
+  const pickupText = useMemo(() => displayPickup(location), [location]);
+
+  const loadTransporters = useCallback(async () => {
+    if (!farmerId) return;
+    setLoadingTransporters(true);
+    try {
+      const response = await api("/transporters?online=true");
+      const list = Array.isArray(response?.transporters)
+        ? response.transporters
+        : [];
+      setTransporters(
+        filterNearbyTransporters(list, location, quantity)
+      );
+    } catch (err) {
+      console.warn("Nearby transporters:", err);
+      setTransporters([]);
+    } finally {
+      setLoadingTransporters(false);
+    }
+  }, [farmerId, location, quantity]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      if (!farmerId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        let resolvedFarmer = farmer;
+
+        try {
+          const serverFarmer = await api(
+            `/farmers/${encodeURIComponent(farmerId)}`
+          );
+          if (serverFarmer?.farmer) {
+            resolvedFarmer = {
+              ...farmer,
+              ...serverFarmer.farmer,
+            };
+            if (!cancelled) {
+              setFarmer(resolvedFarmer);
+              setLocation(locationFromFarmer(resolvedFarmer));
+            }
+          }
+        } catch {
+          // Existing app-store farmer remains usable.
+        }
+
+        const centerResponse = await api("/centers");
+        if (!cancelled) {
+          setCenters(
+            Array.isArray(centerResponse?.centers)
+              ? centerResponse.centers.filter(c => Number(c.active ?? 1) === 1)
+              : []
+          );
+        }
+
+        if (!bookingId) {
+          if (!cancelled) setLoading(false);
+          return;
+        }
+
+        const bookingResponse = await api(
+          `/bookings/${encodeURIComponent(bookingId)}`
+        );
+
+        if (!cancelled) {
+          setBooking(bookingResponse?.booking || null);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err?.message || t.server);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [bookingId, farmerId]);
+
+  useEffect(() => {
+    if (!booking && !bookingId) return;
+    if (!farmerId) return;
+    loadTransporters();
+  }, [booking, bookingId, farmerId, loadTransporters]);
+
+  const locate = useCallback(() => {
+    if (!navigator.geolocation) {
+      setError("Your browser does not support GPS location.");
+      return;
+    }
+
+    setLocating(true);
+    setError("");
+
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        const lat = Number(position.coords.latitude).toFixed(7);
+        const lng = Number(position.coords.longitude).toFixed(7);
+        setLocation(prev => ({
+          ...prev,
+          lat,
+          lng,
+        }));
+        setLocating(false);
+      },
+      geoError => {
+        setLocating(false);
+        setError(
+          geoError?.code === 1
+            ? "Location permission was denied. Your saved farmer location will still be used."
+            : "Unable to read current location."
+        );
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 30000,
+      }
+    );
+  }, []);
+
+  const submit = useCallback(async () => {
+    if (!farmerId) {
+      setError(t.login);
+      return;
+    }
+
+    if (!bookingId || !booking?.id) {
+      setError(t.noBooking);
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+
+    try {
+      const body = {
+        farmerId,
+        phone: first(farmer?.phone),
+        centerId: first(booking?.center_id, booking?.centerId),
+        crop: first(booking?.crop),
+        quantityKg: quantity,
+        pickupAddress: pickupText,
+        pickupLat: location.lat ? Number(location.lat) : null,
+        pickupLng: location.lng ? Number(location.lng) : null,
+        pickupNote: "Pickup from farmer location",
+        requestedDate,
+        requestedSlotStart: requestedStart,
+        requestedSlotEnd: requestedEnd,
+        notes: "Requested from Farmer Token.",
+      };
+
+      const response = await api(
+        `/bookings/${encodeURIComponent(bookingId)}/transport-request`,
+        {
+          method: "POST",
+          body: JSON.stringify(body),
+        }
+      );
+
+      const request = response?.request || null;
+      const candidates = Array.isArray(response?.candidates)
+        ? response.candidates
+        : [];
+
+      if (!request?.id) {
+        throw new Error(t.server);
+      }
+
+      setCreatedRequest({
+        ...request,
+        candidates: candidates.length
+          ? candidates
+          : transporters,
+      });
+    } catch (err) {
+      setError(err?.message || t.server);
+    } finally {
+      setSaving(false);
+    }
+  }, [
+    booking,
+    bookingId,
+    farmer,
+    farmerId,
+    location,
+    pickupText,
+    quantity,
+    requestedDate,
+    requestedEnd,
+    requestedStart,
+    t.server,
+    transporters,
+  ]);
+
+  if (createdRequest) {
+    const requestId = createdRequest.id;
+    const candidateList = Array.isArray(createdRequest.candidates)
+      ? createdRequest.candidates
+      : [];
+
+    return (
+      <div className="ks-transport-page">
+        <style>{STYLES}</style>
+        <Header />
+
+        <main className="ks-transport-shell">
+          <section className="ks-success-card">
+            <div className="ks-success-icon">
+              <CheckCircle2 size={34} />
+            </div>
+            <span className="ks-eyebrow">KRISHISETU • LOGISTICS</span>
+            <h1>{t.requested}</h1>
+            <p>{t.requestedText}</p>
+
+            <div className="ks-success-meta">
+              <div>
+                <small>{t.requestId}</small>
+                <strong>#{requestId}</strong>
+              </div>
+              <div>
+                <small>{t.token}</small>
+                <strong>#{token || "—"}</strong>
+              </div>
+            </div>
+
+            <section className="ks-match-card">
+              <div className="ks-section-head">
+                <div>
+                  <span className="ks-mini-label">{t.nearby}</span>
+                  <h2>{candidateList.length}</h2>
+                  <p>{t.nearbyText}</p>
+                </div>
+                <div className="ks-match-badge">
+                  <ShieldCheck size={16} /> {t.smart}
+                </div>
+              </div>
+
+              {candidateList.length ? (
+                <div className="ks-transporter-grid">
+                  {candidateList.slice(0, 6).map((item, index) => (
+                    <TransporterCard
+                      key={item.id || `${item.name}-${index}`}
+                      item={item}
+                      location={location}
+                      t={t}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="ks-no-match">
+                  <Truck size={22} />
+                  <strong>{t.noNearby}</strong>
+                  <span>{t.waiting}</span>
+                </div>
+              )}
+            </section>
+
+            <div className="ks-success-actions">
+              <button
+                type="button"
+                className="ks-btn ks-btn-primary"
+                onClick={() => navigate(`/farmer/transport/tracking/${encodeURIComponent(requestId)}`)}
+              >
+                <Navigation size={16} /> {t.track}
+              </button>
+              <button
+                type="button"
+                className="ks-btn ks-btn-light"
+                onClick={() => navigate(`/farmer/logistics?request=${encodeURIComponent(requestId)}`)}
+              >
+                <Truck size={16} /> {t.manage}
+              </button>
+            </div>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="ks-transport-page">
+        <style>{STYLES}</style>
+        <Header />
+        <main className="ks-transport-shell">
+          <div className="ks-loading-card">
+            <RefreshCw className="ks-spin" size={22} />
+            <span>{t.load}</span>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!farmerId) {
+    return (
+      <div className="ks-transport-page">
+        <style>{STYLES}</style>
+        <Header />
+        <main className="ks-transport-shell">
+          <button className="ks-back" type="button" onClick={() => navigate(-1)}>
+            <ArrowLeft size={17} /> {t.backToken}
+          </button>
+          <div className="ks-error-card">
+            <UserRound size={25} />
+            <h2>{t.login}</h2>
+            <p>Open the Farmer Token page after signing in and press Request Vehicle.</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (bookingId && !booking) {
+    return (
+      <div className="ks-transport-page">
+        <style>{STYLES}</style>
+        <Header />
+        <main className="ks-transport-shell">
+          <button className="ks-back" type="button" onClick={() => navigate(-1)}>
+            <ArrowLeft size={17} /> {t.backToken}
+          </button>
+          <div className="ks-error-card">
+            <XCircle size={25} />
+            <h2>{t.noBooking}</h2>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="ks-transport-page">
+      <style>{STYLES}</style>
+      <Header />
+
+      <main className="ks-transport-shell">
+        <button className="ks-back" type="button" onClick={() => navigate(-1)}>
+          <ArrowLeft size={17} /> {t.backToken}
+        </button>
+
+        <header className="ks-page-head">
+          <div>
+            <span className="ks-eyebrow">{t.eyebrow}</span>
+            <h1>{t.title}{token ? ` • #${token}` : ""}</h1>
+            <p>{t.subtitle}</p>
+          </div>
+          <div className="ks-live-pill">
+            <span /> {t.nearby}
+          </div>
+        </header>
+
+        {error && (
+          <div className="ks-alert">
+            <XCircle size={17} />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <section className="ks-booking-summary">
+          <div className="ks-summary-head">
+            <div className="ks-summary-token">
+              <Package size={18} />
+              <div>
+                <small>{t.booking}</small>
+                <strong>{booking?.id || bookingId}</strong>
+              </div>
+            </div>
+            <span className="ks-confirmed-pill">
+              <CheckCircle2 size={14} /> Confirmed
+            </span>
+          </div>
+
+          <div className="ks-summary-grid">
+            <Summary icon={<Package size={17} />} label={t.crop} value={cropLabel(crop)} />
+            <Summary icon={<Package size={17} />} label={t.quantity} value={`${quantity.toLocaleString("en-IN")} kg`} />
+            <Summary icon={<MapPin size={17} />} label={t.center} value={centerName} note={centerAddress} />
+            <Summary
+              icon={<CalendarDays size={17} />}
+              label={t.date}
+              value={formatDate(requestedDate, language)}
+              note={`${formatTime(requestedStart)}${requestedEnd ? ` – ${formatTime(requestedEnd)}` : ""}`}
+            />
+          </div>
+        </section>
+
+        <div className="ks-main-grid">
+          <section className="ks-card">
+            <div className="ks-card-head">
+              <div>
+                <span className="ks-mini-label">01</span>
+                <h2>{t.route}</h2>
+              </div>
+            </div>
+
+            <div className="ks-route-card">
+              <div className="ks-route-point">
+                <div className="ks-route-icon green"><MapPin size={18} /></div>
+                <div>
+                  <small>{t.fromFarm}</small>
+                  <strong>{pickupText}</strong>
+                </div>
+              </div>
+              <div className="ks-route-line"><span /></div>
+              <div className="ks-route-point">
+                <div className="ks-route-icon blue"><Navigation size={18} /></div>
+                <div>
+                  <small>{t.toCenter}</small>
+                  <strong>{centerName}</strong>
+                </div>
+              </div>
+            </div>
+
+            <div className="ks-location-panel">
+              <div className="ks-location-icon"><Crosshair size={18} /></div>
+              <div className="ks-location-copy">
+                <small>{t.location}</small>
+                <strong>{pickupText}</strong>
+                <span>{location.lat && location.lng ? `${t.gpsSaved} • ${Number(location.lat).toFixed(5)}, ${Number(location.lng).toFixed(5)}` : t.noGps}</span>
+              </div>
+              <button
+                type="button"
+                className="ks-btn ks-btn-light ks-gps-btn"
+                onClick={locate}
+                disabled={locating}
+              >
+                <Crosshair size={15} /> {locating ? t.locating : t.useGps}
+              </button>
+            </div>
+          </section>
+
+          <aside className="ks-card ks-match-side">
+            <div className="ks-card-head">
+              <div>
+                <span className="ks-mini-label">02</span>
+                <h2>{t.nearby}</h2>
+                <p>{t.nearbyText}</p>
+              </div>
+              <button
+                className="ks-icon-btn"
+                type="button"
+                onClick={loadTransporters}
+                disabled={loadingTransporters}
+                title={t.refresh}
+              >
+                <RefreshCw size={16} className={loadingTransporters ? "ks-spin" : ""} />
+              </button>
+            </div>
+
+            {loadingTransporters ? (
+              <div className="ks-side-loading">
+                <RefreshCw className="ks-spin" size={20} />
+                <span>{t.load}</span>
+              </div>
+            ) : transporters.length ? (
+              <div className="ks-transporter-list">
+                {transporters.slice(0, 4).map((item, index) => (
+                  <TransporterCard
+                    compact
+                    key={item.id || `${item.name}-${index}`}
+                    item={item}
+                    location={location}
+                    t={t}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="ks-no-match compact">
+                <Truck size={24} />
+                <strong>{t.noNearby}</strong>
+                <span>{t.smartText}</span>
+              </div>
+            )}
+
+            <div className="ks-smart-note">
+              <ShieldCheck size={16} />
+              <div>
+                <strong>{t.smart}</strong>
+                <span>{t.smartText}</span>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <section className="ks-bottom-bar">
+          <div>
+            <span className="ks-bottom-title">{t.request}</span>
+            <span className="ks-bottom-sub">{cropLabel(crop)} • {quantity.toLocaleString("en-IN")} kg • #{token || bookingId}</span>
+          </div>
+          <button
+            type="button"
+            className="ks-btn ks-btn-primary ks-request-btn"
+            onClick={submit}
+            disabled={saving}
+          >
+            <Truck size={17} />
+            {saving ? t.requesting : t.request}
+            <Navigation size={15} />
+          </button>
+        </section>
+      </main>
+    </div>
+  );
+}
+
+function Summary({ icon, label, value, note }) {
+  return (
+    <div className="ks-summary-item">
+      <div className="ks-summary-icon">{icon}</div>
+      <div>
+        <small>{label}</small>
+        <strong>{value || "—"}</strong>
+        {note ? <span>{note}</span> : null}
+      </div>
+    </div>
+  );
+}
+
+function TransporterCard({ item, location, t, compact = false }) {
+  const name = first(item?.name, "Transport Partner");
+  const vehicle = first(item?.vehicle_type, item?.vehicleType, "Vehicle");
+  const vehicleNumber = first(item?.vehicle_number, item?.vehicleNumber);
+  const capacity = Number(first(item?.capacity_kg, item?.capacityKg, 0)) || 0;
+  const rating = Number(item?.rating || 0);
+  const trips = Number(item?.total_trips || item?.totalTrips || 0);
+  const distance = transporterDistance(item, location);
+  const phone = first(item?.phone, item?.mobile);
+
+  return (
+    <article className={`ks-transporter-card${compact ? " compact" : ""}`}>
+      <div className="ks-transporter-top">
+        <div className="ks-driver-avatar"><UserRound size={18} /></div>
+        <div className="ks-driver-main">
+          <strong>{name}</strong>
+          <span>{vehicle}{vehicleNumber ? ` • ${vehicleNumber}` : ""}</span>
+        </div>
+        <span className="ks-online-dot" title={t.online} />
+      </div>
+
+      <div className="ks-transporter-meta">
+        <span><Truck size={13} /> {t.capacity}: {capacity.toLocaleString("en-IN")} kg</span>
+        {distance !== null ? (
+          <span><Navigation size={13} /> {distance.toFixed(1)} {t.km}</span>
+        ) : null}
+        {rating > 0 ? (
+          <span><Star size={13} /> {rating.toFixed(1)}</span>
+        ) : null}
+      </div>
+
+      {!compact && (
+        <div className="ks-transporter-footer">
+          <span>{trips.toLocaleString("en-IN")} {t.trips}</span>
+          {phone ? (
+            <a href={`tel:${phone}`}>
+              <Phone size={13} />
+            </a>
+          ) : null}
+        </div>
+      )}
+    </article>
+  );
+}
+
+const STYLES = `
+.ks-transport-page{min-height:100vh;background:#f4f8f5;color:#173126}.ks-transport-page *{box-sizing:border-box}.ks-transport-shell{width:min(1160px,calc(100% - 30px));margin:0 auto;padding:28px 0 50px}.ks-back{border:1px solid #d9e4dd;background:#fff;color:#315046;border-radius:11px;padding:10px 13px;display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:12px;font-weight:800;cursor:pointer;margin-bottom:20px}.ks-page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:20px}.ks-eyebrow{display:block;color:#16824e;font-size:10px;font-weight:950;letter-spacing:.14em}.ks-page-head h1{margin:5px 0 8px;font-size:clamp(29px,4vw,43px);letter-spacing:-.04em;line-height:1.04}.ks-page-head p{margin:0;max-width:720px;color:#6c7c73;font-size:13px;line-height:1.6}.ks-live-pill{display:inline-flex;align-items:center;gap:7px;padding:9px 12px;background:#eff8f2;border:1px solid #cfe5d6;border-radius:999px;color:#2a714b;font-size:10px;font-weight:900;white-space:nowrap}.ks-live-pill>span{width:7px;height:7px;border-radius:50%;background:#2ea45a;box-shadow:0 0 0 4px rgba(46,164,90,.1)}.ks-alert{display:flex;align-items:center;gap:8px;padding:12px 14px;margin-bottom:15px;border:1px solid #efc9c9;border-radius:12px;background:#fff3f3;color:#8c2f2f;font-size:12px}.ks-booking-summary,.ks-card,.ks-bottom-bar{border:1px solid #dfe9e3;background:#fff;border-radius:20px;box-shadow:0 12px 32px rgba(22,61,43,.05)}.ks-booking-summary{padding:20px;margin-bottom:16px}.ks-summary-head{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:16px}.ks-summary-token{display:flex;gap:10px;align-items:center}.ks-summary-token>svg{color:#2d7751}.ks-summary-token small{display:block;color:#87968f;font-size:8px;font-weight:950;letter-spacing:.12em}.ks-summary-token strong{display:block;margin-top:3px;font-size:14px}.ks-confirmed-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;background:#eef9f1;color:#237344;border:1px solid #cee7d5;font-size:9px;font-weight:950}.ks-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.ks-summary-item{display:flex;gap:10px;padding:13px;border:1px solid #e5ece7;border-radius:14px;background:#fbfdfc;min-width:0}.ks-summary-icon{width:33px;height:33px;display:grid;place-items:center;border-radius:10px;background:#edf7f0;color:#28734e;flex:none}.ks-summary-item small{display:block;color:#87958e;font-size:9px;font-weight:950;letter-spacing:.08em;text-transform:uppercase}.ks-summary-item strong{display:block;margin-top:4px;font-size:12px;overflow:hidden;text-overflow:ellipsis}.ks-summary-item span{display:block;color:#718078;font-size:10px;margin-top:3px;line-height:1.35}.ks-main-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(340px,.85fr);gap:16px}.ks-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:18px 19px;border-bottom:1px solid #edf2ef}.ks-mini-label{display:block;color:#8a9891;font-size:8px;font-weight:950;letter-spacing:.12em}.ks-card-head h2{margin:4px 0 0;font-size:17px;letter-spacing:-.02em}.ks-card-head p{margin:4px 0 0;color:#78877f;font-size:10px;line-height:1.45}.ks-route-card{padding:24px 22px}.ks-route-point{display:flex;align-items:center;gap:11px}.ks-route-icon{width:39px;height:39px;border-radius:12px;display:grid;place-items:center;flex:none}.ks-route-icon.green{background:#ebf8ef;color:#25814f}.ks-route-icon.blue{background:#edf5fc;color:#3276a7}.ks-route-point small{display:block;color:#8a9791;font-size:9px;font-weight:950;text-transform:uppercase;letter-spacing:.08em}.ks-route-point strong{display:block;margin-top:4px;font-size:12px;line-height:1.45}.ks-route-line{height:38px;margin-left:19px;border-left:2px dashed #bfd3c7}.ks-location-panel{display:flex;align-items:center;gap:11px;margin:0 19px 19px;padding:14px;border:1px solid #dce9e0;border-radius:14px;background:#f8fcf9}.ks-location-icon{width:35px;height:35px;display:grid;place-items:center;border-radius:10px;background:#eaf7ef;color:#23734a;flex:none}.ks-location-copy{min-width:0;flex:1}.ks-location-copy small{display:block;color:#87948d;font-size:8px;font-weight:950;text-transform:uppercase;letter-spacing:.09em}.ks-location-copy strong{display:block;margin-top:3px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ks-location-copy span{display:block;margin-top:3px;color:#718078;font-size:9px;line-height:1.45}.ks-btn{min-height:42px;border-radius:11px;padding:0 13px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font:inherit;font-size:11px;font-weight:900;cursor:pointer;transition:.16s ease;text-decoration:none}.ks-btn-primary{border:0;background:#16833f;color:#fff;box-shadow:0 8px 20px rgba(22,131,63,.18)}.ks-btn-primary:hover{background:#0f6832}.ks-btn-light{border:1px solid #d8e4dd;background:#fff;color:#315046}.ks-btn-light:hover{background:#f7faf8}.ks-btn:disabled{opacity:.55;cursor:not-allowed}.ks-gps-btn{flex:none;min-height:38px}.ks-icon-btn{width:35px;height:35px;border:1px solid #dce6df;border-radius:10px;background:#fff;color:#527266;display:grid;place-items:center;cursor:pointer}.ks-match-side{overflow:hidden}.ks-transporter-list{padding:13px;display:grid;gap:9px}.ks-transporter-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:15px}.ks-transporter-card{border:1px solid #dde8e0;border-radius:14px;padding:13px;background:#fbfdfc}.ks-transporter-card.compact{padding:11px}.ks-transporter-top{display:flex;align-items:center;gap:9px}.ks-driver-avatar{width:39px;height:39px;display:grid;place-items:center;border-radius:11px;background:#edf7f0;color:#29764e;flex:none}.ks-driver-main{min-width:0;flex:1}.ks-driver-main strong{display:block;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ks-driver-main span{display:block;margin-top:3px;color:#74847b;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ks-online-dot{width:8px;height:8px;border-radius:50%;background:#36a35c;box-shadow:0 0 0 4px rgba(54,163,92,.10);flex:none}.ks-transporter-meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.ks-transporter-meta span{display:inline-flex;align-items:center;gap:4px;color:#6f8178;font-size:8px;font-weight:800}.ks-transporter-meta svg{color:#3a7a57}.ks-transporter-footer{display:flex;justify-content:space-between;align-items:center;margin-top:11px;padding-top:10px;border-top:1px dashed #dbe6df;color:#77867e;font-size:9px}.ks-transporter-footer a{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:#edf7f0;color:#26734b;text-decoration:none}.ks-side-loading{min-height:175px;display:grid;place-items:center;align-content:center;gap:8px;color:#73837a;font-size:10px}.ks-no-match{margin:13px;padding:23px 14px;border:1px dashed #d6e2da;border-radius:13px;text-align:center;display:grid;place-items:center;gap:6px;color:#7a8981}.ks-no-match svg{color:#39805b}.ks-no-match strong{font-size:10px;color:#53665b}.ks-no-match span{font-size:9px;line-height:1.45}.ks-no-match.compact{margin:13px}.ks-smart-note{display:flex;gap:9px;margin:0 13px 13px;padding:11px;border-radius:12px;background:#f2faf4;border:1px solid #d5eadb;color:#28704a}.ks-smart-note>svg{flex:none;margin-top:1px}.ks-smart-note strong{display:block;font-size:9px}.ks-smart-note span{display:block;margin-top:3px;color:#718178;font-size:8px;line-height:1.45}.ks-bottom-bar{position:sticky;bottom:12px;margin-top:16px;padding:13px 16px;display:flex;justify-content:space-between;align-items:center;gap:15px;z-index:5}.ks-bottom-title{display:block;font-size:11px;font-weight:950;color:#1f3d2d}.ks-bottom-sub{display:block;margin-top:3px;color:#74837b;font-size:9px}.ks-request-btn{min-width:190px}.ks-loading-card,.ks-error-card{min-height:260px;display:grid;place-items:center;align-content:center;gap:9px;border:1px dashed #d5e1d9;border-radius:20px;background:#fff;color:#6e7d75;text-align:center;padding:20px}.ks-error-card h2{margin:2px 0 0;font-size:16px;color:#4d6156}.ks-error-card p{margin:0;color:#718078;font-size:11px}.ks-spin{animation:ksSpin 1s linear infinite}@keyframes ksSpin{to{transform:rotate(360deg)}}.ks-success-card{width:min(930px,100%);margin:25px auto 0;padding:28px;border:1px solid #dfe9e3;border-radius:22px;background:#fff;box-shadow:0 15px 45px rgba(22,61,43,.07);text-align:center}.ks-success-icon{width:66px;height:66px;display:grid;place-items:center;margin:0 auto 12px;border-radius:20px;background:#e5f6ea;color:#2d7c50}.ks-success-card h1{margin:7px 0 6px;font-size:28px}.ks-success-card>p{margin:0 auto;max-width:600px;color:#6d7d74;font-size:12px;line-height:1.6}.ks-success-meta{display:flex;justify-content:center;gap:10px;margin:18px 0}.ks-success-meta>div{min-width:140px;padding:10px 13px;border:1px solid #e1e9e3;border-radius:12px;background:#fbfdfc}.ks-success-meta small{display:block;color:#8b9891;font-size:8px;font-weight:950;text-transform:uppercase}.ks-success-meta strong{display:block;margin-top:4px;font-size:13px}.ks-match-card{margin-top:18px;text-align:left;border:1px solid #dce8e0;border-radius:17px;padding:16px;background:#fbfefc}.ks-section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:15px}.ks-section-head h2{margin:3px 0;font-size:22px}.ks-section-head p{margin:0;color:#738279;font-size:10px}.ks-match-badge{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border-radius:999px;border:1px solid #cee4d5;background:#eff8f2;color:#28734b;font-size:8px;font-weight:950;white-space:nowrap}.ks-success-actions{display:flex;justify-content:center;gap:9px;margin-top:17px}.ks-success-actions .ks-btn{min-width:155px}@media(max-width:900px){.ks-summary-grid{grid-template-columns:repeat(2,1fr)}.ks-main-grid{grid-template-columns:1fr}.ks-transporter-grid{grid-template-columns:1fr 1fr}}@media(max-width:640px){.ks-transport-shell{width:calc(100% - 16px);padding-top:18px}.ks-page-head,.ks-summary-head,.ks-bottom-bar{flex-direction:column;align-items:stretch}.ks-live-pill{align-self:flex-start}.ks-summary-grid{grid-template-columns:1fr}.ks-transporter-grid{grid-template-columns:1fr}.ks-location-panel{align-items:flex-start;flex-wrap:wrap}.ks-gps-btn{width:100%}.ks-bottom-bar{gap:10px}.ks-request-btn{width:100%}.ks-success-actions{flex-direction:column}.ks-success-actions .ks-btn{width:100%}.ks-success-meta{flex-direction:column}.ks-success-meta>div{width:100%}}
+`;
