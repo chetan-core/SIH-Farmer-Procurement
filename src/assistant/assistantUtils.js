@@ -8,11 +8,10 @@
    intentEngine.js
    assistantContext.js
    assistantRouter.js
+   assistantService.js
    VoiceAssistant.jsx
 
-   This file should contain reusable, side-effect-light
-   helper functions.
-
+   This file contains reusable, side-effect-light helpers.
 ========================================================= */
 
 
@@ -23,7 +22,6 @@
 const DEFAULT_MAX_HISTORY =
   12;
 
-
 const DEFAULT_MAX_MESSAGES =
   50;
 
@@ -31,10 +29,6 @@ const DEFAULT_MAX_MESSAGES =
 /* =========================================================
    TEXT
 ========================================================= */
-
-/*
- * Clean user-visible text without changing its meaning.
- */
 
 export function cleanText(
   value
@@ -52,10 +46,6 @@ export function cleanText(
 }
 
 
-/*
- * More aggressive normalization for intent detection.
- */
-
 export function normalizeText(
   value
 ) {
@@ -68,7 +58,7 @@ export function normalizeText(
       "NFKC"
     )
     .replace(
-      /[^\p{L}\p{N}\s]/gu,
+      /[^\p{L}\p{N}\s:./-]/gu,
       " "
     )
     .replace(
@@ -79,11 +69,6 @@ export function normalizeText(
 
 }
 
-
-/*
- * Convert a language value into one of the supported
- * language identifiers.
- */
 
 export function normalizeLanguageCode(
   value
@@ -187,10 +172,6 @@ export function uniqueArray(
    STORAGE
 ========================================================= */
 
-/*
- * Safely read JSON from localStorage.
- */
-
 export function readStorageJson(
   key,
   fallback = null
@@ -243,10 +224,6 @@ export function readStorageJson(
 }
 
 
-/*
- * Safely write JSON to localStorage.
- */
-
 export function writeStorageJson(
   key,
   value
@@ -283,10 +260,6 @@ export function writeStorageJson(
 }
 
 
-/*
- * Safely remove localStorage item.
- */
-
 export function removeStorage(
   key
 ) {
@@ -318,10 +291,6 @@ export function removeStorage(
 
 }
 
-
-/* =========================================================
-   LOCAL STORAGE VALUE
-========================================================= */
 
 export function readStorageValue(
   key,
@@ -405,10 +374,6 @@ const FARMER_PHONE_KEYS = [
 ];
 
 
-/*
- * Try to extract farmer identity from an object.
- */
-
 function extractFarmerFromObject(
   value
 ) {
@@ -439,6 +404,13 @@ function extractFarmerFromObject(
     "";
 
 
+  const name =
+    value.name ??
+    value.fullName ??
+    value.farmerName ??
+    "";
+
+
   if (
     !farmerId &&
     !phone
@@ -461,14 +433,15 @@ function extractFarmerFromObject(
         phone || ""
       ),
 
+    name:
+      String(
+        name || ""
+      ),
+
   };
 
 }
 
-
-/*
- * Get the currently stored farmer.
- */
 
 export function getStoredFarmer() {
 
@@ -478,6 +451,9 @@ export function getStoredFarmer() {
       "",
 
     phone:
+      "",
+
+    name:
       "",
 
   };
@@ -494,7 +470,7 @@ export function getStoredFarmer() {
 
 
   /*
-   * Current prototype state has priority.
+   * Prototype state has priority.
    */
 
   try {
@@ -536,7 +512,7 @@ export function getStoredFarmer() {
 
 
   /*
-   * Search known object-based storage keys.
+   * Search object-based storage.
    */
 
   for (
@@ -588,12 +564,11 @@ export function getStoredFarmer() {
 
 
   /*
-   * Search primitive storage keys.
+   * Search primitive storage.
    */
 
   let farmerId =
     "";
-
 
   let phone =
     "";
@@ -665,14 +640,13 @@ export function getStoredFarmer() {
         ""
       ),
 
+    name:
+      "",
+
   };
 
 }
 
-
-/*
- * Check whether a farmer appears authenticated.
- */
 
 export function hasStoredFarmer() {
 
@@ -681,8 +655,10 @@ export function hasStoredFarmer() {
 
 
   return Boolean(
+
     farmer.farmerId ||
     farmer.phone
+
   );
 
 }
@@ -712,10 +688,6 @@ export function normalizePathname(
   }
 
 
-  /*
-   * Remove query string.
-   */
-
   const queryIndex =
     path.indexOf(
       "?"
@@ -736,10 +708,6 @@ export function normalizePathname(
   }
 
 
-  /*
-   * Remove hash.
-   */
-
   const hashIndex =
     path.indexOf(
       "#"
@@ -759,10 +727,6 @@ export function normalizePathname(
 
   }
 
-
-  /*
-   * Normalize trailing slash.
-   */
 
   if (
     path.length >
@@ -788,10 +752,6 @@ export function normalizePathname(
 
 }
 
-
-/*
- * Check whether current route belongs to farmer portal.
- */
 
 export function isFarmerPath(
   pathname
@@ -845,10 +805,6 @@ const PAGE_NAMES = {
 };
 
 
-/*
- * Get human-readable route name.
- */
-
 export function getPageName(
   pathname
 ) {
@@ -873,10 +829,6 @@ export function getPageName(
 /* =========================================================
    ACTION HELPERS
 ========================================================= */
-
-/*
- * Check whether action exists in an action registry.
- */
 
 export function isActionName(
   action,
@@ -907,10 +859,6 @@ export function isActionName(
 /* =========================================================
    HISTORY
 ========================================================= */
-
-/*
- * Keep only valid conversational messages.
- */
 
 export function sanitizeHistory(
   history
@@ -954,44 +902,59 @@ export function sanitizeHistory(
       }
     )
     .map(
-      message => ({
+      message => {
 
-        id:
-          message.id ||
-          createId(),
+        const result = {
 
-        role:
-          message.role,
+          id:
+            message.id ||
+            createId(),
 
-        content:
-          cleanText(
-            message.content
-          ),
+          role:
+            message.role,
 
-        timestamp:
-          Number(
-            message.timestamp
-          ) ||
-          Date.now(),
+          content:
+            cleanText(
+              message.content
+            ),
 
-        action:
-          message.action ||
-          "NONE",
+          timestamp:
+            Number(
+              message.timestamp
+            ) ||
+            Date.now(),
 
-        failed:
-          Boolean(
-            message.failed
-          ),
+          action:
+            message.action ||
+            "NONE",
 
-      })
+          failed:
+            Boolean(
+              message.failed
+            ),
+
+        };
+
+
+        if (
+          message.semanticTopic
+        ) {
+
+          result.semanticTopic =
+            cleanText(
+              message.semanticTopic
+            );
+
+        }
+
+
+        return result;
+
+      }
     );
 
 }
 
-
-/*
- * Limit conversation size.
- */
 
 export function limitHistory(
   history,
@@ -1032,11 +995,6 @@ export function limitHistory(
 }
 
 
-/*
- * Convert history into the structure expected by the
- * backend AI.
- */
-
 export function historyForServer(
   history,
   maxMessages =
@@ -1048,25 +1006,50 @@ export function historyForServer(
     maxMessages
   )
     .map(
-      message => ({
+      message => {
 
-        role:
-          message.role,
+        const result = {
 
-        content:
-          cleanText(
-            message.content
-          ),
+          role:
+            message.role,
 
-      })
+          content:
+            cleanText(
+              message.content
+            ),
+
+        };
+
+
+        if (
+          message.action &&
+          message.action !==
+            "NONE"
+        ) {
+
+          result.action =
+            message.action;
+
+        }
+
+
+        if (
+          message.semanticTopic
+        ) {
+
+          result.semanticTopic =
+            message.semanticTopic;
+
+        }
+
+
+        return result;
+
+      }
     );
 
 }
 
-
-/*
- * Get latest message by role.
- */
 
 export function getLastMessage(
   history,
@@ -1143,21 +1126,38 @@ export function summarizeHistory(
     maxMessages
   )
     .map(
-      message => ({
+      message => {
 
-        role:
-          message.role,
+        const result = {
 
-        content:
-          cleanText(
-            message.content
-          ),
+          role:
+            message.role,
 
-        action:
-          message.action ||
-          "NONE",
+          content:
+            cleanText(
+              message.content
+            ),
 
-      })
+          action:
+            message.action ||
+            "NONE",
+
+        };
+
+
+        if (
+          message.semanticTopic
+        ) {
+
+          result.semanticTopic =
+            message.semanticTopic;
+
+        }
+
+
+        return result;
+
+      }
     );
 
 }
@@ -1280,13 +1280,8 @@ export function getSpeechLanguage(
 
 
 /* =========================================================
-   TEXT RELATION HELPERS
+   TEXT RELATION
 ========================================================= */
-
-/*
- * Check whether a phrase contains another phrase
- * without performing aggressive fuzzy matching.
- */
 
 export function containsText(
   value,
@@ -1322,10 +1317,6 @@ export function containsText(
 }
 
 
-/*
- * Check whether any phrase exists in text.
- */
-
 export function containsAnyText(
   value,
   phrases
@@ -1354,10 +1345,6 @@ export function containsAnyText(
 /* =========================================================
    SAFE JSON
 ========================================================= */
-
-/*
- * Safely parse arbitrary backend JSON text.
- */
 
 export function safeJsonParse(
   value,
@@ -1393,10 +1380,6 @@ export function safeJsonParse(
 /* =========================================================
    API RESPONSE
 ========================================================= */
-
-/*
- * Extract a useful error message from an API response.
- */
 
 export function getApiErrorMessage(
   data,
@@ -1442,6 +1425,30 @@ export function getApiErrorMessage(
       const candidate of
       candidates
     ) {
+
+      if (
+        typeof candidate ===
+          "object" &&
+        candidate !==
+          null
+      ) {
+
+        if (
+          cleanText(
+            candidate.message
+          )
+        ) {
+
+          return cleanText(
+            candidate.message
+          );
+
+        }
+
+        continue;
+
+      }
+
 
       if (
         cleanText(
@@ -1524,8 +1531,10 @@ export function hasMicrophoneSupport() {
 
 
   return Boolean(
+
     navigator.mediaDevices &&
     navigator.mediaDevices.getUserMedia
+
   );
 
 }
@@ -1559,11 +1568,6 @@ export function isTouchDevice() {
 
 }
 
-
-/*
- * This does not attempt to determine an exact device.
- * It only provides a UI hint.
- */
 
 export function getViewportCategory() {
 
@@ -1628,10 +1632,6 @@ export function isPlainObject(
 }
 
 
-/*
- * Pick only explicitly supplied properties.
- */
-
 export function pick(
   object,
   keys
@@ -1683,7 +1683,7 @@ export function pick(
 
 
 /* =========================================================
-   DATE / TIME
+   RECENCY
 ========================================================= */
 
 export function isRecent(
@@ -1712,11 +1712,14 @@ export function isRecent(
 
 
   return (
+
     age >= 0 &&
+
     age <=
       Number(
         maxAgeMs
       )
+
   );
 
 }
@@ -1725,6 +1728,33 @@ export function isRecent(
 /* =========================================================
    ACTION PARAMETER SAFETY
 ========================================================= */
+
+/*
+ * IMPORTANT
+ *
+ * This is intentionally richer than the old implementation.
+ *
+ * Booking state must survive all of these transitions:
+ *
+ * user
+ *  ↓
+ * intentEngine
+ *  ↓
+ * router
+ *  ↓
+ * pending action
+ *  ↓
+ * controller
+ *  ↓
+ * executor / FarmerBook
+ *
+ * The previous implementation kept only:
+ *
+ *   crop
+ *   quantity
+ *
+ * which caused date / center / slot information to disappear.
+ */
 
 export function sanitizeActionParams(
   params
@@ -1745,15 +1775,17 @@ export function sanitizeActionParams(
 
 
   /*
-   * Booking parameters currently supported.
-   *
-   * Keep this allow-list tight.
+   * -------------------------------------------------------
+   * CROP
+   * -------------------------------------------------------
    */
 
   if (
     typeof params.crop ===
       "string" &&
-    params.crop.trim()
+    cleanText(
+      params.crop
+    )
   ) {
 
     output.crop =
@@ -1764,28 +1796,399 @@ export function sanitizeActionParams(
   }
 
 
+  /*
+   * -------------------------------------------------------
+   * QUANTITY
+   * -------------------------------------------------------
+   */
+
+  const quantity =
+    Number(
+      params.quantity ??
+      params.estimatedQuantity
+    );
+
+
   if (
     Number.isFinite(
-      Number(
-        params.quantity
-      )
+      quantity
+    ) &&
+    quantity > 0 &&
+    quantity <= 50000
+  ) {
+
+    output.quantity =
+      quantity;
+
+  }
+
+
+  /*
+   * -------------------------------------------------------
+   * CENTER
+   * -------------------------------------------------------
+   */
+
+  if (
+    params.centerId !==
+      undefined &&
+    params.centerId !==
+      null &&
+    cleanText(
+      params.centerId
     )
   ) {
 
-    const quantity =
-      Number(
-        params.quantity
+    output.centerId =
+      params.centerId;
+
+  }
+
+
+  if (
+    typeof params.centerName ===
+      "string" &&
+    cleanText(
+      params.centerName
+    )
+  ) {
+
+    output.centerName =
+      cleanText(
+        params.centerName
       );
 
+  }
+
+
+  /*
+   * -------------------------------------------------------
+   * DATE
+   * -------------------------------------------------------
+   */
+
+  if (
+    typeof params.date ===
+      "string" &&
+    cleanText(
+      params.date
+    )
+  ) {
+
+    output.date =
+      cleanText(
+        params.date
+      );
+
+  }
+
+
+  if (
+    typeof params.dateLabel ===
+      "string" &&
+    cleanText(
+      params.dateLabel
+    )
+  ) {
+
+    output.dateLabel =
+      cleanText(
+        params.dateLabel
+      );
+
+  }
+
+
+  /*
+   * -------------------------------------------------------
+   * SLOT
+   * -------------------------------------------------------
+   */
+
+  if (
+    typeof params.slotId ===
+      "string" &&
+    cleanText(
+      params.slotId
+    )
+  ) {
+
+    output.slotId =
+      cleanText(
+        params.slotId
+      );
+
+  }
+
+
+  if (
+    typeof params.slotStart ===
+      "string" &&
+    cleanText(
+      params.slotStart
+    )
+  ) {
+
+    output.slotStart =
+      cleanText(
+        params.slotStart
+      );
+
+  }
+
+
+  if (
+    typeof params.slotEnd ===
+      "string" &&
+    cleanText(
+      params.slotEnd
+    )
+  ) {
+
+    output.slotEnd =
+      cleanText(
+        params.slotEnd
+      );
+
+  }
+
+
+  if (
+    typeof params.slotDisplay ===
+      "string" &&
+    cleanText(
+      params.slotDisplay
+    )
+  ) {
+
+    output.slotDisplay =
+      cleanText(
+        params.slotDisplay
+      );
+
+  }
+
+
+  /*
+   * -------------------------------------------------------
+   * STEP / BOOKING STATE
+   * -------------------------------------------------------
+   */
+
+  if (
+    typeof params.step ===
+      "string" &&
+    cleanText(
+      params.step
+    )
+  ) {
+
+    output.step =
+      cleanText(
+        params.step
+      );
+
+  }
+
+
+  if (
+    typeof params.readyForConfirmation ===
+      "boolean"
+  ) {
+
+    output.readyForConfirmation =
+      params.readyForConfirmation;
+
+  }
+
+
+  if (
+    typeof params.awaitingConfirmation ===
+      "boolean"
+  ) {
+
+    output.awaitingConfirmation =
+      params.awaitingConfirmation;
+
+  }
+
+
+  if (
+    typeof params.active ===
+      "boolean"
+  ) {
+
+    output.active =
+      params.active;
+
+  }
+
+
+  /*
+   * -------------------------------------------------------
+   * TOKEN
+   * -------------------------------------------------------
+   */
+
+  if (
+    params.token !==
+      undefined &&
+    params.token !==
+      null &&
+    cleanText(
+      params.token
+    )
+  ) {
+
+    output.token =
+      cleanText(
+        params.token
+      );
+
+  }
+
+
+  if (
+    params.tokenNumber !==
+      undefined &&
+    params.tokenNumber !==
+      null &&
+    cleanText(
+      params.tokenNumber
+    )
+  ) {
+
+    output.tokenNumber =
+      cleanText(
+        params.tokenNumber
+      );
+
+  }
+
+
+  /*
+   * -------------------------------------------------------
+   * BOOKING REFERENCE
+   * -------------------------------------------------------
+   */
+
+  if (
+    params.bookingId !==
+      undefined &&
+    params.bookingId !==
+      null &&
+    cleanText(
+      params.bookingId
+    )
+  ) {
+
+    output.bookingId =
+      cleanText(
+        params.bookingId
+      );
+
+  }
+
+
+  /*
+   * -------------------------------------------------------
+   * ENTITY REFERENCES
+   * -------------------------------------------------------
+   */
+
+  if (
+    params.referenceType
+  ) {
+
+    output.referenceType =
+      cleanText(
+        params.referenceType
+      );
+
+  }
+
+
+  if (
+    params.referenceValue !==
+      undefined &&
+    params.referenceValue !==
+      null &&
+    cleanText(
+      params.referenceValue
+    )
+  ) {
+
+    output.referenceValue =
+      cleanText(
+        params.referenceValue
+      );
+
+  }
+
+
+  /*
+   * -------------------------------------------------------
+   * DATE REFERENCE
+   * -------------------------------------------------------
+   */
+
+  if (
+    typeof params.requestedDate ===
+      "string" &&
+    cleanText(
+      params.requestedDate
+    )
+  ) {
+
+    output.requestedDate =
+      cleanText(
+        params.requestedDate
+      );
+
+  }
+
+
+  /*
+   * -------------------------------------------------------
+   * ACTION-SPECIFIC FLAGS
+   * -------------------------------------------------------
+   */
+
+  const booleanKeys = [
+
+    "download",
+
+    "downloadQr",
+
+    "downloadReceipt",
+
+    "open",
+
+    "navigate",
+
+    "explicitNavigation",
+
+    "continueBooking",
+
+    "executeBooking",
+
+    "cancelBooking",
+
+  ];
+
+
+  for (
+    const key of
+    booleanKeys
+  ) {
 
     if (
-      quantity > 0 &&
-      quantity <=
-        50000
+      typeof params[key] ===
+        "boolean"
     ) {
 
-      output.quantity =
-        quantity;
+      output[key] =
+        params[key];
 
     }
 
@@ -1802,12 +2205,85 @@ export function sanitizeActionParams(
 
 
 /* =========================================================
-   STORAGE VERSIONING
+   BOOKING DATA MERGE
 ========================================================= */
 
 /*
- * Storage helpers for future migration.
+ * Merge booking objects without allowing undefined/null
+ * values to erase useful information already collected.
  */
+
+export function mergeSafeParams(
+  previous,
+  next
+) {
+
+  const first =
+    sanitizeActionParams(
+      previous
+    ) ||
+    {};
+
+  const second =
+    sanitizeActionParams(
+      next
+    ) ||
+    {};
+
+
+  const merged = {
+
+    ...first,
+
+    ...second,
+
+  };
+
+
+  return Object.keys(
+    merged
+  ).length
+    ? merged
+    : null;
+
+}
+
+
+/* =========================================================
+   BOOKING PARAMETER CHECK
+========================================================= */
+
+export function hasBookingParams(
+  params
+) {
+
+  const safe =
+    sanitizeActionParams(
+      params
+    );
+
+
+  return Boolean(
+
+    safe &&
+    (
+      safe.crop ||
+      safe.quantity ||
+      safe.centerId ||
+      safe.date ||
+      safe.slotId ||
+      safe.slotStart ||
+      safe.slotEnd
+    )
+
+  );
+
+}
+
+
+/* =========================================================
+   STORAGE VERSIONING
+========================================================= */
 
 export function versionedStorageRead(
   key,
@@ -1962,6 +2438,10 @@ export const ASSISTANT_UTILS = {
   isRecent,
 
   sanitizeActionParams,
+
+  mergeSafeParams,
+
+  hasBookingParams,
 
   versionedStorageRead,
 

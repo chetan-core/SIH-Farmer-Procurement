@@ -6,43 +6,29 @@
 
    This is the final action execution layer.
 
-   It is responsible for taking a verified assistant action
-   and actually connecting it to the React application.
+   It connects verified assistant decisions to the React
+   application.
 
-   BOOKING EXAMPLE
+   IMPORTANT
 
-      AI knows:
+   Ordinary navigation and booking execution are separate.
 
-      crop       = paddy
-      quantity   = 50
-      centerId   = 2
-      date       = 2026-09-03
-      slotStart  = 10:00
-      slotEnd    = 10:30
+   BOOKING FLOW
 
-              ↓
+      user message
+          ↓
+      router
+          ↓
+      BOOKING
+          ↓
+      booking controller
+          ↓
+      FarmerBook
 
-      executor
+   OPEN_BOOKING is used only when the application actually
+   needs to open/update the FarmerBook page.
 
-              ↓
-
-      navigate("/farmer/book", {
-        state: {
-          assistantAction: "OPEN_BOOKING",
-          assistantBooking: {
-            ...
-          }
-        }
-      })
-
-              ↓
-
-      FarmerBook reads location.state
-
-              ↓
-
-      form is populated
-
+   CONFIRM_BOOKING is NOT converted into ordinary navigation.
 ========================================================= */
 
 import {
@@ -57,13 +43,11 @@ import {
 const DEFAULT_ROUTE =
   "/farmer/home";
 
-
 const BOOKING_ROUTE =
   "/farmer/book";
 
-
 const NAVIGATION_DELAY =
-  450;
+  250;
 
 
 /* =========================================================
@@ -82,41 +66,34 @@ function cleanString(
 }
 
 
+function isObject(
+  value
+) {
+
+  return Boolean(
+    value &&
+    typeof value ===
+      "object" &&
+    !Array.isArray(
+      value
+    )
+  );
+
+}
+
+
 /* =========================================================
    BOOKING PARAMETER SANITIZATION
 ========================================================= */
-
-/*
- * IMPORTANT
- *
- * We do NOT use the generic sanitizeActionParams()
- * here because booking needs more information than
- * crop + quantity.
- *
- * The booking form may receive:
- *
- * crop
- * quantity
- * centerId
- * centerName
- * date
- * dateLabel
- * slotId
- * slotStart
- * slotEnd
- * slotDisplay
- * step
- * readyForConfirmation
- */
 
 export function sanitizeBookingParams(
   booking
 ) {
 
   if (
-    !booking ||
-    typeof booking !==
-      "object"
+    !isObject(
+      booking
+    )
   ) {
 
     return null;
@@ -156,7 +133,6 @@ export function sanitizeBookingParams(
       booking.quantity ??
       booking.estimatedQuantity
     );
-
 
   if (
     Number.isFinite(
@@ -245,7 +221,7 @@ export function sanitizeBookingParams(
 
 
   /* -------------------------------------------------------
-     SLOT ID
+     SLOT
   ------------------------------------------------------- */
 
   if (
@@ -264,10 +240,6 @@ export function sanitizeBookingParams(
   }
 
 
-  /* -------------------------------------------------------
-     SLOT START
-  ------------------------------------------------------- */
-
   if (
     typeof booking.slotStart ===
       "string" &&
@@ -284,10 +256,6 @@ export function sanitizeBookingParams(
   }
 
 
-  /* -------------------------------------------------------
-     SLOT END
-  ------------------------------------------------------- */
-
   if (
     typeof booking.slotEnd ===
       "string" &&
@@ -303,10 +271,6 @@ export function sanitizeBookingParams(
 
   }
 
-
-  /* -------------------------------------------------------
-     SLOT DISPLAY
-  ------------------------------------------------------- */
 
   if (
     typeof booking.slotDisplay ===
@@ -325,7 +289,7 @@ export function sanitizeBookingParams(
 
 
   /* -------------------------------------------------------
-     STEP
+     BOOKING STEP
   ------------------------------------------------------- */
 
   if (
@@ -345,7 +309,7 @@ export function sanitizeBookingParams(
 
 
   /* -------------------------------------------------------
-     READY STATE
+     BOOKING STATE
   ------------------------------------------------------- */
 
   if (
@@ -359,9 +323,16 @@ export function sanitizeBookingParams(
   }
 
 
-  /* -------------------------------------------------------
-     ACTIVE
-  ------------------------------------------------------- */
+  if (
+    typeof booking.awaitingConfirmation ===
+      "boolean"
+  ) {
+
+    result.awaitingConfirmation =
+      booking.awaitingConfirmation;
+
+  }
+
 
   if (
     typeof booking.active ===
@@ -370,6 +341,46 @@ export function sanitizeBookingParams(
 
     result.active =
       booking.active;
+
+  }
+
+
+  /* -------------------------------------------------------
+     TOKEN / BOOKING REFERENCE
+  ------------------------------------------------------- */
+
+  if (
+    booking.token !==
+      undefined &&
+    booking.token !==
+      null &&
+    cleanString(
+      booking.token
+    )
+  ) {
+
+    result.token =
+      cleanString(
+        booking.token
+      );
+
+  }
+
+
+  if (
+    booking.bookingId !==
+      undefined &&
+    booking.bookingId !==
+      null &&
+    cleanString(
+      booking.bookingId
+    )
+  ) {
+
+    result.bookingId =
+      cleanString(
+        booking.bookingId
+      );
 
   }
 
@@ -384,7 +395,7 @@ export function sanitizeBookingParams(
 
 
 /* =========================================================
-   NORMALIZE PARAMETER SOURCE
+   BOOKING PARAMETER SOURCE
 ========================================================= */
 
 function getBookingParameters(
@@ -392,19 +403,14 @@ function getBookingParameters(
   booking
 ) {
 
-  /*
-   * booking is preferred because it normally contains
-   * the complete conversational booking state.
-   */
-
   const source =
-    booking &&
-    typeof booking ===
-      "object"
+    isObject(
+      booking
+    )
       ? booking
-      : params &&
-        typeof params ===
-          "object"
+      : isObject(
+          params
+        )
         ? params
         : null;
 
@@ -417,7 +423,7 @@ function getBookingParameters(
 
 
 /* =========================================================
-   NAVIGATION DELAY
+   WAIT
 ========================================================= */
 
 function wait(
@@ -436,7 +442,81 @@ function wait(
 
 
 /* =========================================================
-   EXECUTOR
+   ACTION HELPERS
+========================================================= */
+
+function isBookingAction(
+  action
+) {
+
+  const normalized =
+    cleanString(
+      action
+    ).toUpperCase();
+
+
+  return (
+    normalized ===
+      "OPEN_BOOKING" ||
+    normalized ===
+      "BOOK" ||
+    normalized ===
+      "CONFIRM_BOOKING" ||
+    normalized ===
+      "CANCEL_BOOKING"
+  );
+
+}
+
+
+/* =========================================================
+   NAVIGATION STATE
+========================================================= */
+
+function buildNavigationState(
+  action,
+  params,
+  bookingParameters
+) {
+
+  const state = {
+
+    assistantAction:
+      action,
+
+  };
+
+
+  if (
+    params &&
+    isObject(
+      params
+    )
+  ) {
+
+    state.assistantParams =
+      params;
+
+  }
+
+
+  if (
+    bookingParameters
+  ) {
+
+    state.assistantBooking =
+      bookingParameters;
+
+  }
+
+
+  return state;
+
+}
+
+
+/* =========================================================
+   ORDINARY ACTION EXECUTION
 ========================================================= */
 
 export async function executeAssistantAction(
@@ -462,13 +542,19 @@ export async function executeAssistantAction(
     options;
 
 
+  const normalizedAction =
+    cleanString(
+      action
+    ).toUpperCase();
+
+
   /* =======================================================
-     INVALID ACTION
+     INVALID
   ======================================================= */
 
   if (
-    !action ||
-    action ===
+    !normalizedAction ||
+    normalizedAction ===
       "NONE"
   ) {
 
@@ -496,7 +582,7 @@ export async function executeAssistantAction(
   ======================================================= */
 
   if (
-    action ===
+    normalizedAction ===
     "SHOW_CURRENT_PAGE"
   ) {
 
@@ -505,7 +591,8 @@ export async function executeAssistantAction(
       success:
         true,
 
-      action,
+      action:
+        normalizedAction,
 
       navigated:
         false,
@@ -523,7 +610,7 @@ export async function executeAssistantAction(
   ======================================================= */
 
   if (
-    action ===
+    normalizedAction ===
     "GO_BACK"
   ) {
 
@@ -537,7 +624,8 @@ export async function executeAssistantAction(
         success:
           false,
 
-        action,
+        action:
+          normalizedAction,
 
         navigated:
           false,
@@ -580,7 +668,8 @@ export async function executeAssistantAction(
       success:
         true,
 
-      action,
+      action:
+        normalizedAction,
 
       navigated:
         true,
@@ -594,12 +683,261 @@ export async function executeAssistantAction(
 
 
   /* =======================================================
-     ACTION DEFINITION
+     BOOKING ACTIONS
+  ======================================================= */
+
+  /*
+   * IMPORTANT
+   *
+   * BOOKING / CONFIRM_BOOKING must NOT be sent through
+   * the generic route executor.
+   *
+   * The booking controller / FarmerBook owns the actual
+   * booking submission.
+   *
+   * The executor only opens FarmerBook when required.
+   */
+
+  if (
+    isBookingAction(
+      normalizedAction
+    )
+  ) {
+
+    const bookingParameters =
+      getBookingParameters(
+        params,
+        booking
+      );
+
+
+    /*
+     * CONFIRM_BOOKING must return an execution description
+     * rather than navigating.
+     *
+     * assistantController can then dispatch the booking
+     * confirmation event to FarmerBook.
+     */
+
+    if (
+      normalizedAction ===
+      "CONFIRM_BOOKING"
+    ) {
+
+      return {
+
+        success:
+          true,
+
+        action:
+          normalizedAction,
+
+        navigated:
+          false,
+
+        route:
+          null,
+
+        params:
+          bookingParameters,
+
+        booking:
+          bookingParameters,
+
+        executeBooking:
+          true,
+
+        requiresBookingController:
+          true,
+
+      };
+
+    }
+
+
+    /*
+     * CANCEL_BOOKING is also handled by the booking
+     * controller. Nothing should navigate here.
+     */
+
+    if (
+      normalizedAction ===
+      "CANCEL_BOOKING"
+    ) {
+
+      return {
+
+        success:
+          true,
+
+        action:
+          normalizedAction,
+
+        navigated:
+          false,
+
+        route:
+          null,
+
+        params:
+          bookingParameters,
+
+        booking:
+          bookingParameters,
+
+        cancelBooking:
+          true,
+
+        requiresBookingController:
+          true,
+
+      };
+
+    }
+
+
+    /*
+     * OPEN_BOOKING
+     *
+     * This action opens FarmerBook with whatever booking
+     * information has already been extracted.
+     */
+
+    if (
+      normalizedAction ===
+      "OPEN_BOOKING"
+    ) {
+
+      if (
+        typeof navigate !==
+        "function"
+      ) {
+
+        return {
+
+          success:
+            false,
+
+          action:
+            normalizedAction,
+
+          navigated:
+            false,
+
+          route:
+            BOOKING_ROUTE,
+
+          params:
+            bookingParameters,
+
+          reason:
+            "navigate function is unavailable.",
+
+        };
+
+      }
+
+
+      const state =
+        buildNavigationState(
+          normalizedAction,
+          bookingParameters ||
+            params,
+          bookingParameters
+        );
+
+
+      /*
+       * If already inside FarmerBook, we still send state
+       * through navigate so the page receives a fresh
+       * location.state update.
+       */
+
+      await wait(
+        NAVIGATION_DELAY
+      );
+
+
+      navigate(
+
+        BOOKING_ROUTE,
+
+        {
+
+          state,
+
+        }
+
+      );
+
+
+      return {
+
+        success:
+          true,
+
+        action:
+          normalizedAction,
+
+        navigated:
+          true,
+
+        route:
+          BOOKING_ROUTE,
+
+        params:
+          bookingParameters,
+
+        booking:
+          bookingParameters,
+
+        continueBooking:
+          true,
+
+      };
+
+    }
+
+
+    /*
+     * Generic BOOK alias.
+     */
+
+    if (
+      normalizedAction ===
+      "BOOK"
+    ) {
+
+      return executeAssistantAction(
+
+        "OPEN_BOOKING",
+
+        {
+
+          ...options,
+
+          booking:
+            bookingParameters,
+
+          params:
+            bookingParameters,
+
+        }
+
+      );
+
+    }
+
+  }
+
+
+  /* =======================================================
+     ORDINARY ACTION DEFINITION
   ======================================================= */
 
   const definition =
     ACTIONS[
-      action
+      normalizedAction
     ];
 
 
@@ -612,7 +950,8 @@ export async function executeAssistantAction(
       success:
         false,
 
-      action,
+      action:
+        normalizedAction,
 
       navigated:
         false,
@@ -634,7 +973,7 @@ export async function executeAssistantAction(
 
 
   if (
-    action ===
+    normalizedAction ===
     "OPEN_NOTIFICATIONS"
   ) {
 
@@ -653,7 +992,8 @@ export async function executeAssistantAction(
       success:
         false,
 
-      action,
+      action:
+        normalizedAction,
 
       navigated:
         false,
@@ -667,66 +1007,7 @@ export async function executeAssistantAction(
 
 
   /* =======================================================
-     BOOKING PARAMETERS
-  ======================================================= */
-
-  const bookingParameters =
-    action ===
-    "OPEN_BOOKING"
-      ? getBookingParameters(
-          params,
-          booking
-        )
-      : null;
-
-
-  /* =======================================================
-     ROUTE STATE
-  ======================================================= */
-
-  const navigationState = {};
-
-
-  navigationState.assistantAction =
-    action;
-
-
-  /*
-   * Store generic parameters.
-   */
-
-  if (
-    params &&
-    typeof params ===
-      "object"
-  ) {
-
-    navigationState.assistantParams =
-      params;
-
-  }
-
-
-  /*
-   * Store COMPLETE booking state.
-   *
-   * This is the important part.
-   */
-
-  if (
-    action ===
-      "OPEN_BOOKING" &&
-    bookingParameters
-  ) {
-
-    navigationState.assistantBooking =
-      bookingParameters;
-
-  }
-
-
-  /* =======================================================
-     NAVIGATE FUNCTION
+     NAVIGATE VALIDATION
   ======================================================= */
 
   if (
@@ -739,7 +1020,8 @@ export async function executeAssistantAction(
       success:
         false,
 
-      action,
+      action:
+        normalizedAction,
 
       navigated:
         false,
@@ -747,7 +1029,6 @@ export async function executeAssistantAction(
       route,
 
       params:
-        bookingParameters ||
         params ||
         null,
 
@@ -763,28 +1044,18 @@ export async function executeAssistantAction(
      SAME ROUTE
   ======================================================= */
 
-  /*
-   * Even if already inside FarmerBook,
-   * push the booking state again.
-   *
-   * This allows:
-
-      user is already on /farmer/book
-
-      "book 50kg paddy"
-
-   * to update the current form.
-   */
-
   const sameRoute =
     currentPath ===
     route;
 
 
+  /*
+   * Ordinary actions should not perform meaningless
+   * navigation when already on the destination page.
+   */
+
   if (
-    sameRoute &&
-    action !==
-      "OPEN_BOOKING"
+    sameRoute
   ) {
 
     return {
@@ -792,7 +1063,8 @@ export async function executeAssistantAction(
       success:
         true,
 
-      action,
+      action:
+        normalizedAction,
 
       navigated:
         false,
@@ -803,72 +1075,45 @@ export async function executeAssistantAction(
         params ||
         null,
 
+      alreadyOnRoute:
+        true,
+
     };
 
   }
 
 
   /* =======================================================
-     NAVIGATION
+     BUILD STATE
   ======================================================= */
+
+  const navigationState =
+    buildNavigationState(
+      normalizedAction,
+      params,
+      null
+    );
+
 
   await wait(
     NAVIGATION_DELAY
   );
 
 
-  /*
-   * Re-check action-specific state immediately
-   * before navigation.
-   */
+  navigate(
 
-  if (
-    action ===
-      "OPEN_BOOKING" &&
-    bookingParameters
-  ) {
+    route,
 
-    navigate(
+    Object.keys(
+      navigationState
+    ).length > 0
+      ? {
+          state:
+            navigationState,
+        }
+      : undefined
 
-      BOOKING_ROUTE,
-
-      {
-
-        state: {
-
-          assistantAction:
-            "OPEN_BOOKING",
-
-          assistantParams:
-            bookingParameters,
-
-          assistantBooking:
-            bookingParameters,
-
-        },
-
-      }
-
-    );
-
-  } else {
-
-    navigate(
-
-      route,
-
-      Object.keys(
-        navigationState
-      ).length > 0
-        ? {
-            state:
-              navigationState,
-          }
-        : undefined
-
-    );
-
-  }
+  );
 
 
   /* =======================================================
@@ -880,19 +1125,15 @@ export async function executeAssistantAction(
     success:
       true,
 
-    action,
+    action:
+      normalizedAction,
 
     navigated:
       true,
 
-    route:
-      action ===
-        "OPEN_BOOKING"
-        ? BOOKING_ROUTE
-        : route,
+    route,
 
     params:
-      bookingParameters ||
       params ||
       null,
 
@@ -902,17 +1143,90 @@ export async function executeAssistantAction(
 
 
 /* =========================================================
-   BOOKING EXECUTOR
+   DEDICATED BOOKING EXECUTION
 ========================================================= */
 
 /*
- * Dedicated helper for booking execution.
+ * This function NEVER directly POSTs a booking.
  *
- * This makes the booking flow explicit and keeps future
- * booking logic easy to extend.
+ * It returns the booking information to the controller,
+ * which is responsible for dispatching the confirmation
+ * event to FarmerBook.
  */
 
 export async function executeBooking(
+  booking,
+  options = {}
+) {
+
+  const safeBooking =
+    sanitizeBookingParams(
+      booking
+    );
+
+
+  if (
+    !safeBooking
+  ) {
+
+    return {
+
+      success:
+        false,
+
+      action:
+        "CONFIRM_BOOKING",
+
+      navigated:
+        false,
+
+      reason:
+        "No valid booking information was provided.",
+
+      executeBooking:
+        false,
+
+    };
+
+  }
+
+
+  return {
+
+    success:
+      true,
+
+    action:
+      "CONFIRM_BOOKING",
+
+    navigated:
+      false,
+
+    route:
+      null,
+
+    params:
+      safeBooking,
+
+    booking:
+      safeBooking,
+
+    executeBooking:
+      true,
+
+    requiresBookingController:
+      true,
+
+  };
+
+}
+
+
+/* =========================================================
+   OPEN BOOKING PAGE WITH STATE
+========================================================= */
+
+export async function openBooking(
   booking,
   options = {}
 ) {
@@ -937,6 +1251,9 @@ export async function executeBooking(
 
       navigated:
         false,
+
+      route:
+        BOOKING_ROUTE,
 
       reason:
         "No valid booking information was provided.",
@@ -968,7 +1285,7 @@ export async function executeBooking(
 
 
 /* =========================================================
-   CHECK WHETHER BOOKING DATA EXISTS
+   BOOKING PARAMETER CHECK
 ========================================================= */
 
 export function hasBookingParameters(
@@ -982,15 +1299,113 @@ export function hasBookingParameters(
 
 
   return Boolean(
+
     safe &&
     (
       safe.crop ||
       safe.quantity ||
       safe.centerId ||
       safe.date ||
-      safe.slotStart
+      safe.slotStart ||
+      safe.slotId
     )
+
   );
+
+}
+
+
+/* =========================================================
+   RESULT NORMALIZER
+========================================================= */
+
+export function normalizeExecutionResult(
+  result
+) {
+
+  if (
+    !result ||
+    typeof result !==
+      "object"
+  ) {
+
+    return {
+
+      success:
+        false,
+
+      action:
+        "NONE",
+
+      navigated:
+        false,
+
+      reason:
+        "Invalid executor result.",
+
+    };
+
+  }
+
+
+  return {
+
+    success:
+      Boolean(
+        result.success
+      ),
+
+    action:
+      result.action ||
+      "NONE",
+
+    navigated:
+      Boolean(
+        result.navigated
+      ),
+
+    route:
+      result.route ||
+      null,
+
+    params:
+      result.params ||
+      null,
+
+    booking:
+      result.booking ||
+      null,
+
+    continueBooking:
+      Boolean(
+        result.continueBooking
+      ),
+
+    executeBooking:
+      Boolean(
+        result.executeBooking
+      ),
+
+    cancelBooking:
+      Boolean(
+        result.cancelBooking
+      ),
+
+    requiresBookingController:
+      Boolean(
+        result.requiresBookingController
+      ),
+
+    alreadyOnRoute:
+      Boolean(
+        result.alreadyOnRoute
+      ),
+
+    reason:
+      result.reason ||
+      null,
+
+  };
 
 }
 
@@ -1007,11 +1422,16 @@ export const assistantExecutor = {
   booking:
     executeBooking,
 
+  openBooking,
+
   sanitizeBooking:
     sanitizeBookingParams,
 
   hasBooking:
     hasBookingParameters,
+
+  normalizeResult:
+    normalizeExecutionResult,
 
 };
 
@@ -1064,6 +1484,9 @@ if (
     readyForConfirmation:
       true,
 
+    awaitingConfirmation:
+      false,
+
   };
 
 
@@ -1094,6 +1517,48 @@ if (
     );
 
   }
+
+
+  /*
+   * Confirming a booking must NEVER produce a route.
+   */
+
+  executeBooking(
+    sampleBooking
+  )
+    .then(
+      result => {
+
+        if (
+          result.route !==
+            null ||
+          result.navigated
+        ) {
+
+          console.warn(
+            "[KrishiSetu AI] Booking execution test failed: confirmation attempted navigation."
+          );
+
+        } else {
+
+          console.debug(
+            "[KrishiSetu AI] Booking confirmation execution test passed."
+          );
+
+        }
+
+      }
+    )
+    .catch(
+      error => {
+
+        console.warn(
+          "[KrishiSetu AI] Booking executor test error:",
+          error
+        );
+
+      }
+    );
 
 }
 

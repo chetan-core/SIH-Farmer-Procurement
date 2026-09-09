@@ -1004,15 +1004,26 @@ function FarmerBook() {
   const assistantConfirmRequestRef =
     useRef(null);
 
+  const assistantConfirmCompleteRef =
+    useRef(null);
+
 
   const assistantSlotAppliedRef =
-    useRef("");
+  useRef("");
+
+const assistantManagedRef =
+  useRef(
+    Boolean(assistantBooking)
+  );
+
+const handleConfirmBookingRef =
+  useRef(null);
 
 
-  const assistantManagedRef =
-    useRef(
-      Boolean(assistantBooking)
-    );
+useEffect(() => {
+  handleConfirmBookingRef.current =
+    handleConfirmBooking;
+});
 
 
   /* =======================================================
@@ -3368,48 +3379,193 @@ function FarmerBook() {
   }
 
 
-  async function handleConfirmBooking() {
+  async function handleConfirmBooking(
+    assistantBookingOverride = null
+  ) {
 
     if (
       confirming ||
       confirmingRef.current
     ) {
-
-      return;
-
+      return {
+        success: false,
+        reason: "Booking is already being submitted.",
+      };
     }
 
+    /*
+     * When the assistant confirms a booking, React may not have
+     * finished hydrating the visible FarmerBook controls yet.
+     *
+     * Use the assistant snapshot as the source of truth when one
+     * is supplied. The normal button path continues to use the
+     * current UI state exactly as before.
+     */
+    const requested =
+      assistantBookingOverride &&
+      typeof assistantBookingOverride === "object"
+        ? assistantBookingOverride
+        : null;
+
+    const requestedCenterId =
+      requested?.centerId != null
+        ? String(requested.centerId)
+        : String(centerId || "");
+
+    const submissionCenter =
+      requestedCenterId
+        ? availableCenters.find(
+            item =>
+              String(item?.id) ===
+              requestedCenterId
+          ) || selectedCenter
+        : selectedCenter;
+
+    const requestedDateValue =
+      requested?.date
+        ? String(requested.date)
+        : String(
+            selectedDate?.date ||
+            dateToOptionId(date) ||
+            ""
+          );
+
+    const submissionDate =
+      dates.find(
+        item =>
+          String(item?.date) ===
+          requestedDateValue ||
+          String(item?.id) ===
+          requestedDateValue
+      ) || selectedDate;
+
+    const requestedCrop =
+      requested?.crop
+        ? String(requested.crop)
+        : String(crop || "");
+
+    const submissionCrop =
+      crops.find(
+        item =>
+          String(item?.id) ===
+            requestedCrop ||
+          String(item?.name || "")
+            .trim()
+            .toLowerCase() ===
+            requestedCrop
+              .trim()
+              .toLowerCase()
+      ) || selectedCrop;
+
+    const requestedQuantity =
+      requested?.quantity != null
+        ? Number(requested.quantity)
+        : estimatedQuantity;
+
+    const requestedSlotStart =
+      requested?.slotStart ||
+      requested?.slot?.start ||
+      "";
+
+    const requestedSlotEnd =
+      requested?.slotEnd ||
+      requested?.slot?.end ||
+      "";
+
+    const requestedSlotId =
+      requested?.slotId ||
+      requested?.slot?.id ||
+      "";
+
+    const submissionSlot =
+      requested
+        ? (
+            availability.find(
+              slot => {
+                const sameId =
+                  requestedSlotId &&
+                  String(slot?.id) ===
+                    String(requestedSlotId);
+
+                const sameTime =
+                  requestedSlotStart &&
+                  String(slot?.start) ===
+                    String(requestedSlotStart) &&
+                  (
+                    !requestedSlotEnd ||
+                    String(slot?.end) ===
+                      String(requestedSlotEnd)
+                  );
+
+                return (
+                  sameId ||
+                  sameTime
+                );
+              }
+            ) ||
+            (
+              requestedSlotStart
+                ? {
+                    id:
+                      requestedSlotId ||
+                      String(
+                        requestedSlotStart
+                      ).replace(
+                        ":",
+                        "-"
+                      ),
+                    start:
+                      String(
+                        requestedSlotStart
+                      ),
+                    end:
+                      String(
+                        requestedSlotEnd
+                      ),
+                    display:
+                      requested?.slotDisplay ||
+                      (
+                        requestedSlotEnd
+                          ? `${requestedSlotStart} – ${requestedSlotEnd}`
+                          : requestedSlotStart
+                      ),
+                  }
+                : null
+            )
+          )
+        : selectedSlotRecord;
 
     if (
-      !selectedCenter
+      !submissionCenter
     ) {
-
       setError(
         "Please select a procurement center."
       );
 
-      return;
-
+      return {
+        success: false,
+        reason:
+          "Please select a procurement center.",
+      };
     }
 
-
     if (
-      !selectedDate
+      !submissionDate
     ) {
-
       setError(
         "Please choose an arrival date."
       );
 
-      return;
-
+      return {
+        success: false,
+        reason:
+          "Please choose an arrival date.",
+      };
     }
 
-
     if (
-      !selectedSlotRecord
+      !submissionSlot
     ) {
-
       setError(
         tr(
           "booking.selectWindowError",
@@ -3417,29 +3573,113 @@ function FarmerBook() {
         )
       );
 
-      return;
-
+      return {
+        success: false,
+        reason:
+          "Choose an available arrival window.",
+      };
     }
-
-
-    const validationError =
-      validate();
-
 
     if (
-      validationError
+      submissionSlot.loadClass ===
+        "past" ||
+      (
+        submissionSlot.remaining != null &&
+        Number(
+          submissionSlot.remaining
+        ) <= 0
+      )
     ) {
-
       setError(
-        validationError
+        "The selected arrival window is no longer available. Please choose another slot."
       );
 
-      return;
-
+      return {
+        success: false,
+        reason:
+          "The selected arrival window is no longer available. Please choose another slot.",
+      };
     }
 
+    if (
+      !submissionCrop
+    ) {
+      setError(
+        "Please select a crop."
+      );
 
-    confirmingRef.current = true;
+      return {
+        success: false,
+        reason:
+          "Please select a crop.",
+      };
+    }
+
+    if (
+      !Number.isFinite(
+        requestedQuantity
+      ) ||
+      requestedQuantity <=
+        0
+    ) {
+      setError(
+        tr(
+          "booking.quantityPositive",
+          "Quantity must be greater than zero."
+        )
+      );
+
+      return {
+        success: false,
+        reason:
+          "Quantity must be greater than zero.",
+      };
+    }
+
+    if (
+      !farmer?.id
+    ) {
+      const reason =
+        "Farmer account could not be loaded. Please login again.";
+
+      setError(
+        reason
+      );
+
+      return {
+        success: false,
+        reason,
+      };
+    }
+
+    const maximumQuantity =
+      Number(
+        settings?.maxQuantity ??
+          5000
+      );
+
+    if (
+      requestedQuantity >
+      maximumQuantity
+    ) {
+      const reason =
+        `${tr(
+          "booking.quantityLimit",
+          "Quantity cannot exceed"
+        )} ${maximumQuantity.toLocaleString()} kg.`;
+
+      setError(
+        reason
+      );
+
+      return {
+        success: false,
+        reason,
+      };
+    }
+
+    confirmingRef.current =
+      true;
 
     setConfirming(
       true
@@ -3453,9 +3693,7 @@ function FarmerBook() {
       false
     );
 
-
     try {
-
       const farmerResponse =
         await fetch(
           `${API_URL}/farmers/${encodeURIComponent(
@@ -3463,167 +3701,81 @@ function FarmerBook() {
           )}`
         );
 
-
       let farmerData =
         null;
 
-
       try {
-
         farmerData =
           await farmerResponse.json();
-
       } catch {
-
         farmerData =
           null;
-
       }
-
 
       if (
         !farmerResponse.ok ||
         !farmerData?.farmer
       ) {
-
         throw new Error(
           farmerData?.message ||
           "Your farmer account could not be verified. Please login again."
         );
-
       }
-
 
       const serverFarmer =
         normalizeFarmer(
           farmerData.farmer
         );
 
-
       if (
         !serverFarmer?.id
       ) {
-
         throw new Error(
           "The server returned an invalid farmer account."
         );
-
       }
-
 
       const latestBookings =
         await refreshBookings();
 
-
       const matchingBookings =
         getBookedCount(
           latestBookings,
-          selectedCenter.id,
-          selectedDate.date,
-          selectedSlotRecord.start,
-          selectedSlotRecord.end
+          submissionCenter.id,
+          submissionDate.date,
+          submissionSlot.start,
+          submissionSlot.end
         );
-
 
       const capacity =
         getCenterCapacity(
-          selectedCenter,
+          submissionCenter,
           settings
         );
-
 
       if (
         matchingBookings >=
         capacity
       ) {
-
-        const alternative =
-          availableCenters
-            .filter(
-              center =>
-                String(
-                  center.id
-                ) !==
-                String(
-                  selectedCenter.id
-                )
-            )
-            .map(
-              center => ({
-
-                center,
-
-                availability:
-                  getFreeSlotForCenter(
-                    center,
-                    latestBookings
-                  ),
-
-              })
-            )
-            .find(
-              item =>
-                item.availability
-            );
-
-
-        setSelectedSlot(
-          null
-        );
-
-
-        setAvailabilityCheckedAt(
-          new Date()
-        );
-
-
-        if (
-          alternative
-        ) {
-
-          setCenterId(
-            alternative.center.id
-          );
-
-          setAvailable(
-            true
-          );
-
-
-          setCenterSwitchMessage(
-            language ===
-              "hi"
-              ? `यह स्लॉट अभी भर गया। आपको ${alternative.center.name} पर भेज दिया गया है।`
-              : language ===
-                  "te"
-                ? `ఈ స్లాట్ ఇప్పుడే నిండిపోయింది. మిమ్మల్ని ${alternative.center.name}కు మార్చాము.`
-                : `This slot was just filled. We switched you to ${alternative.center.name}.`
-          );
-
-
-          return;
-
-        }
-
-
+        /*
+         * Do not silently change the farmer's selected center
+         * during an AI-confirmed booking. The user confirmed a
+         * specific center/slot; report that it became unavailable.
+         */
         setAvailable(
           false
         );
 
-
         throw new Error(
-          "This arrival window was just filled and no other active center has availability for this date."
+          "This arrival window was just filled. Please choose another available window."
         );
-
       }
-
 
       const bookingId =
         `B${Date.now()}${Math.floor(
           Math.random() *
           1000
         )}`;
-
 
       const bookingToken =
         String(
@@ -3632,9 +3784,7 @@ function FarmerBook() {
           -6
         );
 
-
       const requestBody = {
-
         id:
           bookingId,
 
@@ -3642,7 +3792,6 @@ function FarmerBook() {
           bookingToken,
 
         farmer: {
-
           id:
             serverFarmer.id,
 
@@ -3675,29 +3824,26 @@ function FarmerBook() {
 
           estimatedQuantity:
             serverFarmer.estimatedQuantity,
-
         },
 
         centerId:
-          selectedCenter.id,
+          submissionCenter.id,
 
         crop:
-          selectedCrop.id,
+          submissionCrop.id,
 
         estimatedQuantity:
-          estimatedQuantity,
+          requestedQuantity,
 
         date:
-          selectedDate.date,
+          submissionDate.date,
 
         slotStart:
-          selectedSlotRecord.start,
+          submissionSlot.start,
 
         slotEnd:
-          selectedSlotRecord.end,
-
+          submissionSlot.end,
       };
-
 
       const response =
         await fetch(
@@ -3715,61 +3861,43 @@ function FarmerBook() {
               JSON.stringify(
                 requestBody
               ),
-
           }
         );
-
 
       let responseData =
         null;
 
-
       try {
-
         responseData =
           await response.json();
-
       } catch {
-
         responseData =
           null;
-
       }
-
 
       if (
         !response.ok
       ) {
-
         throw new Error(
           responseData?.message ||
           "Failed to save your booking."
         );
-
       }
-
 
       const savedBooking =
         responseData?.booking;
 
-
       if (
         !savedBooking?.id
       ) {
-
         throw new Error(
           "Booking was accepted but the server did not return a valid booking record."
         );
-
       }
 
-
       try {
-
         syncBookingToPrototype(
-
           {
-
             id:
               savedBooking.id,
 
@@ -3778,7 +3906,7 @@ function FarmerBook() {
 
             centerId:
               savedBooking.center_id ||
-              selectedCenter.id,
+              submissionCenter.id,
 
             token:
               String(
@@ -3788,24 +3916,24 @@ function FarmerBook() {
 
             date:
               savedBooking.date ||
-              selectedDate.date,
+              submissionDate.date,
 
             slotStart:
               savedBooking.slot_start ||
-              selectedSlotRecord.start,
+              submissionSlot.start,
 
             slotEnd:
               savedBooking.slot_end ||
-              selectedSlotRecord.end,
+              submissionSlot.end,
 
             crop:
               savedBooking.crop ||
-              selectedCrop.id,
+              submissionCrop.id,
 
             estimatedQuantity:
               Number(
                 savedBooking.estimated_quantity ??
-                estimatedQuantity
+                requestedQuantity
               ),
 
             actualQuantity:
@@ -3817,7 +3945,6 @@ function FarmerBook() {
               "CONFIRMED",
 
             payment: {
-
               amount:
                 Number(
                   savedBooking.payment_amount ||
@@ -3836,30 +3963,20 @@ function FarmerBook() {
               sentAt:
                 savedBooking.payment_sms_sent_at ||
                 null,
-
             },
-
           },
-
           serverFarmer,
-
-          selectedCenter,
-
-          selectedCrop
-
+          submissionCenter,
+          submissionCrop
         );
-
       } catch (
         bridgeError
       ) {
-
         console.warn(
           "Prototype sync warning:",
           bridgeError
         );
-
       }
-
 
       const verifyResponse =
         await fetch(
@@ -3868,60 +3985,103 @@ function FarmerBook() {
           )}`
         );
 
-
       let verifyData =
         null;
 
-
       try {
-
         verifyData =
           await verifyResponse.json();
-
       } catch {
-
         verifyData =
           null;
-
       }
-
 
       if (
         !verifyResponse.ok ||
         !verifyData?.booking?.id
       ) {
-
         throw new Error(
           "Booking was created but could not be verified. Please refresh and check your bookings."
         );
-
       }
 
+      const finalBooking =
+        verifyData.booking;
 
       setBookingConfirmed(
         true
       );
 
+      /*
+       * Preserve the successful booking information long enough
+       * for the assistant callback and token navigation.
+       */
+      try {
+        updateBookingDraft({
+          crop:
+            finalBooking.crop ||
+            submissionCrop.id,
+
+          quantity:
+            Number(
+              finalBooking.estimated_quantity ??
+              requestedQuantity
+            ),
+
+          centerId:
+            finalBooking.center_id ||
+            submissionCenter.id,
+
+          date:
+            finalBooking.date ||
+            submissionDate.date,
+
+          slotStart:
+            finalBooking.slot_start ||
+            submissionSlot.start,
+
+          slotEnd:
+            finalBooking.slot_end ||
+            submissionSlot.end,
+
+          token:
+            finalBooking.token ||
+            bookingToken,
+
+          confirmed:
+            true,
+
+          readyForConfirmation:
+            false,
+
+          awaitingConfirmation:
+            false,
+
+          active:
+            false,
+
+          assistantManaged:
+            false,
+        });
+      } catch {
+        /* Booking itself is already saved. */
+      }
+
       clearBookingDraft();
 
-      await new Promise(
-        resolve =>
-          setTimeout(
-            resolve,
-            900
-          )
-      );
+      assistantConfirmRequestRef.current =
+        null;
 
+      assistantAutoConfirmKeyRef.current =
+        "";
 
-      navigate(
-        `/farmer/token?booking=${encodeURIComponent(
-          verifyData.booking.id
-        )}`,
-        {
-          replace:
-            true,
-        }
-      );
+      return {
+        success:
+          true,
+
+        booking:
+          finalBooking,
+      };
 
     } catch (
       bookingError
@@ -3932,22 +4092,31 @@ function FarmerBook() {
         bookingError
       );
 
+      const reason =
+        bookingError?.message ||
+        "Unable to complete the booking.";
 
       setError(
-        bookingError?.message ||
-        "Unable to complete the booking."
+        reason
       );
+
+      return {
+        success:
+          false,
+
+        reason,
+      };
 
     } finally {
 
-      confirmingRef.current = false;
+      confirmingRef.current =
+        false;
 
       setConfirming(
         false
       );
 
     }
-
   }
 
 
@@ -3962,55 +4131,194 @@ function FarmerBook() {
         event?.detail?.assistantBooking ||
         null;
 
-      if (!assistantManagedRef.current) return;
-
-      assistantConfirmRequestRef.current =
+      const fallbackBooking =
         requestedBooking ||
         getBookingState();
 
-      const booking =
-        assistantConfirmRequestRef.current;
+      if (
+        !fallbackBooking
+      ) {
+        return;
+      }
 
-      if (booking?.crop) {
-        const matchedCrop = crops.find(
-          item =>
-            String(item?.id) === String(booking.crop) ||
-            String(item?.name || "").toLowerCase() ===
-              String(booking.crop).toLowerCase()
+      assistantManagedRef.current =
+        true;
+
+      assistantConfirmRequestRef.current =
+        fallbackBooking;
+
+      const completion =
+        typeof event?.detail?.onComplete ===
+        "function"
+          ? event.detail.onComplete
+          : null;
+
+      assistantConfirmCompleteRef.current =
+        completion;
+
+      /*
+       * Hydrate the visible UI for the farmer, but DO NOT wait
+       * for those React states to become the source of truth.
+       * handleConfirmBooking receives the original snapshot.
+       */
+      if (
+        fallbackBooking.crop
+      ) {
+        const matchedCrop =
+          crops.find(
+            item =>
+              String(item?.id) ===
+                String(
+                  fallbackBooking.crop
+                ) ||
+              String(
+                item?.name || ""
+              )
+                .trim()
+                .toLowerCase() ===
+                String(
+                  fallbackBooking.crop
+                )
+                  .trim()
+                  .toLowerCase()
+          );
+
+        if (
+          matchedCrop
+        ) {
+          setCrop(
+            matchedCrop.id
+          );
+        }
+      }
+
+      if (
+        fallbackBooking.quantity !=
+        null
+      ) {
+        setQuantity(
+          String(
+            fallbackBooking.quantity
+          )
         );
-
-        if (matchedCrop) setCrop(matchedCrop.id);
       }
 
-      if (booking?.quantity != null) {
-        setQuantity(String(booking.quantity));
+      if (
+        fallbackBooking.centerId !=
+        null
+      ) {
+        setCenterId(
+          String(
+            fallbackBooking.centerId
+          )
+        );
       }
 
-      if (booking?.centerId != null) {
-        setCenterId(String(booking.centerId));
-      }
-
-      if (booking?.date) {
+      if (
+        fallbackBooking.date
+      ) {
         setDate(
-          dateToOptionId(booking.date)
+          dateToOptionId(
+            fallbackBooking.date
+          )
         );
       }
 
-      if (booking?.slotStart) {
-        setSelectedSlot({
-          id:
-            booking.slotId ||
-            String(booking.slotStart).replace(':', '-'),
-          start: String(booking.slotStart),
-          end: String(booking.slotEnd || ''),
-          display:
-            booking.slotDisplay ||
-            (booking.slotEnd
-              ? `${booking.slotStart} – ${booking.slotEnd}`
-              : String(booking.slotStart)),
-        });
-        setAvailable(true);
+      if (
+        fallbackBooking.slotStart
+      ) {
+        const slot =
+          {
+            id:
+              fallbackBooking.slotId ||
+              String(
+                fallbackBooking.slotStart
+              ).replace(
+                ":",
+                "-"
+              ),
+
+            start:
+              String(
+                fallbackBooking.slotStart
+              ),
+
+            end:
+              String(
+                fallbackBooking.slotEnd ||
+                ""
+              ),
+
+            display:
+              fallbackBooking.slotDisplay ||
+              (
+                fallbackBooking.slotEnd
+                  ? `${fallbackBooking.slotStart} – ${fallbackBooking.slotEnd}`
+                  : String(
+                      fallbackBooking.slotStart
+                    )
+              ),
+          };
+
+        setSelectedSlot(
+          slot
+        );
+
+        setAvailable(
+          true
+        );
       }
+
+      /*
+       * Submit directly from the authoritative assistant snapshot.
+       * No dependency on selectedSlotRecord or the availability memo.
+       */
+      window.setTimeout(
+        () => {
+          Promise.resolve(
+  handleConfirmBookingRef.current
+    ? handleConfirmBookingRef.current(
+        fallbackBooking
+      )
+    : {
+        success: false,
+        reason:
+          "Booking handler is not ready yet.",
+      }
+)
+            .then(
+              result => {
+                if (
+                  completion
+                ) {
+                  completion(
+                    result || {
+                      success:
+                        true,
+                    }
+                  );
+                }
+              }
+            )
+            .catch(
+              error => {
+                if (
+                  completion
+                ) {
+                  completion({
+                    success:
+                      false,
+
+                    reason:
+                      error?.message ||
+                      "Unable to complete the booking.",
+                  });
+                }
+              }
+            );
+        },
+        0
+      );
     };
 
     window.addEventListener(
@@ -4024,109 +4332,66 @@ function FarmerBook() {
         handleAssistantConfirm
       );
     };
-  }, [crops]);
-
-
-  useEffect(() => {
-    const requested = assistantConfirmRequestRef.current;
-
-    if (!requested) return;
-    if (!assistantManagedRef.current) return;
-    if (!selectedCenter || !selectedDate || !selectedSlotRecord) return;
-    if (!crop || !quantity) return;
-
-    const requestedDate = String(requested.date || "");
-    const selectedDateValue = String(selectedDate.date || "");
-    const requestedStart = String(requested.slotStart || requested.slot?.start || "");
-    const requestedEnd = String(requested.slotEnd || requested.slot?.end || "");
-
-    if (requestedDate && requestedDate !== selectedDateValue) return;
-    if (requested.centerId && String(requested.centerId) !== String(selectedCenter.id)) return;
-    if (requested.crop && String(requested.crop) !== String(crop)) return;
-    if (requested.quantity != null && Number(requested.quantity) !== Number(quantity)) return;
-    if (requestedStart && String(selectedSlotRecord.start) !== requestedStart) return;
-    if (requestedEnd && String(selectedSlotRecord.end) !== requestedEnd) return;
-
-    const availableSlot =
-      availability.find(
-        slot =>
-          String(slot.start) === String(selectedSlotRecord.start) &&
-          String(slot.end) === String(selectedSlotRecord.end) &&
-          Number(slot.remaining) > 0 &&
-          slot.loadClass !== "past"
-      );
-
-    if (!availableSlot) return;
-
-    assistantConfirmRequestRef.current = null;
-    handleConfirmBooking();
   }, [
-    selectedCenter?.id,
-    selectedDate?.date,
-    selectedSlotRecord?.start,
-    selectedSlotRecord?.end,
-    availability,
-    crop,
-    quantity,
+    crops,
   ]);
 
-
+  /*
+   * Auto-confirm is used only when the assistant explicitly routed
+   * the farmer to FarmerBook with assistantAutoConfirm=true.
+   *
+   * Like the event bridge above, the authoritative booking snapshot
+   * is passed directly to the submit function.
+   */
   useEffect(() => {
     if (
       !assistantAutoConfirm ||
       !assistantBookingKey ||
-      assistantAutoConfirmKeyRef.current === assistantBookingKey
+      assistantAutoConfirmKeyRef.current ===
+        assistantBookingKey
     ) {
       return;
     }
 
     if (
-      !assistantManagedRef.current ||
-      !selectedCenter ||
-      !selectedDate ||
-      !selectedSlotRecord ||
-      !crop ||
-      !quantity
+      !assistantBooking?.active
     ) {
       return;
     }
 
-    const availableSlot =
-      availability.find(
-        slot =>
-          String(slot.start) ===
-            String(selectedSlotRecord.start) &&
-          String(slot.end) ===
-            String(selectedSlotRecord.end) &&
-          Number(slot.remaining) > 0 &&
-          slot.loadClass !== "past"
-      );
-
-    if (!availableSlot) return;
+    if (
+      !assistantBooking?.crop ||
+      assistantBooking?.quantity == null ||
+      !assistantBooking?.centerId ||
+      !assistantBooking?.date ||
+      !assistantBooking?.slotStart
+    ) {
+      return;
+    }
 
     assistantAutoConfirmKeyRef.current =
       assistantBookingKey;
 
     const timer =
-      setTimeout(() => {
-        handleConfirmBooking();
-      }, 0);
+      setTimeout(
+        () => {
+          handleConfirmBooking(
+            assistantBooking
+          );
+        },
+        0
+      );
 
     return () => {
-      clearTimeout(timer);
+      clearTimeout(
+        timer
+      );
     };
   }, [
     assistantAutoConfirm,
     assistantBookingKey,
-    selectedCenter?.id,
-    selectedDate?.date,
-    selectedSlotRecord?.start,
-    selectedSlotRecord?.end,
-    availability,
-    crop,
-    quantity,
+    assistantBooking,
   ]);
-
 
   /* =======================================================
      RENDER

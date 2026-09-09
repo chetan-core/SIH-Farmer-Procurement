@@ -4,45 +4,27 @@
 
    PURPOSE
 
-   This module is the ONLY layer responsible for communicating
-   with the backend AI assistant API.
+   This module is the transport layer between the frontend
+   assistant and the backend AI API.
 
-   Architecture:
-
-        VoiceAssistant
-              ↓
-        assistantRouter
-              ↓
-        assistantController
-              ↓
-        assistantService
-              ↓
-        /api/assistant
-              ↓
-        Backend AI
-
-
-   IMPORTANT
-
-   This module does NOT:
+   It does NOT:
 
    - render UI
    - navigate
-   - update React state
    - speak
-   - decide browser routes
-   - manipulate DOM
-   - interpret natural language locally
+   - modify React state
+   - execute bookings
+   - decide routes
+   - manipulate the DOM
 
-   Its job is simply:
+   It DOES:
 
-   1. Build the request.
-   2. Send it to the backend.
-   3. Parse the response.
-   4. Normalize the response.
-   5. Detect network/timeout/abort failures.
-   6. Return a predictable result.
-
+   - build the request
+   - preserve rich farmer context
+   - preserve booking state
+   - call /api/assistant
+   - handle timeout / abort / network errors
+   - normalize backend responses
 ========================================================= */
 
 
@@ -63,36 +45,12 @@ const ASSISTANT_ENDPOINT =
   `${API_URL}/assistant`;
 
 
-/*
- * Default request timeout.
- *
- * The backend should normally answer much faster,
- * but a generous timeout prevents the UI from hanging
- * forever when the backend becomes unavailable.
- */
-
 const DEFAULT_TIMEOUT =
   30000;
 
 
-/*
- * Maximum number of messages allowed in the payload.
- *
- * The UI already limits history, but this service adds
- * another safety layer.
- */
-
 const MAX_HISTORY_MESSAGES =
   20;
-
-
-/*
- * Maximum context JSON size is intentionally not enforced
- * byte-for-byte here because JSON string length is only an
- * approximation.
- *
- * Instead we sanitize the major fields before transmission.
- */
 
 
 /* =========================================================
@@ -104,7 +62,7 @@ function cleanText(
 ) {
 
   return String(
-    value || ""
+    value ?? ""
   )
     .trim()
     .replace(
@@ -136,17 +94,30 @@ function sanitizeHistory(
 
   return history
     .filter(
-      item =>
-        item &&
-        (
-          item.role ===
-            "user" ||
-          item.role ===
-            "assistant"
-        ) &&
-        cleanText(
-          item.content
-        )
+      item => {
+
+        if (
+          !item ||
+          (
+            item.role !==
+              "user" &&
+            item.role !==
+              "assistant"
+          )
+        ) {
+
+          return false;
+
+        }
+
+
+        return Boolean(
+          cleanText(
+            item.content
+          )
+        );
+
+      }
     )
     .slice(
       -MAX_HISTORY_MESSAGES
@@ -167,20 +138,25 @@ function sanitizeHistory(
         };
 
 
-        /*
-         * Preserve action metadata when available.
-         *
-         * The backend may use this to understand what
-         * happened immediately before the current request.
-         */
-
         if (
           item.action
         ) {
 
           result.action =
-            String(
+            cleanText(
               item.action
+            );
+
+        }
+
+
+        if (
+          item.semanticTopic
+        ) {
+
+          result.semanticTopic =
+            cleanText(
+              item.semanticTopic
             );
 
         }
@@ -195,17 +171,20 @@ function sanitizeHistory(
 
 
 /* =========================================================
-   CONTEXT SANITIZATION
+   SAFE OBJECT CLONE
 ========================================================= */
 
-function sanitizeContext(
-  context
+function sanitizePlainObject(
+  value
 ) {
 
   if (
-    !context ||
-    typeof context !==
-      "object"
+    !value ||
+    typeof value !==
+      "object" ||
+    Array.isArray(
+      value
+    )
   ) {
 
     return null;
@@ -214,13 +193,43 @@ function sanitizeContext(
 
 
   /*
-   * Context is already assembled by assistantContext.js.
+   * Context has already been built by
+   * assistantContext.js.
    *
-   * We intentionally preserve its structure rather than
-   * rebuilding it here.
+   * We intentionally preserve its structure.
+   *
+   * JSON serialization below removes anything that
+   * cannot safely travel over the API boundary.
    */
 
-  return context;
+  try {
+
+    return JSON.parse(
+      JSON.stringify(
+        value
+      )
+    );
+
+  } catch {
+
+    return null;
+
+  }
+
+}
+
+
+/* =========================================================
+   CONTEXT SANITIZATION
+========================================================= */
+
+function sanitizeContext(
+  context
+) {
+
+  return sanitizePlainObject(
+    context
+  );
 
 }
 
@@ -301,7 +310,7 @@ export const SERVICE_ERROR_CODES = {
 
 
 /* =========================================================
-   REQUEST URL
+   ENDPOINT
 ========================================================= */
 
 export function getAssistantEndpoint() {
@@ -312,19 +321,13 @@ export function getAssistantEndpoint() {
 
 
 /* =========================================================
-   ABORT / TIMEOUT
+   TIMEOUT / ABORT CONTROLLER
 ========================================================= */
 
 function createTimeoutSignal(
   timeout,
   externalSignal
 ) {
-
-  /*
-   * Modern browsers support AbortSignal.timeout(),
-   * but using an AbortController manually gives us
-   * better compatibility and explicit cleanup.
-   */
 
   const controller =
     new AbortController();
@@ -342,11 +345,11 @@ function createTimeoutSignal(
   ) {
 
     timer =
-      window.setTimeout(
+      setTimeout(
         () => {
 
           controller.abort(
-            "timeout"
+            "krishisetu-timeout"
           );
 
         },
@@ -420,7 +423,7 @@ function createTimeoutSignal(
         timer
       ) {
 
-        window.clearTimeout(
+        clearTimeout(
           timer
         );
 
@@ -476,6 +479,18 @@ export function buildAssistantRequestBody(
     context =
       null,
 
+    bookingState =
+      null,
+
+    bookingDraft =
+      null,
+
+    semanticTopic =
+      null,
+
+    decision =
+      null,
+
   } =
     options;
 
@@ -486,10 +501,34 @@ export function buildAssistantRequestBody(
     );
 
 
+  const safeContext =
+    sanitizeContext(
+      context
+    );
+
+
+  const safeBookingState =
+    sanitizePlainObject(
+      bookingState
+    );
+
+
+  const safeBookingDraft =
+    sanitizePlainObject(
+      bookingDraft
+    );
+
+
+  const safeDecision =
+    sanitizePlainObject(
+      decision
+    );
+
+
   return {
 
     /*
-     * Primary user message.
+     * Primary message.
      */
 
     text:
@@ -499,7 +538,7 @@ export function buildAssistantRequestBody(
 
 
     /*
-     * Current UI language.
+     * Language.
      */
 
     language:
@@ -510,7 +549,7 @@ export function buildAssistantRequestBody(
 
 
     /*
-     * Route information.
+     * Current frontend route.
      */
 
     currentPath:
@@ -526,10 +565,7 @@ export function buildAssistantRequestBody(
 
 
     /*
-     * Farmer identity.
-     *
-     * These values are passed only because your current
-     * application already uses them.
+     * Existing farmer identity fields.
      */
 
     farmerId:
@@ -553,13 +589,73 @@ export function buildAssistantRequestBody(
 
 
     /*
-     * Rich assistant context.
+     * Rich farmer/application context.
+     *
+     * This contains information such as:
+     *
+     * - crops
+     * - bookings
+     * - latest token
+     * - payments
+     * - booking history
+     * - current references
+     *
+     * assistantContext.js is responsible for building it.
      */
 
     context:
-      sanitizeContext(
-        context
-      ),
+      safeContext,
+
+
+    /*
+     * Active booking conversation state.
+     *
+     * Keeping these as top-level fields makes the API
+     * contract easier to inspect and allows older backend
+     * code to ignore them safely.
+     */
+
+    bookingState:
+      safeBookingState,
+
+    bookingDraft:
+      safeBookingDraft,
+
+
+    /*
+     * Local semantic classification.
+     *
+     * Examples:
+     *
+     * crops
+     * booking
+     * booking-centers
+     * booking-dates
+     * booking-timings
+     * token
+     * history
+     * payments
+     * qr
+     * receipt
+     * cancellation
+     */
+
+    semanticTopic:
+      cleanText(
+        semanticTopic
+      ) ||
+      null,
+
+
+    /*
+     * Frontend routing decision, when available.
+     *
+     * This is informational context for the backend.
+     * The backend must not blindly override local routing.
+     */
+
+    decision:
+      safeDecision,
 
   };
 
@@ -567,7 +663,7 @@ export function buildAssistantRequestBody(
 
 
 /* =========================================================
-   RESPONSE JSON VALIDATION
+   RESPONSE VALIDATION
 ========================================================= */
 
 function validateResponseObject(
@@ -584,12 +680,16 @@ function validateResponseObject(
   ) {
 
     throw new AssistantServiceError(
+
       "Assistant returned an invalid response object.",
+
       {
+
         code:
           SERVICE_ERROR_CODES.INVALID_RESPONSE,
 
       }
+
     );
 
   }
@@ -614,19 +714,11 @@ export function normalizeAssistantResponse(
     );
 
 
-  /*
-   * Normalize reply.
-   */
-
   const reply =
     cleanText(
       response.reply
     );
 
-
-  /*
-   * Normalize action.
-   */
 
   const action =
     typeof response.action ===
@@ -638,13 +730,7 @@ export function normalizeAssistantResponse(
 
 
   /*
-   * Normalize navigation flag.
-   *
-   * Different backend versions may use:
-   *
-   * explicitNavigation
-   * navigate
-   * shouldNavigate
+   * Accept the naming used by several backend versions.
    */
 
   const explicitNavigation =
@@ -658,10 +744,6 @@ export function normalizeAssistantResponse(
       response.shouldNavigate
     );
 
-
-  /*
-   * Normalize confidence.
-   */
 
   const confidenceValue =
     Number(
@@ -684,9 +766,76 @@ export function normalizeAssistantResponse(
 
 
   /*
-   * Preserve the backend response,
-   * but expose a predictable shape.
+   * Preserve booking-related information.
    */
+
+  const booking =
+    sanitizePlainObject(
+      response.booking
+    );
+
+
+  const params =
+    sanitizePlainObject(
+      response.params
+    );
+
+
+  /*
+   * Backend semantic information.
+   */
+
+  const semanticTopic =
+    cleanText(
+      response.semanticTopic
+    ) ||
+    null;
+
+
+  /*
+   * Some backend implementations may return
+   * a conversational state directly.
+   */
+
+  const bookingState =
+    sanitizePlainObject(
+      response.bookingState
+    );
+
+
+  const bookingDraft =
+    sanitizePlainObject(
+      response.bookingDraft
+    );
+
+
+  /*
+   * Confirmation / execution flags.
+   */
+
+  const continueBooking =
+    Boolean(
+      response.continueBooking
+    );
+
+
+  const executeBooking =
+    Boolean(
+      response.executeBooking
+    );
+
+
+  const cancelBooking =
+    Boolean(
+      response.cancelBooking
+    );
+
+
+  const requiresBookingController =
+    Boolean(
+      response.requiresBookingController
+    );
+
 
   return {
 
@@ -705,28 +854,25 @@ export function normalizeAssistantResponse(
       explicitNavigation,
 
 
-    /*
-     * Preserve possible semantic information.
-     */
+    semanticTopic,
 
-    semanticTopic:
-      response.semanticTopic ||
-      null,
+    booking,
 
+    bookingState,
 
-    booking:
-      response.booking ||
-      null,
+    bookingDraft,
+
+    params,
 
 
-    params:
-      response.params ||
-      null,
+    continueBooking,
 
+    executeBooking,
 
-    /*
-     * Preserve backend metadata if present.
-     */
+    cancelBooking,
+
+    requiresBookingController,
+
 
     metadata:
       response.metadata ||
@@ -748,11 +894,6 @@ export function normalizeAssistantResponse(
       null,
 
 
-    /*
-     * Keep the original response available for
-     * debugging and future features.
-     */
-
     raw:
       response,
 
@@ -762,7 +903,7 @@ export function normalizeAssistantResponse(
 
 
 /* =========================================================
-   HTTP ERROR
+   HTTP ERROR MESSAGE
 ========================================================= */
 
 async function extractErrorMessage(
@@ -770,13 +911,18 @@ async function extractErrorMessage(
 ) {
 
   /*
-   * Try JSON first.
+   * Clone first so we do not consume the original
+   * response body unnecessarily.
    */
 
   try {
 
+    const clone =
+      response.clone();
+
+
     const data =
-      await response.json();
+      await clone.json();
 
 
     if (
@@ -791,40 +937,30 @@ async function extractErrorMessage(
 
 
     if (
-      data?.error
+      typeof data?.error ===
+        "string"
     ) {
 
-      if (
-        typeof data.error ===
-          "string"
-      ) {
+      return cleanText(
+        data.error
+      );
 
-        return cleanText(
-          data.error
-        );
-
-      }
+    }
 
 
-      if (
+    if (
+      data?.error?.message
+    ) {
+
+      return cleanText(
         data.error.message
-      ) {
-
-        return cleanText(
-          data.error.message
-        );
-
-      }
+      );
 
     }
 
   } catch {
   }
 
-
-  /*
-   * Fall back to text.
-   */
 
   try {
 
@@ -886,11 +1022,6 @@ export function isNetworkError(
       TypeError
   ) {
 
-    /*
-     * fetch() commonly produces TypeError when
-     * a network request cannot be completed.
-     */
-
     return true;
 
   }
@@ -913,21 +1044,27 @@ export function isNetworkError(
 
 
   return (
+
     name.includes(
       "network"
     ) ||
+
     message.includes(
       "network"
     ) ||
+
     message.includes(
       "failed to fetch"
     ) ||
+
     message.includes(
       "load failed"
     ) ||
+
     message.includes(
       "connection refused"
     )
+
   );
 
 }
@@ -972,12 +1109,19 @@ export function isTimeoutError(
 
 
   return (
+
     message.includes(
       "timeout"
     ) ||
+
     message.includes(
       "timed out"
+    ) ||
+
+    message.includes(
+      "krishisetu-timeout"
     )
+
   );
 
 }
@@ -1022,17 +1166,20 @@ export function isAbortedError(
 
 
   return (
+
     name ===
       "aborterror" ||
+
     name ===
       "aborted"
+
   );
 
 }
 
 
 /* =========================================================
-   SERVICE ERROR MESSAGE
+   LOCALIZED SERVICE ERROR
 ========================================================= */
 
 export function getServiceErrorMessage(
@@ -1192,6 +1339,18 @@ export async function askAssistantService(
     context =
       null,
 
+    bookingState =
+      null,
+
+    bookingDraft =
+      null,
+
+    semanticTopic =
+      null,
+
+    decision =
+      null,
+
     signal =
       null,
 
@@ -1213,11 +1372,16 @@ export async function askAssistantService(
   ) {
 
     throw new AssistantServiceError(
+
       "Assistant message is empty.",
+
       {
+
         code:
           SERVICE_ERROR_CODES.INVALID_RESPONSE,
+
       }
+
     );
 
   }
@@ -1242,6 +1406,14 @@ export async function askAssistantService(
       history,
 
       context,
+
+      bookingState,
+
+      bookingDraft,
+
+      semanticTopic,
+
+      decision,
 
     });
 
@@ -1292,10 +1464,6 @@ export async function askAssistantService(
       );
 
 
-    /*
-     * HTTP error.
-     */
-
     if (
       !response.ok
     ) {
@@ -1319,16 +1487,14 @@ export async function askAssistantService(
           status:
             response.status,
 
+          response,
+
         }
 
       );
 
     }
 
-
-    /*
-     * Parse JSON.
-     */
 
     let data;
 
@@ -1361,10 +1527,6 @@ export async function askAssistantService(
     }
 
 
-    /*
-     * Normalize response.
-     */
-
     return normalizeAssistantResponse(
       data
     );
@@ -1372,11 +1534,6 @@ export async function askAssistantService(
   } catch (
     error
   ) {
-
-    /*
-     * Already normalized service errors should
-     * simply pass through.
-     */
 
     if (
       error instanceof
@@ -1389,7 +1546,11 @@ export async function askAssistantService(
 
 
     /*
-     * Browser abort.
+     * Browser AbortController turns both timeout and
+     * explicit cancellation into AbortError.
+     *
+     * Our own controller stores "krishisetu-timeout"
+     * as the reason, which lets us distinguish them.
      */
 
     if (
@@ -1397,35 +1558,33 @@ export async function askAssistantService(
       "AbortError"
     ) {
 
-      /*
-       * Determine whether this was our timeout
-       * or an external AbortController.
-       */
-
-      const message =
+      const reason =
         String(
-          error?.message ||
+          requestSignal?.reason ||
           ""
         )
           .toLowerCase();
 
 
-      const likelyTimeout =
-        message.includes(
+      const timedOut =
+        reason.includes(
+          "krishisetu-timeout"
+        ) ||
+        reason.includes(
           "timeout"
         );
 
 
       throw new AssistantServiceError(
 
-        likelyTimeout
+        timedOut
           ? "Assistant request timed out."
           : "Assistant request was aborted.",
 
         {
 
           code:
-            likelyTimeout
+            timedOut
               ? SERVICE_ERROR_CODES.TIMEOUT
               : SERVICE_ERROR_CODES.ABORTED,
 
@@ -1439,9 +1598,30 @@ export async function askAssistantService(
     }
 
 
-    /*
-     * Network failure.
-     */
+    if (
+      isTimeoutError(
+        error
+      )
+    ) {
+
+      throw new AssistantServiceError(
+
+        "Assistant request timed out.",
+
+        {
+
+          code:
+            SERVICE_ERROR_CODES.TIMEOUT,
+
+          cause:
+            error,
+
+        }
+
+      );
+
+    }
+
 
     if (
       isNetworkError(
@@ -1467,10 +1647,6 @@ export async function askAssistantService(
 
     }
 
-
-    /*
-     * Unknown failure.
-     */
 
     throw new AssistantServiceError(
 
@@ -1501,14 +1677,6 @@ export async function askAssistantService(
 /* =========================================================
    HEALTH CHECK
 ========================================================= */
-
-/*
- * Optional helper for future connection indicators.
- *
- * This does NOT affect assistant operation.
- *
- * It simply checks whether the API server responds.
- */
 
 export async function checkAssistantHealth(
   options = {}
@@ -1607,13 +1775,6 @@ export async function checkAssistantHealth(
    REQUEST PREVIEW
 ========================================================= */
 
-/*
- * Useful during development.
- *
- * It allows you to inspect exactly what the frontend will
- * send without actually sending a request.
- */
-
 export function createAssistantRequestPreview(
   options = {}
 ) {
@@ -1642,6 +1803,18 @@ export function createAssistantRequestPreview(
       [],
 
     context =
+      null,
+
+    bookingState =
+      null,
+
+    bookingDraft =
+      null,
+
+    semanticTopic =
+      null,
+
+    decision =
       null,
 
   } =
@@ -1685,6 +1858,14 @@ export function createAssistantRequestPreview(
 
         context,
 
+        bookingState,
+
+        bookingDraft,
+
+        semanticTopic,
+
+        decision,
+
       }),
 
   };
@@ -1693,7 +1874,7 @@ export function createAssistantRequestPreview(
 
 
 /* =========================================================
-   SERVICE DESCRIPTION
+   SERVICE INFO
 ========================================================= */
 
 export function getAssistantServiceInfo() {
@@ -1763,3 +1944,10 @@ if (
   );
 
 }
+
+
+/* =========================================================
+   DEFAULT EXPORT
+========================================================= */
+
+export default assistantService;

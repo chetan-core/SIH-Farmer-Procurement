@@ -1,4 +1,3 @@
-
 /* =========================================================
    KRISHISETU INTENT ENGINE
 ========================================================= */
@@ -24,7 +23,7 @@ export function normalizeText(
       "NFKC"
     )
     .replace(
-      /[^\p{L}\p{N}\s]/gu,
+      /[^\p{L}\p{N}\s:.-]/gu,
       " "
     )
     .replace(
@@ -65,7 +64,7 @@ function tokenize(
 
 
 /* =========================================================
-   ID / RESULT
+   RESULT
 ========================================================= */
 
 function createResult(
@@ -269,11 +268,6 @@ export function fuzzyWord(
       }
 
 
-      /*
-       * Substring matching is acceptable
-       * only for longer destination words.
-       */
-
       if (
         target.length >=
           5 &&
@@ -375,10 +369,6 @@ export function fuzzyPhrase(
     );
 
 
-  /*
-   * Exact phrase first.
-   */
-
   for (
     const phrase of list
   ) {
@@ -402,10 +392,6 @@ export function fuzzyPhrase(
 
   }
 
-
-  /*
-   * Word-by-word matching.
-   */
 
   for (
     const phrase of list
@@ -432,10 +418,6 @@ export function fuzzyPhrase(
       );
 
 
-    /*
-     * Single word.
-     */
-
     if (
       targetWords.length ===
       1
@@ -456,10 +438,6 @@ export function fuzzyPhrase(
 
     }
 
-
-    /*
-     * Multi-word phrase.
-     */
 
     for (
       let index = 0;
@@ -555,7 +533,7 @@ function containsAny(
 
 
 /* =========================================================
-   ACTION DEFINITIONS
+   ACTION LANGUAGE
 ========================================================= */
 
 const ACTION_LANGUAGE = {
@@ -711,20 +689,24 @@ const DESTINATIONS = {
     "token",
     "my token",
     "latest token",
+    "current token",
+    "new token",
     "token page",
     "token details",
     "booking token",
-    "booking details",
-    "my booking",
 
     "टोकन",
     "मेरा टोकन",
     "लेटेस्ट टोकन",
+    "वर्तमान टोकन",
     "टोकन पेज",
+    "बुकिंग टोकन",
     "बुकिंग विवरण",
 
     "టోకెన్",
     "నా టోకెన్",
+    "లేటెస్ట్ టోకెన్",
+    "ప్రస్తుత టోకెన్",
     "టోకెన్ పేజీ",
     "బుకింగ్ వివరాలు",
 
@@ -873,7 +855,7 @@ const DESTINATIONS = {
 
 
 /* =========================================================
-   QUESTION DETECTION
+   QUESTION PATTERNS
 ========================================================= */
 
 const QUESTION_PATTERNS = [
@@ -905,6 +887,9 @@ const QUESTION_PATTERNS = [
   "are my",
   "do i have",
   "did i",
+  "can i",
+  "can we",
+  "could you",
 
   "क्या",
   "क्या है",
@@ -921,6 +906,7 @@ const QUESTION_PATTERNS = [
   "बताओ",
   "बताइए",
   "मेरी स्थिति",
+  "क्या मैं",
 
   "ఏమిటి",
   "ఎక్కడ",
@@ -930,6 +916,7 @@ const QUESTION_PATTERNS = [
   "ఎలా",
   "చెప్పండి",
   "స్థితి",
+  "నేను చేయగలనా",
 
 ];
 
@@ -943,7 +930,6 @@ function looksLikeQuestion(
       message || ""
     )
       .trim();
-
 
   const text =
     normalizeText(
@@ -983,10 +969,6 @@ function looksLikeQuestion(
   }
 
 
-  /*
-   * Common status forms.
-   */
-
   if (
     fuzzyPhrase(
       text,
@@ -997,6 +979,9 @@ function looksLikeQuestion(
         "my status",
         "payment state",
         "booking state",
+        "what is my token",
+        "what is my booking",
+        "what are my bookings",
       ]
     )
   ) {
@@ -1012,7 +997,7 @@ function looksLikeQuestion(
 
 
 /* =========================================================
-   EXPLICIT NAVIGATION
+   NAVIGATION
 ========================================================= */
 
 function hasNavigationVerb(
@@ -1029,10 +1014,6 @@ function hasNavigationVerb(
 }
 
 
-/* =========================================================
-   EXPLICIT BACK
-========================================================= */
-
 function isBackRequest(
   message
 ) {
@@ -1046,10 +1027,6 @@ function isBackRequest(
 
 }
 
-
-/* =========================================================
-   EXPLICIT DESTINATION REQUEST
-========================================================= */
 
 function hasDestination(
   text,
@@ -1067,10 +1044,6 @@ function hasDestination(
 }
 
 
-/* =========================================================
-   SAFE DESTINATION RULE
-========================================================= */
-
 function shouldNavigateToDestination(
   text,
   action
@@ -1081,24 +1054,11 @@ function shouldNavigateToDestination(
       text
     );
 
-
   const question =
     looksLikeQuestion(
       text
     );
 
-
-  /*
-   * Explicit navigation always wins.
-   *
-   * Example:
-   *
-   * "show me my payment history"
-   *
-   * contains "show" but is semantically a
-   * navigation request rather than asking for
-   * the payment information itself.
-   */
 
   if (
     navigation
@@ -1108,15 +1068,6 @@ function shouldNavigateToDestination(
 
   }
 
-
-  /*
-   * Very short destination commands can navigate.
-   *
-   * "help"
-   * "home"
-   * "payments"
-   * "settings"
-   */
 
   const wordCount =
     tokenize(
@@ -1129,12 +1080,6 @@ function shouldNavigateToDestination(
       3 &&
     !question
   ) {
-
-    /*
-     * Notification / payment / history alone are
-     * treated as navigation because they are common
-     * portal commands.
-     */
 
     if (
       action ===
@@ -1166,7 +1111,7 @@ function shouldNavigateToDestination(
 
 
 /* =========================================================
-   BOOKING CROP ALIASES
+   CROP ALIASES
 ========================================================= */
 
 const CROP_ALIASES = {
@@ -1179,11 +1124,13 @@ const CROP_ALIASES = {
     "gehun",
     "gehoo",
     "gahu",
+
     "गेहूं",
     "गेहू",
     "गहूं",
     "गहू",
     "गेहूँ",
+
     "గోధుమ",
     "గోధుమలు",
 
@@ -1195,10 +1142,12 @@ const CROP_ALIASES = {
     "paddy",
     "rice",
     "dhan",
+    "dhan crop",
+
     "धान",
     "चावल",
     "धान की फसल",
-    "व ajustrి",
+
     "వరి",
     "బియ్యం",
 
@@ -1210,7 +1159,9 @@ const CROP_ALIASES = {
     "maize",
     "corn",
     "maka",
+
     "मक्का",
+
     "మొక్కజొన్న",
 
   ],
@@ -1220,7 +1171,9 @@ const CROP_ALIASES = {
 
     "cotton",
     "kapas",
+
     "कपास",
+
     "పత్తి",
 
   ],
@@ -1229,7 +1182,58 @@ const CROP_ALIASES = {
 
 
 /* =========================================================
-   BOOKING QUANTITY EXTRACTION
+   CROP EXTRACTION
+========================================================= */
+
+export function extractCrop(
+  message
+) {
+
+  const text =
+    normalizeText(
+      message
+    );
+
+
+  if (
+    !text
+  ) {
+
+    return null;
+
+  }
+
+
+  for (
+    const [
+      cropId,
+      aliases,
+    ] of Object.entries(
+      CROP_ALIASES
+    )
+  ) {
+
+    if (
+      fuzzyPhrase(
+        text,
+        aliases
+      )
+    ) {
+
+      return cropId;
+
+    }
+
+  }
+
+
+  return null;
+
+}
+
+
+/* =========================================================
+   QUANTITY EXTRACTION
 ========================================================= */
 
 export function extractBookingDetails(
@@ -1251,25 +1255,11 @@ export function extractBookingDetails(
   }
 
 
-  /*
-   * Prefer an explicitly stated unit.
-   */
-
   const explicitQuantity =
     text.match(
       /(\d+(?:\.\d+)?)\s*(kg|kgs|kilo|kilos|kilogram|kilograms|किलो|किलोग्राम|కిలో|కిలోలు)\b/i
     );
 
-
-  /*
-   * Fallback for natural phrases such as:
-   *
-   * "book 300 wheat"
-   * "300 kg wheat"
-   *
-   * Only use a bare number when the sentence also
-   * contains booking/procurement/crop context.
-   */
 
   const bareQuantity =
     text.match(
@@ -1297,25 +1287,8 @@ export function extractBookingDetails(
         text,
         "OPEN_BOOKING"
       ) ||
-      fuzzyPhrase(
-        text,
-        [
-          "wheat",
-          "paddy",
-          "rice",
-          "maize",
-          "corn",
-          "cotton",
-          "गेहूं",
-          "धान",
-          "चावल",
-          "मक्का",
-          "कपास",
-          "గోధుమ",
-          "వరి",
-          "మొక్కజొన్న",
-          "పత్తి",
-        ]
+      extractCrop(
+        text
       )
     )
   ) {
@@ -1344,34 +1317,10 @@ export function extractBookingDetails(
   }
 
 
-  let crop =
-    null;
-
-
-  for (
-    const [
-      cropId,
-      aliases,
-    ] of Object.entries(
-      CROP_ALIASES
-    )
-  ) {
-
-    if (
-      fuzzyPhrase(
-        text,
-        aliases
-      )
-    ) {
-
-      crop =
-        cropId;
-
-      break;
-
-    }
-
-  }
+  const crop =
+    extractCrop(
+      text
+    );
 
 
   if (
@@ -1391,6 +1340,550 @@ export function extractBookingDetails(
     quantity,
 
   };
+
+}
+
+
+/* =========================================================
+   BOOKING DATE / TIME SIGNALS
+========================================================= */
+
+export function hasBookingDateSignal(
+  message
+) {
+
+  const text =
+    normalizeText(
+      message
+    );
+
+
+  return Boolean(
+
+    fuzzyPhrase(
+      text,
+      [
+        "today",
+        "tomorrow",
+        "tommorow",
+        "tomorow",
+        "day after tomorrow",
+        "yesterday",
+        "morning",
+        "afternoon",
+        "evening",
+        "tonight",
+        "next monday",
+        "next tuesday",
+        "next wednesday",
+        "next thursday",
+        "next friday",
+        "next saturday",
+        "next sunday",
+
+        "आज",
+        "कल",
+        "सुबह",
+        "दोपहर",
+        "शाम",
+
+        "ఈరోజు",
+        "రేపు",
+        "ఉదయం",
+        "మధ్యాహ్నం",
+        "సాయంత్రం",
+
+      ]
+    ) ||
+
+    /\b\d{4}[-/.]\d{1,2}[-/.]\d{1,2}\b/.test(
+      text
+    ) ||
+
+    /\b\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}\b/.test(
+      text
+    )
+
+  );
+
+}
+
+
+export function hasBookingTimeSignal(
+  message
+) {
+
+  const text =
+    normalizeText(
+      message
+    );
+
+
+  return Boolean(
+
+    /\b\d{1,2}\s*(?::|[.])\s*\d{1,2}\s*(?:am|pm)?\b/i.test(
+      text
+    ) ||
+
+    /\b\d{1,2}\s*(?:am|pm)\b/i.test(
+      text
+    ) ||
+
+    /\b\d{1,2}\s*(?:to|-)\s*\d{1,2}(?::\d{1,2})?\s*(?:am|pm)?\b/i.test(
+      text
+    ) ||
+
+    fuzzyPhrase(
+      text,
+      [
+        "morning",
+        "afternoon",
+        "evening",
+        "night",
+        "सुबह",
+        "दोपहर",
+        "शाम",
+        "ఉదయం",
+        "మధ్యాహ్నం",
+        "సాయంత్రం",
+      ]
+    )
+
+  );
+
+}
+
+
+/* =========================================================
+   SEMANTIC KNOWLEDGE TOPICS
+========================================================= */
+
+function detectKnowledgeTopic(
+  text
+) {
+
+  /*
+   * CROPS
+   */
+
+  if (
+    fuzzyPhrase(
+      text,
+      [
+        "available crops",
+        "what crops are available",
+        "which crops are available",
+        "crops available",
+        "available crop",
+        "which crop can i sell",
+        "what can i sell",
+        "what crops can i sell",
+        "crop list",
+        "crop options",
+        "crops",
+
+        "उपलब्ध फसल",
+        "कौन सी फसल",
+        "कौन सी फसल बेच सकते हैं",
+        "फसल उपलब्ध",
+        "फसलों की सूची",
+
+        "ఏ పంటలు అందుబాటులో ఉన్నాయి",
+        "అందుబాటులో ఉన్న పంటలు",
+        "ఏ పంట అమ్మవచ్చు",
+        "పంటల జాబితా",
+      ]
+    )
+  ) {
+
+    return "crops";
+
+  }
+
+
+  /*
+   * CENTERS
+   */
+
+  if (
+    fuzzyPhrase(
+      text,
+      [
+        "centers",
+        "center",
+        "centres",
+        "centre",
+        "centeers",
+        "procurement centers",
+        "procurement center",
+        "procurement centres",
+        "procurement centre",
+        "where are the centers",
+        "which center",
+        "which centers",
+        "nearby center",
+        "nearest center",
+
+        "केंद्र",
+        "केंद्रों",
+        "खरीद केंद्र",
+        "कौन सा केंद्र",
+
+        "కేంద్రాలు",
+        "కొనుగోలు కేంద్రం",
+        "ఏ కేంద్రం",
+      ]
+    )
+  ) {
+
+    return "booking-centers";
+
+  }
+
+
+  /*
+   * DATES
+   */
+
+  if (
+    fuzzyPhrase(
+      text,
+      [
+        "available dates",
+        "dates available",
+        "which dates",
+        "what dates are available",
+        "available day",
+        "available days",
+        "booking dates",
+        "procurement dates",
+
+        "उपलब्ध तारीख",
+        "उपलब्ध तारीखें",
+        "कौन सी तारीख",
+        "बुकिंग की तारीख",
+
+        "అందుబాటులో ఉన్న తేదీలు",
+        "ఏ తేదీలు",
+        "బుకింగ్ తేదీలు",
+      ]
+    )
+  ) {
+
+    return "booking-dates";
+
+  }
+
+
+  /*
+   * TIMINGS / SLOTS
+   */
+
+  if (
+    fuzzyPhrase(
+      text,
+      [
+        "available timings",
+        "available timing",
+        "available time",
+        "available times",
+        "available slots",
+        "which slots",
+        "what slots",
+        "what times are available",
+        "timings",
+        "timmings",
+        "timming",
+        "slot timings",
+        "booking timings",
+        "procurement timings",
+        "morning slots",
+        "evening slots",
+
+        "उपलब्ध समय",
+        "उपलब्ध स्लॉट",
+        "कौन सा स्लॉट",
+        "बुकिंग समय",
+        "समय क्या है",
+
+        "అందుబాటులో ఉన్న సమయాలు",
+        "అందుబాటులో ఉన్న స్లాట్లు",
+        "ఏ స్లాట్లు",
+        "బుకింగ్ సమయం",
+      ]
+    )
+  ) {
+
+    return "booking-timings";
+
+  }
+
+
+  /*
+   * TOKEN
+   */
+
+  if (
+    fuzzyPhrase(
+      text,
+      [
+        "my token",
+        "latest token",
+        "current token",
+        "last token",
+        "show token",
+        "token number",
+        "what is my token",
+        "where is my token",
+        "token details",
+        "token status",
+
+        "मेरा टोकन",
+        "लेटेस्ट टोकन",
+        "वर्तमान टोकन",
+        "मेरा टोकन नंबर",
+        "टोकन नंबर",
+
+        "నా టోకెన్",
+        "లేటెస్ట్ టోకెన్",
+        "ప్రస్తుత టోకెన్",
+        "టోకెన్ నంబర్",
+      ]
+    )
+  ) {
+
+    return "token";
+
+  }
+
+
+  /*
+   * BOOKING
+   */
+
+  if (
+    fuzzyPhrase(
+      text,
+      [
+        "my booking",
+        "my bookings",
+        "booking details",
+        "booking detail",
+        "booking status",
+        "latest booking",
+        "current booking",
+        "last booking",
+        "recent booking",
+        "what is my booking",
+        "show my booking",
+        "where is my booking",
+
+        "मेरी बुकिंग",
+        "मेरी बुकिंग का विवरण",
+        "बुकिंग विवरण",
+        "बुकिंग स्थिति",
+
+        "నా బుకింగ్",
+        "నా బుకింగ్స్",
+        "బుకింగ్ వివరాలు",
+        "బుకింగ్ స్థితి",
+      ]
+    )
+  ) {
+
+    return "booking";
+
+  }
+
+
+  /*
+   * HISTORY
+   */
+
+  if (
+    fuzzyPhrase(
+      text,
+      [
+        "booking history",
+        "my booking history",
+        "procurement history",
+        "my history",
+        "past bookings",
+        "previous bookings",
+        "old bookings",
+        "recent bookings",
+        "booking records",
+        "past procurement",
+
+        "बुकिंग इतिहास",
+        "मेरी बुकिंग हिस्ट्री",
+        "पिछली बुकिंग",
+        "पुरानी बुकिंग",
+
+        "బుకింగ్ చరిత్ర",
+        "నా బుకింగ్ హిస్టరీ",
+        "గత బుకింగ్స్",
+      ]
+    )
+  ) {
+
+    return "history";
+
+  }
+
+
+  /*
+   * PAYMENTS
+   */
+
+  if (
+    fuzzyPhrase(
+      text,
+      [
+        "my payment",
+        "my payments",
+        "payment status",
+        "payment history",
+        "recent payment",
+        "latest payment",
+        "payment received",
+        "when will i get payment",
+        "have i been paid",
+        "money received",
+        "payment record",
+        "payment details",
+
+        "मेरा पेमेंट",
+        "मेरी भुगतान स्थिति",
+        "भुगतान स्थिति",
+        "भुगतान इतिहास",
+        "पैसे मिले",
+        "भुगतान कब मिलेगा",
+
+        "నా పేమెంట్",
+        "చెల్లింపు స్థితి",
+        "చెల్లింపు చరిత్ర",
+        "పేమెంట్ ఎప్పుడు",
+      ]
+    )
+  ) {
+
+    return "payments";
+
+  }
+
+
+  /*
+   * QR
+   */
+
+  if (
+    fuzzyPhrase(
+      text,
+      [
+        "qr",
+        "qr code",
+        "my qr",
+        "download qr",
+        "download my qr",
+        "show qr",
+        "booking qr",
+        "token qr",
+        "qr for this token",
+        "qr of this booking",
+        "qr code for yesterday",
+        "qr code for my booking",
+
+        "क्यूआर",
+        "क्यूआर कोड",
+        "मेरा क्यूआर",
+        "क्यूआर डाउनलोड",
+        "टोकन का क्यूआर",
+
+        "క్యూఆర్",
+        "క్యూఆర్ కోడ్",
+        "నా క్యూఆర్",
+      ]
+    )
+  ) {
+
+    return "qr";
+
+  }
+
+
+  /*
+   * RECEIPT
+   */
+
+  if (
+    fuzzyPhrase(
+      text,
+      [
+        "receipt",
+        "my receipt",
+        "download receipt",
+        "download my receipt",
+        "booking receipt",
+        "token receipt",
+        "receipt for this booking",
+        "receipt of yesterday",
+        "receipt for yesterday",
+        "show receipt",
+
+        "रसीद",
+        "मेरी रसीद",
+        "रसीद डाउनलोड",
+        "बुकिंग रसीद",
+
+        "రసీదు",
+        "నా రసీదు",
+        "రసీదు డౌన్లోడ్",
+      ]
+    )
+  ) {
+
+    return "receipt";
+
+  }
+
+
+  /*
+   * CANCELLATION
+   */
+
+  if (
+    fuzzyPhrase(
+      text,
+      [
+        "cancel booking",
+        "cancel my booking",
+        "cancel this booking",
+        "cancel slot",
+        "cancel my slot",
+        "can i cancel",
+        "want to cancel",
+        "delete booking",
+        "remove booking",
+
+        "बुकिंग रद्द",
+        "मेरी बुकिंग रद्द",
+        "स्लॉट रद्द",
+        "बुकिंग कैंसल",
+
+        "బుకింగ్ రద్దు",
+        "నా బుకింగ్ రద్దు",
+        "స్లాట్ రద్దు",
+      ]
+    )
+  ) {
+
+    return "cancellation";
+
+  }
+
+
+  return null;
 
 }
 
@@ -1462,8 +1955,6 @@ export function detectIntent(
   /*
    * -------------------------------------------------------
    * BOOKING
-   *
-   * Booking is evaluated before generic destinations.
    * -------------------------------------------------------
    */
 
@@ -1474,34 +1965,36 @@ export function detectIntent(
     );
 
 
+  const extracted =
+    extractBookingDetails(
+      text
+    );
+
+
+  const bookingDateSignal =
+    hasBookingDateSignal(
+      text
+    );
+
+
+  const bookingTimeSignal =
+    hasBookingTimeSignal(
+      text
+    );
+
+
+  /*
+   * Any explicit booking phrase.
+   */
+
   if (
     bookingMatch
   ) {
-
-    const booking =
-      extractBookingDetails(
-        text
-      );
-
-
-    /*
-     * A booking phrase by itself is enough:
-     *
-     * "book"
-     * "booking"
-     * "book page"
-     *
-     * More complex phrases also work:
-     *
-     * "can you take me to booking"
-     * "book 300kg wheat"
-     */
 
     const navigation =
       hasNavigationVerb(
         text
       );
-
 
     const question =
       looksLikeQuestion(
@@ -1510,18 +2003,28 @@ export function detectIntent(
 
 
     if (
-      booking &&
-      (
-        navigation ||
-        !question
-      )
+      extracted ||
+      bookingDateSignal ||
+      bookingTimeSignal
     ) {
 
       return createResult(
         "OPEN_BOOKING",
         0.99,
         {
-          booking,
+
+          booking:
+            extracted,
+
+          semanticTopic:
+            "booking",
+
+          hasBookingDate:
+            bookingDateSignal,
+
+          hasBookingTime:
+            bookingTimeSignal,
+
         }
       );
 
@@ -1536,97 +2039,128 @@ export function detectIntent(
         "OPEN_BOOKING",
         0.97,
         {
-          booking,
+
+          booking:
+            extracted,
+
         }
       );
 
     }
 
 
-    /*
-     * "I want to book"
-     */
-
     if (
-      fuzzyPhrase(
-        text,
-        [
-          "i want to book",
-          "i need to book",
-          "i want booking",
-          "i need booking",
-          "book for me",
-          "help me book",
-          "book this",
-          "booking please",
-
-          "बुक करना है",
-          "बुकिंग करनी है",
-
-          "బుక్ చేయాలి",
-          "బుకింగ్ చేయాలి",
-        ]
-      )
+      !question
     ) {
 
       return createResult(
         "OPEN_BOOKING",
         0.96,
         {
-          booking,
+
+          booking:
+            extracted,
+
         }
       );
 
     }
+
+
+    return createResult(
+      "NONE",
+      0,
+      {
+
+        semanticTopic:
+          "booking",
+
+      }
+    );
 
   }
 
 
   /*
    * -------------------------------------------------------
-   * BOOKING INFORMATION QUESTIONS
+   * BOOKING INFORMATION
    * -------------------------------------------------------
-   * Keep these local so the backend AI cannot turn simple
-   * center/date/timing questions into generic help text.
+   */
+
+  const knowledgeTopic =
+    detectKnowledgeTopic(
+      text
+    );
+
+
+  if (
+    knowledgeTopic
+  ) {
+
+    return createResult(
+      "NONE",
+      0,
+      {
+
+        semanticTopic:
+          knowledgeTopic,
+
+        booking:
+          extracted,
+
+      }
+    );
+
+  }
+
+
+  /*
+   * -------------------------------------------------------
+   * NATURAL BOOKING DETAILS WITHOUT "BOOK"
+   * -------------------------------------------------------
+   *
+   * Examples:
+   *
+   *   300 kg wheat tomorrow
+   *   tomorrow
+   *   8 to 830
+   *   morning
+   *
+   * The booking controller can combine these with
+   * the existing draft.
+   * -------------------------------------------------------
    */
 
   if (
-    /\b(centeers?|centers?|centres?|procurement centers?|procurement centres?)\b/i.test(text)
+    extracted &&
+    (
+      bookingDateSignal ||
+      bookingTimeSignal
+    )
   ) {
-    return createResult(
-      "OPEN_BOOKING",
-      0.98,
-      {
-        semanticTopic: "booking-centers",
-      }
-    );
-  }
 
-  if (
-    /\b(available dates|dates available|which dates|dates?)\b/i.test(text) &&
-    !extractBookingDetails(text)
-  ) {
     return createResult(
       "OPEN_BOOKING",
       0.97,
       {
-        semanticTopic: "booking-dates",
+
+        booking:
+          extracted,
+
+        semanticTopic:
+          "booking",
+
+        hasBookingDate:
+          bookingDateSignal,
+
+        hasBookingTime:
+          bookingTimeSignal,
+
       }
     );
+
   }
 
-  if (
-    /\b(timings?|hours|opening|closing)\b/i.test(text) &&
-    /\b(center|centers|centre|centres|centeers?|procurement)\b/i.test(text)
-  ) {
-    return createResult(
-      "OPEN_BOOKING",
-      0.98,
-      {
-        semanticTopic: "booking-center-timings",
-      }
-    );
-  }
 
   /*
    * -------------------------------------------------------
@@ -1663,11 +2197,6 @@ export function detectIntent(
 
     }
 
-
-    /*
-     * Payment/history/token questions must stay with
-     * the AI unless explicitly asking to open a page.
-     */
 
     const question =
       looksLikeQuestion(
@@ -1738,7 +2267,12 @@ export function detectIntent(
         "NONE",
         0,
         {
+
           semanticTopic,
+
+          booking:
+            extracted,
+
         }
       );
 
@@ -1765,7 +2299,7 @@ export function detectIntent(
 
   /*
    * -------------------------------------------------------
-   * "TAKE ME TO A PLACE WHERE..."
+   * NATURAL BOOKING REQUESTS
    * -------------------------------------------------------
    */
 
@@ -1773,6 +2307,8 @@ export function detectIntent(
     fuzzyPhrase(
       text,
       [
+        "take me to booking",
+        "take me to the booking page",
         "take me to a place where i can book",
         "take me somewhere to book",
         "where i can book a slot",
@@ -1783,6 +2319,7 @@ export function detectIntent(
         "जहाँ से बुकिंग कर सकूँ वहाँ ले चलो",
 
         "బుకింగ్ చేయగల పేజీకి తీసుకెళ్లండి",
+
       ]
     )
   ) {
@@ -1791,10 +2328,10 @@ export function detectIntent(
       "OPEN_BOOKING",
       0.98,
       {
+
         booking:
-          extractBookingDetails(
-            text
-          ),
+          extracted,
+
       }
     );
 
@@ -1806,12 +2343,6 @@ export function detectIntent(
    * BOOKING DATA + BOOKING WORD
    * -------------------------------------------------------
    */
-
-  const extracted =
-    extractBookingDetails(
-      text
-    );
-
 
   if (
     extracted &&
@@ -1837,8 +2368,10 @@ export function detectIntent(
       "OPEN_BOOKING",
       0.97,
       {
+
         booking:
           extracted,
+
       }
     );
 
@@ -1926,9 +2459,7 @@ const CONFIRMATIONS = [
   "continue",
   "open it",
   "open that",
-  "show me",
   "take me there",
-  "take me",
   "please do",
   "yes please",
   "go for it",
@@ -1945,15 +2476,11 @@ const CONFIRMATIONS = [
   "कर दो",
   "ठीक है",
   "ठीक",
-  "खोलो",
-  "दिखाओ",
   "आगे बढ़ो",
 
   "అవును",
   "సరే",
   "చేయండి",
-  "తెరవండి",
-  "చూపించండి",
   "చేయి",
   "ముందుకు వెళ్దాం",
 
@@ -2010,10 +2537,6 @@ export function isConfirmation(
   }
 
 
-  /*
-   * Never let a real question act as "yes".
-   */
-
   if (
     looksLikeQuestion(
       text
@@ -2024,14 +2547,6 @@ export function isConfirmation(
 
   }
 
-
-  /*
-   * Very short confirmations only.
-   *
-   * This prevents words such as "open it please
-   * and show me payment status" from accidentally
-   * confirming a previous action.
-   */
 
   const wordCount =
     tokenize(
@@ -2044,11 +2559,6 @@ export function isConfirmation(
     6
   ) {
 
-    /*
-     * Longer confirmation phrases are accepted only
-     * when they strongly contain a known confirmation.
-     */
-
     return containsAny(
       text,
       [
@@ -2058,6 +2568,7 @@ export function isConfirmation(
         "yes open it",
         "ठीक है खोलो",
         "हाँ खोलो",
+        "अवश्य करो",
         "అవును తెరవండి",
       ]
     );
@@ -2444,5 +2955,55 @@ export function getActionReply(
     ] ||
     null
   );
+
+}
+
+
+/* =========================================================
+   ACTION REGISTRY SANITY CHECK
+========================================================= */
+
+if (
+  typeof ACTIONS !==
+  "undefined" &&
+  ACTIONS
+) {
+
+  /*
+   * This intentionally does not throw.
+   *
+   * A missing action should not crash the whole assistant.
+   */
+
+  const expectedActions = [
+
+    "OPEN_HOME",
+    "OPEN_BOOKING",
+    "OPEN_TOKEN",
+    "OPEN_HISTORY",
+    "OPEN_PAYMENTS",
+    "OPEN_SETTINGS",
+    "OPEN_HELP",
+    "OPEN_NOTIFICATIONS",
+
+  ];
+
+
+  for (
+    const action of
+    expectedActions
+  ) {
+
+    if (
+      !ACTIONS[action]
+    ) {
+
+      console.warn(
+        `[KrishiSetu AI] Missing action definition: ${action}`
+      );
+
+    }
+
+  }
 
 }

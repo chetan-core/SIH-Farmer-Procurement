@@ -1,26 +1,23 @@
 /* =========================================================
    KRISHISETU AI ASSISTANT CONTEXT
-=========================================================
 
-   This module builds the context sent to the AI system.
+   Central runtime context for the assistant.
 
-   The assistant should not interpret a message in isolation.
+   This module describes:
+   - current page
+   - farmer identity/profile
+   - crops
+   - bookings
+   - current/latest token
+   - booking history
+   - payments
+   - conversation
+   - pending actions
+   - booking draft
+   - available assistant capabilities
 
-   Example:
-
-   User:
-       "open it"
-
-   Without context:
-       impossible to know what "it" means.
-
-   With context:
-       previous intent = OPEN_BOOKING
-       pending action = OPEN_BOOKING
-       current page = Farmer Home
-
-   The context layer gives the assistant that information.
-
+   It does NOT submit bookings, cancel bookings, or navigate.
+   Those responsibilities stay in the controller/executor.
 ========================================================= */
 
 import {
@@ -51,7 +48,6 @@ import {
   readStorageJson,
 } from "./assistantUtils";
 
-
 /* =========================================================
    CONSTANTS
 ========================================================= */
@@ -59,294 +55,452 @@ import {
 const PENDING_ACTION_STORAGE_KEY =
   "krishisetu_ai_pending_action";
 
+const BOOKING_STATE_STORAGE_KEY =
+  "krishisetu_ai_booking_state";
+
+const BOOKING_STORAGE_KEY =
+  "krishisetu_ai_booking_draft";
+
+const BOOKING_AVAILABILITY_STORAGE_KEY =
+  "krishisetu_ai_booking_availability";
 
 const PENDING_ACTION_TTL =
   5 * 60 * 1000;
 
+const BOOKING_STATE_TTL =
+  15 * 60 * 1000;
+
+const AVAILABILITY_TTL =
+  5 * 60 * 1000;
 
 const MAX_CONTEXT_HISTORY =
   12;
 
-
 const MAX_CONTEXT_MESSAGES =
   20;
 
+const MAX_BOOKINGS_IN_CONTEXT =
+  25;
+
+const MAX_PAYMENTS_IN_CONTEXT =
+  25;
 
 /* =========================================================
    PAGE DEFINITIONS
 ========================================================= */
 
 const PAGE_METADATA = {
-
   "/farmer/home": {
-
-    id:
-      "FARMER_HOME",
-
-    name:
-      "Farmer Home",
-
-    section:
-      "farmer",
-
+    id: "FARMER_HOME",
+    name: "Farmer Home",
+    section: "farmer",
     capabilities: [
-
       "view dashboard",
-
       "view notifications",
-
       "view farmer overview",
-
       "view procurement summary",
-
       "view booking summary",
-
+      "view current token",
+      "view recent payment",
     ],
-
   },
-
 
   "/farmer/book": {
-
-    id:
-      "FARMER_BOOKING",
-
-    name:
-      "Book Procurement Slot",
-
-    section:
-      "farmer",
-
+    id: "FARMER_BOOKING",
+    name: "Book Procurement Slot",
+    section: "farmer",
     capabilities: [
-
       "create booking",
-
       "select crop",
-
       "enter quantity",
-
+      "select procurement center",
+      "select procurement date",
       "select procurement slot",
-
       "review booking",
-
+      "confirm booking",
+      "cancel booking draft",
     ],
-
   },
-
 
   "/farmer/token": {
-
-    id:
-      "FARMER_TOKEN",
-
-    name:
-      "Token / Booking Tracking",
-
-    section:
-      "farmer",
-
+    id: "FARMER_TOKEN",
+    name: "Token / Booking Tracking",
+    section: "farmer",
     capabilities: [
-
       "view token",
-
       "view booking",
-
       "track booking",
-
       "view booking status",
-
+      "download booking qr",
+      "download booking receipt",
+      "view booking payment",
+      "cancel eligible booking",
     ],
-
   },
-
 
   "/farmer/history": {
-
-    id:
-      "FARMER_HISTORY",
-
-    name:
-      "Procurement History",
-
-    section:
-      "farmer",
-
+    id: "FARMER_HISTORY",
+    name: "Procurement History",
+    section: "farmer",
     capabilities: [
-
       "view procurement history",
-
       "view previous bookings",
-
       "view previous procurement records",
-
+      "find booking by date",
+      "find booking by token",
     ],
-
   },
-
 
   "/farmer/payments": {
-
-    id:
-      "FARMER_PAYMENTS",
-
-    name:
-      "Payment History",
-
-    section:
-      "farmer",
-
+    id: "FARMER_PAYMENTS",
+    name: "Payment History",
+    section: "farmer",
     capabilities: [
-
       "view payment history",
-
       "view payment records",
-
       "view payment status",
-
+      "find payment by booking",
+      "find payment by token",
     ],
-
   },
-
 
   "/farmer/settings": {
-
-    id:
-      "FARMER_SETTINGS",
-
-    name:
-      "Farmer Settings",
-
-    section:
-      "farmer",
-
+    id: "FARMER_SETTINGS",
+    name: "Farmer Settings",
+    section: "farmer",
     capabilities: [
-
       "view account settings",
-
       "edit preferences",
-
       "manage account settings",
-
     ],
-
   },
-
 
   "/farmer/help": {
-
-    id:
-      "FARMER_HELP",
-
-    name:
-      "Farmer Help",
-
-    section:
-      "farmer",
-
+    id: "FARMER_HELP",
+    name: "Farmer Help",
+    section: "farmer",
     capabilities: [
-
       "view help",
-
       "view frequently asked questions",
-
       "find support information",
-
     ],
-
   },
-
 
   "/farmer/login": {
-
-    id:
-      "FARMER_LOGIN",
-
-    name:
-      "Farmer Login",
-
-    section:
-      "authentication",
-
+    id: "FARMER_LOGIN",
+    name: "Farmer Login",
+    section: "authentication",
     capabilities: [
-
       "login",
-
       "authenticate farmer",
-
     ],
-
   },
-
 
   "/farmer/register": {
-
-    id:
-      "FARMER_REGISTER",
-
-    name:
-      "Farmer Registration",
-
-    section:
-      "authentication",
-
+    id: "FARMER_REGISTER",
+    name: "Farmer Registration",
+    section: "authentication",
     capabilities: [
-
       "register farmer",
-
       "create farmer account",
-
     ],
-
   },
-
 };
 
+/* =========================================================
+   GENERIC HELPERS
+========================================================= */
+
+function normalizeStatus(value) {
+  return String(
+    value || ""
+  )
+    .trim()
+    .toUpperCase();
+}
+
+function normalizeId(value) {
+  if (
+    value === null ||
+    value === undefined
+  ) {
+    return "";
+  }
+
+  return String(value);
+}
+
+function normalizePhone(value) {
+  return String(
+    value || ""
+  ).replace(
+    /\D/g,
+    ""
+  );
+}
+
+function firstValue(
+  ...values
+) {
+  for (
+    const value of values
+  ) {
+    if (
+      value !== undefined &&
+      value !== null &&
+      value !== ""
+    ) {
+      return value;
+    }
+  }
+
+  return null;
+}
+
+function bookingFarmerId(
+  booking
+) {
+  return firstValue(
+    booking?.farmerId,
+    booking?.farmer_id,
+    booking?.farmer?.id
+  );
+}
+
+function bookingCenterId(
+  booking
+) {
+  return firstValue(
+    booking?.centerId,
+    booking?.center_id
+  );
+}
+
+function bookingCrop(
+  booking
+) {
+  return firstValue(
+    booking?.crop,
+    booking?.cropId,
+    booking?.crop_id,
+    booking?.cropName
+  );
+}
+
+function bookingQuantity(
+  booking
+) {
+  return firstValue(
+    booking?.estimatedQuantity,
+    booking?.estimated_quantity,
+    booking?.quantity,
+    booking?.actualQuantity,
+    booking?.actual_quantity
+  );
+}
+
+function bookingToken(
+  booking
+) {
+  return firstValue(
+    booking?.token,
+    booking?.tokenNumber,
+    booking?.token_no,
+    booking?.token_number
+  );
+}
+
+function bookingDate(
+  booking
+) {
+  return firstValue(
+    booking?.date,
+    booking?.bookingDate,
+    booking?.booking_date
+  );
+}
+
+function bookingStatus(
+  booking
+) {
+  return normalizeStatus(
+    booking?.status
+  );
+}
+
+function bookingCreatedAt(
+  booking
+) {
+  return firstValue(
+    booking?.createdAt,
+    booking?.created_at,
+    booking?.timestamp,
+    bookingDate(booking)
+  );
+}
+
+function paymentObject(
+  booking
+) {
+  return (
+    booking?.payment ||
+    booking?.paymentDetails ||
+    booking?.payment_details ||
+    null
+  );
+}
+
+function paymentAmount(
+  booking
+) {
+  const payment =
+    paymentObject(
+      booking
+    );
+
+  return firstValue(
+    payment?.amount,
+    payment?.paymentAmount,
+    booking?.payment_amount,
+    booking?.amount
+  );
+}
+
+function paymentStatus(
+  booking
+) {
+  const payment =
+    paymentObject(
+      booking
+    );
+
+  return firstValue(
+    payment?.status,
+    booking?.payment_status
+  );
+}
+
+function paymentReference(
+  booking
+) {
+  const payment =
+    paymentObject(
+      booking
+    );
+
+  return firstValue(
+    payment?.reference,
+    payment?.paymentReference,
+    payment?.payment_reference,
+    booking?.payment_reference
+  );
+}
+
+function sortNewestFirst(
+  rows = []
+) {
+  return (
+    Array.isArray(rows)
+      ? rows
+      : []
+  )
+    .slice()
+    .sort(
+      (
+        a,
+        b
+      ) =>
+        String(
+          bookingCreatedAt(b) ||
+          ""
+        ).localeCompare(
+          String(
+            bookingCreatedAt(a) ||
+            ""
+          )
+        )
+    );
+}
+
+function isExcludedBookingStatus(
+  status
+) {
+  return [
+    "CANCELLED",
+    "CANCELED",
+    "REJECTED",
+    "EXPIRED",
+  ].includes(
+    normalizeStatus(status)
+  );
+}
+
+function isActiveBooking(
+  booking
+) {
+  return (
+    Boolean(
+      bookingToken(
+        booking
+      )
+    ) &&
+    !isExcludedBookingStatus(
+      bookingStatus(
+        booking
+      )
+    )
+  );
+}
+
+function isPaymentRecord(
+  booking
+) {
+  return Boolean(
+    paymentObject(
+      booking
+    ) ||
+    paymentAmount(
+      booking
+    ) !== null ||
+    paymentStatus(
+      booking
+    ) !== null ||
+    paymentReference(
+      booking
+    )
+  );
+}
 
 /* =========================================================
    CURRENT PAGE
 ========================================================= */
 
-/*
- * Return metadata about the current route.
- */
-
 export function getCurrentPageMetadata(
   pathname
 ) {
-
   const normalized =
     normalizePathname(
       pathname
     );
-
 
   const metadata =
     PAGE_METADATA[
       normalized
     ];
 
-
   if (
     metadata
   ) {
-
     return {
-
       ...metadata,
-
       pathname:
         normalized,
-
       known:
         true,
-
     };
-
   }
 
-
   return {
-
     id:
       "UNKNOWN_PAGE",
 
@@ -362,100 +516,53 @@ export function getCurrentPageMetadata(
         ? "farmer"
         : "unknown",
 
-    capabilities: [],
+    capabilities:
+      [],
 
     pathname:
       normalized,
 
     known:
       false,
-
   };
-
 }
-
-
-/* =========================================================
-   CURRENT PAGE CAPABILITIES
-========================================================= */
 
 export function getCurrentPageCapabilities(
   pathname
 ) {
-
   return [
     ...getCurrentPageMetadata(
       pathname
     ).capabilities,
   ];
-
 }
-
-
-/* =========================================================
-   PAGE CATEGORY
-========================================================= */
 
 export function getPageSection(
   pathname
 ) {
-
   return getCurrentPageMetadata(
     pathname
   ).section;
-
 }
-
 
 /* =========================================================
    PENDING ACTION
 ========================================================= */
 
-/*
- * Read the currently pending conversational action.
- *
- * Example:
- *
- * User:
- *     "book 300 kg wheat"
- *
- * Pending:
- *
- * {
- *   action: "OPEN_BOOKING",
- *   booking: {
- *     crop: "wheat",
- *     quantity: 300
- *   }
- * }
- *
- * Then:
- *
- * User:
- *     "okay do it"
- *
- * The context tells the system what "it" means.
- */
-
 export function getPendingAction() {
-
   const pending =
     readStorageJson(
       PENDING_ACTION_STORAGE_KEY,
       null
     );
 
-
   if (
     !pending ||
     typeof pending !==
       "object"
   ) {
-
     return null;
-
   }
-
 
   if (
     !pending.action ||
@@ -464,11 +571,8 @@ export function getPendingAction() {
       ACTIONS
     )
   ) {
-
     return null;
-
   }
-
 
   const createdAt =
     Number(
@@ -476,21 +580,16 @@ export function getPendingAction() {
       0
     );
 
-
   if (
     createdAt &&
     Date.now() -
       createdAt >
       PENDING_ACTION_TTL
   ) {
-
     return null;
-
   }
 
-
   return {
-
     ...pending,
 
     action:
@@ -500,57 +599,161 @@ export function getPendingAction() {
       getAction(
         pending.action
       ),
-
   };
-
 }
 
-
-/*
- * Return true when there is an unexpired pending action.
- */
-
 export function hasPendingAction() {
-
   return Boolean(
     getPendingAction()
   );
-
 }
 
+/* =========================================================
+   BOOKING DRAFT CONTEXT
+========================================================= */
+
+function getBookingDraft() {
+  const canonical =
+    readStorageJson(
+      BOOKING_STORAGE_KEY,
+      null
+    );
+
+  const fallback =
+    readStorageJson(
+      BOOKING_STATE_STORAGE_KEY,
+      null
+    );
+
+  const draft =
+    canonical &&
+    typeof canonical ===
+      "object"
+      ? canonical
+      : fallback;
+
+  if (
+    !draft ||
+    typeof draft !==
+      "object"
+  ) {
+    return null;
+  }
+
+  const updatedAt =
+    Number(
+      draft.updatedAt ||
+      0
+    );
+
+  if (
+    updatedAt &&
+    Date.now() -
+      updatedAt >
+      BOOKING_STATE_TTL
+  ) {
+    return null;
+  }
+
+  return {
+    ...draft,
+
+    active:
+      draft.active !==
+      false,
+  };
+}
+
+function getBookingAvailabilityContext() {
+  const context =
+    readStorageJson(
+      BOOKING_AVAILABILITY_STORAGE_KEY,
+      null
+    );
+
+  if (
+    !context ||
+    typeof context !==
+      "object"
+  ) {
+    return null;
+  }
+
+  const updatedAt =
+    Number(
+      context.updatedAt ||
+      0
+    );
+
+  if (
+    updatedAt &&
+    Date.now() -
+      updatedAt >
+      AVAILABILITY_TTL
+  ) {
+    return null;
+  }
+
+  return {
+    availableDates:
+      Array.isArray(
+        context.availableDates
+      )
+        ? context.availableDates
+        : [],
+
+    availableSlots:
+      Array.isArray(
+        context.availableSlots
+      )
+        ? context.availableSlots
+        : [],
+
+    availableCenters:
+      Array.isArray(
+        context.availableCenters
+      )
+        ? context.availableCenters
+        : [],
+
+    selectedDate:
+      context.selectedDate ||
+      null,
+
+    selectedCenterId:
+      context.selectedCenterId ||
+      null,
+
+    updatedAt,
+  };
+}
 
 /* =========================================================
    ACTION CONTEXT
 ========================================================= */
 
-/*
- * Describe an action in a format useful for the AI.
- */
-
 export function getActionContext(
   action
 ) {
-
   if (
     !isActionName(
       action,
       ACTIONS
     )
   ) {
-
     return null;
-
   }
-
 
   const definition =
     getAction(
       action
     );
 
+  if (!definition) {
+    return null;
+  }
 
   return {
-
     id:
       definition.id,
 
@@ -575,58 +778,36 @@ export function getActionContext(
       Boolean(
         definition.acceptsParams
       ),
-
   };
-
 }
 
-
-/*
- * Return every available navigation action.
- */
-
 export function getAvailableNavigationActions() {
-
   return getNavigationActions()
     .map(
       action =>
         getActionContext(
           action.id
         )
-    );
-
+    )
+    .filter(Boolean);
 }
-
-
-/*
- * Return all available action IDs.
- */
 
 export function getAvailableActionIds() {
-
   return getActionIds();
-
 }
-
 
 /* =========================================================
    CONVERSATION STATE
 ========================================================= */
 
-/*
- * Build a compact representation of the conversation.
- */
-
 export function getConversationContext(
   history
 ) {
-
   const safeHistory =
     limitHistory(
       history,
       MAX_CONTEXT_MESSAGES
     );
-
 
   const serverHistory =
     historyForServer(
@@ -634,21 +815,17 @@ export function getConversationContext(
       MAX_CONTEXT_HISTORY
     );
 
-
   const lastUser =
     getLastUserMessage(
       safeHistory
     );
-
 
   const lastAssistant =
     getLastAssistantMessage(
       safeHistory
     );
 
-
   return {
-
     messageCount:
       safeHistory.length,
 
@@ -658,7 +835,6 @@ export function getConversationContext(
     lastUserMessage:
       lastUser
         ? {
-
             content:
               cleanText(
                 lastUser.content
@@ -666,14 +842,12 @@ export function getConversationContext(
 
             timestamp:
               lastUser.timestamp,
-
           }
         : null,
 
     lastAssistantMessage:
       lastAssistant
         ? {
-
             content:
               cleanText(
                 lastAssistant.content
@@ -690,87 +864,109 @@ export function getConversationContext(
               Boolean(
                 lastAssistant.failed
               ),
-
           }
         : null,
-
   };
-
 }
-
 
 /* =========================================================
    CONVERSATION RELATION
 ========================================================= */
 
-/*
- * Determine how the newest user message relates to
- * the preceding conversation.
- *
- * This is deliberately heuristic.
- *
- * It does NOT decide intent.
- * It only gives the AI additional context.
- */
-
 export function getConversationRelation(
   history,
   message
 ) {
-
   const current =
     cleanText(
       message
     );
 
+  const safeHistory =
+    Array.isArray(
+      history
+    )
+      ? history
+      : [];
 
   const lastUser =
     getLastUserMessage(
-      history
+      safeHistory
     );
-
 
   const lastAssistant =
     getLastAssistantMessage(
-      history
+      safeHistory
     );
-
 
   const pending =
     getPendingAction();
 
+  const bookingDraft =
+    getBookingDraft();
 
   if (
     pending &&
     current
   ) {
-
     return {
-
       type:
         "PENDING_ACTION_EXISTS",
 
       pendingAction:
         pending.action,
 
+      pendingParams:
+        pending.params ||
+        pending.booking ||
+        null,
     };
-
   }
 
+  if (
+    bookingDraft?.active &&
+    current
+  ) {
+    return {
+      type:
+        "ACTIVE_BOOKING_DRAFT",
+
+      bookingStep:
+        bookingDraft.step ||
+        null,
+
+      bookingDate:
+        bookingDraft.date ||
+        null,
+
+      bookingCenterId:
+        bookingDraft.centerId ||
+        null,
+
+      bookingSlot:
+        bookingDraft.slotDisplay ||
+        null,
+
+      readyForConfirmation:
+        Boolean(
+          bookingDraft.readyForConfirmation
+        ),
+
+      confirmed:
+        Boolean(
+          bookingDraft.confirmed
+        ),
+    };
+  }
 
   if (
     !lastAssistant
   ) {
-
     return {
-
       type:
         "NEW_CONVERSATION",
-
     };
-
   }
-
 
   const assistantText =
     cleanText(
@@ -778,29 +974,15 @@ export function getConversationRelation(
     )
       .toLowerCase();
 
-
-  /*
-   * Pronouns such as:
-   *
-   * "it"
-   * "that"
-   * "there"
-   *
-   * often refer to the previous assistant result.
-   */
-
   const pronounPattern =
-    /\b(it|that|this|there|them|those)\b/i;
-
+    /\b(it|that|this|there|them|those|same|one)\b/i;
 
   if (
     pronounPattern.test(
       current
     )
   ) {
-
     return {
-
       type:
         "REFERENCES_PREVIOUS_MESSAGE",
 
@@ -810,28 +992,18 @@ export function getConversationRelation(
 
       previousAssistantMessage:
         lastAssistant.content,
-
     };
-
   }
 
-
-  /*
-   * Confirmation-like continuation.
-   */
-
-  const continuationPattern =
-    /\b(yes|okay|ok|sure|continue|do it|go ahead|please do)\b/i;
-
+  const confirmationPattern =
+    /^(yes|yeah|yep|yup|sure|okay|ok|confirm|confirmed|book it|do it|go ahead|haan|हां|हाँ|ठीक|ठीक है|अवश्य|అవును|సరే)\b/i;
 
   if (
-    continuationPattern.test(
+    confirmationPattern.test(
       current
     )
   ) {
-
     return {
-
       type:
         "POSSIBLE_CONFIRMATION",
 
@@ -841,14 +1013,10 @@ export function getConversationRelation(
 
       previousAssistantMessage:
         lastAssistant.content,
-
     };
-
   }
 
-
   return {
-
     type:
       "NORMAL_FOLLOW_UP",
 
@@ -866,178 +1034,641 @@ export function getConversationRelation(
 
     previousAssistantText:
       assistantText,
-
   };
-
 }
-
 
 /* =========================================================
    FARMER CONTEXT
 ========================================================= */
 
-/*
- * Build farmer identity context.
- *
- * This intentionally contains only the identifiers already
- * available in localStorage.
- */
-
 export function getFarmerContext() {
+  const farmer =
+    getStoredFarmer() ||
+    {};
 
-  const farmer = getStoredFarmer();
-  const currentFarmer = getCurrentFarmer();
-  const appState = getState();
-  const farmerId = String(farmer.farmerId || currentFarmer?.id || "");
+  const currentFarmer =
+    getCurrentFarmer() ||
+    null;
 
-  const farmerBookings = Array.isArray(appState?.bookings)
-    ? appState.bookings.filter(item => {
-        const id = item?.farmerId || item?.farmer_id;
-        return !farmerId || String(id || "") === farmerId;
-      })
-    : [];
+  const appState =
+    getState() ||
+    {};
 
-  const recentBookings = farmerBookings.slice().sort((a, b) =>
-    String(b?.date || b?.createdAt || b?.created_at || "").localeCompare(
-      String(a?.date || a?.createdAt || a?.created_at || "")
+  const farmerId =
+    normalizeId(
+      firstValue(
+        farmer.farmerId,
+        farmer.farmer_id,
+        farmer.id,
+        currentFarmer?.id
+      )
+    );
+
+  const farmerPhone =
+    normalizePhone(
+      firstValue(
+        farmer.phone,
+        currentFarmer?.phone
+      )
+    );
+
+  /*
+   * --------------------------------------------------------
+   * PROFILE
+   * --------------------------------------------------------
+   */
+
+  const profile =
+    currentFarmer
+      ? {
+          id:
+            currentFarmer.id,
+
+          name:
+            currentFarmer.name,
+
+          phone:
+            currentFarmer.phone,
+
+          village:
+            currentFarmer.village,
+
+          stateId:
+            firstValue(
+              currentFarmer.stateId,
+              currentFarmer.state_id
+            ),
+
+          districtId:
+            firstValue(
+              currentFarmer.districtId,
+              currentFarmer.district_id
+            ),
+
+          mandalId:
+            firstValue(
+              currentFarmer.mandalId,
+              currentFarmer.mandal_id
+            ),
+
+          preferredCenterId:
+            firstValue(
+              currentFarmer.preferredCenterId,
+              currentFarmer.preferred_center_id
+            ),
+
+          primaryCrop:
+            firstValue(
+              currentFarmer.primaryCrop,
+              currentFarmer.primary_crop
+            ),
+
+          estimatedQuantity:
+            firstValue(
+              currentFarmer.estimatedQuantity,
+              currentFarmer.estimated_quantity
+            ),
+
+          language:
+            currentFarmer.language ||
+            null,
+        }
+      : null;
+
+  /*
+   * --------------------------------------------------------
+   * CROPS
+   * --------------------------------------------------------
+   */
+
+  const crops =
+    Array.isArray(
+      appState.crops
     )
-  ).slice(0, 20);
+      ? appState.crops
+          .map(
+            crop => ({
+              id:
+                crop?.id,
 
-  const currentToken = recentBookings.find(item => {
-    const status = String(item?.status || "").toUpperCase();
-    return item?.token && !["CANCELLED", "CANCELED", "REJECTED", "EXPIRED", "PROCURED", "PAYMENT_SENT"].includes(status);
-  }) || null;
+              name:
+                crop?.name,
+
+              code:
+                crop?.code ||
+                crop?.slug ||
+                null,
+            })
+          )
+          .filter(
+            crop =>
+              crop.id ||
+              crop.name
+          )
+      : [];
+
+  /*
+   * --------------------------------------------------------
+   * BOOKINGS
+   * --------------------------------------------------------
+   */
+
+  const allBookings =
+    Array.isArray(
+      appState.bookings
+    )
+      ? appState.bookings
+      : [];
+
+  const farmerBookings =
+    allBookings.filter(
+      booking => {
+        const id =
+          normalizeId(
+            bookingFarmerId(
+              booking
+            )
+          );
+
+        const phone =
+          normalizePhone(
+            firstValue(
+              booking?.farmer_phone,
+              booking?.phone,
+              booking?.farmer?.phone
+            )
+          );
+
+        /*
+         * If booking records contain no farmer id,
+         * don't incorrectly hide them from the assistant
+         * in a prototype environment.
+         */
+        if (
+          !id &&
+          !phone
+        ) {
+          return true;
+        }
+
+        return (
+          Boolean(
+            farmerId
+          ) &&
+          id ===
+            farmerId
+        ) ||
+        (
+          Boolean(
+            farmerPhone
+          ) &&
+          phone ===
+            farmerPhone
+        );
+      }
+    );
+
+  const recentBookings =
+    sortNewestFirst(
+      farmerBookings
+    ).slice(
+      0,
+      MAX_BOOKINGS_IN_CONTEXT
+    );
+
+  /*
+   * --------------------------------------------------------
+   * BOOKING DERIVED DATA
+   * --------------------------------------------------------
+   */
+
+  const activeBookings =
+    recentBookings.filter(
+      booking =>
+        isActiveBooking(
+          booking
+        )
+    );
+
+  const latestBooking =
+    recentBookings[0] ||
+    null;
+
+  const currentTokenBooking =
+    activeBookings[0] ||
+    null;
+
+  const latestToken =
+    bookingToken(
+      currentTokenBooking
+    ) ||
+    bookingToken(
+      latestBooking
+    ) ||
+    null;
+
+  /*
+   * --------------------------------------------------------
+   * PAYMENT DERIVED DATA
+   * --------------------------------------------------------
+   */
+
+  const recentPayments =
+    sortNewestFirst(
+      recentBookings.filter(
+        booking =>
+          isPaymentRecord(
+            booking
+          )
+      )
+    )
+      .slice(
+        0,
+        MAX_PAYMENTS_IN_CONTEXT
+      )
+      .map(
+        booking => ({
+          bookingId:
+            booking?.id ||
+            null,
+
+          token:
+            bookingToken(
+              booking
+            ),
+
+          amount:
+            paymentAmount(
+              booking
+            ),
+
+          status:
+            paymentStatus(
+              booking
+            ),
+
+          reference:
+            paymentReference(
+              booking
+            ),
+
+          date:
+            bookingDate(
+              booking
+            ),
+
+          bookingStatus:
+            bookingStatus(
+              booking
+            ),
+        })
+      );
+
+  /*
+   * --------------------------------------------------------
+   * BOOKING HISTORY
+   * --------------------------------------------------------
+   */
+
+  const bookingHistory =
+    recentBookings.map(
+      booking => ({
+        id:
+          booking?.id ||
+          null,
+
+        token:
+          bookingToken(
+            booking
+          ),
+
+        date:
+          bookingDate(
+            booking
+          ),
+
+        status:
+          bookingStatus(
+            booking
+          ),
+
+        crop:
+          bookingCrop(
+            booking
+          ),
+
+        quantity:
+          bookingQuantity(
+            booking
+          ),
+
+        centerId:
+          bookingCenterId(
+            booking
+          ),
+
+        centerName:
+          firstValue(
+            booking?.centerName,
+            booking?.center_name
+          ),
+
+        slotStart:
+          firstValue(
+            booking?.slotStart,
+            booking?.slot_start
+          ),
+
+        slotEnd:
+          firstValue(
+            booking?.slotEnd,
+            booking?.slot_end
+          ),
+
+        payment:
+          isPaymentRecord(
+            booking
+          )
+            ? {
+                amount:
+                  paymentAmount(
+                    booking
+                  ),
+
+                status:
+                  paymentStatus(
+                    booking
+                  ),
+
+                reference:
+                  paymentReference(
+                    booking
+                  ),
+              }
+            : null,
+      })
+    );
+
+  /*
+   * --------------------------------------------------------
+   * DRAFT + AVAILABILITY
+   * --------------------------------------------------------
+   */
+
+  const bookingDraft =
+    getBookingDraft();
+
+  const bookingAvailability =
+    getBookingAvailabilityContext();
 
   return {
-    authenticated: Boolean(farmer.farmerId || farmer.phone || currentFarmer?.id),
-    farmerId: farmer.farmerId || currentFarmer?.id || "",
-    phone: farmer.phone || currentFarmer?.phone || "",
-    profile: currentFarmer ? {
-      id: currentFarmer.id,
-      name: currentFarmer.name,
-      village: currentFarmer.village,
-      stateId: currentFarmer.stateId || currentFarmer.state_id,
-      districtId: currentFarmer.districtId || currentFarmer.district_id,
-      mandalId: currentFarmer.mandalId || currentFarmer.mandal_id,
-      preferredCenterId: currentFarmer.preferredCenterId || currentFarmer.preferred_center_id,
-      primaryCrop: currentFarmer.primaryCrop || currentFarmer.primary_crop,
-      estimatedQuantity: currentFarmer.estimatedQuantity || currentFarmer.estimated_quantity,
-    } : null,
-    crops: Array.isArray(appState?.crops) ? appState.crops.map(c => ({ id: c.id, name: c.name })) : [],
-    bookings: recentBookings,
-    currentToken: currentToken ? {
-      id: currentToken.id,
-      token: currentToken.token,
-      date: currentToken.date,
-      status: currentToken.status,
-      centerId: currentToken.centerId || currentToken.center_id,
-      crop: currentToken.crop,
-    } : null,
-    recentPayments: recentBookings
-      .filter(item => item?.payment || item?.payment_status || item?.payment_reference)
-      .map(item => ({
-        bookingId: item.id,
-        token: item.token,
-        amount: item.payment?.amount ?? item.payment_amount ?? null,
-        status: item.payment?.status ?? item.payment_status ?? null,
-        reference: item.payment?.reference ?? item.payment_reference ?? null,
-        date: item.date,
-      })),
+    authenticated:
+      Boolean(
+        farmerId ||
+        farmerPhone ||
+        currentFarmer?.id
+      ),
+
+    farmerId:
+      firstValue(
+        farmer.farmerId,
+        farmer.farmer_id,
+        farmer.id,
+        currentFarmer?.id,
+        ""
+      ),
+
+    phone:
+      firstValue(
+        farmer.phone,
+        currentFarmer?.phone,
+        ""
+      ),
+
+    profile,
+
+    crops,
+
+    latestBooking:
+      latestBooking
+        ? bookingHistory[0]
+        : null,
+
+    currentToken:
+      currentTokenBooking
+        ? {
+            id:
+              currentTokenBooking.id ||
+              null,
+
+            token:
+              bookingToken(
+                currentTokenBooking
+              ),
+
+            date:
+              bookingDate(
+                currentTokenBooking
+              ),
+
+            status:
+              bookingStatus(
+                currentTokenBooking
+              ),
+
+            centerId:
+              bookingCenterId(
+                currentTokenBooking
+              ),
+
+            centerName:
+              firstValue(
+                currentTokenBooking?.centerName,
+                currentTokenBooking?.center_name
+              ),
+
+            crop:
+              bookingCrop(
+                currentTokenBooking
+              ),
+
+            quantity:
+              bookingQuantity(
+                currentTokenBooking
+              ),
+          }
+        : null,
+
+    latestToken,
+
+    bookings:
+      bookingHistory,
+
+    bookingHistory,
+
+    activeBookings:
+      activeBookings.map(
+        booking => ({
+          id:
+            booking?.id ||
+            null,
+
+          token:
+            bookingToken(
+              booking
+            ),
+
+          date:
+            bookingDate(
+              booking
+            ),
+
+          status:
+            bookingStatus(
+              booking
+            ),
+
+          crop:
+            bookingCrop(
+              booking
+            ),
+
+          quantity:
+            bookingQuantity(
+              booking
+            ),
+
+          centerId:
+            bookingCenterId(
+              booking
+            ),
+
+          centerName:
+            firstValue(
+              booking?.centerName,
+              booking?.center_name
+            ),
+        })
+      ),
+
+    recentPayments,
+
+    bookingDraft,
+
+    bookingAvailability:
+      bookingAvailability
+        ? {
+            availableDates:
+              bookingAvailability.availableDates,
+
+            availableSlots:
+              bookingAvailability.availableSlots,
+
+            availableCenters:
+              bookingAvailability.availableCenters,
+
+            selectedDate:
+              bookingAvailability.selectedDate,
+
+            selectedCenterId:
+              bookingAvailability.selectedCenterId,
+
+            updatedAt:
+              bookingAvailability.updatedAt,
+          }
+        : null,
+
+    totals: {
+      bookings:
+        recentBookings.length,
+
+      activeBookings:
+        activeBookings.length,
+
+      payments:
+        recentPayments.length,
+    },
   };
 }
-
 
 /* =========================================================
    USER CAPABILITIES
 ========================================================= */
 
-/*
- * Future versions can expand this based on:
- *
- * - authentication
- * - role
- * - permissions
- * - route
- * - backend capabilities
- *
- * For now it describes the capabilities available
- * to the current prototype.
- */
-
 export function getUserCapabilities(
   pathname
 ) {
-
   const farmer =
     getFarmerContext();
-
 
   const pageCapabilities =
     getCurrentPageCapabilities(
       pathname
     );
 
-
   const capabilities = [
-
     "use krishisetu ai",
-
     "navigate portal",
-
   ];
-
 
   if (
     farmer.authenticated
   ) {
-
     capabilities.push(
-      "access farmer account"
+      "access farmer account",
+      "view farmer profile",
+      "view crops",
+      "view bookings",
+      "view booking history",
+      "view current token",
+      "view latest token",
+      "view recent payments",
+      "find booking by token",
+      "find booking by date"
     );
-
   }
 
+  if (
+    farmer.authenticated &&
+    farmer.bookingDraft?.active
+  ) {
+    capabilities.push(
+      "continue booking",
+      "modify booking draft",
+      "cancel booking draft",
+      "review booking draft"
+    );
+  }
 
   capabilities.push(
     ...pageCapabilities
   );
-
 
   return [
     ...new Set(
       capabilities
     ),
   ];
-
 }
-
 
 /* =========================================================
    ROUTE CONTEXT
 ========================================================= */
 
-/*
- * Build route-aware context.
- */
-
 export function getRouteContext(
   pathname
 ) {
-
   const normalized =
     normalizePathname(
       pathname
     );
-
 
   const page =
     getCurrentPageMetadata(
       normalized
     );
 
-
   return {
-
     pathname:
       normalized,
 
@@ -1060,83 +1691,232 @@ export function getRouteContext(
       isFarmerPath(
         normalized
       ),
-
   };
-
 }
 
+/* =========================================================
+   SPECIALIZED TOPIC DETECTION
+========================================================= */
+
+function detectFarmerTopics(
+  message
+) {
+  const text =
+    cleanText(
+      message
+    )
+      .toLowerCase();
+
+  const topics = [];
+
+  if (
+    /\b(crop|crops|produce|धान|गेहूं|मक्का|कपास|పంట|పంటలు)\b/i.test(
+      text
+    )
+  ) {
+    topics.push(
+      "CROPS"
+    );
+  }
+
+  if (
+    /\b(token|tok[ae]n|टोकन|టోకెన్)\b/i.test(
+      text
+    )
+  ) {
+    topics.push(
+      "TOKEN"
+    );
+  }
+
+  if (
+    /\b(booking|bookings|booked|my booking|booking details)\b/i.test(
+      text
+    )
+  ) {
+    topics.push(
+      "BOOKING"
+    );
+  }
+
+  if (
+    /\b(history|previous|yesterday|last booking|old booking|recent booking|procurement history)\b/i.test(
+      text
+    )
+  ) {
+    topics.push(
+      "HISTORY"
+    );
+  }
+
+  if (
+    /\b(payment|payments|paid|payment status|payment reference)\b/i.test(
+      text
+    )
+  ) {
+    topics.push(
+      "PAYMENTS"
+    );
+  }
+
+  if (
+    /\b(qr|qr code|scan code)\b/i.test(
+      text
+    )
+  ) {
+    topics.push(
+      "QR"
+    );
+  }
+
+  if (
+    /\b(receipt|bill|proof of payment|payment receipt)\b/i.test(
+      text
+    )
+  ) {
+    topics.push(
+      "RECEIPT"
+    );
+  }
+
+  if (
+    /\b(cancel|cancellation|cancel booking|रद्द|रद्द करो|రద్దు)\b/i.test(
+      text
+    )
+  ) {
+    topics.push(
+      "CANCELLATION"
+    );
+  }
+
+  if (
+    /\b(center|centers|centre|centres|procurement center|location)\b/i.test(
+      text
+    )
+  ) {
+    topics.push(
+      "CENTERS"
+    );
+  }
+
+  if (
+    /\b(date|dates|tomorrow|today|yesterday|weekday)\b/i.test(
+      text
+    )
+  ) {
+    topics.push(
+      "DATES"
+    );
+  }
+
+  if (
+    /\b(time|times|timing|timings|timming|timmings|slot|slots)\b/i.test(
+      text
+    )
+  ) {
+    topics.push(
+      "TIMINGS"
+    );
+  }
+
+  return [
+    ...new Set(
+      topics
+    ),
+  ];
+}
+
+/* =========================================================
+   ENTITY REFERENCE DETECTION
+========================================================= */
+
+function detectEntityReferences(
+  message
+) {
+  const text =
+    cleanText(
+      message
+    )
+      .toLowerCase();
+
+  const tokenMatch =
+    text.match(
+      /\b(?:token|टोकन|टोकन\s*no\.?|token\s*no\.?|token\s*number|token\s*#)\s*([a-z0-9-]+)\b/i
+    );
+
+  const dateReference =
+    /\b(today|tomorrow|tommorow|tmrw|yesterday|day after tomorrow|last booking|recent booking)\b/i.exec(
+      text
+    )?.[1] ||
+    null;
+
+  return {
+    token:
+      tokenMatch?.[1] ||
+      null,
+
+    dateReference,
+
+    refersToCurrent:
+      /\b(this|current|my current|current token|current booking)\b/i.test(
+        text
+      ),
+
+    refersToLatest:
+      /\b(latest|recent|newest|most recent)\b/i.test(
+        text
+      ),
+
+    refersToPrevious:
+      /\b(previous|last|yesterday|older|old)\b/i.test(
+        text
+      ),
+  };
+}
 
 /* =========================================================
    ASSISTANT CONTEXT
 ========================================================= */
 
-/*
- * Build the complete runtime context.
- *
- * This is the main function other modules should use.
- */
-
 export function buildAssistantContext(
   options = {}
 ) {
-
   const {
-
-    pathname =
-      "",
-
-    language =
-      "en",
-
-    history =
-      [],
-
-    message =
-      "",
-
-    pendingAction =
-      undefined,
-
-    includeHistory =
-      true,
-
-  } =
-    options;
-
+    pathname = "",
+    language = "en",
+    history = [],
+    message = "",
+    pendingAction = undefined,
+    includeHistory = true,
+  } = options;
 
   const normalizedPath =
     normalizePathname(
       pathname
     );
 
-
   const normalizedLanguage =
     normalizeLanguageCode(
       language
     );
-
 
   const page =
     getCurrentPageMetadata(
       normalizedPath
     );
 
-
   const farmer =
     getFarmerContext();
-
 
   const route =
     getRouteContext(
       normalizedPath
     );
 
-
   const conversation =
     getConversationContext(
       history
     );
-
 
   const relation =
     getConversationRelation(
@@ -1144,18 +1924,25 @@ export function buildAssistantContext(
       message
     );
 
-
   const pending =
     pendingAction ===
     undefined
       ? getPendingAction()
       : pendingAction;
 
+  const topics =
+    detectFarmerTopics(
+      message
+    );
+
+  const references =
+    detectEntityReferences(
+      message
+    );
 
   return {
-
     version:
-      "1.0",
+      "2.0",
 
     contextId:
       createId(),
@@ -1178,11 +1965,15 @@ export function buildAssistantContext(
 
     farmer,
 
+    topics,
+
+    entityReferences:
+      references,
+
     conversation:
       includeHistory
         ? conversation
         : {
-
             messageCount:
               conversation.messageCount,
 
@@ -1194,7 +1985,6 @@ export function buildAssistantContext(
 
             lastAssistantMessage:
               conversation.lastAssistantMessage,
-
           },
 
     conversationRelation:
@@ -1203,7 +1993,6 @@ export function buildAssistantContext(
     pendingAction:
       pending
         ? {
-
             action:
               pending.action,
 
@@ -1220,7 +2009,6 @@ export function buildAssistantContext(
               getActionContext(
                 pending.action
               ),
-
           }
         : null,
 
@@ -1234,36 +2022,27 @@ export function buildAssistantContext(
       getUserCapabilities(
         normalizedPath
       ),
-
   };
-
 }
-
 
 /* =========================================================
    SERVER CONTEXT
 ========================================================= */
 
-/*
- * Produce a compact JSON-safe version for the backend.
- *
- * We do not need every client-side detail on every request.
- */
-
 export function buildServerAssistantContext(
   options = {}
 ) {
-
   const context =
     buildAssistantContext(
       options
     );
 
-
   return {
-
     version:
       context.version,
+
+    timestamp:
+      context.timestamp,
 
     language:
       context.language,
@@ -1275,7 +2054,6 @@ export function buildServerAssistantContext(
       context.currentPath,
 
     route: {
-
       pageId:
         context.route.pageId,
 
@@ -1287,11 +2065,15 @@ export function buildServerAssistantContext(
 
       isFarmerPage:
         context.route.isFarmerPage,
-
     },
 
-    farmer: {
+    topics:
+      context.topics,
 
+    entityReferences:
+      context.entityReferences,
+
+    farmer: {
       authenticated:
         context.farmer.authenticated,
 
@@ -1301,10 +2083,44 @@ export function buildServerAssistantContext(
       phone:
         context.farmer.phone,
 
+      profile:
+        context.farmer.profile,
+
+      crops:
+        context.farmer.crops,
+
+      latestBooking:
+        context.farmer.latestBooking,
+
+      latestToken:
+        context.farmer.latestToken,
+
+      currentToken:
+        context.farmer.currentToken,
+
+      bookings:
+        context.farmer.bookings,
+
+      bookingHistory:
+        context.farmer.bookingHistory,
+
+      activeBookings:
+        context.farmer.activeBookings,
+
+      recentPayments:
+        context.farmer.recentPayments,
+
+      bookingDraft:
+        context.farmer.bookingDraft,
+
+      bookingAvailability:
+        context.farmer.bookingAvailability,
+
+      totals:
+        context.farmer.totals,
     },
 
     conversation: {
-
       messageCount:
         context.conversation.messageCount,
 
@@ -1316,7 +2132,6 @@ export function buildServerAssistantContext(
 
       lastAssistantMessage:
         context.conversation.lastAssistantMessage,
-
     },
 
     conversationRelation:
@@ -1328,209 +2143,163 @@ export function buildServerAssistantContext(
     availableActions:
       context.availableActions,
 
+    availableNavigationActions:
+      context.availableNavigationActions,
+
     userCapabilities:
       context.userCapabilities,
-
   };
-
 }
-
 
 /* =========================================================
    ACTION VALIDATION
 ========================================================= */
 
-/*
- * Validate whether an action makes sense in the current
- * application context.
- *
- * This is not intent detection.
- *
- * Example:
- *
- * OPEN_HELP
- *
- * is valid almost everywhere.
- *
- * An action can still be rejected by permissions or
- * application-specific rules in the future.
- */
-
 export function validateActionForContext(
   action,
   context
 ) {
-
   const definition =
     getAction(
       action
     );
-
 
   if (
     !definition ||
     action ===
       "NONE"
   ) {
-
     return {
-
       valid:
         false,
 
       reason:
         "Unknown or empty action.",
-
     };
-
   }
-
-
-  /*
-   * Current-page information is always valid.
-   */
 
   if (
     action ===
     "SHOW_CURRENT_PAGE"
   ) {
-
     return {
-
       valid:
         true,
 
       reason:
         null,
-
     };
-
   }
-
-
-  /*
-   * Back is always valid inside the browser router.
-   */
 
   if (
     action ===
     "GO_BACK"
   ) {
-
     return {
-
       valid:
         true,
 
       reason:
         null,
-
     };
-
   }
-
 
   if (
     !context
   ) {
-
     return {
-
       valid:
         true,
 
       reason:
         null,
-
     };
-
   }
-
 
   /*
-   * Check farmer-page restrictions.
+   * Farmer actions require a farmer session.
+   *
+   * Public navigation remains allowed.
    */
-
   if (
-    definition.route?.startsWith(
-      "/farmer"
-    ) &&
-    !context.route?.isFarmerPage
+    definition.category ===
+      "FARMER" &&
+    !context.farmer?.authenticated
   ) {
-
-    /*
-     * This is not automatically invalid.
-     *
-     * The AI can navigate from a public page into the
-     * farmer portal.
-     */
-
     return {
-
       valid:
-        true,
+        false,
 
       reason:
-        null,
-
+        "A farmer account is required for this action.",
     };
-
   }
 
+  /*
+   * Actions requiring a farmer booking can only be
+   * considered valid when there is a booking reference,
+   * a current booking, or a booking draft.
+   */
+  const actionText =
+    `${definition.id || ""} ${
+      definition.description || ""
+    }`.toLowerCase();
+
+  const requiresBookingReference =
+    /\b(token|booking|receipt|qr|payment|history|cancel)\b/.test(
+      actionText
+    );
+
+  if (
+    requiresBookingReference &&
+    !context.farmer?.authenticated
+  ) {
+    return {
+      valid:
+        false,
+
+      reason:
+        "A farmer account is required to access booking data.",
+    };
+  }
 
   return {
-
     valid:
       true,
 
     reason:
       null,
-
   };
-
 }
-
 
 /* =========================================================
    CONTEXT SUMMARY
 ========================================================= */
 
-/*
- * Small human-readable summary useful in logs.
- */
-
 export function summarizeContext(
   context
 ) {
-
   if (
     !context
   ) {
-
     return "No assistant context.";
-
   }
-
 
   const page =
     context.currentPage ||
     "Unknown Page";
 
-
   const path =
     context.currentPath ||
     "/";
-
 
   const language =
     context.language ||
     "en";
 
-
   const pending =
     context.pendingAction?.action ||
     "NONE";
-
 
   const lastAction =
     context
@@ -1539,32 +2308,46 @@ export function summarizeContext(
       ?.action ||
     "NONE";
 
+  const topics =
+    Array.isArray(
+      context.topics
+    ) &&
+    context.topics.length
+      ? context.topics.join(
+          ","
+        )
+      : "NONE";
+
+  const latestToken =
+    context.farmer?.latestToken ||
+    context.farmer?.currentToken
+      ?.token ||
+    "NONE";
+
+  const bookingCount =
+    context.farmer?.totals
+      ?.bookings ??
+    0;
 
   return [
-
     `page=${page}`,
-
     `path=${path}`,
-
     `language=${language}`,
-
     `pending=${pending}`,
-
     `lastAction=${lastAction}`,
-
+    `topics=${topics}`,
+    `latestToken=${latestToken}`,
+    `bookings=${bookingCount}`,
   ].join(
     " | "
   );
-
 }
-
 
 /* =========================================================
    CONTEXT EXPORT
 ========================================================= */
 
 export const ASSISTANT_CONTEXT = {
-
   getCurrentPageMetadata,
 
   getCurrentPageCapabilities,
@@ -1598,5 +2381,6 @@ export const ASSISTANT_CONTEXT = {
   validateActionForContext,
 
   summarizeContext,
-
 };
+
+export default ASSISTANT_CONTEXT;

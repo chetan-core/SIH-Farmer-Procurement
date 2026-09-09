@@ -1,3 +1,37 @@
+/* =========================================================
+   KRISHISETU AI ASSISTANT CONTROLLER
+=========================================================
+
+   RESPONSIBILITIES
+
+   - Orchestrate local assistant logic
+   - Maintain conversational booking state
+   - Resolve farmer-specific data
+   - Refresh booking availability
+   - Connect booking confirmation to FarmerBook
+   - Handle QR / receipt requests
+   - Route ordinary navigation
+   - Fall back to backend AI
+
+   IMPORTANT
+
+   The controller does NOT directly create a booking.
+
+   Actual booking POST remains inside FarmerBook.
+
+   Flow:
+
+      user
+        ↓
+      controller
+        ↓
+      booking engine
+        ↓
+      FarmerBook confirmation bridge
+        ↓
+      existing booking POST
+========================================================= */
+
 import {
   ACTIONS,
 } from "./assistantActions";
@@ -6,6 +40,7 @@ import {
   buildAssistantContext,
   buildServerAssistantContext,
   validateActionForContext,
+  getFarmerContext,
 } from "./assistantContext";
 
 import {
@@ -36,12 +71,16 @@ import {
   cleanText,
   normalizeLanguageCode,
   sanitizeActionParams,
-  getStoredFarmer,
   debugLog,
   readStorageJson,
   writeStorageJson,
   removeStorage,
+  getStoredFarmer,
 } from "./assistantUtils";
+
+/* =========================================================
+   CONSTANTS
+========================================================= */
 
 const DEFAULT_LANGUAGE =
   "en";
@@ -58,11 +97,20 @@ const BOOKING_STATE_TTL =
 const BOOKING_AVAILABILITY_CACHE_TTL =
   60 * 1000;
 
+const BOOKING_CONFIRM_TIMEOUT =
+  15000;
+
 const BOOKING_API_URL =
   import.meta.env.VITE_API_URL ||
   "";
 
+
+/* =========================================================
+   TYPES
+========================================================= */
+
 export const CONTROLLER_TYPES = {
+
   LOCAL:
     "LOCAL",
 
@@ -89,9 +137,12 @@ export const CONTROLLER_TYPES = {
 
   NONE:
     "NONE",
+
 };
 
+
 export const CONTROLLER_STATUS = {
+
   SUCCESS:
     "SUCCESS",
 
@@ -106,27 +157,60 @@ export const CONTROLLER_STATUS = {
 
   SKIPPED:
     "SKIPPED",
+
 };
+
+
+/* =========================================================
+   INTERNAL STATE
+========================================================= */
+
+/*
+ * Prevent two assistant messages from triggering two
+ * simultaneous FarmerBook submissions.
+ */
+
+let bookingSubmissionInFlight =
+  null;
+
+
+/* =========================================================
+   RESULT
+========================================================= */
 
 function controllerResult(
   type,
   status,
   extras = {}
 ) {
+
   return {
+
     type,
+
     status,
+
     success:
       status ===
       CONTROLLER_STATUS.SUCCESS,
+
     ...extras,
+
   };
+
 }
+
+
+/* =========================================================
+   OPTIONS
+========================================================= */
 
 function normalizeOptions(
   options = {}
 ) {
+
   const {
+
     currentPath =
       DEFAULT_PATH,
 
@@ -150,9 +234,25 @@ function normalizeOptions(
 
     bookingContext =
       null,
-  } = options;
+
+    bookingDraft =
+      undefined,
+
+    semanticTopic =
+      null,
+
+    decision =
+      null,
+
+    signal =
+      null,
+
+  } =
+    options;
+
 
   return {
+
     currentPath:
       String(
         currentPath ||
@@ -183,25 +283,44 @@ function normalizeOptions(
     bookingState,
 
     bookingContext,
+
+    bookingDraft,
+
+    semanticTopic,
+
+    decision,
+
+    signal,
+
   };
+
 }
 
+
+/* =========================================================
+   BOOKING STATE
+========================================================= */
+
 function loadBookingState() {
+
   const canonical =
     typeof assistantBooking.loadBookingDraft ===
       "function"
       ? assistantBooking.loadBookingDraft()
       : null;
 
+
   if (
     canonical &&
     canonical.active
   ) {
+
     const updatedAt =
       Number(
         canonical.updatedAt ||
         0
       );
+
 
     if (
       !updatedAt ||
@@ -209,11 +328,15 @@ function loadBookingState() {
         updatedAt <=
         BOOKING_STATE_TTL
     ) {
+
       return assistantBooking.normalize(
         canonical
       );
+
     }
+
   }
+
 
   const stored =
     readStorageJson(
@@ -221,16 +344,19 @@ function loadBookingState() {
       null
     );
 
+
   if (
     stored &&
     typeof stored ===
       "object"
   ) {
+
     const updatedAt =
       Number(
         stored.updatedAt ||
         0
       );
+
 
     if (
       !updatedAt ||
@@ -238,81 +364,110 @@ function loadBookingState() {
         updatedAt <=
         BOOKING_STATE_TTL
     ) {
+
       return assistantBooking.normalize(
         stored
       );
+
     }
+
   }
 
+
   return assistantBooking.createEmpty();
+
 }
+
 
 function saveBookingState(
   state
 ) {
+
   const normalized =
     assistantBooking.normalize(
       state
     );
 
+
   if (
     typeof assistantBooking.saveBookingState ===
     "function"
   ) {
+
     return assistantBooking.saveBookingState(
       normalized
     );
+
   }
+
 
   writeStorageJson(
     BOOKING_STATE_STORAGE_KEY,
     normalized
   );
 
+
   return normalized;
+
 }
 
+
 function clearBookingState() {
+
   if (
     typeof assistantBooking.clearBookingDraft ===
     "function"
   ) {
+
     assistantBooking.clearBookingDraft();
+
   }
+
 
   removeStorage(
     BOOKING_STATE_STORAGE_KEY
   );
+
 }
+
 
 function getEffectiveBookingState(
   explicitState
 ) {
+
   if (
     explicitState !==
     undefined
   ) {
+
     return assistantBooking.normalize(
       explicitState
     );
+
   }
 
+
   return loadBookingState();
+
 }
+
+
+/* =========================================================
+   BOOKING TEXT
+========================================================= */
 
 function getBookingText(
   language,
   key,
   data = {}
 ) {
+
   const {
+
     crop =
       null,
 
     quantity =
-      null,
-
-    center =
       null,
 
     date =
@@ -320,10 +475,18 @@ function getBookingText(
 
     slot =
       null,
-  } = data;
+
+    state =
+      null,
+
+  } =
+    data;
+
 
   const cropNames = {
+
     en: {
+
       wheat:
         "wheat",
 
@@ -335,9 +498,11 @@ function getBookingText(
 
       cotton:
         "cotton",
+
     },
 
     hi: {
+
       wheat:
         "गेहूं",
 
@@ -349,9 +514,11 @@ function getBookingText(
 
       cotton:
         "कपास",
+
     },
 
     te: {
+
       wheat:
         "గోధుమ",
 
@@ -363,8 +530,11 @@ function getBookingText(
 
       cotton:
         "పత్తి",
+
     },
+
   };
+
 
   const displayCrop =
     crop
@@ -378,407 +548,819 @@ function getBookingText(
         )
       : null;
 
+
   if (
     key ===
     "detailsUpdated"
   ) {
+
     if (
       language ===
       "hi"
     ) {
+
       if (
         displayCrop &&
         quantity
       ) {
-        return `मैंने ${displayCrop} की ${quantity} kg मात्रा रख ली है। अभी तारीख और आने का समय चुनना बाकी है।`;
+
+        return (
+          `मैंने ${displayCrop} की ${quantity} kg मात्रा रख ली है। ` +
+          `अब तारीख और आने का समय चुनना बाकी है।`
+        );
+
       }
+
 
       if (
         displayCrop
       ) {
-        return `मैंने ${displayCrop} चुन लिया है। अब अनुमानित मात्रा बताएं।`;
+
+        return (
+          `मैंने ${displayCrop} चुन लिया है। ` +
+          `अब अनुमानित मात्रा बताएं।`
+        );
+
       }
+
 
       if (
         quantity
       ) {
-        return `मैंने ${quantity} kg मात्रा रख ली है। अब फसल बताएं।`;
+
+        return (
+          `मैंने ${quantity} kg मात्रा रख ली है। ` +
+          `अब फसल बताएं।`
+        );
+
       }
 
-      return "बुकिंग की जानकारी अपडेट हो गई है.";
+
+      return "बुकिंग की जानकारी अपडेट हो गई है।";
+
     }
+
 
     if (
       language ===
       "te"
     ) {
+
       if (
         displayCrop &&
         quantity
       ) {
-        return `${displayCrop} ${quantity} kg వివరాలను నమోదు చేశాను. ఇంకా తేదీ మరియు రాక సమయం ఎంచుకోవాలి.`;
+
+        return (
+          `${displayCrop} ${quantity} kg వివరాలను నమోదు చేశాను. ` +
+          `ఇంకా తేదీ మరియు రాక సమయం ఎంచుకోవాలి.`
+        );
+
       }
+
 
       if (
         displayCrop
       ) {
-        return `${displayCrop} ఎంపిక చేశాను. ఇప్పుడు అంచనా పరిమాణం చెప్పండి.`;
+
+        return (
+          `${displayCrop} ఎంపిక చేశాను. ` +
+          `ఇప్పుడు అంచనా పరిమాణం చెప్పండి.`
+        );
+
       }
+
 
       if (
         quantity
       ) {
-        return `${quantity} kg పరిమాణాన్ని నమోదు చేశాను. ఇప్పుడు పంటను చెప్పండి.`;
+
+        return (
+          `${quantity} kg పరిమాణాన్ని నమోదు చేశాను. ` +
+          `ఇప్పుడు పంటను చెప్పండి.`
+        );
+
       }
 
+
       return "బుకింగ్ వివరాలు నవీకరించబడ్డాయి.";
+
     }
+
 
     if (
       displayCrop &&
       quantity
     ) {
-      return `I have saved ${quantity} kg of ${displayCrop}. We still need your date and arrival time.`;
+
+      return (
+        `I saved ${quantity} kg of ${displayCrop}. ` +
+        `We still need the date and arrival time.`
+      );
+
     }
+
 
     if (
       displayCrop
     ) {
-      return `I have selected ${displayCrop}. Now tell me the estimated quantity.`;
+
+      return (
+        `I selected ${displayCrop}. ` +
+        `Now tell me the estimated quantity.`
+      );
+
     }
+
 
     if (
       quantity
     ) {
-      return `I have saved ${quantity} kg. Now tell me which crop you are bringing.`;
+
+      return (
+        `I saved ${quantity} kg. ` +
+        `Now tell me which crop you are bringing.`
+      );
+
     }
 
+
     return "Your booking details have been updated.";
+
   }
+
 
   if (
     key ===
     "dateSelected"
   ) {
+
     if (
       language ===
       "hi"
     ) {
-      return `ठीक है। ${date || "यह तारीख"} चुन ली गई है। अब मैं इस तारीख के उपलब्ध आने के समय देख सकता हूँ।`;
+
+      return (
+        `ठीक है। ${date || "यह तारीख"} चुन ली गई है। ` +
+        `अब मैं इस तारीख के उपलब्ध समय देख सकता हूँ।`
+      );
+
     }
+
 
     if (
       language ===
       "te"
     ) {
-      return `సరే. ${date || "ఈ తేదీ"} ఎంచుకున్నాను. ఇప్పుడు ఈ తేదీకి అందుబాటులో ఉన్న రాక సమయాలను చూడవచ్చు.`;
+
+      return (
+        `సరే. ${date || "ఈ తేదీ"} ఎంచుకున్నాను. ` +
+        `ఇప్పుడు ఈ తేదీకి అందుబాటులో ఉన్న రాక సమయాలను చూడవచ్చు.`
+      );
+
     }
 
-    return `Okay. ${date || "That date"} is selected. I can now check the available arrival times for this date.`;
+
+    return (
+      `Okay. ${date || "That date"} is selected. ` +
+      `I can now check the available arrival times for this date.`
+    );
+
   }
+
 
   if (
     key ===
     "slotSelected"
   ) {
+
     if (
       language ===
       "hi"
     ) {
-      return `समय ${slot || "चुन लिया गया"}। अब बुकिंग की सारी जानकारी तैयार है। क्या मैं पुष्टि कर दूँ?`;
+
+      return (
+        `समय ${slot || "चुन लिया गया"}। ` +
+        `बुकिंग की सारी जानकारी तैयार है। ` +
+        `क्या मैं पुष्टि कर दूँ?`
+      );
+
     }
+
 
     if (
       language ===
       "te"
     ) {
-      return `సమయం ${slot || "ఎంచుకున్నాము"}. ఇప్పుడు బుకింగ్ వివరాలన్నీ సిద్ధంగా ఉన్నాయి. నిర్ధారించనా?`;
+
+      return (
+        `సమయం ${slot || "ఎంచుకున్నాము"}. ` +
+        `ఇప్పుడు బుకింగ్ వివరాలన్నీ సిద్ధంగా ఉన్నాయి. ` +
+        `నిర్ధారించనా?`
+      );
+
     }
 
-    return `The ${slot || "arrival time"} is selected. Your booking details are complete. Shall I confirm it?`;
+
+    return (
+      `The ${slot || "arrival time"} is selected. ` +
+      `Your booking details are complete. ` +
+      `Shall I confirm it?`
+    );
+
   }
+
 
   if (
     key ===
     "needDate"
   ) {
+
     return assistantBooking.nextPrompt(
-      {
-        ...assistantBooking.normalize(
-          data.state
-        ),
-      },
+      assistantBooking.normalize(
+        state
+      ),
       language
     );
+
   }
+
 
   if (
     key ===
     "needSlot"
   ) {
+
     if (
       language ===
       "hi"
     ) {
-      return "तारीख चुन ली गई है। अब पूछें “उपलब्ध समय बताओ” या कोई उपलब्ध समय चुनें।";
+
+      return (
+        "तारीख चुन ली गई है। " +
+        "उपलब्ध समय पूछें या कोई उपलब्ध समय चुनें।"
+      );
+
     }
+
 
     if (
       language ===
       "te"
     ) {
-      return "తేదీ ఎంచుకున్నారు. ఇప్పుడు “అందుబాటులో ఉన్న సమయాలు చెప్పు” అని అడగండి లేదా ఒక సమయాన్ని ఎంచుకోండి.";
+
+      return (
+        "తేదీ ఎంచుకున్నారు. " +
+        "అందుబాటులో ఉన్న సమయాలు అడగండి లేదా ఒక సమయాన్ని ఎంచుకోండి."
+      );
+
     }
 
-    return "Your date is selected. Ask me for the available times, or choose an available time.";
+
+    return (
+      "Your date is selected. " +
+      "Ask me for the available times, or choose one."
+    );
+
   }
+
 
   if (
     key ===
     "state"
   ) {
+
     const summary =
       assistantBooking.getStateSummary(
-        data.state,
+        state,
         language
       );
+
 
     if (
       language ===
       "hi"
     ) {
-      return `अभी आपकी बुकिंग में: ${summary}`;
+
+      return (
+        `अभी आपकी बुकिंग में:\n${summary}`
+      );
+
     }
+
 
     if (
       language ===
       "te"
     ) {
-      return `ప్రస్తుతం మీ బుకింగ్‌లో: ${summary}`;
+
+      return (
+        `ప్రస్తుతం మీ బుకింగ్‌లో:\n${summary}`
+      );
+
     }
 
-    return `Here is what I currently have for your booking: ${summary}`;
+
+    return (
+      `Here is what I currently have for your booking:\n${summary}`
+    );
+
   }
+
 
   if (
     key ===
     "dates"
   ) {
+
     if (
       language ===
       "hi"
     ) {
+
       return data.dateText
-        ? `उपलब्ध तारीखें हैं: ${data.dateText}। इनमें से कोई तारीख चुन सकते हैं।`
+        ? `उपलब्ध तारीखें हैं: ${data.dateText}। इनमें से कोई तारीख चुनें।`
         : "अभी उपलब्ध तारीखें नहीं मिलीं।";
+
     }
+
 
     if (
       language ===
       "te"
     ) {
+
       return data.dateText
-        ? `అందుబాటులో ఉన్న తేదీలు: ${data.dateText}. వీటిలో ఒక తేదీ ఎంచుకోండి.`
+        ? `అందుబాటులో ఉన్న తేదీలు: ${data.dateText}. వీటిలో ఒకదాన్ని ఎంచుకోండి.`
         : "ప్రస్తుతం అందుబాటులో ఉన్న తేదీలు లేవు.";
+
     }
 
+
     return data.dateText
-      ? `The available dates are: ${data.dateText}. You can choose one of these dates.`
+      ? `The available dates are: ${data.dateText}. You can choose one.`
       : "I couldn't find any available dates right now.";
+
   }
+
 
   if (
     key ===
     "slots"
   ) {
+
     if (
       language ===
       "hi"
     ) {
+
       return data.slotText
         ? `उपलब्ध समय हैं: ${data.slotText}। इनमें से कोई एक चुनें।`
         : "इस तारीख के लिए कोई उपलब्ध समय नहीं मिला।";
+
     }
+
 
     if (
       language ===
       "te"
     ) {
+
       return data.slotText
         ? `అందుబాటులో ఉన్న సమయాలు: ${data.slotText}. వీటిలో ఒకదాన్ని ఎంచుకోండి.`
         : "ఈ తేదీకి అందుబాటులో ఉన్న సమయాలు లేవు.";
+
     }
 
+
     return data.slotText
-      ? `The available arrival times are: ${data.slotText}. Choose one of them.`
+      ? `The available arrival times are: ${data.slotText}. Choose one.`
       : "There are no available arrival times for this date.";
+
   }
+
 
   if (
     key ===
     "ready"
   ) {
+
     if (
       language ===
       "hi"
     ) {
-      return "आपकी बुकिंग की सारी जानकारी तैयार है। अंतिम पुष्टि करने से पहले मैं आपको सभी विवरण दिखाऊँगा।";
+
+      return (
+        "बुकिंग की सारी जानकारी तैयार है। " +
+        "अंतिम पुष्टि के लिए हाँ कहें।"
+      );
+
     }
+
 
     if (
       language ===
       "te"
     ) {
-      return "మీ బుకింగ్ వివరాలన్నీ సిద్ధంగా ఉన్నాయి. చివరి నిర్ధారణకు ముందు పూర్తి వివరాలను చూపిస్తాను.";
+
+      return (
+        "బుకింగ్ వివరాలన్నీ సిద్ధంగా ఉన్నాయి. " +
+        "తుది నిర్ధారణ కోసం అవును అని చెప్పండి."
+      );
+
     }
 
-    return "All booking details are ready. I’ll show you the complete booking details before the final confirmation.";
+
+    return (
+      "All booking details are ready. " +
+      "Say yes to submit the booking."
+    );
+
   }
+
 
   if (
     key ===
     "confirmed"
   ) {
+
     if (
       language ===
       "hi"
     ) {
-      return "बुकिंग की पुष्टि हो गई।";
+
+      return "बुकिंग सफलतापूर्वक पुष्टि हो गई।";
+
     }
+
 
     if (
       language ===
       "te"
     ) {
-      return "బుకింగ్ నిర్ధారించబడింది.";
+
+      return "బుకింగ్ విజయవంతంగా నిర్ధారించబడింది.";
+
     }
 
-    return "Booking confirmed.";
+
+    return "Booking confirmed successfully.";
+
   }
 
+
   return "";
+
 }
+
+
+/* =========================================================
+   TIME HELPERS
+========================================================= */
 
 function controllerTimeToMinutes(
   value
 ) {
-  const text =
+
+  const raw =
     String(
-      value || ""
+      value ??
+      ""
     )
       .trim()
-      .toUpperCase();
+      .toLowerCase()
+      .replace(
+        /\./g,
+        ":"
+      );
 
-  const match =
-    text.match(
-      /^(\d{1,2}):(\d{2})\s*(AM|PM)?$/
+
+  if (
+    !raw
+  ) {
+
+    return null;
+
+  }
+
+
+  let match =
+    raw.match(
+      /^(\d{1,2}):(\d{1,2})(?::\d{1,2})?\s*(am|pm)?$/
     );
 
-  if (!match) {
-    return null;
-  }
-
-  let hours =
-    Number(match[1]);
-
-  const minutes =
-    Number(match[2]);
-
-  const period =
-    match[3];
 
   if (
-    !Number.isFinite(hours) ||
-    !Number.isFinite(minutes) ||
-    minutes > 59
+    match
   ) {
-    return null;
+
+    let hours =
+      Number(
+        match[1]
+      );
+
+    const minutes =
+      Number(
+        match[2]
+      );
+
+    const period =
+      match[3];
+
+
+    if (
+      !Number.isFinite(
+        hours
+      ) ||
+      !Number.isFinite(
+        minutes
+      ) ||
+      minutes >
+        59
+    ) {
+
+      return null;
+
+    }
+
+
+    if (
+      period ===
+      "am" &&
+      hours ===
+      12
+    ) {
+
+      hours =
+        0;
+
+    }
+
+
+    if (
+      period ===
+      "pm" &&
+      hours !==
+      12
+    ) {
+
+      hours +=
+        12;
+
+    }
+
+
+    if (
+      hours >
+      23
+    ) {
+
+      return null;
+
+    }
+
+
+    return (
+      hours *
+      60 +
+      minutes
+    );
+
   }
+
+
+  /*
+   * Support compact times such as:
+   *
+   * 830
+   * 0830
+   */
+
+  match =
+    raw.match(
+      /^(\d{3,4})(am|pm)?$/
+    );
+
 
   if (
-    period === "AM" &&
-    hours === 12
+    match
   ) {
-    hours = 0;
+
+    const digits =
+      match[1];
+
+
+    let hours;
+
+    let minutes;
+
+
+    if (
+      digits.length ===
+      3
+    ) {
+
+      hours =
+        Number(
+          digits.slice(
+            0,
+            1
+          )
+        );
+
+      minutes =
+        Number(
+          digits.slice(
+            1
+          )
+        );
+
+    } else {
+
+      hours =
+        Number(
+          digits.slice(
+            0,
+            2
+          )
+        );
+
+      minutes =
+        Number(
+          digits.slice(
+            2
+          )
+        );
+
+    }
+
+
+    const period =
+      match[2];
+
+
+    if (
+      !period
+    ) {
+
+      if (
+        hours >
+        23 ||
+        minutes >
+        59
+      ) {
+
+        return null;
+
+      }
+
+    } else {
+
+      if (
+        hours <
+        1 ||
+        hours >
+        12 ||
+        minutes >
+        59
+      ) {
+
+        return null;
+
+      }
+
+
+      if (
+        period ===
+        "pm" &&
+        hours !==
+        12
+      ) {
+
+        hours +=
+          12;
+
+      }
+
+
+      if (
+        period ===
+        "am" &&
+        hours ===
+        12
+      ) {
+
+        hours =
+          0;
+
+      }
+
+    }
+
+
+    return (
+      hours *
+      60 +
+      minutes
+    );
+
   }
 
-  if (
-    period === "PM" &&
-    hours !== 12
-  ) {
-    hours += 12;
-  }
 
-  if (
-    hours > 23
-  ) {
-    return null;
-  }
+  return null;
 
-  return (
-    hours * 60 +
-    minutes
-  );
 }
+
 
 function controllerMinutesToTime(
   total
 ) {
+
   const hours =
     Math.floor(
-      total / 60
+      Number(
+        total
+      ) /
+      60
     );
 
+
   const minutes =
-    total % 60;
+    Number(
+      total
+    ) %
+    60;
+
 
   return (
-    `${String(hours).padStart(
+    `${String(
+      hours
+    ).padStart(
       2,
       "0"
     )}:` +
-    `${String(minutes).padStart(
+
+    `${String(
+      minutes
+    ).padStart(
       2,
       "0"
     )}`
   );
+
 }
+
 
 function controllerFormatTime(
   value
 ) {
+
   const total =
     controllerTimeToMinutes(
       value
     );
 
+
   if (
     total == null
   ) {
+
     return String(
-      value || ""
+      value ||
+      ""
     );
+
   }
+
 
   const hours =
     Math.floor(
-      total / 60
+      total /
+      60
     );
 
+
   const minutes =
-    total % 60;
+    total %
+    60;
+
 
   const displayHour =
-    hours % 12 ||
+    hours %
+      12 ||
     12;
 
+
   const suffix =
-    hours >= 12
+    hours >=
+    12
       ? "PM"
       : "AM";
 
+
   return (
     `${displayHour}:` +
+
     `${String(
       minutes
     ).padStart(
@@ -786,30 +1368,43 @@ function controllerFormatTime(
       "0"
     )} ${suffix}`
   );
+
 }
+
+
+/* =========================================================
+   SLOT GENERATION
+========================================================= */
 
 function controllerGenerateSlots(
   center,
   settings
 ) {
+
   const opening =
     center?.opening_time ||
     center?.openingTime ||
+    center?.openTime ||
     "09:00";
+
 
   const closing =
     center?.closing_time ||
     center?.closingTime ||
+    center?.closeTime ||
     "17:00";
+
 
   const duration =
     Math.max(
       5,
       Number(
-        settings?.slotDuration ||
+        settings?.slotDuration ??
+        settings?.slot_duration ??
         30
-      )
+      ) || 30
     );
+
 
   const capacity =
     Math.max(
@@ -823,34 +1418,46 @@ function controllerGenerateSlots(
       ) || 20
     );
 
+
   let cursor =
     controllerTimeToMinutes(
       opening
     );
+
 
   const end =
     controllerTimeToMinutes(
       closing
     );
 
+
   if (
     cursor == null ||
     end == null ||
-    end <= cursor
+    end <=
+      cursor
   ) {
+
     return [];
+
   }
 
-  const slots = [];
+
+  const slots =
+    [];
+
 
   while (
-    cursor + duration <=
+    cursor +
+      duration <=
     end
   ) {
+
     const start =
       controllerMinutesToTime(
         cursor
       );
+
 
     const finish =
       controllerMinutesToTime(
@@ -858,7 +1465,9 @@ function controllerGenerateSlots(
         duration
       );
 
+
     slots.push({
+
       id:
         start.replace(
           ":",
@@ -878,79 +1487,121 @@ function controllerGenerateSlots(
         )}`,
 
       capacity,
+
     });
+
 
     cursor +=
       duration;
+
   }
 
+
   return slots;
+
 }
+
+
+/* =========================================================
+   PAST SLOT
+========================================================= */
 
 function controllerIsPastSlot(
   slot,
   date
 ) {
-  const today =
+
+  const now =
     new Date();
+
 
   const todayIso =
     [
-      today.getFullYear(),
+      now.getFullYear(),
+
       String(
-        today.getMonth() +
+        now.getMonth() +
         1
       ).padStart(
         2,
         "0"
       ),
+
       String(
-        today.getDate()
+        now.getDate()
       ).padStart(
         2,
         "0"
       ),
-    ].join("-");
+
+    ].join(
+      "-"
+    );
+
 
   if (
-    String(date) !==
+    String(
+      date
+    ) !==
     todayIso
   ) {
+
     return false;
+
   }
+
 
   const end =
     controllerTimeToMinutes(
-      slot?.end
+      slot?.end ??
+      slot?.endTime ??
+      slot?.to
     );
+
 
   if (
     end == null
   ) {
+
     return false;
+
   }
+
 
   return (
     end <=
-    today.getHours() *
+    now.getHours() *
       60 +
-      today.getMinutes()
+      now.getMinutes()
   );
+
 }
+
+
+/* =========================================================
+   DATE GENERATION
+========================================================= */
 
 function controllerGenerateDates(
   days,
   now = new Date()
 ) {
+
   const safeDays =
     Math.max(
       0,
-      Number(days) ||
+      Number(
+        days
+      ) ||
       7
     );
 
+
   const base =
-    new Date(now);
+    new Date(
+      now
+    );
+
 
   base.setHours(
     0,
@@ -959,24 +1610,35 @@ function controllerGenerateDates(
     0
   );
 
-  const result = [];
+
+  const result =
+    [];
+
 
   for (
     let index = 0;
-    index <= safeDays;
-    index += 1
+    index <=
+      safeDays;
+    index +=
+      1
   ) {
+
     const date =
-      new Date(base);
+      new Date(
+        base
+      );
+
 
     date.setDate(
       base.getDate() +
       index
     );
 
+
     const iso =
       [
         date.getFullYear(),
+
         String(
           date.getMonth() +
           1
@@ -984,28 +1646,23 @@ function controllerGenerateDates(
           2,
           "0"
         ),
+
         String(
           date.getDate()
         ).padStart(
           2,
           "0"
         ),
-      ].join("-");
+
+      ].join(
+        "-"
+      );
+
 
     result.push({
+
       id:
-        `${String(
-          date.getDate()
-        ).padStart(
-          2,
-          "0"
-        )}-${date.toLocaleString(
-          "en-US",
-          {
-            month:
-              "short",
-          }
-        ).toLowerCase()}`,
+        iso,
 
       date:
         iso,
@@ -1028,92 +1685,385 @@ function controllerGenerateDates(
         ).toUpperCase(),
 
       label:
-        index === 0
+        index ===
+          0
           ? "Today"
-          : index === 1
+          : index ===
+              1
             ? "Tomorrow"
-            : date.toLocaleString(
+            : date.toLocaleDateString(
                 "en-US",
                 {
                   weekday:
                     "long",
+
+                  month:
+                    "short",
+
+                  day:
+                    "numeric",
                 }
               ),
+
     });
+
   }
 
+
   return result;
+
 }
 
-function controllerBookedCount(rows, centerId, date, start, end) {
 
-  if (!Array.isArray(rows)) return 0;
+/* =========================================================
+   BOOKING DATE NORMALIZATION
+========================================================= */
 
-  const ignoredStatuses = new Set([
-    "CANCELLED",
-    "CANCELED",
-    "REJECTED",
-    "EXPIRED",
-  ]);
+function normalizeControllerDate(
+  value
+) {
 
-  return rows.filter(row => {
-    const status = String(row?.status ?? "").toUpperCase();
+  const text =
+    String(
+      value ??
+      ""
+    )
+      .trim();
 
-    return (
-      String(row?.center_id ?? row?.centerId ?? "") === String(centerId) &&
-      String(row?.date ?? "") === String(date) &&
-      String(row?.slot_start ?? row?.slotStart ?? "") === String(start) &&
-      String(row?.slot_end ?? row?.slotEnd ?? "") === String(end) &&
-      !ignoredStatuses.has(status)
+
+  if (
+    !text
+  ) {
+
+    return null;
+
+  }
+
+
+  if (
+    /^\d{4}-\d{1,2}-\d{1,2}$/.test(
+      text
+    )
+  ) {
+
+    const [
+      year,
+      month,
+      day,
+    ] =
+      text
+        .split(
+          "-"
+        )
+        .map(
+          Number
+        );
+
+
+    const date =
+      new Date(
+        year,
+        month -
+          1,
+        day
+      );
+
+
+    if (
+      date.getFullYear() ===
+        year &&
+      date.getMonth() ===
+        month -
+        1 &&
+      date.getDate() ===
+        day
+    ) {
+
+      return (
+
+        `${String(
+          year
+        )}-${String(
+          month
+        ).padStart(
+          2,
+          "0"
+        )}-${String(
+          day
+        ).padStart(
+          2,
+          "0"
+        )}`
+
+      );
+
+    }
+
+  }
+
+
+  return null;
+
+}
+
+
+/* =========================================================
+   BOOKED COUNT
+========================================================= */
+
+function controllerBookedCount(
+  rows,
+  centerId,
+  date,
+  start,
+  end
+) {
+
+  if (
+    !Array.isArray(
+      rows
+    )
+  ) {
+
+    return 0;
+
+  }
+
+
+  const ignoredStatuses =
+    new Set([
+
+      "CANCELLED",
+
+      "CANCELED",
+
+      "REJECTED",
+
+      "EXPIRED",
+
+    ]);
+
+
+  const wantedStart =
+    controllerTimeToMinutes(
+      start
     );
-  }).length;
+
+
+  const wantedEnd =
+    controllerTimeToMinutes(
+      end
+    );
+
+
+  return rows.filter(
+    row => {
+
+      const status =
+        String(
+          row?.status ??
+          ""
+        )
+          .toUpperCase();
+
+
+      if (
+        ignoredStatuses.has(
+          status
+        )
+      ) {
+
+        return false;
+
+      }
+
+
+      const rowCenter =
+        row?.center_id ??
+        row?.centerId ??
+        row?.procurement_center_id;
+
+
+      const rowDate =
+        row?.date ??
+        row?.booking_date ??
+        row?.bookingDate;
+
+
+      const rowStart =
+        row?.slot_start ??
+        row?.slotStart ??
+        row?.startTime ??
+        row?.start_time;
+
+
+      const rowEnd =
+        row?.slot_end ??
+        row?.slotEnd ??
+        row?.endTime ??
+        row?.end_time;
+
+
+      const actualStart =
+        controllerTimeToMinutes(
+          rowStart
+        );
+
+
+      const actualEnd =
+        controllerTimeToMinutes(
+          rowEnd
+        );
+
+
+      return (
+
+        String(
+          rowCenter ??
+          ""
+        ) ===
+        String(
+          centerId ??
+          ""
+        ) &&
+
+        String(
+          rowDate ??
+          ""
+        ) ===
+        String(
+          date ??
+          ""
+        ) &&
+
+        wantedStart !=
+          null &&
+
+        actualStart !=
+          null &&
+
+        actualStart ===
+          wantedStart &&
+
+        wantedEnd !=
+          null &&
+
+        actualEnd !=
+          null &&
+
+        actualEnd ===
+          wantedEnd
+
+      );
+
+    }
+  ).length;
+
 }
+
+
+/* =========================================================
+   API
+========================================================= */
 
 async function controllerGetJson(
-  path
+  path,
+  options = {}
 ) {
+
+  const query =
+    String(
+      path ||
+      ""
+    );
+
+
   const response =
     await fetch(
-      `${BOOKING_API_URL}${path}`
+      `${BOOKING_API_URL}${query}`,
+      {
+
+        method:
+          "GET",
+
+        headers: {
+
+          Accept:
+            "application/json",
+
+        },
+
+        signal:
+          options.signal ||
+          undefined,
+
+      }
     );
+
 
   let data =
     null;
 
+
   try {
+
     data =
       await response.json();
+
   } catch {
+
     data =
       null;
+
   }
+
 
   if (
     !response.ok
   ) {
+
     throw new Error(
+
       data?.message ||
+
+      data?.error?.message ||
+
+      data?.error ||
+
       `Request failed: ${path}`
+
     );
+
   }
+
 
   return (
     data ||
     {}
   );
+
 }
+
+
+/* =========================================================
+   AVAILABILITY CACHE SCOPE
+========================================================= */
 
 function sameBookingAvailabilityScope(
   context,
   state
 ) {
+
   if (
     !context ||
     typeof context !==
       "object"
   ) {
+
     return false;
+
   }
+
 
   const age =
     Date.now() -
@@ -1122,74 +2072,513 @@ function sameBookingAvailabilityScope(
       0
     );
 
+
   if (
     age < 0 ||
     age >
       BOOKING_AVAILABILITY_CACHE_TTL
   ) {
+
     return false;
+
   }
 
-  if (
-    !Array.isArray(
-      context.availableCenters
-    ) ||
-    !context.availableCenters.length
-  ) {
-    return false;
-  }
 
   if (
     state?.date &&
+    context.selectedDate &&
     String(
-      context.selectedDate ||
-      ""
+      context.selectedDate
     ) !==
       String(
         state.date
       )
   ) {
+
     return false;
+
   }
+
 
   if (
     state?.centerId &&
+    context.selectedCenterId &&
     String(
-      context.selectedCenterId ||
-      ""
+      context.selectedCenterId
     ) !==
       String(
         state.centerId
       )
   ) {
+
     return false;
+
   }
 
+
   return true;
+
 }
+
+
+/* =========================================================
+   SERVER AUTHORITATIVE AVAILABILITY
+========================================================= */
+
+async function getServerAuthoritativeAvailability(
+  state,
+  options = {}
+) {
+
+  const date =
+    normalizeControllerDate(
+      state?.date
+    );
+
+
+  if (
+    !date
+  ) {
+
+    return null;
+
+  }
+
+
+  const query =
+    new URLSearchParams({
+
+      date,
+
+    });
+
+
+  if (
+    state?.centerId
+  ) {
+
+    query.set(
+      "centerId",
+      String(
+        state.centerId
+      )
+    );
+
+  }
+
+
+  try {
+
+    const data =
+      await controllerGetJson(
+        `/booking-availability?${query.toString()}`,
+        options
+      );
+
+
+    const rawSlots =
+      Array.isArray(
+        data?.slots
+      )
+        ? data.slots
+        : [];
+
+
+    const rawCenters =
+      Array.isArray(
+        data?.centers
+      )
+        ? data.centers
+        : [];
+
+
+    const centers =
+      rawCenters.map(
+        center => ({
+
+          id:
+            center?.id ??
+            center?.centerId,
+
+          name:
+            center?.name ??
+            center?.centerName ??
+            center?.title ??
+            "Procurement Center",
+
+          openingTime:
+            center?.opening_time ??
+            center?.openingTime ??
+            "09:00",
+
+          closingTime:
+            center?.closing_time ??
+            center?.closingTime ??
+            "17:00",
+
+          capacity:
+            Number(
+              center?.capacity ??
+              center?.capacityPerSlot ??
+              center?.capacity_per_slot ??
+              20
+            ) || 20,
+
+        })
+      );
+
+
+    const selectedCenter =
+      state?.centerId
+        ? (
+
+            centers.find(
+              center =>
+                String(
+                  center.id
+                ) ===
+                String(
+                  state.centerId
+                )
+            ) ||
+
+            null
+
+          )
+        : (
+
+            centers[0] ||
+            null
+
+          );
+
+
+    const selectedCenterId =
+      selectedCenter?.id ??
+      state?.centerId ??
+      null;
+
+
+    const normalizedSlots =
+      rawSlots
+        .map(
+          slot => {
+
+            const centerId =
+              slot?.centerId ??
+              slot?.center_id ??
+              selectedCenterId ??
+              null;
+
+
+            const start =
+              slot?.start ??
+              slot?.startTime ??
+              slot?.start_time ??
+              slot?.from ??
+              "";
+
+
+            const end =
+              slot?.end ??
+              slot?.endTime ??
+              slot?.end_time ??
+              slot?.to ??
+              "";
+
+
+            const startMinutes =
+              controllerTimeToMinutes(
+                start
+              );
+
+
+            const endMinutes =
+              controllerTimeToMinutes(
+                end
+              );
+
+
+            /*
+             * Some API responses provide remaining.
+             * Others simply provide availability flags.
+             *
+             * Missing remaining MUST NOT mean "zero".
+             */
+
+            const rawRemaining =
+              Number(
+                slot?.remaining
+              );
+
+
+            const rawAvailable =
+              slot?.available ??
+              slot?.isAvailable ??
+              slot?.is_available;
+
+
+            const available =
+              Number.isFinite(
+                rawRemaining
+              )
+                ? rawRemaining >
+                  0
+
+                : rawAvailable ===
+                    false
+                  ? false
+                  : true;
+
+
+            return {
+
+              ...slot,
+
+              id:
+                slot?.id ||
+                (
+                  start &&
+                  end
+                    ? `${String(
+                        start
+                      ).slice(
+                        0,
+                        5
+                      ).replace(
+                        ":",
+                        "-"
+                      )}`
+                    : null
+                ),
+
+              centerId,
+
+              start:
+                startMinutes !=
+                  null
+                  ? controllerMinutesToTime(
+                      startMinutes
+                    )
+                  : start,
+
+              end:
+                endMinutes !=
+                  null
+                  ? controllerMinutesToTime(
+                      endMinutes
+                    )
+                  : end,
+
+              display:
+                slot?.display ||
+                slot?.label ||
+                (
+                  start &&
+                  end
+                    ? `${controllerFormatTime(
+                        start
+                      )} – ${controllerFormatTime(
+                        end
+                      )}`
+                    : ""
+                ),
+
+              remaining:
+                Number.isFinite(
+                  rawRemaining
+                )
+                  ? rawRemaining
+                  : null,
+
+              available,
+
+            };
+
+          }
+        )
+        .filter(
+          slot =>
+            slot.available !==
+            false
+        );
+
+
+    const centerSlots =
+      selectedCenterId
+
+        ? normalizedSlots.filter(
+            slot =>
+              String(
+                slot.centerId ??
+                ""
+              ) ===
+              String(
+                selectedCenterId
+              )
+          )
+
+        : normalizedSlots;
+
+
+    const apiDates =
+      Array.isArray(
+        data?.availableDates
+      )
+        ? data.availableDates
+        : Array.isArray(
+            data?.dates
+          )
+          ? data.dates
+          : [];
+
+
+    const availableDates =
+      apiDates.length
+        ? apiDates
+            .map(
+              item => {
+
+                const itemDate =
+                  normalizeControllerDate(
+                    item?.date ??
+                    item?.id ??
+                    item?.value
+                  );
+
+
+                return {
+
+                  id:
+                    itemDate ||
+                    item?.id ||
+                    String(
+                      item
+                    ),
+
+                  date:
+                    itemDate,
+
+                  label:
+                    item?.label ||
+                    item?.name ||
+                    itemDate ||
+                    "",
+
+                };
+
+              }
+            )
+            .filter(
+              item =>
+                Boolean(
+                  item.date
+                )
+            )
+
+        : [
+
+            {
+
+              id:
+                date,
+
+              date,
+
+              label:
+                new Date(
+                  `${date}T00:00:00`
+                ).toLocaleDateString(
+                  "en-US",
+                  {
+
+                    weekday:
+                      "long",
+
+                    month:
+                      "long",
+
+                    day:
+                      "numeric",
+
+                    year:
+                      "numeric",
+
+                  }
+                ),
+
+            },
+
+          ];
+
+
+    return {
+
+      availableDates,
+
+      availableSlots:
+        centerSlots,
+
+      availableCenters:
+        centers,
+
+      selectedDate:
+        date,
+
+      selectedCenterId,
+
+      updatedAt:
+        Date.now(),
+
+      serverAuthoritative:
+        true,
+
+    };
+
+  } catch (
+    error
+  ) {
+
+    debugLog(
+      "Server availability endpoint failed",
+      error
+    );
+
+
+    return null;
+
+  }
+
+}
+
+
+/* =========================================================
+   LIVE AVAILABILITY REFRESH
+========================================================= */
 
 async function refreshLiveBookingAvailability(
   state,
-  {
-    force = false,
-  } = {}
+  options = {}
 ) {
+
+  const {
+
+    force =
+      false,
+
+    signal =
+      null,
+
+  } =
+    options;
+
+
   let pageContext =
     typeof assistantBooking.getBookingAvailabilityContext ===
       "function"
       ? assistantBooking.getBookingAvailabilityContext()
       : null;
 
-  if (
-    typeof assistantBooking.requestBookingAvailabilitySync ===
-    "function"
-  ) {
-    try {
-      pageContext =
-        assistantBooking.requestBookingAvailabilitySync() ||
-        pageContext;
-    } catch {}
-  }
 
   if (
     !force &&
@@ -1198,71 +2587,202 @@ async function refreshLiveBookingAvailability(
       state
     )
   ) {
+
     return pageContext;
+
   }
 
+
+  /*
+   * When a date is selected, prefer the backend's live
+   * availability endpoint.
+   */
+
+  if (
+    state?.date
+  ) {
+
+    const authoritative =
+      await getServerAuthoritativeAvailability(
+        state,
+        {
+          signal,
+        }
+      );
+
+
+    if (
+      authoritative
+    ) {
+
+      if (
+        typeof assistantBooking.saveBookingAvailabilityContext ===
+        "function"
+      ) {
+
+        assistantBooking.saveBookingAvailabilityContext(
+          authoritative
+        );
+
+      }
+
+
+      return authoritative;
+
+    }
+
+  }
+
+
+  /*
+   * Ask the currently mounted booking page for its
+   * latest availability snapshot as a fast fallback.
+   */
+
+  if (
+    typeof assistantBooking.requestBookingAvailabilitySync ===
+    "function"
+  ) {
+
+    try {
+
+      pageContext =
+        assistantBooking.requestBookingAvailabilitySync() ||
+        pageContext;
+
+    } catch {
+    }
+
+  }
+
+
+  if (
+    !force &&
+    sameBookingAvailabilityScope(
+      pageContext,
+      state
+    )
+  ) {
+
+    return pageContext;
+
+  }
+
+
   try {
+
     const [
       centersData,
       settingsData,
       bookingsData,
     ] =
       await Promise.all([
+
         controllerGetJson(
-          "/centers"
+          "/centers",
+          {
+            signal,
+          }
         ),
 
         controllerGetJson(
-          "/settings"
+          "/settings",
+          {
+            signal,
+          }
         ),
 
         controllerGetJson(
-          "/bookings"
+          "/bookings",
+          {
+            signal,
+          }
         ),
+
       ]);
+
 
     const settings =
       settingsData?.settings ||
+      settingsData ||
       {};
 
-    const centers =
+
+    const rawCenters =
       Array.isArray(
         centersData?.centers
       )
-        ? centersData.centers.filter(
-            center =>
-              Number(
-                center?.active ??
-                1
-              ) === 1
+        ? centersData.centers
+        : Array.isArray(
+            centersData
           )
-        : [];
+          ? centersData
+          : [];
+
+
+    const centers =
+      rawCenters.filter(
+        center => {
+
+          const active =
+            center?.active ??
+            center?.isActive ??
+            center?.is_active ??
+            1;
+
+
+          return (
+            active ===
+            true ||
+
+            active ===
+            1 ||
+
+            active ===
+            "1" ||
+
+            active ===
+            "true"
+          );
+
+        }
+      );
+
 
     const bookings =
       Array.isArray(
         bookingsData?.bookings
       )
         ? bookingsData.bookings
-        : [];
+        : Array.isArray(
+            bookingsData
+          )
+          ? bookingsData
+          : [];
+
 
     const dates =
       controllerGenerateDates(
         Number(
           settings?.advanceBookingDays ??
+          settings?.advance_booking_days ??
           7
         )
       );
+
 
     const liveAvailableDates =
       dates.filter(
         day =>
           centers.some(
             center => {
+
               const slots =
                 controllerGenerateSlots(
                   center,
                   settings
                 );
+
 
               const capacity =
                 Math.max(
@@ -1273,41 +2793,55 @@ async function refreshLiveBookingAvailability(
                     center?.capacity_per_slot ??
                     settings?.defaultCapacity ??
                     20
-                  ) || 20
+                  ) ||
+                  20
                 );
+
 
               return slots.some(
                 slot => {
+
                   if (
                     controllerIsPastSlot(
                       slot,
                       day.date
                     )
                   ) {
+
                     return false;
+
                   }
 
-                  return (
+
+                  const booked =
                     controllerBookedCount(
                       bookings,
                       center?.id,
                       day.date,
                       slot.start,
                       slot.end
-                    ) <
+                    );
+
+
+                  return (
+                    booked <
                     capacity
                   );
+
                 }
               );
+
             }
           )
       );
+
 
     const preferredCenterId =
       state?.centerId ||
       pageContext?.selectedCenterId ||
       centers[0]?.id ||
       null;
+
 
     const selectedCenter =
       centers.find(
@@ -1319,97 +2853,127 @@ async function refreshLiveBookingAvailability(
             preferredCenterId
           )
       ) ||
+
       centers[0] ||
+
       null;
+
 
     const selectedDate =
       state?.date ||
       pageContext?.selectedDate ||
       null;
 
-    const availableSlots =
+
+    let availableSlots =
+      [];
+
+
+    if (
       selectedCenter &&
       selectedDate
-        ? controllerGenerateSlots(
-            selectedCenter,
-            settings
+    ) {
+
+      availableSlots =
+        controllerGenerateSlots(
+          selectedCenter,
+          settings
+        )
+          .filter(
+            slot =>
+              !controllerIsPastSlot(
+                slot,
+                selectedDate
+              )
           )
-            .filter(
-              slot =>
-                !controllerIsPastSlot(
-                  slot,
-                  selectedDate
-                )
-            )
-            .map(
-              slot => {
-                const capacity =
-                  Math.max(
-                    1,
-                    Number(
-                      selectedCenter?.capacity ??
-                      selectedCenter?.capacityPerSlot ??
-                      selectedCenter?.capacity_per_slot ??
-                      settings?.defaultCapacity ??
-                      20
-                    ) || 20
-                  );
+          .map(
+            slot => {
 
-                const booked =
-                  Math.min(
-                    controllerBookedCount(
-                      bookings,
-                      selectedCenter?.id,
-                      selectedDate,
-                      slot.start,
-                      slot.end
-                    ),
-                    capacity
-                  );
+              const capacity =
+                Math.max(
+                  1,
+                  Number(
+                    selectedCenter?.capacity ??
+                    selectedCenter?.capacityPerSlot ??
+                    selectedCenter?.capacity_per_slot ??
+                    settings?.defaultCapacity ??
+                    20
+                  ) ||
+                  20
+                );
 
-                const remaining =
-                  Math.max(
-                    capacity -
-                    booked,
-                    0
-                  );
 
-                return {
-                  ...slot,
+              const booked =
+                Math.min(
+                  controllerBookedCount(
+                    bookings,
+                    selectedCenter?.id,
+                    selectedDate,
+                    slot.start,
+                    slot.end
+                  ),
+                  capacity
+                );
 
-                  capacity,
 
+              const remaining =
+                Math.max(
+                  capacity -
                   booked,
+                  0
+                );
 
-                  remaining,
 
-                  loadClass:
-                    remaining === 0
-                      ? "full"
+              return {
+
+                ...slot,
+
+                centerId:
+                  selectedCenter.id,
+
+                capacity,
+
+                booked,
+
+                remaining,
+
+                available:
+                  remaining >
+                  0,
+
+                loadClass:
+                  remaining ===
+                    0
+                    ? "full"
+                    : remaining <=
+                        Math.ceil(
+                          capacity *
+                          0.25
+                        )
+                      ? "busy"
                       : remaining <=
                           Math.ceil(
                             capacity *
-                            0.25
+                            0.5
                           )
-                        ? "busy"
-                        : remaining <=
-                            Math.ceil(
-                              capacity *
-                              0.5
-                            )
-                          ? "limited"
-                          : "normal",
-                };
-              }
-            )
-            .filter(
-              slot =>
-                slot.remaining >
-                0
-            )
-        : [];
+                        ? "limited"
+                        : "normal",
+
+              };
+
+            }
+          )
+          .filter(
+            slot =>
+              slot.remaining >
+              0
+          );
+
+    }
+
 
     const context = {
+
       availableDates:
         liveAvailableDates,
 
@@ -1418,20 +2982,23 @@ async function refreshLiveBookingAvailability(
       availableCenters:
         centers.map(
           center => ({
+
             id:
               center?.id,
 
             name:
-              center?.name,
+              center?.name ??
+              center?.centerName ??
+              center?.title,
 
             openingTime:
-              center?.opening_time ||
-              center?.openingTime ||
+              center?.opening_time ??
+              center?.openingTime ??
               "09:00",
 
             closingTime:
-              center?.closing_time ||
-              center?.closingTime ||
+              center?.closing_time ??
+              center?.closingTime ??
               "17:00",
 
             capacity:
@@ -1440,6 +3007,7 @@ async function refreshLiveBookingAvailability(
               center?.capacity_per_slot ??
               settings?.defaultCapacity ??
               20,
+
           })
         ),
 
@@ -1448,56 +3016,100 @@ async function refreshLiveBookingAvailability(
       selectedCenterId:
         selectedCenter?.id ||
         null,
+
+      updatedAt:
+        Date.now(),
+
+      serverAuthoritative:
+        false,
+
     };
+
 
     if (
       typeof assistantBooking.saveBookingAvailabilityContext ===
       "function"
     ) {
+
       assistantBooking.saveBookingAvailabilityContext(
         context
       );
+
     }
+
 
     return context;
 
   } catch (
     error
   ) {
+
     debugLog(
       "Live booking availability refresh failed",
       error
     );
 
+
     return (
+
       pageContext ||
+
       {
-        availableDates: [],
-        availableSlots: [],
-        availableCenters: [],
-        selectedDate: null,
-        selectedCenterId: null,
+
+        availableDates:
+          [],
+
+        availableSlots:
+          [],
+
+        availableCenters:
+          [],
+
+        selectedDate:
+          null,
+
+        selectedCenterId:
+          null,
+
+        updatedAt:
+          0,
+
       }
+
     );
+
   }
+
 }
+
+
+/* =========================================================
+   BOOKING PROCESSOR WRAPPER
+========================================================= */
 
 function processBookingConversation(
   text,
   options
 ) {
+
   const {
+
     language,
+
     bookingState:
       explicitBookingState,
+
     bookingContext,
+
   } =
     options;
+
 
   const bookingState =
     getEffectiveBookingState(
       explicitBookingState
     );
+
 
   const availableDates =
     Array.isArray(
@@ -1506,12 +3118,14 @@ function processBookingConversation(
       ? bookingContext.availableDates
       : undefined;
 
+
   const availableSlots =
     Array.isArray(
       bookingContext?.availableSlots
     )
       ? bookingContext.availableSlots
       : undefined;
+
 
   const availableCenters =
     Array.isArray(
@@ -1520,11 +3134,13 @@ function processBookingConversation(
       ? bookingContext.availableCenters
       : undefined;
 
+
   const result =
     assistantBooking.process(
       bookingState,
       text,
       {
+
         language,
 
         availableDates,
@@ -1532,31 +3148,45 @@ function processBookingConversation(
         availableSlots,
 
         availableCenters,
+
       }
     );
+
 
   if (
     result?.state
   ) {
+
     saveBookingState(
       result.state
     );
+
   }
 
+
   return result;
+
 }
+
+
+/* =========================================================
+   BOOKING RESULT
+========================================================= */
 
 function buildBookingControllerResult(
   bookingResult,
   originalText,
   language
 ) {
+
   const intent =
     bookingResult?.intent;
+
 
   const state =
     bookingResult?.state ||
     assistantBooking.createEmpty();
+
 
   if (
     intent ===
@@ -1564,73 +3194,46 @@ function buildBookingControllerResult(
     intent ===
       BOOKING_INTENTS.UPDATE
   ) {
+
     const missing =
       bookingResult.missing ||
       assistantBooking.getMissingDetails(
         state
       );
 
-    let reply =
-      "";
+
+    let reply;
+
 
     if (
-      missing.includes(
-        "crop"
-      )
+      missing.length
     ) {
+
       reply =
         assistantBooking.nextPrompt(
           state,
           language
         );
-    } else if (
-      missing.includes(
-        "quantity"
-      )
-    ) {
-      reply =
-        assistantBooking.nextPrompt(
-          state,
-          language
-        );
-    } else if (
-      missing.includes(
-        "date"
-      )
-    ) {
-      reply =
-        getBookingText(
-          language,
-          "needDate",
-          {
-            state,
-          }
-        );
-    } else if (
-      missing.includes(
-        "slot"
-      )
-    ) {
-      reply =
-        getBookingText(
-          language,
-          "needSlot",
-          {
-            state,
-          }
-        );
+
     } else {
+
       reply =
         getBookingText(
           language,
-          "ready"
+          "ready",
+          {
+            state,
+          }
         );
+
     }
+
 
     return controllerResult(
       CONTROLLER_TYPES.BOOKING,
       CONTROLLER_STATUS.SUCCESS,
       {
+
         decision:
           null,
 
@@ -1651,8 +3254,7 @@ function buildBookingControllerResult(
         bookingStep:
           bookingResult.nextStep,
 
-        missing:
-          missing,
+        missing,
 
         shouldCallAI:
           false,
@@ -1665,18 +3267,23 @@ function buildBookingControllerResult(
 
         bookingCommand:
           true,
+
       }
     );
+
   }
+
 
   if (
     intent ===
     BOOKING_INTENTS.SHOW_STATE
   ) {
+
     return controllerResult(
       CONTROLLER_TYPES.BOOKING,
       CONTROLLER_STATUS.SUCCESS,
       {
+
         bookingIntent:
           intent,
 
@@ -1706,18 +3313,23 @@ function buildBookingControllerResult(
 
         bookingCommand:
           true,
+
       }
     );
+
   }
+
 
   if (
     intent ===
     BOOKING_INTENTS.SHOW_CENTERS
   ) {
+
     return controllerResult(
       CONTROLLER_TYPES.BOOKING,
       CONTROLLER_STATUS.SUCCESS,
       {
+
         bookingIntent:
           intent,
 
@@ -1725,37 +3337,38 @@ function buildBookingControllerResult(
           "OPEN_BOOKING",
 
         reply:
-          language === "hi"
-            ? `उपलब्ध खरीद केंद्र: ${assistantBooking.formatCenterOptions(
-                bookingResult.centers ||
-                [],
-                language
-              )}।${
-                bookingResult.dateText
-                  ? ` उपलब्ध तारीखें: ${bookingResult.dateText}।`
-                  : ""
-              }`
+          language ===
+          "hi"
 
-            : language === "te"
-              ? `అందుబాటులో ఉన్న కొనుగోలు కేంద్రాలు: ${assistantBooking.formatCenterOptions(
+            ? (
+                `उपलब्ध खरीद केंद्र: ` +
+                `${assistantBooking.formatCenterOptions(
                   bookingResult.centers ||
-                  [],
+                    [],
                   language
-                )}.${
-                  bookingResult.dateText
-                    ? ` అందుబాటులో ఉన్న తేదీలు: ${bookingResult.dateText}.`
-                    : ""
-                }`
+                )}.`
+              )
 
-              : `Available procurement centers and timings: ${assistantBooking.formatCenterOptions(
-                  bookingResult.centers ||
-                  [],
-                  language
-                )}.${
-                  bookingResult.dateText
-                    ? ` Available dates: ${bookingResult.dateText}.`
-                    : ""
-                }`,
+            : language ===
+                "te"
+
+              ? (
+                  `అందుబాటులో ఉన్న కొనుగోలు కేంద్రాలు: ` +
+                  `${assistantBooking.formatCenterOptions(
+                    bookingResult.centers ||
+                      [],
+                    language
+                  )}.`
+                )
+
+              : (
+                  `Available procurement centers: ` +
+                  `${assistantBooking.formatCenterOptions(
+                    bookingResult.centers ||
+                      [],
+                    language
+                  )}.`
+                ),
 
         bookingState:
           state,
@@ -1782,18 +3395,23 @@ function buildBookingControllerResult(
 
         bookingCommand:
           true,
+
       }
     );
+
   }
+
 
   if (
     intent ===
     BOOKING_INTENTS.ASK_DATES
   ) {
+
     return controllerResult(
       CONTROLLER_TYPES.BOOKING,
       CONTROLLER_STATUS.SUCCESS,
       {
+
         bookingIntent:
           intent,
 
@@ -1822,18 +3440,23 @@ function buildBookingControllerResult(
 
         bookingCommand:
           true,
+
       }
     );
+
   }
+
 
   if (
     intent ===
     BOOKING_INTENTS.SELECT_DATE
   ) {
+
     return controllerResult(
       CONTROLLER_TYPES.BOOKING,
       CONTROLLER_STATUS.SUCCESS,
       {
+
         bookingIntent:
           intent,
 
@@ -1845,12 +3468,14 @@ function buildBookingControllerResult(
             language,
             "dateSelected",
             {
+
               date:
                 bookingResult.selectedDate
                   ?.label ||
                 bookingResult.selectedDate
                   ?.date ||
                 state.date,
+
             }
           ),
 
@@ -1859,6 +3484,10 @@ function buildBookingControllerResult(
 
         selectedDate:
           bookingResult.selectedDate,
+
+        slots:
+          bookingResult.slots ||
+          [],
 
         bookingStep:
           BOOKING_STEPS.SLOT,
@@ -1874,18 +3503,23 @@ function buildBookingControllerResult(
 
         bookingCommand:
           true,
+
       }
     );
+
   }
+
 
   if (
     intent ===
     BOOKING_INTENTS.ASK_SLOTS
   ) {
+
     return controllerResult(
       CONTROLLER_TYPES.BOOKING,
       CONTROLLER_STATUS.SUCCESS,
       {
+
         bookingIntent:
           intent,
 
@@ -1917,14 +3551,18 @@ function buildBookingControllerResult(
 
         bookingCommand:
           true,
+
       }
     );
+
   }
+
 
   if (
     intent ===
     BOOKING_INTENTS.SELECT_SLOT
   ) {
+
     const review =
       bookingResult.review ||
       assistantBooking.review(
@@ -1932,10 +3570,31 @@ function buildBookingControllerResult(
         language
       );
 
+
+    const pending = {
+
+      action:
+        "OPEN_BOOKING",
+
+      params:
+        sanitizeActionParams(
+          state
+        ),
+
+      booking:
+        state,
+
+      createdAt:
+        Date.now(),
+
+    };
+
+
     return controllerResult(
       CONTROLLER_TYPES.CONFIRMATION,
       CONTROLLER_STATUS.PENDING,
       {
+
         bookingIntent:
           intent,
 
@@ -1947,21 +3606,34 @@ function buildBookingControllerResult(
             language,
             "slotSelected",
             {
+
               slot:
                 bookingResult.selectedSlot
                   ?.display ||
                 state.slotDisplay,
+
             }
-          )} ${assistantBooking.formatBookingProgress(
+          )}` +
+
+          `\n${assistantBooking.formatBookingProgress(
             state,
             language
-          )}${
-            language === "hi"
+          )}` +
+
+          (
+            language ===
+            "hi"
+
               ? "\nअंतिम पुष्टि के लिए ‘हाँ’ कहें।"
-              : language === "te"
+
+              : language ===
+                  "te"
+
                 ? "\nతుది నిర్ధారణ కోసం ‘అవును’ అని చెప్పండి."
+
                 : "\nSay ‘yes’ to submit the booking."
-          }`,
+
+          ),
 
         bookingState:
           state,
@@ -1987,51 +3659,44 @@ function buildBookingControllerResult(
           true,
 
         pendingAction:
-          {
-            action:
-              "OPEN_BOOKING",
-
-            params:
-              sanitizeActionParams({
-                crop:
-                  state.crop,
-
-                quantity:
-                  state.quantity,
-              }),
-
-            booking:
-              state,
-
-            createdAt:
-              Date.now(),
-          },
+          pending,
 
         createPending:
           true,
+
       }
     );
+
   }
+
 
   if (
     intent ===
     BOOKING_INTENTS.CONFIRM
   ) {
+
     return controllerResult(
       CONTROLLER_TYPES.CONFIRMATION,
       CONTROLLER_STATUS.SUCCESS,
       {
+
         bookingIntent:
           intent,
 
         action:
-          "OPEN_BOOKING",
+          "CONFIRM_BOOKING",
 
         reply:
-          language === "hi"
+          language ===
+          "hi"
+
             ? "ठीक है। मैं आपकी चुनी हुई बुकिंग अभी सबमिट कर रहा हूँ।"
-            : language === "te"
+
+            : language ===
+                "te"
+
               ? "సరే. మీరు ఎంచుకున్న బుకింగ్‌ను ఇప్పుడు సమర్పిస్తున్నాను."
+
               : "Okay. I’m submitting the booking with your selected details now.",
 
         bookingState:
@@ -2041,13 +3706,9 @@ function buildBookingControllerResult(
           state,
 
         params:
-          sanitizeActionParams({
-            crop:
-              state.crop,
-
-            quantity:
-              state.quantity,
-          }),
+          sanitizeActionParams(
+            state
+          ),
 
         shouldCallAI:
           false,
@@ -2060,21 +3721,27 @@ function buildBookingControllerResult(
 
         bookingCommand:
           true,
+
       }
     );
+
   }
+
 
   if (
     intent ===
     BOOKING_INTENTS.REVIEW
   ) {
+
     const review =
       bookingResult.review;
+
 
     return controllerResult(
       CONTROLLER_TYPES.BOOKING,
       CONTROLLER_STATUS.SUCCESS,
       {
+
         bookingIntent:
           intent,
 
@@ -2085,7 +3752,10 @@ function buildBookingControllerResult(
           review?.valid
             ? getBookingText(
                 language,
-                "ready"
+                "ready",
+                {
+                  state,
+                }
               )
             : assistantBooking.nextPrompt(
                 state,
@@ -2097,6 +3767,16 @@ function buildBookingControllerResult(
 
         review,
 
+        awaitingConfirmation:
+          Boolean(
+            state.awaitingConfirmation
+          ),
+
+        readyForConfirmation:
+          Boolean(
+            state.readyForConfirmation
+          ),
+
         shouldCallAI:
           false,
 
@@ -2105,20 +3785,28 @@ function buildBookingControllerResult(
 
         bookingCommand:
           true,
+
       }
     );
+
   }
+
 
   if (
     intent ===
     BOOKING_INTENTS.CANCEL
   ) {
+
     clearBookingState();
+
+    clearPendingAction();
+
 
     return controllerResult(
       CONTROLLER_TYPES.CANCELLATION,
       CONTROLLER_STATUS.CANCELLED,
       {
+
         bookingIntent:
           intent,
 
@@ -2126,10 +3814,16 @@ function buildBookingControllerResult(
           "NONE",
 
         reply:
-          language === "hi"
+          language ===
+          "hi"
+
             ? "ठीक है, मैंने आपकी बुकिंग प्रक्रिया रद्द कर दी।"
-            : language === "te"
+
+            : language ===
+                "te"
+
               ? "సరే, బుకింగ్ ప్రక్రియను రద్దు చేశాను."
+
               : "Okay, I cancelled the booking process.",
 
         shouldCallAI:
@@ -2140,55 +3834,2389 @@ function buildBookingControllerResult(
 
         bookingCommand:
           true,
+
       }
     );
+
   }
 
+
   return null;
+
 }
+
+
+/* =========================================================
+   BOOKING PATH
+========================================================= */
+
+function isBookingPath(
+  pathname
+) {
+
+  return /^\/farmer\/book\/?$/i.test(
+    String(
+      pathname ||
+      ""
+    )
+  );
+
+}
+
+
+/* =========================================================
+   BOOKING NAVIGATION
+========================================================= */
+
+function navigateBookingPage(
+  state,
+  options,
+  autoConfirm = false
+) {
+
+  const safeState =
+    assistantBooking.normalize(
+      state
+    );
+
+
+  const routeState = {
+
+    ...assistantBooking.buildBookingRouteState(
+      safeState
+    ),
+
+    assistantAutoConfirm:
+      Boolean(
+        autoConfirm
+      ),
+
+  };
+
+
+  if (
+    typeof options.navigate ===
+    "function"
+  ) {
+
+    options.navigate(
+      "/farmer/book",
+      {
+
+        state:
+          routeState,
+
+      }
+    );
+
+
+    return {
+
+      navigationPerformed:
+        true,
+
+      shouldNavigate:
+        false,
+
+      navigateTo:
+        "/farmer/book",
+
+      routeState,
+
+    };
+
+  }
+
+
+  return {
+
+    navigationPerformed:
+      false,
+
+    shouldNavigate:
+      true,
+
+    navigateTo:
+      "/farmer/book",
+
+    routeState,
+
+  };
+
+}
+
+
+/* =========================================================
+   BOOKING CONFIRMATION EVENT
+========================================================= */
+
+function dispatchBookingEventAndWait(
+  name,
+  state,
+  timeoutMs =
+    BOOKING_CONFIRM_TIMEOUT
+) {
+
+  if (
+    bookingSubmissionInFlight
+  ) {
+
+    return bookingSubmissionInFlight;
+
+  }
+
+
+  bookingSubmissionInFlight =
+    new Promise(
+      resolve => {
+
+        if (
+          typeof window ===
+          "undefined"
+        ) {
+
+          resolve({
+
+            success:
+              false,
+
+            reason:
+              "Booking page is unavailable.",
+
+          });
+
+          return;
+
+        }
+
+
+        let settled =
+          false;
+
+
+        let timeout =
+          null;
+
+
+        const finish =
+          result => {
+
+            if (
+              settled
+            ) {
+
+              return;
+
+            }
+
+
+            settled =
+              true;
+
+
+            if (
+              timeout
+            ) {
+
+              clearTimeout(
+                timeout
+              );
+
+            }
+
+
+            resolve(
+
+              result ||
+              {
+
+                success:
+                  true,
+
+              }
+
+            );
+
+          };
+
+
+        timeout =
+          setTimeout(
+            () => {
+
+              finish({
+
+                success:
+                  false,
+
+                reason:
+                  "The booking page did not finish submitting the booking. Please check the booking form and try again.",
+
+                timedOut:
+                  true,
+
+              });
+
+            },
+            timeoutMs
+          );
+
+
+        try {
+
+          window.dispatchEvent(
+
+            new CustomEvent(
+              name,
+              {
+
+                detail: {
+
+                  booking:
+                    state,
+
+                  assistantBooking:
+                    state,
+
+                  source:
+                    "krishisetu-assistant",
+
+                  autoConfirm:
+                    true,
+
+                  onComplete:
+                    finish,
+
+                },
+
+              }
+            )
+
+          );
+
+        } catch (
+          error
+        ) {
+
+          finish({
+
+            success:
+              false,
+
+            reason:
+              error?.message ||
+              "Unable to submit the booking.",
+
+          });
+
+        }
+
+      }
+    );
+
+
+  bookingSubmissionInFlight =
+    bookingSubmissionInFlight
+      .finally(
+        () => {
+
+          bookingSubmissionInFlight =
+            null;
+
+        }
+      );
+
+
+  return bookingSubmissionInFlight;
+
+}
+
+
+/* =========================================================
+   ACTUAL BOOKING HANDOFF
+========================================================= */
+
+async function submitBookingThroughFarmerBook(
+  state,
+  options
+) {
+
+  const safe =
+    assistantBooking.normalize(
+      state
+    );
+
+
+  const validation =
+    assistantBooking.validateBookingDraft(
+      safe
+    );
+
+
+  if (
+    !validation.valid
+  ) {
+
+    return {
+
+      success:
+        false,
+
+      reason:
+        assistantBooking.nextPrompt(
+          safe,
+          options.language
+        ),
+
+      validation,
+
+      booking:
+        safe,
+
+    };
+
+  }
+
+
+  /*
+   * IMPORTANT
+   *
+   * `confirmed` in assistantBooking historically means
+   * "user has authorized this booking".
+   *
+   * It must NOT remain true while the real HTTP submission
+   * is still pending, otherwise a failed submission can make
+   * the assistant believe the booking already exists.
+   */
+
+  const submissionState =
+    assistantBooking.normalize({
+
+      ...safe,
+
+      confirmed:
+        false,
+
+      readyForConfirmation:
+        true,
+
+      awaitingConfirmation:
+        true,
+
+    });
+
+
+  saveBookingState(
+    submissionState
+  );
+
+
+  /*
+   * FarmerBook is already mounted.
+   */
+
+  if (
+    isBookingPath(
+      options.currentPath
+    )
+  ) {
+
+    const submission =
+      await dispatchBookingEventAndWait(
+        "krishisetu:assistant-confirm-booking",
+        submissionState
+      );
+
+
+    if (
+      !submission?.success
+    ) {
+
+      /*
+       * Restore a retryable state after a failed
+       * submission rather than locking the booking.
+       */
+
+      const retryState =
+        assistantBooking.normalize({
+
+          ...submissionState,
+
+          confirmed:
+            false,
+
+          readyForConfirmation:
+            true,
+
+          awaitingConfirmation:
+            true,
+
+        });
+
+
+      saveBookingState(
+        retryState
+      );
+
+
+      return {
+
+        success:
+          false,
+
+        reason:
+          submission?.reason ||
+          "I couldn’t complete the booking.",
+
+        booking:
+          retryState,
+
+        submission,
+
+      };
+
+    }
+
+
+    const submittedBooking =
+      submission.booking ||
+      null;
+
+
+    const finalState =
+      assistantBooking.normalize({
+
+        ...submissionState,
+
+        confirmed:
+          true,
+
+        readyForConfirmation:
+          false,
+
+        awaitingConfirmation:
+          false,
+
+        token:
+          submittedBooking?.token ||
+          submission?.token ||
+          submissionState.token ||
+          null,
+
+        bookingId:
+          submittedBooking?.id ||
+          submission?.bookingId ||
+          submissionState.bookingId ||
+          null,
+
+      });
+
+
+    clearPendingAction();
+
+
+    saveBookingState(
+      finalState
+    );
+
+
+    return {
+
+      success:
+        true,
+
+      submitted:
+        true,
+
+      booking:
+        finalState,
+
+      submittedBooking,
+
+      submission,
+
+    };
+
+  }
+
+
+  /*
+   * FarmerBook is not mounted.
+   *
+   * Navigate with autoConfirm so the existing FarmerBook
+   * auto-confirm bridge can perform the real submission.
+   */
+
+  const navigation =
+    navigateBookingPage(
+      submissionState,
+      options,
+      true
+    );
+
+
+  return {
+
+    success:
+      true,
+
+    submitted:
+      false,
+
+    pendingSubmission:
+      true,
+
+    navigation,
+
+    booking:
+      submissionState,
+
+    reason:
+      "Opening the booking page to complete the authorized booking.",
+
+  };
+
+}
+
+
+/* =========================================================
+   CROP AVAILABILITY
+========================================================= */
+
+function isCropAvailabilityRequest(
+  text
+) {
+
+  const value =
+    String(
+      text ||
+      ""
+    )
+      .toLowerCase();
+
+
+  return (
+
+    /\b(what|which|show|list|tell)\b.*\b(crops?|produce)\b/i.test(
+      value
+    ) ||
+
+    /\b(available|accepted|offered)\b.*\b(crops?|produce)\b/i.test(
+      value
+    ) ||
+
+    /\b(crops?|produce)\b.*\b(available|accepted|offered)\b/i.test(
+      value
+    ) ||
+
+    /उपलब्ध.*फसल|कौन.*फसल/i.test(
+      value
+    ) ||
+
+    /అందుబాటులో.*పంట|ఏ.*పంట/i.test(
+      value
+    )
+
+  );
+
+}
+
+
+/* =========================================================
+   AVAILABLE CROPS
+========================================================= */
+
+function getAvailableCropNames(
+  language = "en"
+) {
+
+  const farmer =
+    getFarmerContext();
+
+
+  const crops =
+    Array.isArray(
+      farmer?.crops
+    )
+      ? farmer.crops
+      : [];
+
+
+  const names =
+    crops
+      .map(
+        crop =>
+          String(
+            crop?.name ??
+            crop?.cropName ??
+            ""
+          )
+            .trim()
+      )
+      .filter(
+        Boolean
+      );
+
+
+  if (
+    names.length
+  ) {
+
+    return [
+      ...new Set(
+        names
+      ),
+    ];
+
+  }
+
+
+  if (
+    language ===
+    "hi"
+  ) {
+
+    return [
+
+      "गेहूं",
+
+      "धान",
+
+      "मक्का",
+
+      "कपास",
+
+    ];
+
+  }
+
+
+  if (
+    language ===
+    "te"
+  ) {
+
+    return [
+
+      "గోధుమ",
+
+      "వరి",
+
+      "మొక్కజొన్న",
+
+      "పత్తి",
+
+    ];
+
+  }
+
+
+  return [
+
+    "Wheat",
+
+    "Paddy",
+
+    "Maize",
+
+    "Cotton",
+
+  ];
+
+}
+
+
+/* =========================================================
+   BOOKING PAGE REQUEST
+========================================================= */
+
+function isBookingPageRequest(
+  text
+) {
+
+  const value =
+    String(
+      text ||
+      ""
+    );
+
+
+  return (
+
+    /\b(open|show|go\s+to|take\s+me\s+to|navigate\s+to)\b.*\bbooking\b.*\b(page|form|screen)\b/i.test(
+      value
+    ) ||
+
+    /\bbooking\s+(page|form|screen)\b/i.test(
+      value
+    ) ||
+
+    /\b(procurement|book)\s+(page|form|screen)\b/i.test(
+      value
+    )
+
+  );
+
+}
+
+
+/* =========================================================
+   BOOKING COMMAND
+========================================================= */
+
+function extractExplicitBookingCommand(
+  text
+) {
+
+  return (
+
+    /\b(book|booking|reserve|reservation|procurement|sell|select|choose|start|new)\b/i.test(
+      String(
+        text ||
+        ""
+      )
+    ) ||
+
+    /बुक|बुकिंग|बिक्री|चुनो|चुनें|రిజర్వ్|బుక్|బుకింగ్|ఎంచుకో/i.test(
+      String(
+        text ||
+        ""
+      )
+    )
+
+  );
+
+}
+
+
+/* =========================================================
+   IMMEDIATE BOOKING APPROVAL
+========================================================= */
+
+function isImmediateBookingApproval(
+  text
+) {
+
+  const value =
+    String(
+      text ||
+      ""
+    )
+      .trim();
+
+
+  if (
+    !value
+  ) {
+
+    return false;
+
+  }
+
+
+  /*
+   * Examples:
+   *
+   * yes book 234 kg paddy tomorrow 8 to 830
+   * okay book 100 kg wheat tomorrow
+   * sure book paddy
+   */
+
+  return (
+
+    /^(yes|yeah|yep|yup|sure|okay|ok|haan|हां|हाँ|ठीक|ठीक है|अवश्य|అవును|సరే)\b/i.test(
+      value
+    ) &&
+
+    extractExplicitBookingCommand(
+      value
+    )
+
+  );
+
+}
+
+
+/* =========================================================
+   AFFIRMATIVE
+========================================================= */
+
+function extractAffirmative(
+  text
+) {
+
+  return (
+
+    /^(yes|yeah|yep|yup|sure|okay|ok|k|confirm|confirmed|do it|book it|go ahead|continue|proceed|haan|हाँ|हां|ठीक|ठीक है|अवश्य|करो|कर दो|అవును|సరే|చేయండి)[.!\s]*$/i.test(
+      String(
+        text ||
+        ""
+      ).trim()
+    )
+
+  );
+
+}
+
+
+/* =========================================================
+   FARMER DATA QUESTION
+========================================================= */
+
+function isBookingDataQuestion(
+  text
+) {
+
+  const value =
+    String(
+      text ||
+      ""
+    )
+      .toLowerCase();
+
+
+  return (
+
+    /\b(my|show|what|where|give|tell|see)\b.*\b(latest|current|recent)?\b.*\b(token|booking|history|payment|receipt|qr)\b/i.test(
+      value
+    ) ||
+
+    /\b(latest|current|recent)\s+(token|booking|payment)\b/i.test(
+      value
+    ) ||
+
+    /\bwhat('?s| is)\s+my\s+booking\b/i.test(
+      value
+    ) ||
+
+    /\bmy\s+booking\b/i.test(
+      value
+    ) ||
+
+    /\bmy\s+history\b/i.test(
+      value
+    ) ||
+
+    /\bmy\s+payments?\b/i.test(
+      value
+    ) ||
+
+    /\b(recent|latest|last)\s+payments?\b/i.test(
+      value
+    )
+
+  );
+
+}
+
+
+/* =========================================================
+   RESOLVE FARMER BOOKINGS
+========================================================= */
+
+async function getFarmerBookings() {
+
+  const farmer =
+    getStoredFarmer();
+
+
+  if (
+    !farmer?.farmerId &&
+    !farmer?.phone
+  ) {
+
+    return [];
+
+  }
+
+
+  try {
+
+    const data =
+      await controllerGetJson(
+        "/bookings"
+      );
+
+
+    const rows =
+      Array.isArray(
+        data?.bookings
+      )
+        ? data.bookings
+        : Array.isArray(
+            data
+          )
+          ? data
+          : [];
+
+
+    const farmerId =
+      String(
+        farmer.farmerId ||
+        ""
+      );
+
+
+    const farmerPhone =
+      String(
+        farmer.phone ||
+        ""
+      )
+        .replace(
+          /\D/g,
+          ""
+        );
+
+
+    return rows.filter(
+      row => {
+
+        const rowFarmerId =
+          String(
+            row?.farmer_id ??
+            row?.farmerId ??
+            ""
+          );
+
+
+        const rowPhone =
+          String(
+            row?.farmer_phone ??
+            row?.phone ??
+            row?.mobile ??
+            ""
+          )
+            .replace(
+              /\D/g,
+              ""
+            );
+
+
+        return (
+
+          (
+            farmerId &&
+            rowFarmerId ===
+              farmerId
+          ) ||
+
+          (
+            farmerPhone &&
+            rowPhone ===
+              farmerPhone
+          )
+
+        );
+
+      }
+    );
+
+  } catch {
+
+    return [];
+
+  }
+
+}
+
+
+/* =========================================================
+   SORT BOOKINGS
+========================================================= */
+
+function sortBookings(
+  rows
+) {
+
+  return [
+
+    ...(
+      Array.isArray(
+        rows
+      )
+        ? rows
+        : []
+    ),
+
+  ].sort(
+    (
+      a,
+      b
+    ) => {
+
+      const aTime =
+        String(
+          a?.created_at ??
+          a?.createdAt ??
+          `${a?.date || ""} ${a?.slot_start || ""}`
+        );
+
+
+      const bTime =
+        String(
+          b?.created_at ??
+          b?.createdAt ??
+          `${b?.date || ""} ${b?.slot_start || ""}`
+        );
+
+
+      return bTime.localeCompare(
+        aTime
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   FIND SPECIFIC FARMER BOOKING
+========================================================= */
+
+async function resolveFarmerBookingForAssistant(
+  message,
+  bookingState = null
+) {
+
+  const normalizedMessage =
+    String(
+      message ||
+      ""
+    )
+      .toLowerCase();
+
+
+  const rows =
+    await getFarmerBookings();
+
+
+  if (
+    !rows.length
+  ) {
+
+    /*
+     * A currently stored actual token can still be useful
+     * when the page has the booking loaded.
+     */
+
+    const context =
+      getFarmerContext();
+
+
+    const contextBooking =
+      context?.latestBooking ||
+      context?.currentBooking ||
+      null;
+
+
+    if (
+      contextBooking
+    ) {
+
+      return contextBooking;
+
+    }
+
+
+    return null;
+
+  }
+
+
+  const exactToken =
+    normalizedMessage.match(
+      /\b(?:token|टोकन|టోకెన్)\s*(?:no\.?|number|#)?\s*([a-z0-9-]+)\b/i
+    )?.[1] ||
+    null;
+
+
+  if (
+    exactToken
+  ) {
+
+    const match =
+      rows.find(
+        row =>
+          String(
+            row?.token ??
+            row?.tokenNumber ??
+            ""
+          )
+            .toLowerCase() ===
+          exactToken.toLowerCase()
+      );
+
+
+    if (
+      match
+    ) {
+
+      return match;
+
+    }
+
+  }
+
+
+  const currentTokenRequested =
+    /\b(this|current|latest|my)\s+token\b/i.test(
+      normalizedMessage
+    );
+
+
+  if (
+    currentTokenRequested
+  ) {
+
+    const draftToken =
+      bookingState?.token;
+
+
+    if (
+      draftToken
+    ) {
+
+      const draftMatch =
+        rows.find(
+          row =>
+            String(
+              row?.token ||
+              ""
+            ) ===
+            String(
+              draftToken
+            )
+        );
+
+
+      if (
+        draftMatch
+      ) {
+
+        return draftMatch;
+
+      }
+
+    }
+
+
+    const context =
+      getFarmerContext();
+
+
+    const contextToken =
+      context?.currentToken?.token ||
+      context?.latestToken?.token ||
+      context?.currentToken?.tokenNumber ||
+      context?.latestToken?.tokenNumber ||
+      null;
+
+
+    if (
+      contextToken
+    ) {
+
+      const contextMatch =
+        rows.find(
+          row =>
+            String(
+              row?.token ||
+              row?.tokenNumber ||
+              ""
+            ) ===
+            String(
+              contextToken
+            )
+        );
+
+
+      if (
+        contextMatch
+      ) {
+
+        return contextMatch;
+
+      }
+
+    }
+
+  }
+
+
+  const bookingId =
+    bookingState?.bookingId;
+
+
+  if (
+    bookingId
+  ) {
+
+    const byId =
+      rows.find(
+        row =>
+          String(
+            row?.id ??
+            ""
+          ) ===
+          String(
+            bookingId
+          )
+      );
+
+
+    if (
+      byId
+    ) {
+
+      return byId;
+
+    }
+
+  }
+
+
+  const now =
+    new Date();
+
+
+  const isoForOffset =
+    offset => {
+
+      const date =
+        new Date(
+          now
+        );
+
+
+      date.setHours(
+        0,
+        0,
+        0,
+        0
+      );
+
+
+      date.setDate(
+        date.getDate() +
+        Number(
+          offset
+        )
+      );
+
+
+      return (
+
+        `${date.getFullYear()}-` +
+
+        `${String(
+          date.getMonth() +
+          1
+        ).padStart(
+          2,
+          "0"
+        )}-` +
+
+        `${String(
+          date.getDate()
+        ).padStart(
+          2,
+          "0"
+        )}`
+
+      );
+
+    };
+
+
+  const yesterdayRequested =
+    /\b(yesterday|kal|कल)\b/i.test(
+      normalizedMessage
+    );
+
+
+  const todayRequested =
+    /\b(today|aaj|आज)\b/i.test(
+      normalizedMessage
+    );
+
+
+  if (
+    yesterdayRequested ||
+    todayRequested
+  ) {
+
+    const targetDate =
+      isoForOffset(
+        yesterdayRequested
+          ? -1
+          : 0
+      );
+
+
+    const sameDay =
+      rows.filter(
+        row =>
+          String(
+            row?.date ??
+            ""
+          ) ===
+          targetDate
+      );
+
+
+    if (
+      sameDay.length
+    ) {
+
+      return sortBookings(
+        sameDay
+      )[0];
+
+    }
+
+  }
+
+
+  /*
+   * If "this booking" is requested, prefer the newest
+   * active booking.
+   */
+
+  if (
+    /\b(this|current)\s+booking\b/i.test(
+      normalizedMessage
+    )
+  ) {
+
+    const active =
+      rows.filter(
+        row =>
+          ![
+            "CANCELLED",
+            "CANCELED",
+            "REJECTED",
+            "EXPIRED",
+          ].includes(
+            String(
+              row?.status ??
+              ""
+            ).toUpperCase()
+          )
+      );
+
+
+    if (
+      active.length
+    ) {
+
+      return sortBookings(
+        active
+      )[0];
+
+    }
+
+  }
+
+
+  return sortBookings(
+    rows
+  )[0] ||
+  null;
+
+}
+
+
+/* =========================================================
+   DOCUMENT REQUEST
+========================================================= */
+
+async function handleFarmerDocumentRequest(
+  message,
+  normalized,
+  bookingState
+) {
+
+  const text =
+    String(
+      message ||
+      ""
+    ).toLowerCase();
+
+
+  const mentionsQr =
+    /\bqr(?:\s+code)?\b/i.test(
+      text
+    );
+
+
+  const mentionsReceipt =
+    /\breceipt\b/i.test(
+      text
+    ) ||
+    /\bदस्तावेज़\b/i.test(
+      text
+    ) ||
+    /\bरसीद\b/i.test(
+      text
+    ) ||
+    /\bరసీదు\b/i.test(
+      text
+    );
+
+
+  if (
+    !mentionsQr &&
+    !mentionsReceipt
+  ) {
+
+    return null;
+
+  }
+
+
+  /*
+   * Do not intercept educational questions such as:
+   *
+   * "what is a QR code?"
+   */
+
+  const informational =
+    /\bwhat\s+is\b.*\bqr\b/i.test(
+      text
+    ) ||
+    /\bwhat\s+is\b.*\breceipt\b/i.test(
+      text
+    );
+
+
+  if (
+    informational
+  ) {
+
+    return null;
+
+  }
+
+
+  const actionable =
+    /\b(download|save|get|show|open|view|give|send|provide)\b/i.test(
+      text
+    ) ||
+
+    /\b(this|current|latest|my|yesterday|today|token|booking|बुकिंग|टोकन)\b/i.test(
+      text
+    );
+
+
+  if (
+    !actionable
+  ) {
+
+    return null;
+
+  }
+
+
+  const booking =
+    await resolveFarmerBookingForAssistant(
+      message,
+      bookingState
+    );
+
+
+  if (
+    !booking
+  ) {
+
+    return controllerResult(
+      CONTROLLER_TYPES.ERROR,
+      CONTROLLER_STATUS.FAILED,
+      {
+
+        action:
+          "OPEN_TOKEN",
+
+        reply:
+          normalized.language ===
+          "hi"
+
+            ? "मुझे उस बुकिंग का रिकॉर्ड नहीं मिला।"
+
+            : normalized.language ===
+                "te"
+
+              ? "ఆ బుకింగ్ రికార్డ్ దొరకలేదు."
+
+              : "I couldn't find the booking record you're referring to.",
+
+        shouldNavigate:
+          false,
+
+        shouldCallAI:
+          false,
+
+      }
+    );
+
+  }
+
+
+  const assistantAction =
+    mentionsReceipt
+      ? "download-receipt"
+      : "download-qr";
+
+
+  const query =
+    new URLSearchParams({
+
+      booking:
+        String(
+          booking.id
+        ),
+
+      assistantAction,
+
+    });
+
+
+  const target =
+    `/farmer/token?${query.toString()}`;
+
+
+  if (
+    typeof normalized.navigate ===
+    "function"
+  ) {
+
+    normalized.navigate(
+      target
+    );
+
+
+    return controllerResult(
+      CONTROLLER_TYPES.NAVIGATION,
+      CONTROLLER_STATUS.SUCCESS,
+      {
+
+        action:
+          "OPEN_TOKEN",
+
+        reply:
+          normalized.language ===
+          "hi"
+
+            ? (
+                mentionsReceipt
+                  ? "ठीक है, उस बुकिंग की रसीद खोल रहा हूँ।"
+                  : "ठीक है, उस बुकिंग का QR खोल रहा हूँ।"
+              )
+
+            : normalized.language ===
+                "te"
+
+              ? (
+                  mentionsReceipt
+                    ? "సరే, ఆ బుకింగ్ రసీదును తెరుస్తున్నాను."
+                    : "సరే, ఆ బుకింగ్ QR ను తెరుస్తున్నాను."
+                )
+
+              : (
+                  mentionsReceipt
+                    ? "Okay. I’m opening that booking's receipt."
+                    : "Okay. I’m opening that booking's QR."
+                ),
+
+        shouldNavigate:
+          false,
+
+        shouldCallAI:
+          false,
+
+        navigateTo:
+          target,
+
+        bookingId:
+          booking.id,
+
+        booking:
+          {
+
+            id:
+              booking.id,
+
+            token:
+              booking.token ||
+              booking.tokenNumber ||
+              null,
+
+            date:
+              booking.date ||
+              null,
+
+          },
+
+        assistantTokenAction:
+          assistantAction,
+
+      }
+    );
+
+  }
+
+
+  return controllerResult(
+    CONTROLLER_TYPES.NAVIGATION,
+    CONTROLLER_STATUS.SUCCESS,
+    {
+
+      action:
+        "OPEN_TOKEN",
+
+      reply:
+        mentionsReceipt
+          ? "Opening that booking's receipt."
+          : "Opening that booking's QR.",
+
+      shouldNavigate:
+        true,
+
+      shouldCallAI:
+        false,
+
+      navigateTo:
+        target,
+
+      routeState:
+        {
+
+          assistantTokenAction:
+            assistantAction,
+
+        },
+
+      bookingId:
+        booking.id,
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   FARMER DATA FORMATTING
+========================================================= */
+
+function bookingSummaryLine(
+  booking,
+  language
+) {
+
+  const crop =
+    booking?.crop ||
+    booking?.cropName ||
+    "";
+
+
+  const quantity =
+    booking?.quantity ??
+    booking?.estimatedQuantity ??
+    "";
+
+
+  const date =
+    booking?.date ||
+    "date unavailable";
+
+
+  const token =
+    booking?.token ||
+    booking?.tokenNumber ||
+    "";
+
+
+  if (
+    language ===
+    "hi"
+  ) {
+
+    return (
+      `${crop || "फसल"} — ` +
+      `${quantity ? `${quantity} kg, ` : ""}` +
+      `${date}` +
+      `${token ? `, टोकन ${token}` : ""}`
+    );
+
+  }
+
+
+  if (
+    language ===
+    "te"
+  ) {
+
+    return (
+      `${crop || "పంట"} — ` +
+      `${quantity ? `${quantity} kg, ` : ""}` +
+      `${date}` +
+      `${token ? `, టోకెన్ ${token}` : ""}`
+    );
+
+  }
+
+
+  return (
+    `${crop || "crop"} — ` +
+    `${quantity ? `${quantity} kg, ` : ""}` +
+    `${date}` +
+    `${token ? `, token ${token}` : ""}`
+  );
+
+}
+
+
+/* =========================================================
+   FARMER DATA REQUEST
+========================================================= */
+
+async function handleFarmerDataRequest(
+  message,
+  normalized,
+  bookingState
+) {
+
+  const text =
+    String(
+      message ||
+      ""
+    ).toLowerCase();
+
+
+  const wantsLatestToken =
+
+    /\b(latest|current|recent|my|this)\b.*\btoken\b/i.test(
+      text
+    ) ||
+
+    /\bshow\s+my\s+token\b/i.test(
+      text
+    );
+
+
+  const wantsBooking =
+
+    /\bwhat('?s| is)\s+my\s+booking\b/i.test(
+      text
+    ) ||
+
+    /\bshow\s+my\s+booking\b/i.test(
+      text
+    ) ||
+
+    /\bmy\s+current\s+booking\b/i.test(
+      text
+    ) ||
+
+    /\bmy\s+latest\s+booking\b/i.test(
+      text
+    );
+
+
+  const wantsHistory =
+
+    /\b(booking|procurement|purchase)\s+history\b/i.test(
+      text
+    ) ||
+
+    /\bmy\s+history\b/i.test(
+      text
+    ) ||
+
+    /\b(past|previous|old)\s+bookings\b/i.test(
+      text
+    ) ||
+
+    /\bbooking\s+records\b/i.test(
+      text
+    );
+
+
+  const wantsPayments =
+
+    /\b(payment|payments|payment status|payment history)\b/i.test(
+      text
+    ) &&
+
+    (
+      /\b(my|recent|latest|current|show|what|when)\b/i.test(
+        text
+      ) ||
+      /\bpayment\s+status\b/i.test(
+        text
+      )
+    );
+
+
+  if (
+    !wantsLatestToken &&
+    !wantsBooking &&
+    !wantsHistory &&
+    !wantsPayments
+  ) {
+
+    return null;
+
+  }
+
+
+  /*
+   * TOKEN / BOOKING
+   */
+
+  if (
+    wantsLatestToken ||
+    wantsBooking
+  ) {
+
+    const booking =
+      await resolveFarmerBookingForAssistant(
+        message,
+        bookingState
+      );
+
+
+    if (
+      !booking
+    ) {
+
+      return controllerResult(
+        CONTROLLER_TYPES.ERROR,
+        CONTROLLER_STATUS.FAILED,
+        {
+
+          action:
+            "OPEN_TOKEN",
+
+          reply:
+            normalized.language ===
+            "hi"
+
+              ? "मुझे आपकी हाल की बुकिंग नहीं मिली।"
+
+              : normalized.language ===
+                  "te"
+
+                ? "మీ ఇటీవలి బుకింగ్ దొరకలేదు."
+
+                : "I couldn't find a recent booking for you.",
+
+          shouldNavigate:
+            false,
+
+          shouldCallAI:
+            false,
+
+        }
+      );
+
+    }
+
+
+    if (
+      wantsLatestToken
+    ) {
+
+      const token =
+        booking.token ||
+        booking.tokenNumber ||
+        null;
+
+
+      const reply =
+
+        normalized.language ===
+        "hi"
+
+          ? (
+              `आपका नवीनतम टोकन ` +
+              `${token || "उपलब्ध नहीं"} है.` +
+              `${booking.date ? ` बुकिंग तारीख ${booking.date} है.` : ""}`
+            )
+
+          : normalized.language ===
+              "te"
+
+            ? (
+                `మీ తాజా టోకెన్ ` +
+                `${token || "అందుబాటులో లేదు"}.` +
+                `${booking.date ? ` బుకింగ్ తేదీ ${booking.date}.` : ""}`
+              )
+
+            : (
+                `Your latest token is ` +
+                `${token || "not available"}.` +
+                `${booking.date ? ` The booking date is ${booking.date}.` : ""}`
+              );
+
+
+      return controllerResult(
+        CONTROLLER_TYPES.LOCAL,
+        CONTROLLER_STATUS.SUCCESS,
+        {
+
+          action:
+            "OPEN_TOKEN",
+
+          reply,
+
+          booking,
+
+          token,
+
+          bookingId:
+            booking.id,
+
+          shouldNavigate:
+            false,
+
+          shouldCallAI:
+            false,
+
+        }
+      );
+
+    }
+
+
+    return controllerResult(
+      CONTROLLER_TYPES.LOCAL,
+      CONTROLLER_STATUS.SUCCESS,
+      {
+
+        action:
+          "OPEN_TOKEN",
+
+        reply:
+          normalized.language ===
+          "hi"
+
+            ? `आपकी सबसे हाल की बुकिंग: ${bookingSummaryLine(
+                booking,
+                normalized.language
+              )}.`
+
+            : normalized.language ===
+                "te"
+
+              ? `మీ తాజా బుకింగ్: ${bookingSummaryLine(
+                  booking,
+                  normalized.language
+                )}.`
+
+              : `Your latest booking: ${bookingSummaryLine(
+                  booking,
+                  normalized.language
+                )}.`,
+
+        booking,
+
+        bookingId:
+          booking.id,
+
+        shouldNavigate:
+          false,
+
+        shouldCallAI:
+          false,
+
+      }
+    );
+
+  }
+
+
+  /*
+   * BOOKING HISTORY
+   */
+
+  if (
+    wantsHistory
+  ) {
+
+    const rows =
+      sortBookings(
+        await getFarmerBookings()
+      );
+
+
+    if (
+      !rows.length
+    ) {
+
+      return controllerResult(
+        CONTROLLER_TYPES.LOCAL,
+        CONTROLLER_STATUS.SUCCESS,
+        {
+
+          action:
+            "OPEN_HISTORY",
+
+          reply:
+            normalized.language ===
+            "hi"
+
+              ? "आपकी बुकिंग हिस्ट्री में अभी कोई रिकॉर्ड नहीं मिला।"
+
+              : normalized.language ===
+                  "te"
+
+                ? "మీ బుకింగ్ చరిత్రలో ప్రస్తుతం రికార్డులు లేవు."
+
+                : "I couldn't find any booking records in your history.",
+
+          bookings:
+            [],
+
+          shouldNavigate:
+            false,
+
+          shouldCallAI:
+            false,
+
+        }
+      );
+
+    }
+
+
+    const recent =
+      rows.slice(
+        0,
+        5
+      );
+
+
+    const lines =
+      recent.map(
+        (
+          booking,
+          index
+        ) =>
+          `${index + 1}. ${bookingSummaryLine(
+            booking,
+            normalized.language
+          )}`
+      );
+
+
+    const reply =
+
+      normalized.language ===
+      "hi"
+
+        ? `आपकी हाल की बुकिंग:\n${lines.join(
+            "\n"
+          )}`
+
+        : normalized.language ===
+            "te"
+
+          ? `మీ ఇటీవలి బుకింగ్స్:\n${lines.join(
+              "\n"
+            )}`
+
+          : `Your recent bookings:\n${lines.join(
+              "\n"
+            )}`;
+
+
+    return controllerResult(
+      CONTROLLER_TYPES.LOCAL,
+      CONTROLLER_STATUS.SUCCESS,
+      {
+
+        action:
+          "OPEN_HISTORY",
+
+        reply,
+
+        bookings:
+          recent,
+
+        shouldNavigate:
+          false,
+
+        shouldCallAI:
+          false,
+
+      }
+    );
+
+  }
+
+
+  /*
+   * PAYMENT CONTEXT
+   *
+   * Payment API details are intentionally not invented here.
+   * Use the existing farmer context when available.
+   */
+
+  if (
+    wantsPayments
+  ) {
+
+    const farmer =
+      getFarmerContext();
+
+
+    const payments =
+      Array.isArray(
+        farmer?.recentPayments
+      )
+        ? farmer.recentPayments
+        : Array.isArray(
+            farmer?.payments
+          )
+          ? farmer.payments
+          : [];
+
+
+    if (
+      payments.length
+    ) {
+
+      const recent =
+        payments.slice(
+          0,
+          5
+        );
+
+
+      const lines =
+        recent.map(
+          (
+            payment,
+            index
+          ) => {
+
+            const amount =
+              payment?.amount ??
+              payment?.paidAmount ??
+              payment?.total ??
+              "";
+
+
+            const date =
+              payment?.date ??
+              payment?.paymentDate ??
+              "";
+
+
+            const status =
+              payment?.status ??
+              payment?.paymentStatus ??
+              "";
+
+
+            return (
+
+              `${index + 1}. ` +
+
+              `${amount ? `₹${amount}` : "Payment"}` +
+
+              `${date ? ` — ${date}` : ""}` +
+
+              `${status ? ` — ${status}` : ""}`
+
+            );
+
+          }
+        );
+
+
+      const reply =
+
+        normalized.language ===
+        "hi"
+
+          ? `आपके हाल के भुगतान:\n${lines.join(
+              "\n"
+            )}`
+
+          : normalized.language ===
+              "te"
+
+            ? `మీ ఇటీవలి చెల్లింపులు:\n${lines.join(
+                "\n"
+              )}`
+
+            : `Your recent payments:\n${lines.join(
+                "\n"
+              )}`;
+
+
+      return controllerResult(
+        CONTROLLER_TYPES.LOCAL,
+        CONTROLLER_STATUS.SUCCESS,
+        {
+
+          action:
+            "OPEN_PAYMENTS",
+
+          reply,
+
+          payments:
+            recent,
+
+          shouldNavigate:
+            false,
+
+          shouldCallAI:
+            false,
+
+        }
+      );
+
+    }
+
+
+    /*
+     * Let backend AI answer from richer context when the
+     * local context does not contain payment records.
+     */
+
+    return null;
+
+  }
+
+
+  return null;
+
+}
+
+
+/* =========================================================
+   LOCAL ROUTING
+========================================================= */
 
 export function routeLocalCommand(
   message,
   options = {}
 ) {
+
   const normalized =
     normalizeOptions({
+
       ...options,
+
       message,
+
     });
+
 
   const pending =
     normalized.pendingAction !==
-      undefined
+    undefined
+
       ? normalized.pendingAction
+
       : loadPendingAction();
+
 
   const bookingState =
     getEffectiveBookingState(
       normalized.bookingState
     );
 
+
+  /*
+   * Farmer data questions must not be mistaken for
+   * booking-form updates.
+   */
+
   if (
-    bookingState.active ||
-    assistantBooking.extractCrop(
-      normalized.message
-    ) ||
-    assistantBooking.extractQuantity(
+    isBookingDataQuestion(
       normalized.message
     )
   ) {
+
+    return {
+
+      decision:
+        null,
+
+      pending,
+
+      booking:
+        bookingState,
+
+      farmerDataRequest:
+        true,
+
+    };
+
+  }
+
+
+  /*
+   * Booking information and booking continuation are
+   * handled locally.
+   */
+
+  const bookingInformationRequest =
+    typeof assistantBooking.isBookingInformationRequest ===
+      "function" &&
+
+    assistantBooking.isBookingInformationRequest(
+      normalized.message
+    );
+
+
+  const hasBookingDetails =
+    Boolean(
+      assistantBooking.extractCrop(
+        normalized.message
+      ) ||
+
+      assistantBooking.extractQuantity(
+        normalized.message
+      ) ||
+
+      assistantBooking.extractNaturalBookingDate(
+        normalized.message,
+        new Date()
+      ) ||
+
+      assistantBooking.extractTimeReference(
+        normalized.message
+      )
+    );
+
+
+  if (
+    bookingState.active ||
+    bookingInformationRequest ||
+    hasBookingDetails
+  ) {
+
     const bookingResult =
       processBookingConversation(
         normalized.message,
         normalized
       );
 
+
     if (
       bookingResult?.handled &&
       bookingResult.intent !==
         BOOKING_INTENTS.NONE
     ) {
+
       return {
+
         decision:
           buildBookingControllerResult(
             bookingResult,
@@ -2200,14 +6228,19 @@ export function routeLocalCommand(
 
         booking:
           bookingResult.state,
+
       };
+
     }
+
   }
+
 
   const decision =
     routeAssistantCommand(
       normalized.message,
       {
+
         currentPath:
           normalized.currentPath,
 
@@ -2216,40 +6249,61 @@ export function routeLocalCommand(
 
         pendingAction:
           pending,
+
+        bookingState:
+          bookingState,
+
+        bookingDraft:
+          bookingState,
+
       }
     );
 
+
   return {
+
     decision,
 
     pending,
 
     booking:
       bookingState,
+
   };
+
 }
+
+
+/* =========================================================
+   CONTEXT
+========================================================= */
 
 export function createControllerContext(
   options = {}
 ) {
+
   const normalized =
     normalizeOptions(
       options
     );
 
+
   const pending =
     normalized.pendingAction !==
-      undefined
+    undefined
       ? normalized.pendingAction
       : loadPendingAction();
+
 
   const bookingState =
     getEffectiveBookingState(
       normalized.bookingState
     );
 
+
   const context =
     buildAssistantContext({
+
       pathname:
         normalized.currentPath,
 
@@ -2264,45 +6318,91 @@ export function createControllerContext(
 
       pendingAction:
         pending,
+
+      bookingState,
+
+      bookingDraft:
+        bookingState,
+
+      bookingContext:
+        normalized.bookingContext,
+
+      semanticTopic:
+        normalized.semanticTopic,
+
     });
 
+
+  const serverContext =
+    buildServerAssistantContext({
+
+      pathname:
+        normalized.currentPath,
+
+      language:
+        normalized.language,
+
+      history:
+        normalized.history,
+
+      message:
+        normalized.message,
+
+      pendingAction:
+        pending,
+
+      bookingState,
+
+      bookingDraft:
+        bookingState,
+
+      bookingContext:
+        normalized.bookingContext,
+
+      semanticTopic:
+        normalized.semanticTopic,
+
+    });
+
+
   return {
+
     context,
 
-    serverContext:
-      buildServerAssistantContext({
-        pathname:
-          normalized.currentPath,
-
-        language:
-          normalized.language,
-
-        history:
-          normalized.history,
-
-        message:
-          normalized.message,
-
-        pendingAction:
-          pending,
-      }),
+    serverContext,
 
     pending,
 
     bookingState,
+
   };
+
 }
+
+
+/* =========================================================
+   BACKEND REQUEST
+========================================================= */
 
 export function createBackendRequest(
   options = {}
 ) {
+
   const normalized =
     normalizeOptions(
       options
     );
 
+
   const farmer =
     getStoredFarmer();
+
+
+  const bookingState =
+    getEffectiveBookingState(
+      normalized.bookingState
+    );
+
 
   const {
     serverContext,
@@ -2311,7 +6411,9 @@ export function createBackendRequest(
       normalized
     );
 
+
   return {
+
     text:
       normalized.message,
 
@@ -2325,95 +6427,151 @@ export function createBackendRequest(
       serverContext.currentPage,
 
     farmerId:
-      farmer.farmerId,
+      farmer?.farmerId ||
+      farmer?.id ||
+      null,
 
     phone:
-      farmer.phone,
+      farmer?.phone ||
+      null,
 
     history:
       normalized.history,
 
     context:
       {
+
         ...serverContext,
 
         booking:
           {
+
             state:
-              normalized.bookingState ||
-              loadBookingState(),
+              bookingState,
+
           },
 
         bookingConversation:
           true,
+
+        farmerContext:
+          getFarmerContext(),
+
       },
+
+    bookingState,
+
+    bookingDraft:
+      bookingState,
+
+    semanticTopic:
+      normalized.semanticTopic ||
+      null,
+
+    decision:
+      normalized.decision ||
+      null,
+
   };
+
 }
+
+
+/* =========================================================
+   BACKEND AI
+========================================================= */
 
 export async function requestAI(
   options = {}
 ) {
+
   const request =
     createBackendRequest(
       options
     );
+
 
   debugLog(
     "Controller → AI request",
     request
   );
 
+
   const response =
     await assistantService.ask(
       request
     );
+
 
   debugLog(
     "AI → Controller response",
     response
   );
 
+
   return response;
+
 }
+
+
+/* =========================================================
+   BACKEND DECISION
+========================================================= */
 
 export function processBackendDecision(
   localDecision,
   backendResponse,
   options = {}
 ) {
+
   const normalized =
     normalizeOptions(
       options
     );
 
-  const merged =
-    mergeBackendDecision(
-      localDecision,
-      backendResponse,
-      {
-        language:
-          normalized.language,
-
-        originalText:
-          normalized.message,
-      }
-    );
 
   return {
+
     decision:
-      merged,
+      mergeBackendDecision(
+        localDecision,
+        backendResponse,
+        {
+
+          language:
+            normalized.language,
+
+          originalText:
+            normalized.message,
+
+        }
+      ),
+
   };
+
 }
+
+
+/* =========================================================
+   EXECUTION
+========================================================= */
 
 async function executeLocalDecision(
   decision,
   options
 ) {
-  if (!decision) {
+
+  if (
+    !decision
+  ) {
+
     return null;
+
   }
 
+
   const {
+
     navigate =
       null,
 
@@ -2422,67 +6580,250 @@ async function executeLocalDecision(
 
     language =
       DEFAULT_LANGUAGE,
-  } = options;
+
+  } =
+    options;
+
+
+  /*
+   * BOOKING EXECUTION
+   */
 
   if (
     decision.type ===
       CONTROLLER_TYPES.BOOKING ||
-    decision.bookingCommand
+
+    decision.bookingCommand ||
+
+    (
+      decision.type ===
+        "CONFIRM" &&
+      (
+        decision.action ===
+          "OPEN_BOOKING" ||
+        decision.action ===
+          "CONFIRM_BOOKING"
+      )
+    )
   ) {
+
+    const shouldExecute =
+      Boolean(
+        decision.shouldExecuteBooking
+      ) ||
+
+      decision.action ===
+        "CONFIRM_BOOKING";
+
+
     if (
-      decision.shouldExecuteBooking &&
-      decision.bookingState
+      shouldExecute
     ) {
+
       const state =
         assistantBooking.normalize(
-          decision.bookingState
+          decision.bookingState ||
+          decision.booking ||
+          decision.params ||
+          null
         );
+
+
+      const submission =
+        await submitBookingThroughFarmerBook(
+          state,
+          options
+        );
+
 
       if (
-        isBookingPath(
-          currentPath
-        )
+        !submission.success
       ) {
-        dispatchBookingEvent(
-          "krishisetu:assistant-confirm-booking",
-          state
+
+        return controllerResult(
+          CONTROLLER_TYPES.BOOKING,
+          CONTROLLER_STATUS.FAILED,
+          {
+
+            ...decision,
+
+            reply:
+              submission.reason ||
+              "I couldn’t complete the booking.",
+
+            bookingState:
+              submission.booking ||
+              state,
+
+            booking:
+              submission.booking ||
+              state,
+
+            bookingSubmitted:
+              false,
+
+            shouldExecuteBooking:
+              false,
+
+            shouldNavigate:
+              false,
+
+          }
         );
 
-        return {
-          ...decision,
-
-          confirmationDispatched:
-            true,
-
-          shouldNavigate:
-            false,
-        };
       }
 
-      const navigation =
-        navigateBookingPage(
-          state,
-          options,
-          true
+
+      if (
+        submission.submitted
+      ) {
+
+        const submittedBooking =
+          submission.submittedBooking ||
+          null;
+
+
+        return controllerResult(
+          CONTROLLER_TYPES.BOOKING,
+          CONTROLLER_STATUS.SUCCESS,
+          {
+
+            ...decision,
+
+            action:
+              "BOOKING_CONFIRMED",
+
+            reply:
+              language ===
+              "hi"
+
+                ? (
+                    `बुकिंग सफलतापूर्वक पुष्टि हो गई` +
+                    `${
+                      submittedBooking?.token
+                        ? `। आपका टोकन ${submittedBooking.token} है।`
+                        : "।"
+                    }`
+                  )
+
+                : language ===
+                    "te"
+
+                  ? (
+                      `బుకింగ్ విజయవంతంగా నిర్ధారించబడింది` +
+                      `${
+                        submittedBooking?.token
+                          ? `. మీ టోకెన్ ${submittedBooking.token}.`
+                          : "."
+                      }`
+                    )
+
+                  : (
+                      `Booking confirmed successfully` +
+                      `${
+                        submittedBooking?.token
+                          ? `. Your token is ${submittedBooking.token}.`
+                          : "."
+                      }`
+                    ),
+
+            confirmationDispatched:
+              true,
+
+            bookingSubmitted:
+              true,
+
+            bookingResult:
+              submittedBooking,
+
+            bookingState:
+              submission.booking,
+
+            booking:
+              submission.booking,
+
+            shouldExecuteBooking:
+              false,
+
+            awaitingConfirmation:
+              false,
+
+            shouldNavigate:
+              false,
+
+          }
         );
 
-      return {
-        ...decision,
-        ...navigation,
-      };
+      }
+
+
+      /*
+       * Not mounted: navigation occurred and FarmerBook's
+       * auto-confirm bridge will finish the actual POST.
+       */
+
+      return controllerResult(
+        CONTROLLER_TYPES.BOOKING,
+        CONTROLLER_STATUS.PENDING,
+        {
+
+          ...decision,
+
+          action:
+            "OPEN_BOOKING",
+
+          reply:
+            language ===
+            "hi"
+
+              ? "ठीक है। बुकिंग पेज खोल रहा हूँ और आपकी पुष्टि के बाद बुकिंग पूरी की जाएगी।"
+
+              : language ===
+                  "te"
+
+                ? "సరే. బుకింగ్ పేజీని తెరుస్తున్నాను మరియు మీ అనుమతితో బుకింగ్ పూర్తవుతుంది."
+
+                : "Okay. I’m opening the booking page to complete the authorized booking.",
+
+          bookingState:
+            submission.booking,
+
+          booking:
+            submission.booking,
+
+          shouldExecuteBooking:
+            true,
+
+          pendingSubmission:
+            true,
+
+          ...submission.navigation,
+
+        }
+      );
+
     }
 
+
     return decision;
+
   }
+
+
+  /*
+   * CURRENT PAGE
+   */
 
   if (
     decision.type ===
     "CURRENT_PAGE"
   ) {
+
     return controllerResult(
       CONTROLLER_TYPES.CURRENT_PAGE,
       CONTROLLER_STATUS.SUCCESS,
       {
+
         decision,
 
         reply:
@@ -2500,22 +6841,32 @@ async function executeLocalDecision(
 
         execution:
           null,
+
       }
     );
+
   }
+
+
+  /*
+   * CANCEL
+   */
 
   if (
     decision.type ===
     "CANCEL"
   ) {
+
     clearPendingAction();
 
     clearBookingState();
+
 
     return controllerResult(
       CONTROLLER_TYPES.CANCELLATION,
       CONTROLLER_STATUS.CANCELLED,
       {
+
         decision,
 
         reply:
@@ -2533,20 +6884,31 @@ async function executeLocalDecision(
 
         execution:
           null,
+
       }
     );
+
   }
+
+
+  /*
+   * NORMAL NAVIGATION / CONFIRMATION
+   */
 
   if (
     decision.type ===
       "CONFIRM" ||
+
     decision.type ===
       "NAVIGATE" ||
+
     decision.type ===
       "GO_BACK"
   ) {
+
     const context =
       buildAssistantContext({
+
         pathname:
           currentPath,
 
@@ -2557,7 +6919,14 @@ async function executeLocalDecision(
 
         message:
           options.message,
+
+        bookingState:
+          getEffectiveBookingState(
+            options.bookingState
+          ),
+
       });
+
 
     const validation =
       validateActionForContext(
@@ -2565,13 +6934,16 @@ async function executeLocalDecision(
         context
       );
 
+
     if (
       !validation.valid
     ) {
+
       return controllerResult(
         CONTROLLER_TYPES.ERROR,
         CONTROLLER_STATUS.FAILED,
         {
+
           decision,
 
           action:
@@ -2590,20 +6962,29 @@ async function executeLocalDecision(
 
           execution:
             null,
+
         }
       );
+
     }
+
 
     if (
       decision.clearPending
     ) {
+
       clearPendingAction();
+
     }
+
 
     const execution =
       await assistantExecutor.execute(
+
         decision.action,
+
         {
+
           navigate,
 
           currentPath,
@@ -2618,20 +6999,29 @@ async function executeLocalDecision(
             decision.pendingAction
               ?.booking ||
             null,
+
         }
+
       );
+
 
     const success =
       execution?.success !==
       false;
 
+
     return controllerResult(
+
       decision.type ===
         "GO_BACK"
+
         ? CONTROLLER_TYPES.NAVIGATION
+
         : decision.type ===
             "CONFIRM"
+
           ? CONTROLLER_TYPES.CONFIRMATION
+
           : CONTROLLER_TYPES.LOCAL,
 
       success
@@ -2639,6 +7029,7 @@ async function executeLocalDecision(
         : CONTROLLER_STATUS.FAILED,
 
       {
+
         decision,
 
         action:
@@ -2656,147 +7047,47 @@ async function executeLocalDecision(
           false,
 
         execution,
+
       }
+
     );
+
   }
+
 
   return null;
+
 }
 
-function isBookingPageRequest(
-  text
-) {
-  return (
-    /\b(open|show|go\s+to|take\s+me\s+to)\b.*\bbooking\b.*\b(page|form|screen)\b/i.test(
-      text
-    ) ||
 
-    /\bbooking\s+(page|form|screen)\b/i.test(
-      text
-    ) ||
-
-    /\b(procurement|book)\s+(page|form|screen)\b/i.test(
-      text
-    )
-  );
-}
-
-function isBookingPath(
-  pathname
-) {
-  return /^\/farmer\/book\/?$/i.test(
-    String(
-      pathname || ""
-    )
-  );
-}
-
-function navigateBookingPage(
-  state,
-  options,
-  autoConfirm = false
-) {
-  const routeState = {
-    ...assistantBooking.buildBookingRouteState(
-      state
-    ),
-
-    assistantAutoConfirm:
-      Boolean(
-        autoConfirm
-      ),
-  };
-
-  if (
-    typeof options.navigate ===
-    "function"
-  ) {
-    options.navigate(
-      "/farmer/book",
-      {
-        state:
-          routeState,
-      }
-    );
-
-    return {
-      navigationPerformed:
-        true,
-
-      shouldNavigate:
-        false,
-
-      navigateTo:
-        "/farmer/book",
-
-      routeState,
-    };
-  }
-
-  return {
-    navigationPerformed:
-      false,
-
-    shouldNavigate:
-      true,
-
-    navigateTo:
-      "/farmer/book",
-
-    routeState,
-  };
-}
-
-function dispatchBookingEvent(
-  name,
-  state
-) {
-  if (
-    typeof window ===
-    "undefined"
-  ) {
-    return false;
-  }
-
-  try {
-    window.dispatchEvent(
-      new CustomEvent(
-        name,
-        {
-          detail: {
-            booking:
-              state,
-
-            assistantBooking:
-              state,
-          },
-        }
-      )
-    );
-
-    return true;
-  } catch {
-    return false;
-  }
-}
+/* =========================================================
+   MAIN COMMAND HANDLER
+========================================================= */
 
 export async function handleAssistantCommand(
   message,
   options = {}
 ) {
+
   const normalized =
     normalizeOptions({
+
       ...options,
+
       message,
+
     });
+
 
   if (
     !normalized.message
   ) {
+
     return controllerResult(
       CONTROLLER_TYPES.NONE,
       CONTROLLER_STATUS.SKIPPED,
       {
+
         action:
           "NONE",
 
@@ -2808,153 +7099,493 @@ export async function handleAssistantCommand(
 
         shouldNavigate:
           false,
+
       }
     );
+
   }
+
+
+  let bookingState =
+    getEffectiveBookingState(
+      normalized.bookingState
+    );
+
+
+  const affirmative =
+    extractAffirmative(
+      normalized.message
+    );
+
+
+  const immediateBookingApproval =
+    isImmediateBookingApproval(
+      normalized.message
+    );
+
+
+  /* =======================================================
+     1. FARMER-SPECIFIC DATA
+  ======================================================= */
+
+  if (
+    isBookingDataQuestion(
+      normalized.message
+    )
+  ) {
+
+    const farmerData =
+      await handleFarmerDataRequest(
+        normalized.message,
+        normalized,
+        bookingState
+      );
+
+
+    if (
+      farmerData
+    ) {
+
+      return farmerData;
+
+    }
+
+  }
+
+
+  /* =======================================================
+     2. CROP AVAILABILITY
+  ======================================================= */
+
+  if (
+    isCropAvailabilityRequest(
+      normalized.message
+    )
+  ) {
+
+    const names =
+      getAvailableCropNames(
+        normalized.language
+      );
+
+
+    const reply =
+
+      normalized.language ===
+      "hi"
+
+        ? `उपलब्ध फसलें हैं: ${names.join(
+            ", "
+          )}.`
+
+        : normalized.language ===
+            "te"
+
+          ? `అందుబాటులో ఉన్న పంటలు: ${names.join(
+              ", "
+            )}.`
+
+          : `The available crops are: ${names.join(
+              ", "
+            )}.`;
+
+
+    return controllerResult(
+      CONTROLLER_TYPES.LOCAL,
+      CONTROLLER_STATUS.SUCCESS,
+      {
+
+        action:
+          "SHOW_CROPS",
+
+        reply,
+
+        crops:
+          names,
+
+        shouldCallAI:
+          false,
+
+        shouldNavigate:
+          false,
+
+        bookingCommand:
+          false,
+
+      }
+    );
+
+  }
+
+
+  /* =======================================================
+     3. QR / RECEIPT
+  ======================================================= */
+
+  const documentRequest =
+    await handleFarmerDocumentRequest(
+      normalized.message,
+      normalized,
+      bookingState
+    );
+
+
+  if (
+    documentRequest
+  ) {
+
+    return documentRequest;
+
+  }
+
+
+  /* =======================================================
+     4. EXPLICIT NEW BOOKING DETAILS
+  ======================================================= */
 
   const incomingCrop =
     assistantBooking.extractCrop(
       normalized.message
     );
 
+
   const incomingQuantity =
     assistantBooking.extractQuantity(
       normalized.message
     );
 
+
+  const incomingDate =
+    assistantBooking.extractNaturalBookingDate(
+      normalized.message,
+      new Date()
+    );
+
+
+  const incomingTime =
+    assistantBooking.extractTimeReference(
+      normalized.message
+    );
+
+
   const explicitBookingStart =
-    (
-      /\b(book|booking|reserve|reservation|procurement|sell)\b|\b(बुक|बुकिंग|बिक्री|బుక్|బుకింగ్|అమ్మ)/i.test(
+    Boolean(
+
+      (
+        incomingCrop ||
+        incomingQuantity
+      ) &&
+
+      extractExplicitBookingCommand(
         normalized.message
       )
-    ) &&
-    Boolean(
-      incomingCrop ||
-      incomingQuantity
+
     );
+
+
+  /*
+   * Starting a genuinely new booking must destroy stale
+   * conversational state.
+   */
 
   if (
     explicitBookingStart
   ) {
+
     clearPendingAction();
 
     clearBookingState();
-  }
 
-  if (
-    isBookingPageRequest(
-      normalized.message
-    ) &&
-    !explicitBookingStart &&
-    !getEffectiveBookingState(
-      normalized.bookingState
-    )?.active
-  ) {
-    const empty =
+    bookingState =
       assistantBooking.createEmpty();
 
-    const navigation =
-      navigateBookingPage(
-        empty,
-        normalized,
-        false
-      );
+  }
+
+
+  /* =======================================================
+     5. CONFIRM CURRENT BOOKING
+  ======================================================= */
+
+  if (
+    affirmative &&
+    bookingState.confirmed
+  ) {
 
     return controllerResult(
-      CONTROLLER_TYPES.NAVIGATION,
+      CONTROLLER_TYPES.BOOKING,
       CONTROLLER_STATUS.SUCCESS,
       {
+
         action:
-          "OPEN_BOOKING",
+          "BOOKING_ALREADY_CONFIRMED",
 
         reply:
           normalized.language ===
           "hi"
-            ? "बुकिंग पेज खोल रहा हूँ।"
+
+            ? "यह बुकिंग पहले ही सफलतापूर्वक पुष्टि हो चुकी है।"
+
             : normalized.language ===
                 "te"
-              ? "బుకింగ్ పేజీని తెరుస్తున్నాను."
-              : "Opening the procurement booking page.",
 
-        bookingState:
-          empty,
+              ? "ఈ బుకింగ్ ఇప్పటికే విజయవంతంగా నిర్ధారించబడింది."
+
+              : "That booking has already been successfully confirmed.",
+
+        bookingState,
 
         booking:
-          empty,
-
-        bookingCommand:
-          true,
+          bookingState,
 
         shouldCallAI:
           false,
 
-        ...navigation,
+        shouldNavigate:
+          false,
+
+        shouldExecuteBooking:
+          false,
+
+        bookingCommand:
+          true,
+
       }
     );
+
   }
 
-  let bookingState =
-    explicitBookingStart
-      ? assistantBooking.createEmpty()
-      : getEffectiveBookingState(
-          normalized.bookingState
+
+  if (
+    affirmative &&
+    (
+      bookingState.readyForConfirmation ||
+      bookingState.awaitingConfirmation ||
+      bookingState.step ===
+        BOOKING_STEPS.REVIEW
+    )
+  ) {
+
+    const result =
+      processBookingConversation(
+        normalized.message,
+        {
+
+          ...normalized,
+
+          bookingState,
+
+        }
+      );
+
+
+    if (
+      result?.handled &&
+      result.intent ===
+        BOOKING_INTENTS.CONFIRM
+    ) {
+
+      const decision =
+        buildBookingControllerResult(
+          result,
+          normalized.message,
+          normalized.language
         );
 
-  const bookingLikely =
-    bookingState.active ||
-    incomingCrop ||
-    incomingQuantity ||
-    assistantBooking.isBookingInformationRequest?.(
+
+      const state =
+        assistantBooking.normalize(
+          result.state
+        );
+
+
+      return executeLocalDecision(
+
+        {
+
+          ...decision,
+
+          bookingState:
+            state,
+
+          booking:
+            state,
+
+          shouldExecuteBooking:
+            true,
+
+          action:
+            "CONFIRM_BOOKING",
+
+        },
+
+        {
+
+          ...normalized,
+
+          bookingState:
+            state,
+
+        }
+
+      );
+
+    }
+
+  }
+
+
+  /* =======================================================
+     6. BOOKING DETECTION
+  ======================================================= */
+
+  const bookingInformationRequest =
+    typeof assistantBooking.isBookingInformationRequest ===
+      "function" &&
+
+    assistantBooking.isBookingInformationRequest(
       normalized.message
-    ) ||
-    /\b(book|booking|reserve|reservation|procurement|sell)\b/i.test(
-      normalized.message
-    ) ||
-    normalized.message.includes(
-      "बुक"
-    ) ||
-    normalized.message.includes(
-      "बुकिंग"
-    ) ||
-    normalized.message.includes(
-      "బుక్"
-    ) ||
-    normalized.message.includes(
-      "బుకింగ్"
     );
+
+
+  const bookingLikely =
+
+    bookingState.active ||
+
+    explicitBookingStart ||
+
+    Boolean(
+      incomingCrop ||
+      incomingQuantity ||
+      incomingDate ||
+      incomingTime
+    ) ||
+
+    bookingInformationRequest ||
+
+    extractExplicitBookingCommand(
+      normalized.message
+    );
+
+
+  /* =======================================================
+     7. BOOKING CONVERSATION
+  ======================================================= */
 
   if (
     bookingLikely
   ) {
+
+    /*
+     * A date/time in a new booking request must always
+     * refresh availability rather than trusting an old
+     * cached snapshot.
+     */
+
+    const availabilitySeed =
+      incomingDate
+        ? assistantBooking.mergeBookingDraft(
+
+            bookingState,
+
+            {
+
+              date:
+                incomingDate,
+
+              slot:
+                null,
+
+              slotId:
+                null,
+
+              slotStart:
+                null,
+
+              slotEnd:
+                null,
+
+              slotDisplay:
+                null,
+
+              readyForConfirmation:
+                false,
+
+              awaitingConfirmation:
+                false,
+
+              confirmed:
+                false,
+
+            }
+
+          )
+
+        : bookingState;
+
+
     const liveBookingContext =
       await refreshLiveBookingAvailability(
-        bookingState,
+
+        availabilitySeed,
+
         {
+
           force:
+
             explicitBookingStart ||
-            /\b(what|which|show|tell|available|center|centers|timings?|slots?)\b/i.test(
-              normalized.message
-            ),
+
+            Boolean(
+              incomingDate ||
+              incomingTime
+            ) ||
+
+            bookingInformationRequest,
+
+          signal:
+            normalized.signal,
+
         }
+
       );
+
 
     normalized.bookingContext =
       {
-        ...(normalized.bookingContext ||
-          {}),
 
-        ...(liveBookingContext ||
-          {}),
+        ...(
+          normalized.bookingContext ||
+          {}
+        ),
+
+        ...(
+          liveBookingContext ||
+          {}
+        ),
+
       };
 
+
+    /*
+     * Explicit booking page navigation remains ordinary
+     * navigation.
+     */
+
     const genericBookingPageRequest =
-      bookingState.active &&
-      /\b(open|show|go\s+to|take\s+me\s+to)\b.*\b(page|form|screen)\b/i.test(
+
+      (
+        bookingState.active ||
+
+        bookingInformationRequest
+      ) &&
+
+      /\b(open|show|go\s+to|take\s+me\s+to|navigate\s+to)\b.*\b(page|form|screen)\b/i.test(
         normalized.message
       ) &&
+
       !/\btoken\b/i.test(
         normalized.message
       );
+
 
     if (
       isBookingPageRequest(
@@ -2962,6 +7593,7 @@ export async function handleAssistantCommand(
       ) ||
       genericBookingPageRequest
     ) {
+
       const navigation =
         navigateBookingPage(
           bookingState,
@@ -2969,24 +7601,29 @@ export async function handleAssistantCommand(
           false
         );
 
+
       return controllerResult(
         CONTROLLER_TYPES.NAVIGATION,
         CONTROLLER_STATUS.SUCCESS,
         {
+
           action:
             "OPEN_BOOKING",
 
           reply:
             normalized.language ===
             "hi"
+
               ? "बुकिंग पेज खोल रहा हूँ। आपकी चुनी हुई जानकारी वहीं रहेगी।"
+
               : normalized.language ===
                   "te"
+
                 ? "బుకింగ్ పేజీని తెరుస్తున్నాను. మీరు ఎంచుకున్న వివరాలు అలాగే ఉంటాయి."
+
                 : "Opening the procurement booking page. Your selected details will stay there.",
 
-          bookingState:
-            bookingState,
+          bookingState,
 
           booking:
             bookingState,
@@ -2998,156 +7635,296 @@ export async function handleAssistantCommand(
             false,
 
           ...navigation,
+
         }
       );
+
     }
 
+
     let bookingResult =
-  processBookingConversation(
-    normalized.message,
-    normalized
-  );
+      processBookingConversation(
+        normalized.message,
+        {
 
-/*
- * A newly selected date needs a fresh live slot list.
- * FarmerBook updates asynchronously, so the cached slots can
- * still belong to the previous date.
- */
-if (
-  bookingResult?.handled &&
-  bookingResult.intent === BOOKING_INTENTS.SELECT_DATE
-) {
-  const freshAvailability =
-    await refreshLiveBookingAvailability(
-      bookingResult.state,
-      { force: true }
-    );
+          ...normalized,
 
-  bookingResult = {
-    ...bookingResult,
-    slots: freshAvailability?.availableSlots || [],
-  };
+          bookingState:
 
-  normalized.bookingContext = {
-    ...(normalized.bookingContext || {}),
-    ...(freshAvailability || {}),
-  };
-}
+            explicitBookingStart
+              ? assistantBooking.createEmpty()
+              : bookingState,
+
+        }
+      );
+
+
+    /*
+     * A date selection must always be followed by a fresh
+     * slot availability lookup.
+     */
+
+    if (
+      bookingResult?.handled &&
+      bookingResult.intent ===
+        BOOKING_INTENTS.SELECT_DATE
+    ) {
+
+      const freshAvailability =
+        await refreshLiveBookingAvailability(
+
+          bookingResult.state,
+
+          {
+
+            force:
+              true,
+
+            signal:
+              normalized.signal,
+
+          }
+
+        );
+
+
+      bookingResult = {
+
+        ...bookingResult,
+
+        slots:
+          freshAvailability
+            ?.availableSlots ||
+          bookingResult.slots ||
+          [],
+
+        availableSlots:
+          freshAvailability
+            ?.availableSlots ||
+          bookingResult.slots ||
+          [],
+
+      };
+
+
+      normalized.bookingContext =
+        {
+
+          ...(
+            normalized.bookingContext ||
+            {}
+          ),
+
+          ...(
+            freshAvailability ||
+            {}
+          ),
+
+        };
+
+    }
+
+
+    /*
+     * Handle bare "morning", "afternoon", "evening"
+     * as a slot preference when availability exists.
+     */
+
+    if (
+      bookingResult?.handled &&
+      bookingResult.intent ===
+        BOOKING_INTENTS.SELECT_DATE &&
+      (
+        /\b(morning|सुबह|ఉదయం)\b/i.test(
+          normalized.message
+        ) ||
+
+        /\b(afternoon|दोपहर|మధ్యాహ్నం)\b/i.test(
+          normalized.message
+        ) ||
+
+        /\b(evening|शाम|సాయంత్రం)\b/i.test(
+          normalized.message
+        )
+      )
+    ) {
+
+      const slots =
+        bookingResult.slots ||
+        normalized.bookingContext
+          ?.availableSlots ||
+        [];
+
+
+      const preferredSlot =
+        assistantBooking.findSlotReference(
+          normalized.message,
+          slots
+        );
+
+
+      if (
+        preferredSlot
+      ) {
+
+        const slotState =
+          assistantBooking.mergeBookingDraft(
+
+            bookingResult.state,
+
+            {
+
+              slot:
+                preferredSlot,
+
+              availabilityChecked:
+                true,
+
+              readyForConfirmation:
+                false,
+
+              awaitingConfirmation:
+                false,
+
+              confirmed:
+                false,
+
+            }
+
+          );
+
+
+        bookingResult =
+          {
+
+            handled:
+              true,
+
+            intent:
+              BOOKING_INTENTS.SELECT_SLOT,
+
+            state:
+              assistantBooking.normalize(
+                slotState
+              ),
+
+            selectedSlot:
+              preferredSlot,
+
+            review:
+              assistantBooking.review(
+                slotState,
+                normalized.language
+              ),
+
+            nextStep:
+              BOOKING_STEPS.REVIEW,
+
+          };
+
+
+        saveBookingState(
+          slotState
+        );
+
+      }
+
+    }
+
 
     if (
       bookingResult?.handled &&
       bookingResult.intent !==
         BOOKING_INTENTS.NONE
     ) {
+
       const bookingDecision =
         buildBookingControllerResult(
+
           bookingResult,
+
           normalized.message,
+
           normalized.language
+
         );
+
+
+      /*
+       * Save pending confirmation after selecting a slot.
+       */
 
       if (
         bookingDecision.createPending &&
         bookingDecision.pendingAction
       ) {
+
         savePendingAction(
           bookingDecision.pendingAction
         );
+
       }
+
+
+      /*
+       * One-shot authorized command:
+       *
+       * "yes book 234 kg paddy tomorrow 8 to 830"
+       *
+       * Once all details have been resolved, submit.
+       */
+
+      const readyNow =
+        Boolean(
+          bookingResult.readyForConfirmation
+        ) ||
+
+        Boolean(
+          bookingResult.state
+            ?.readyForConfirmation
+        ) ||
+
+        Boolean(
+          bookingDecision.bookingState
+            ?.readyForConfirmation
+        );
+
+
+      const shouldImmediatelySubmit =
+        immediateBookingApproval &&
+        readyNow;
+
 
       if (
         bookingResult.intent ===
-        BOOKING_INTENTS.CONFIRM
+          BOOKING_INTENTS.CONFIRM ||
+        shouldImmediatelySubmit
       ) {
-        clearPendingAction();
 
         const state =
           assistantBooking.normalize(
-            bookingResult.state
+
+            bookingResult.state ||
+
+            bookingDecision.bookingState
+
           );
 
-        if (
-          isBookingPath(
-            normalized.currentPath
-          )
-        ) {
-          dispatchBookingEvent(
-            "krishisetu:assistant-confirm-booking",
-            state
-          );
 
-          return controllerResult(
-            CONTROLLER_TYPES.BOOKING,
-            CONTROLLER_STATUS.SUCCESS,
-            {
-              ...bookingDecision,
+        return executeLocalDecision(
 
-              action:
-                "OPEN_BOOKING",
-
-              reply:
-                normalized.language ===
-                "hi"
-                  ? "ठीक है। मैं आपकी चुनी हुई बुकिंग अभी सबमिट कर रहा हूँ।"
-                  : normalized.language ===
-                      "te"
-                    ? "సరే. మీరు ఎంచుకున్న బుకింగ్‌ను ఇప్పుడు సమర్పిస్తున్నాను."
-                    : "Okay. I’m submitting the booking with your selected details now.",
-
-              shouldCallAI:
-                false,
-
-              shouldNavigate:
-                false,
-
-              shouldExecuteBooking:
-                true,
-
-              bookingState:
-                state,
-
-              booking:
-                state,
-
-              bookingCommand:
-                true,
-
-              confirmationDispatched:
-                true,
-            }
-          );
-        }
-
-        const navigation =
-          navigateBookingPage(
-            state,
-            normalized,
-            true
-          );
-
-        return controllerResult(
-          CONTROLLER_TYPES.BOOKING,
-          CONTROLLER_STATUS.SUCCESS,
           {
+
             ...bookingDecision,
 
+            type:
+              CONTROLLER_TYPES.BOOKING,
+
             action:
-              "OPEN_BOOKING",
+              "CONFIRM_BOOKING",
 
-            reply:
-              normalized.language ===
-              "hi"
-                ? "ठीक है। बुकिंग पेज पर आपकी बुकिंग अभी सबमिट की जा रही है।"
-                : normalized.language ===
-                    "te"
-                  ? "సరే. బుకింగ్ పేజీలో మీ బుకింగ్‌ను ఇప్పుడు సమర్పిస్తున్నాను."
-                  : "Okay. I’m opening the booking page and submitting it now.",
-
-            shouldCallAI:
-              false,
-
-            shouldExecuteBooking:
-              true,
+            bookingIntent:
+              BOOKING_INTENTS.CONFIRM,
 
             bookingState:
               state,
@@ -3155,104 +7932,215 @@ if (
             booking:
               state,
 
+            params:
+              sanitizeActionParams(
+                state
+              ),
+
+            shouldExecuteBooking:
+              true,
+
             bookingCommand:
               true,
 
-            ...navigation,
+          },
+
+          {
+
+            ...normalized,
+
+            bookingState:
+              state,
+
           }
+
         );
+
       }
+
+
+      /*
+       * Pending confirmation.
+       */
 
       if (
         bookingDecision.status ===
         CONTROLLER_STATUS.PENDING
       ) {
+
         return bookingDecision;
+
       }
 
+
+      /*
+       * Start/update from another page:
+       * open FarmerBook while preserving the exact state.
+       */
+
       const shouldOpenBookingPage =
+
         (
+
           bookingResult.intent ===
             BOOKING_INTENTS.START ||
+
           bookingResult.intent ===
-            BOOKING_INTENTS.UPDATE
+            BOOKING_INTENTS.UPDATE ||
+
+          bookingResult.intent ===
+            BOOKING_INTENTS.SELECT_DATE
+
         ) &&
-        bookingDecision.bookingState?.active &&
+
+        bookingDecision.bookingState
+          ?.active &&
+
         !isBookingPath(
           normalized.currentPath
         ) &&
-        Boolean(
-          normalized.navigate
-        );
+
+        typeof normalized.navigate ===
+        "function";
+
 
       if (
         shouldOpenBookingPage
       ) {
+
         const navigation =
           navigateBookingPage(
+
             bookingDecision.bookingState,
+
             normalized,
+
             false
+
           );
+
 
         return controllerResult(
           CONTROLLER_TYPES.BOOKING,
           CONTROLLER_STATUS.SUCCESS,
           {
+
             ...bookingDecision,
 
             reply:
-              `${bookingDecision.reply} ${
+              `${bookingDecision.reply} ` +
+
+              (
                 normalized.language ===
                 "hi"
-                  ? "बुकिंग पेज भी खोल दिया है, बातचीत जारी रख सकते हैं।"
+
+                  ? "बुकिंग पेज भी खोल दिया है; बातचीत जारी रख सकते हैं।"
+
                   : normalized.language ===
                       "te"
+
                     ? "బుకింగ్ పేజీని కూడా తెరిచాను; ఇక్కడే సంభాషణ కొనసాగించవచ్చు."
+
                     : "I’ve also opened the booking page; you can keep the conversation here."
-              }`,
+
+              ),
 
             ...navigation,
+
           }
         );
+
       }
 
+
       return bookingDecision;
+
     }
+
   }
+
+
+  /* =======================================================
+     8. OTHER LOCAL COMMANDS
+  ======================================================= */
 
   const local =
     routeLocalCommand(
       normalized.message,
-      normalized
+      {
+
+        ...normalized,
+
+        bookingState,
+
+        bookingContext:
+          normalized.bookingContext,
+
+      }
     );
+
+
+  if (
+    local?.farmerDataRequest
+  ) {
+
+    const farmerData =
+      await handleFarmerDataRequest(
+
+        normalized.message,
+
+        normalized,
+
+        bookingState
+
+      );
+
+
+    if (
+      farmerData
+    ) {
+
+      return farmerData;
+
+    }
+
+  }
+
 
   const localDecision =
     local.decision;
 
+
   if (
     localDecision?.bookingCommand
   ) {
+
     return localDecision;
+
   }
+
 
   debugLog(
     "Controller local decision",
     localDecision
   );
 
+
   if (
     localDecision?.createPending &&
     localDecision?.pendingAction
   ) {
+
     savePendingAction(
       localDecision.pendingAction
     );
+
 
     return controllerResult(
       CONTROLLER_TYPES.CONFIRMATION,
       CONTROLLER_STATUS.PENDING,
       {
+
         ...localDecision,
 
         pendingAction:
@@ -3263,39 +8151,79 @@ if (
 
         shouldNavigate:
           false,
+
       }
     );
+
   }
+
 
   if (
     localDecision?.type !==
     "ASK_AI"
   ) {
+
     return executeLocalDecision(
+
       localDecision,
+
       normalized
+
     );
+
   }
+
+
+  /* =======================================================
+     9. BACKEND AI
+  ======================================================= */
 
   let backendResponse;
 
+
   try {
+
     backendResponse =
-      await requestAI(
-        normalized
-      );
+      await requestAI({
+
+        ...normalized,
+
+        decision:
+          localDecision,
+
+        semanticTopic:
+          localDecision?.intent
+            ?.semanticTopic ||
+
+          localDecision
+            ?.semanticTopic ||
+
+          normalized.semanticTopic ||
+
+          null,
+
+        bookingState,
+
+        bookingDraft:
+          bookingState,
+
+      });
+
   } catch (
     error
   ) {
+
     debugLog(
       "Controller AI request failed",
       error
     );
 
+
     return controllerResult(
       CONTROLLER_TYPES.ERROR,
       CONTROLLER_STATUS.FAILED,
       {
+
         decision:
           localDecision,
 
@@ -3312,27 +8240,42 @@ if (
           false,
 
         error,
+
       }
     );
+
   }
+
 
   const {
     decision:
       finalDecision,
   } =
     processBackendDecision(
+
       localDecision,
+
       backendResponse,
+
       normalized
+
     );
+
+
+  /*
+   * Validate backend navigation against the current
+   * farmer context.
+   */
 
   if (
     finalDecision?.action &&
     finalDecision.action !==
       "NONE"
   ) {
+
     const finalContext =
       buildAssistantContext({
+
         pathname:
           normalized.currentPath,
 
@@ -3344,23 +8287,42 @@ if (
 
         message:
           normalized.message,
+
+        bookingState:
+          bookingState,
+
+        bookingDraft:
+          bookingState,
+
+        semanticTopic:
+          backendResponse?.semanticTopic ||
+          null,
+
       });
+
 
     const validation =
       validateActionForContext(
+
         finalDecision.action,
+
         finalContext
+
       );
+
 
     if (
       !validation.valid
     ) {
+
       return controllerResult(
         CONTROLLER_TYPES.AI,
         CONTROLLER_STATUS.SUCCESS,
         {
+
           decision:
             {
+
               ...finalDecision,
 
               action:
@@ -3368,6 +8330,7 @@ if (
 
               shouldNavigate:
                 false,
+
             },
 
           action:
@@ -3384,20 +8347,31 @@ if (
             false,
 
           validation,
+
         }
       );
+
     }
+
   }
+
+
+  /*
+   * Ordinary natural-language answer.
+   */
 
   if (
     finalDecision?.action ===
       "NONE" ||
+
     !finalDecision?.shouldNavigate
   ) {
+
     return controllerResult(
       CONTROLLER_TYPES.AI,
       CONTROLLER_STATUS.SUCCESS,
       {
+
         decision:
           finalDecision,
 
@@ -3416,24 +8390,101 @@ if (
 
         semanticTopic:
           backendResponse?.semanticTopic ||
+          finalDecision
+            ?.intent
+            ?.semanticTopic ||
           null,
 
         booking:
           backendResponse?.booking ||
           null,
+
+        bookingState:
+          bookingState,
+
       }
     );
+
   }
+
+
+  /* =======================================================
+     10. EXECUTE BACKEND NAVIGATION
+  ======================================================= */
 
   const plan =
     getExecutionPlan(
       finalDecision
     );
 
+
+  /*
+   * Backend booking actions should go through the booking
+   * controller rather than ordinary route execution.
+   */
+
+  if (
+    plan?.type ===
+    "BOOKING"
+  ) {
+
+    const booking =
+      backendResponse?.booking ||
+      backendResponse?.bookingDraft ||
+      finalDecision?.booking ||
+      finalDecision?.params ||
+      bookingState;
+
+
+    return executeLocalDecision(
+
+      {
+
+        ...finalDecision,
+
+        type:
+          CONTROLLER_TYPES.BOOKING,
+
+        bookingCommand:
+          true,
+
+        bookingState:
+          booking,
+
+        booking,
+
+        params:
+          booking,
+
+        shouldExecuteBooking:
+          Boolean(
+            backendResponse?.executeBooking ||
+            finalDecision?.executeBooking
+          ),
+
+      },
+
+      {
+
+        ...normalized,
+
+        bookingState:
+          booking,
+
+      }
+
+    );
+
+  }
+
+
   const execution =
     await assistantExecutor.execute(
+
       finalDecision.action,
+
       {
+
         navigate:
           normalized.navigate,
 
@@ -3447,14 +8498,19 @@ if (
 
         booking:
           backendResponse?.booking,
+
       }
+
     );
+
 
   const executionSucceeded =
     execution?.success !==
     false;
 
+
   return controllerResult(
+
     executionSucceeded
       ? CONTROLLER_TYPES.NAVIGATION
       : CONTROLLER_TYPES.ERROR,
@@ -3464,6 +8520,7 @@ if (
       : CONTROLLER_STATUS.FAILED,
 
     {
+
       decision:
         finalDecision,
 
@@ -3484,61 +8541,96 @@ if (
       plan,
 
       execution,
+
     }
+
   );
+
 }
+
+
+/* =========================================================
+   PUBLIC HELPERS
+========================================================= */
 
 export async function askAssistant(
   message,
   options = {}
 ) {
+
   return handleAssistantCommand(
     message,
     options
   );
+
 }
+
 
 export async function executeDecision(
   decision,
   options = {}
 ) {
+
   return executeLocalDecision(
+
     decision,
+
     normalizeOptions(
       options
     )
+
   );
+
 }
+
+
+/* =========================================================
+   CONFIRM PENDING
+========================================================= */
 
 export async function confirmPendingAction(
   options = {}
 ) {
+
   const pending =
     loadPendingAction();
+
 
   if (
     !pending
   ) {
+
     const bookingState =
       loadBookingState();
 
+
     if (
-      bookingState.readyForConfirmation
+      bookingState.readyForConfirmation ||
+      bookingState.awaitingConfirmation
     ) {
+
       return handleAssistantCommand(
+
         "yes",
+
         {
+
           ...options,
 
           bookingState,
+
         }
+
       );
+
     }
+
 
     return controllerResult(
       CONTROLLER_TYPES.NONE,
       CONTROLLER_STATUS.SKIPPED,
       {
+
         action:
           "NONE",
 
@@ -3547,14 +8639,64 @@ export async function confirmPendingAction(
 
         reason:
           "No pending action exists.",
+
       }
     );
+
   }
+
+
+  /*
+   * Booking confirmations should go through the booking
+   * conversation rather than generic navigation.
+   */
+
+  if (
+    pending.action ===
+      "OPEN_BOOKING" ||
+    pending.action ===
+      "CONFIRM_BOOKING"
+  ) {
+
+    const bookingState =
+      assistantBooking.normalize(
+
+        pending.booking ||
+
+        pending.params ||
+
+        loadBookingState()
+
+      );
+
+
+    clearPendingAction();
+
+
+    return handleAssistantCommand(
+
+      "yes",
+
+      {
+
+        ...options,
+
+        bookingState,
+
+      }
+
+    );
+
+  }
+
 
   clearPendingAction();
 
+
   return executeLocalDecision(
+
     {
+
       type:
         "CONFIRM",
 
@@ -3590,33 +8732,46 @@ export async function confirmPendingAction(
 
       clearPending:
         true,
+
     },
 
     normalizeOptions(
       options
     )
+
   );
+
 }
+
+
+/* =========================================================
+   CANCEL PENDING
+========================================================= */
 
 export function cancelPendingAction(
   options = {}
 ) {
+
   const pending =
     loadPendingAction();
+
 
   clearPendingAction();
 
   clearBookingState();
+
 
   const language =
     normalizeLanguageCode(
       options.language
     );
 
+
   return controllerResult(
     CONTROLLER_TYPES.CANCELLATION,
     CONTROLLER_STATUS.CANCELLED,
     {
+
       action:
         "NONE",
 
@@ -3625,67 +8780,114 @@ export function cancelPendingAction(
 
       reply:
         language ===
-          "hi"
+        "hi"
+
           ? "ठीक है, मैंने वह कार्रवाई रद्द कर दी।"
+
           : language ===
               "te"
+
             ? "సరే, ఆ చర్యను రద్దు చేశాను."
+
             : "Okay, I cancelled that action.",
+
     }
   );
+
 }
 
+
+/* =========================================================
+   BOOKING STATE API
+========================================================= */
+
 export function getBookingState() {
+
   return loadBookingState();
+
 }
+
 
 export function setBookingState(
   state
 ) {
+
   return saveBookingState(
     state
   );
+
 }
+
 
 export function resetBookingState() {
+
   clearBookingState();
 
+
   return assistantBooking.createEmpty();
+
 }
+
+
+/* =========================================================
+   BOOKING MESSAGE API
+========================================================= */
 
 export function handleBookingMessage(
   message,
   options = {}
 ) {
+
   const normalized =
     normalizeOptions({
+
       ...options,
+
       message,
+
     });
+
 
   const result =
     processBookingConversation(
+
       normalized.message,
+
       normalized
+
     );
 
+
   return buildBookingControllerResult(
+
     result,
+
     normalized.message,
+
     normalized.language
+
   );
+
 }
+
+
+/* =========================================================
+   BOOKING FORM COMMAND
+========================================================= */
 
 export function getBookingFormCommand(
   state =
     loadBookingState()
 ) {
+
   const booking =
     assistantBooking.normalize(
       state
     );
 
+
   return {
+
     active:
       booking.active,
 
@@ -3724,31 +8926,80 @@ export function getBookingFormCommand(
 
     readyForConfirmation:
       booking.readyForConfirmation,
+
+    awaitingConfirmation:
+      booking.awaitingConfirmation,
+
+    confirmed:
+      booking.confirmed,
+
+    token:
+      booking.token ||
+      null,
+
+    bookingId:
+      booking.bookingId ||
+      null,
+
   };
+
 }
+
+
+/* =========================================================
+   PREVIEW
+========================================================= */
 
 export function previewAssistantRequest(
   message,
   options = {}
 ) {
+
   const normalized =
     normalizeOptions({
+
       ...options,
+
       message,
+
     });
+
 
   const local =
     routeLocalCommand(
+
       normalized.message,
+
       normalized
+
     );
+
 
   const request =
-    createBackendRequest(
-      normalized
-    );
+    createBackendRequest({
+
+      ...normalized,
+
+      decision:
+        local.decision,
+
+      bookingState:
+        local.booking,
+
+      bookingDraft:
+        local.booking,
+
+      semanticTopic:
+        local.decision
+          ?.intent
+          ?.semanticTopic ||
+        null,
+
+    });
+
 
   return {
+
     localDecision:
       local.decision,
 
@@ -3760,28 +9011,44 @@ export function previewAssistantRequest(
 
     backendRequest:
       request,
+
   };
+
 }
+
+
+/* =========================================================
+   CONTROLLER STATE
+========================================================= */
 
 export function getControllerState(
   options = {}
 ) {
+
   const normalized =
     normalizeOptions(
       options
     );
 
+
   const {
+
     context,
+
     serverContext,
+
     pending,
+
     bookingState,
+
   } =
     createControllerContext(
       normalized
     );
 
+
   return {
+
     currentPath:
       normalized.currentPath,
 
@@ -3801,20 +9068,30 @@ export function getControllerState(
     context,
 
     serverContext,
+
   };
+
 }
+
+
+/* =========================================================
+   ACTION VALIDATION
+========================================================= */
 
 export function validateControllerAction(
   action,
   options = {}
 ) {
+
   const normalized =
     normalizeOptions(
       options
     );
 
+
   const context =
     buildAssistantContext({
+
       pathname:
         normalized.currentPath,
 
@@ -3826,45 +9103,112 @@ export function validateControllerAction(
 
       message:
         normalized.message,
+
+      bookingState:
+        getEffectiveBookingState(
+          normalized.bookingState
+        ),
+
     });
 
+
   return validateActionForContext(
+
     action,
+
     context
+
   );
+
 }
 
+
+/* =========================================================
+   CONTROLLER INFO
+========================================================= */
+
 export function getControllerInfo() {
+
   return {
+
     name:
       "KrishiSetu AI Assistant Controller",
 
     architecture: [
+
       "VoiceAssistant",
+
       "assistantController",
+
       "assistantBooking",
+
       "assistantRouter",
+
       "assistantContext",
+
       "assistantService",
+
       "assistantExecutor",
+
     ],
 
     responsibilities: [
+
       "orchestrate assistant requests",
+
       "manage conversational booking",
+
       "maintain booking state",
-      "handle dates and slots",
+
+      "maintain booking continuity",
+
+      "handle dates",
+
+      "handle live slot availability",
+
+      "handle timings",
+
+      "handle procurement centers",
+
       "handle booking confirmation",
+
+      "handle farmer crops",
+
+      "handle tokens",
+
+      "handle booking history",
+
+      "handle payments",
+
+      "handle receipts",
+
+      "handle QR requests",
+
+      "support future cancellation",
+
       "route local commands",
+
       "manage pending actions",
+
       "call backend AI",
+
       "validate backend decisions",
+
       "execute approved actions",
+
     ],
+
   };
+
 }
 
+
+/* =========================================================
+   CONTROLLER OBJECT
+========================================================= */
+
 export const assistantController = {
+
   ask:
     askAssistant,
 
@@ -3902,6 +9246,7 @@ export const assistantController = {
 
   booking:
     {
+
       getState:
         getBookingState,
 
@@ -3916,6 +9261,7 @@ export const assistantController = {
 
       form:
         getBookingFormCommand,
+
     },
 
   info:
@@ -3929,6 +9275,12 @@ export const assistantController = {
 
   executor:
     assistantExecutor,
+
 };
+
+
+/* =========================================================
+   DEFAULT EXPORT
+========================================================= */
 
 export default assistantController;

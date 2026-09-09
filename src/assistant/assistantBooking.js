@@ -1,6 +1,20 @@
 /* =========================================================
    KRISHISETU AI BOOKING
    Conversational booking state + live availability bridge.
+
+   IMPORTANT:
+   - Booking state is independent from FarmerBook React state.
+   - Supports one-shot commands:
+       "book 234 kg paddy tomorrow 8 to 8:30"
+       "book 234 kg paddy tomorrow 8 to 830"
+   - Supports follow-up commands:
+       "tomorrow"
+       "8 to 8:30"
+       "8 to 830"
+       "morning"
+       "yes"
+   - Does NOT directly submit the booking.
+   - Final booking submission remains in FarmerBook/controller.
 ========================================================= */
 
 export const BOOKING_FIELDS = {
@@ -33,7 +47,8 @@ export const BOOKING_STEPS = {
   COMPLETE: "COMPLETE",
 };
 
-export const BOOKING_ENGINE_VERSION = "2026-09-09-one-shot";
+export const BOOKING_ENGINE_VERSION =
+  "2026-09-09-stable-flow-v3";
 
 export const BOOKING_INTENTS = {
   NONE: "NONE",
@@ -50,40 +65,65 @@ export const BOOKING_INTENTS = {
   CANCEL: "CANCEL",
 };
 
-export const BOOKING_STORAGE_KEY = "krishisetu_ai_booking_draft";
-export const BOOKING_STATE_STORAGE_KEY = "krishisetu_ai_booking_state";
+export const BOOKING_STORAGE_KEY =
+  "krishisetu_ai_booking_draft";
+
+export const BOOKING_STATE_STORAGE_KEY =
+  "krishisetu_ai_booking_state";
+
 export const BOOKING_AVAILABILITY_STORAGE_KEY =
   "krishisetu_ai_booking_availability";
-export const BOOKING_SCHEMA_VERSION = 2;
 
-const AVAILABILITY_TTL = 5 * 60 * 1000;
-const MAX_QUANTITY = 50000;
+export const BOOKING_SCHEMA_VERSION = 4;
 
-const EVENT_BOOKING = "krishisetu:assistant-booking-updated";
+const AVAILABILITY_TTL =
+  5 * 60 * 1000;
+
+const MAX_QUANTITY =
+  50000;
+
+const EVENT_BOOKING =
+  "krishisetu:assistant-booking-updated";
+
 const EVENT_AVAILABILITY =
   "krishisetu:assistant-availability-updated";
+
 const EVENT_REQUEST_AVAILABILITY =
   "krishisetu:assistant-request-availability";
 
+
+/* =========================================================
+   CROP ALIASES
+========================================================= */
+
 const CROP_ALIASES = {
+
   wheat: [
     "wheat",
     "gehun",
     "gehu",
+    "gehun crop",
     "गेहूं",
     "गेहू",
     "गेहूँ",
+    "गहूं",
     "గోధుమ",
+    "గోధుమలు",
   ],
+
   paddy: [
     "paddy",
     "rice",
     "dhan",
+    "dhan crop",
+    "ধান",
     "धान",
     "चावल",
+    "धान की फसल",
     "వరి",
     "బియ్యం",
   ],
+
   maize: [
     "maize",
     "corn",
@@ -91,84 +131,191 @@ const CROP_ALIASES = {
     "मक्का",
     "మొక్కజొన్న",
   ],
+
   cotton: [
     "cotton",
     "kapas",
     "कपास",
     "పత్తి",
   ],
+
 };
 
+
 const CROP_NAMES = {
+
   en: {
     wheat: "wheat",
     paddy: "paddy",
     maize: "maize",
     cotton: "cotton",
   },
+
   hi: {
     wheat: "गेहूं",
     paddy: "धान",
     maize: "मक्का",
     cotton: "कपास",
   },
+
   te: {
     wheat: "గోధుమ",
     paddy: "వరి",
     maize: "మొక్కజొన్న",
     cotton: "పత్తి",
   },
+
 };
 
-function clean(value) {
-  return String(value ?? "")
+
+/* =========================================================
+   BASIC HELPERS
+========================================================= */
+
+function clean(
+  value
+) {
+
+  return String(
+    value ?? ""
+  )
     .trim()
-    .replace(/\s+/g, " ");
+    .replace(
+      /\s+/g,
+      " "
+    );
+
 }
 
-function norm(value) {
-  return clean(value)
+
+function norm(
+  value
+) {
+
+  return clean(
+    value
+  )
     .toLowerCase()
-    .normalize("NFKC")
-    .replace(/[^\p{L}\p{N}\s:/.,'\-–—]/gu, " ")
-    .replace(/\s+/g, " ")
+    .normalize(
+      "NFKC"
+    )
+    .replace(
+      /[^\p{L}\p{N}\s:/.,'\-–—]/gu,
+      " "
+    )
+    .replace(
+      /\s+/g,
+      " "
+    )
     .trim();
+
 }
 
-function languageCode(value) {
-  const code = clean(value).toLowerCase();
 
-  if (code.startsWith("hi")) {
+function languageCode(
+  value
+) {
+
+  const code =
+    clean(
+      value
+    ).toLowerCase();
+
+
+  if (
+    code.startsWith(
+      "hi"
+    )
+  ) {
+
     return "hi";
+
   }
 
-  if (code.startsWith("te")) {
+
+  if (
+    code.startsWith(
+      "te"
+    )
+  ) {
+
     return "te";
+
   }
+
 
   return "en";
+
 }
 
-function validQuantity(value, max = MAX_QUANTITY) {
-  const number = Number(value);
+
+function validQuantity(
+  value,
+  max = MAX_QUANTITY
+) {
+
+  const number =
+    Number(
+      value
+    );
+
 
   return (
-    Number.isFinite(number) &&
+
+    Number.isFinite(
+      number
+    ) &&
+
     number > 0 &&
-    number <= Number(max)
+
+    number <=
+      Number(
+        max
+      )
+
   );
+
 }
 
-function isoDate(date) {
+
+function isoDate(
+  date
+) {
+
   return [
+
     date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0"),
-  ].join("-");
+
+    String(
+      date.getMonth() + 1
+    ).padStart(
+      2,
+      "0"
+    ),
+
+    String(
+      date.getDate()
+    ).padStart(
+      2,
+      "0"
+    ),
+
+  ].join(
+    "-"
+  );
+
 }
 
-function dayStart(value = new Date()) {
-  const date = new Date(value);
+
+function dayStart(
+  value = new Date()
+) {
+
+  const date =
+    new Date(
+      value
+    );
+
 
   date.setHours(
     0,
@@ -177,49 +324,57 @@ function dayStart(value = new Date()) {
     0
   );
 
-  return date;
-}
-
-function addDays(days, now = new Date()) {
-  const date = dayStart(now);
-
-  date.setDate(
-    date.getDate() + Number(days)
-  );
 
   return date;
+
 }
 
-function parseDate(value) {
-  const text = clean(value);
 
-  if (!text) {
-    return null;
-  }
-
-  const normalized =
-    normalizeBookingDate(text);
-
-  if (!normalized) {
-    return null;
-  }
+function addDays(
+  days,
+  now = new Date()
+) {
 
   const date =
-    new Date(`${normalized}T00:00:00`);
+    dayStart(
+      now
+    );
 
-  return Number.isNaN(
-    date.getTime()
-  )
-    ? null
-    : date;
+
+  date.setDate(
+    date.getDate() +
+      Number(
+        days
+      )
+  );
+
+
+  return date;
+
 }
 
-function dispatch(name, detail) {
-  if (typeof window === "undefined") {
+
+/* =========================================================
+   EVENTS
+========================================================= */
+
+function dispatch(
+  name,
+  detail
+) {
+
+  if (
+    typeof window ===
+    "undefined"
+  ) {
+
     return;
+
   }
 
+
   try {
+
     window.dispatchEvent(
       new CustomEvent(
         name,
@@ -228,64 +383,128 @@ function dispatch(name, detail) {
         }
       )
     );
+
   } catch {
+
     try {
+
       window.dispatchEvent(
-        new Event(name)
+        new Event(
+          name
+        )
       );
-    } catch {}
+
+    } catch {
+    }
+
   }
+
 }
+
+
+/* =========================================================
+   STORAGE
+========================================================= */
 
 function readJson(
   key,
   fallback = null
 ) {
-  if (typeof window === "undefined") {
+
+  if (
+    typeof window ===
+    "undefined"
+  ) {
+
     return fallback;
+
   }
+
 
   try {
+
     const raw =
-      localStorage.getItem(key);
+      localStorage.getItem(
+        key
+      );
+
 
     return raw
-      ? JSON.parse(raw)
+      ? JSON.parse(
+          raw
+        )
       : fallback;
+
   } catch {
+
     return fallback;
+
   }
+
 }
+
 
 function writeJson(
   key,
   value
 ) {
-  if (typeof window === "undefined") {
+
+  if (
+    typeof window ===
+    "undefined"
+  ) {
+
     return false;
+
   }
 
+
   try {
+
     localStorage.setItem(
       key,
-      JSON.stringify(value)
+      JSON.stringify(
+        value
+      )
     );
 
+
     return true;
+
   } catch {
+
     return false;
+
   }
+
 }
 
-function removeKey(key) {
-  if (typeof window === "undefined") {
+
+function removeKey(
+  key
+) {
+
+  if (
+    typeof window ===
+    "undefined"
+  ) {
+
     return;
+
   }
+
 
   try {
-    localStorage.removeItem(key);
-  } catch {}
+
+    localStorage.removeItem(
+      key
+    );
+
+  } catch {
+  }
+
 }
+
 
 /* =========================================================
    CROP
@@ -294,32 +513,100 @@ function removeKey(key) {
 export function extractBookingCrop(
   message
 ) {
-  const text = norm(message);
 
-  if (!text) {
+  const text =
+    norm(
+      message
+    );
+
+
+  if (
+    !text
+  ) {
+
     return null;
+
   }
+
+
+  const words =
+    text.split(
+      /\s+/
+    );
+
 
   for (
-    const [crop, aliases]
-    of Object.entries(CROP_ALIASES)
+    const [
+      crop,
+      aliases,
+    ] of Object.entries(
+      CROP_ALIASES
+    )
   ) {
-    if (
-      aliases.some(
-        alias =>
-          text === norm(alias) ||
-          text.includes(norm(alias))
-      )
+
+    for (
+      const alias of aliases
     ) {
-      return crop;
+
+      const normalizedAlias =
+        norm(
+          alias
+        );
+
+
+      if (
+        !normalizedAlias
+      ) {
+
+        continue;
+
+      }
+
+
+      if (
+        text ===
+        normalizedAlias
+      ) {
+
+        return crop;
+
+      }
+
+
+      if (
+        words.includes(
+          normalizedAlias
+        )
+      ) {
+
+        return crop;
+
+      }
+
+
+      if (
+        text.includes(
+          normalizedAlias
+        )
+      ) {
+
+        return crop;
+
+      }
+
     }
+
   }
 
+
   return null;
+
 }
+
 
 export const extractCrop =
   extractBookingCrop;
+
 
 /* =========================================================
    QUANTITY
@@ -328,42 +615,113 @@ export const extractCrop =
 export function extractBookingQuantity(
   message
 ) {
-  const text = norm(message);
 
-  if (!text) {
+  const text =
+    norm(
+      message
+    );
+
+
+  if (
+    !text
+  ) {
+
     return null;
+
   }
+
 
   const explicit =
     text.match(
       /(\d+(?:\.\d+)?)\s*(kg|kgs|kilo|kilos|kilogram|kilograms|किलो|किलोग्राम|కిలో|కిలోలు)\b/i
     );
 
-  if (explicit) {
-    const value =
-      Number(explicit[1]);
-
-    return validQuantity(value)
-      ? value
-      : null;
-  }
 
   if (
-    !/^\d+(?:\.\d+)?$/.test(text)
+    explicit
   ) {
-    return null;
+
+    const value =
+      Number(
+        explicit[1]
+      );
+
+
+    return validQuantity(
+      value
+    )
+      ? value
+      : null;
+
   }
 
-  const value =
-    Number(text);
 
-  return validQuantity(value)
-    ? value
-    : null;
+  if (
+    /^\d+(?:\.\d+)?$/.test(
+      text
+    )
+  ) {
+
+    const value =
+      Number(
+        text
+      );
+
+
+    return validQuantity(
+      value
+    )
+      ? value
+      : null;
+
+  }
+
+
+  /*
+   * Bare quantity in a natural booking sentence.
+   */
+
+  const bare =
+    text.match(
+      /\b(\d+(?:\.\d+)?)\b/
+    );
+
+
+  if (
+    bare &&
+    (
+      extractBookingCrop(
+        text
+      ) ||
+      /\b(book|booking|slot|procurement)\b/i.test(
+        text
+      )
+    )
+  ) {
+
+    const value =
+      Number(
+        bare[1]
+      );
+
+
+    return validQuantity(
+      value
+    )
+      ? value
+      : null;
+
+  }
+
+
+  return null;
+
 }
+
 
 export const extractQuantity =
   extractBookingQuantity;
+
 
 /* =========================================================
    CENTER
@@ -372,11 +730,18 @@ export const extractQuantity =
 export function normalizeCenter(
   value
 ) {
-  const text =
-    clean(value);
 
-  return text || null;
+  const text =
+    clean(
+      value
+    );
+
+
+  return text ||
+    null;
+
 }
+
 
 /* =========================================================
    DATE
@@ -385,23 +750,51 @@ export function normalizeCenter(
 export function normalizeBookingDate(
   value
 ) {
-  if (!value) {
-    return null;
-  }
-
-  const text =
-    clean(value);
 
   if (
-    /^\d{4}-\d{1,2}-\d{1,2}$/.test(text)
+    !value
   ) {
-    const [
-      year,
-      month,
-      day,
-    ] = text
-      .split("-")
-      .map(Number);
+
+    return null;
+
+  }
+
+
+  const text =
+    clean(
+      value
+    );
+
+
+  /*
+   * YYYY-MM-DD
+   */
+
+  const iso =
+    text.match(
+      /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/
+    );
+
+
+  if (
+    iso
+  ) {
+
+    const year =
+      Number(
+        iso[1]
+      );
+
+    const month =
+      Number(
+        iso[2]
+      );
+
+    const day =
+      Number(
+        iso[3]
+      );
+
 
     const date =
       new Date(
@@ -410,29 +803,54 @@ export function normalizeBookingDate(
         day
       );
 
+
     if (
-      date.getFullYear() === year &&
-      date.getMonth() === month - 1 &&
-      date.getDate() === day
+      date.getFullYear() ===
+        year &&
+      date.getMonth() ===
+        month - 1 &&
+      date.getDate() ===
+        day
     ) {
-      return isoDate(date);
+
+      return isoDate(
+        date
+      );
+
     }
+
   }
+
+
+  /*
+   * DD/MM/YYYY
+   */
 
   const slash =
     text.match(
       /^(\d{1,2})\/(\d{1,2})\/(20\d{2})$/
     );
 
-  if (slash) {
+
+  if (
+    slash
+  ) {
+
     const day =
-      Number(slash[1]);
+      Number(
+        slash[1]
+      );
 
     const month =
-      Number(slash[2]);
+      Number(
+        slash[2]
+      );
 
     const year =
-      Number(slash[3]);
+      Number(
+        slash[3]
+      );
+
 
     const date =
       new Date(
@@ -441,92 +859,403 @@ export function normalizeBookingDate(
         day
       );
 
+
     if (
-      date.getFullYear() === year &&
-      date.getMonth() === month - 1 &&
-      date.getDate() === day
+      date.getFullYear() ===
+        year &&
+      date.getMonth() ===
+        month - 1 &&
+      date.getDate() ===
+        day
     ) {
-      return isoDate(date);
+
+      return isoDate(
+        date
+      );
+
     }
+
   }
 
+
+  /*
+   * DD-MM-YYYY
+   */
+
+  const dash =
+    text.match(
+      /^(\d{1,2})-(\d{1,2})-(20\d{2})$/
+    );
+
+
+  if (
+    dash
+  ) {
+
+    const day =
+      Number(
+        dash[1]
+      );
+
+    const month =
+      Number(
+        dash[2]
+      );
+
+    const year =
+      Number(
+        dash[3]
+      );
+
+
+    const date =
+      new Date(
+        year,
+        month - 1,
+        day
+      );
+
+
+    if (
+      date.getFullYear() ===
+        year &&
+      date.getMonth() ===
+        month - 1 &&
+      date.getDate() ===
+        day
+    ) {
+
+      return isoDate(
+        date
+      );
+
+    }
+
+  }
+
+
   return null;
+
 }
+
 
 export function extractNaturalBookingDate(
   message,
   now = new Date()
 ) {
+
   const text =
-    norm(message);
+    norm(
+      message
+    );
 
-  if (!text) {
+
+  if (
+    !text
+  ) {
+
     return null;
+
   }
+
 
   if (
-    /\b(today|aaj|आज|ఈ రోజు|నేడు)\b/i.test(text)
+    /\b(today|aaj|आज|इस\s+दिन|ఈ రోజు|నేడు)\b/i.test(
+      text
+    )
   ) {
-    return isoDate(
-      new Date(now)
-    );
-  }
 
-  if (
-    /\b(tomorrow|tommorow|tommorrow|tomorow|tmrw|kal|कल|రేపు)\b/i.test(text)
-  ) {
     return isoDate(
-      addDays(1, now)
-    );
-  }
-
-  if (
-    /\b(day after tomorrow|day after tommorrow|परसों|ఎల్లుండి)\b/i.test(text)
-  ) {
-    return isoDate(
-      addDays(2, now)
-    );
-  }
-
-  const inDays =
-    text.match(
-      /\bin\s+(\d{1,3})\s+(day|days|दिन|రోజులు)\b/i
-    );
-
-  if (inDays) {
-    return isoDate(
-      addDays(
-        Number(inDays[1]),
+      new Date(
         now
       )
     );
+
   }
 
-  const explicit =
-    normalizeBookingDate(text);
 
-  if (explicit) {
-    return explicit;
+  if (
+    /\b(tomorrow|tommorow|tommorrow|tomorow|tmrw|kal|कल|రేపు)\b/i.test(
+      text
+    )
+  ) {
+
+    return isoDate(
+      addDays(
+        1,
+        now
+      )
+    );
+
   }
 
-  return null;
+
+  if (
+    /\b(day after tomorrow|day after tommorrow|परसों|ఎల్లుండి)\b/i.test(
+      text
+    )
+  ) {
+
+    return isoDate(
+      addDays(
+        2,
+        now
+      )
+    );
+
+  }
+
+
+  const inDays =
+    text.match(
+      /\bin\s+(\d{1,3})\s+(day|days)\b/i
+    );
+
+
+  if (
+    inDays
+  ) {
+
+    return isoDate(
+      addDays(
+        Number(
+          inDays[1]
+        ),
+        now
+      )
+    );
+
+  }
+
+
+  const hindiDays =
+    text.match(
+      /(\d{1,3})\s*(दिन)\s*(बाद)?/i
+    );
+
+
+  if (
+    hindiDays
+  ) {
+
+    return isoDate(
+      addDays(
+        Number(
+          hindiDays[1]
+        ),
+        now
+      )
+    );
+
+  }
+
+
+  const weekday =
+    extractWeekdayDate(
+      text,
+      now
+    );
+
+
+  if (
+    weekday
+  ) {
+
+    return weekday;
+
+  }
+
+
+  return normalizeBookingDate(
+    text
+  );
+
 }
+
+
+function weekdayIndex(
+  name
+) {
+
+  return {
+
+    sunday:
+      0,
+
+    sun:
+      0,
+
+    monday:
+      1,
+
+    mon:
+      1,
+
+    tuesday:
+      2,
+
+    tue:
+      2,
+
+    tues:
+      2,
+
+    wednesday:
+      3,
+
+    wed:
+      3,
+
+    thursday:
+      4,
+
+    thu:
+      4,
+
+    thurs:
+      4,
+
+    friday:
+      5,
+
+    fri:
+      5,
+
+    saturday:
+      6,
+
+    sat:
+      6,
+
+  }[
+    name
+  ];
+
+}
+
+
+function extractWeekdayDate(
+  text,
+  now
+) {
+
+  const match =
+    text.match(
+      /\b(next\s+)?(sunday|sun|monday|mon|tuesday|tue|tues|wednesday|wed|thursday|thu|thurs|friday|fri|saturday|sat)\b/i
+    );
+
+
+  if (
+    !match
+  ) {
+
+    return null;
+
+  }
+
+
+  const weekdayName =
+    match[2]
+      .toLowerCase();
+
+
+  const targetDay =
+    weekdayIndex(
+      weekdayName
+    );
+
+
+  if (
+    targetDay ===
+      undefined
+  ) {
+
+    return null;
+
+  }
+
+
+  const currentDay =
+    new Date(
+      now
+    ).getDay();
+
+
+  const wantsNext =
+    Boolean(
+      match[1]
+    );
+
+
+  let delta =
+    (
+      targetDay -
+      currentDay +
+      7
+    ) %
+    7;
+
+
+  if (
+    delta === 0 ||
+    wantsNext
+  ) {
+
+    delta += 7;
+
+  }
+
+
+  return isoDate(
+    addDays(
+      delta,
+      now
+    )
+  );
+
+}
+
 
 export function getDateReference(
   value
 ) {
+
   const dateText =
-    normalizeBookingDate(value);
+    normalizeBookingDate(
+      value
+    );
 
-  const date =
-    parseDate(dateText);
 
-  if (!date) {
+  if (
+    !dateText
+  ) {
+
     return null;
+
   }
 
+
+  const date =
+    new Date(
+      `${dateText}T00:00:00`
+    );
+
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+
+    return null;
+
+  }
+
+
   return {
-    date: dateText,
+
+    date:
+      dateText,
 
     year:
       date.getFullYear(),
@@ -541,7 +1270,8 @@ export function getDateReference(
       date.toLocaleDateString(
         "en-IN",
         {
-          weekday: "long",
+          weekday:
+            "long",
         }
       ),
 
@@ -549,130 +1279,710 @@ export function getDateReference(
       date.toLocaleDateString(
         "en-IN",
         {
-          weekday: "long",
-          day: "numeric",
-          month: "long",
-          year: "numeric",
+
+          weekday:
+            "long",
+
+          day:
+            "numeric",
+
+          month:
+            "long",
+
+          year:
+            "numeric",
+
         }
       ),
+
   };
+
 }
+
 
 /* =========================================================
-   TIME
+   TIME HELPERS
 ========================================================= */
 
-function time24(value) {
-  const text =
-    clean(value).toLowerCase();
+/*
+ * Accept:
+ *
+ * 8
+ * 08
+ * 8:00
+ * 8.00
+ * 8 am
+ * 8 pm
+ * 830
+ * 0830
+ * 8:30
+ *
+ * Compact 3/4 digit values:
+ *
+ * 830  -> 08:30
+ * 1230 -> 12:30
+ */
 
-  const match =
+function parseTimeValue(
+  value
+) {
+
+  const text =
+    clean(
+      value
+    )
+      .toLowerCase()
+      .replace(
+        /\./g,
+        ":"
+      )
+      .trim();
+
+
+  if (
+    !text
+  ) {
+
+    return null;
+
+  }
+
+
+  const compact =
     text.match(
-      /^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i
+      /^(\d{3,4})\s*(am|pm)?$/i
     );
 
-  if (!match) {
-    return null;
-  }
 
-  let hour =
-    Number(match[1]);
+  if (
+    compact
+  ) {
 
-  const minute =
-    Number(match[2] || 0);
+    const digits =
+      compact[1];
 
-  const meridiem =
-    match[3]?.toLowerCase();
 
-  if (minute > 59) {
-    return null;
-  }
+    let hours;
+    let minutes;
 
-  if (meridiem) {
+
     if (
-      hour < 1 ||
-      hour > 12
+      digits.length ===
+      3
     ) {
+
+      hours =
+        Number(
+          digits.slice(
+            0,
+            1
+          )
+        );
+
+      minutes =
+        Number(
+          digits.slice(
+            1
+          )
+        );
+
+    } else {
+
+      hours =
+        Number(
+          digits.slice(
+            0,
+            2
+          )
+        );
+
+      minutes =
+        Number(
+          digits.slice(
+            2
+          )
+        );
+
+    }
+
+
+    return makeTimeValue(
+      hours,
+      minutes,
+      compact[2]
+    );
+
+  }
+
+
+  const regular =
+    text.match(
+      /^(\d{1,2})(?::(\d{1,2}))?\s*(am|pm)?$/i
+    );
+
+
+  if (
+    !regular
+  ) {
+
+    return null;
+
+  }
+
+
+  const hours =
+    Number(
+      regular[1]
+    );
+
+
+  const minutes =
+    Number(
+      regular[2] ||
+        0
+    );
+
+
+  return makeTimeValue(
+    hours,
+    minutes,
+    regular[3]
+  );
+
+}
+
+
+function makeTimeValue(
+  rawHours,
+  rawMinutes,
+  meridiem
+) {
+
+  let hours =
+    Number(
+      rawHours
+    );
+
+
+  const minutes =
+    Number(
+      rawMinutes
+    );
+
+
+  if (
+    !Number.isFinite(
+      hours
+    ) ||
+    !Number.isFinite(
+      minutes
+    ) ||
+    minutes < 0 ||
+    minutes > 59
+  ) {
+
+    return null;
+
+  }
+
+
+  const suffix =
+    meridiem?.toLowerCase() ||
+    "";
+
+
+  if (
+    suffix
+  ) {
+
+    if (
+      hours < 1 ||
+      hours > 12
+    ) {
+
       return null;
+
     }
 
-    if (
-      meridiem === "pm" &&
-      hour !== 12
-    ) {
-      hour += 12;
-    }
 
     if (
-      meridiem === "am" &&
-      hour === 12
+      suffix ===
+        "pm" &&
+      hours !== 12
     ) {
-      hour = 0;
+
+      hours +=
+        12;
+
     }
-  } else if (hour > 23) {
-    return null;
+
+
+    if (
+      suffix ===
+        "am" &&
+      hours === 12
+    ) {
+
+      hours =
+        0;
+
+    }
+
+  } else {
+
+    if (
+      hours >
+      23
+    ) {
+
+      return null;
+
+    }
+
   }
+
 
   return (
-    `${String(hour).padStart(2, "0")}:` +
-    `${String(minute).padStart(2, "0")}`
+
+    `${String(
+      hours
+    ).padStart(
+      2,
+      "0"
+    )}:` +
+
+    `${String(
+      minutes
+    ).padStart(
+      2,
+      "0"
+    )}`
+
   );
+
 }
+
+
+function time24(
+  value
+) {
+
+  return parseTimeValue(
+    value
+  );
+
+}
+
+
+function timeToMinutes(
+  value
+) {
+
+  const normalized =
+    time24(
+      value
+    );
+
+
+  if (
+    !normalized
+  ) {
+
+    return null;
+
+  }
+
+
+  const [
+    hours,
+    minutes,
+  ] =
+    normalized
+      .split(
+        ":"
+      )
+      .map(
+        Number
+      );
+
+
+  return (
+    hours * 60 +
+    minutes
+  );
+
+}
+
+
+function minutesToTime(
+  total
+) {
+
+  const safeTotal =
+    Number(
+      total
+    );
+
+
+  if (
+    !Number.isFinite(
+      safeTotal
+    )
+  ) {
+
+    return null;
+
+  }
+
+
+  const hours =
+    Math.floor(
+      safeTotal /
+      60
+    );
+
+
+  const minutes =
+    safeTotal %
+    60;
+
+
+  return (
+
+    `${String(
+      hours
+    ).padStart(
+      2,
+      "0"
+    )}:` +
+
+    `${String(
+      minutes
+    ).padStart(
+      2,
+      "0"
+    )}`
+
+  );
+
+}
+
+
+function formatDisplayTime(
+  value
+) {
+
+  const minutes =
+    timeToMinutes(
+      value
+    );
+
+
+  if (
+    minutes == null
+  ) {
+
+    return clean(
+      value
+    );
+
+  }
+
+
+  const hours =
+    Math.floor(
+      minutes /
+      60
+    );
+
+
+  const minute =
+    minutes %
+    60;
+
+
+  const displayHour =
+    hours %
+      12 ||
+    12;
+
+
+  const suffix =
+    hours >= 12
+      ? "PM"
+      : "AM";
+
+
+  return (
+
+    `${displayHour}:` +
+
+    `${String(
+      minute
+    ).padStart(
+      2,
+      "0"
+    )} ${suffix}`
+
+  );
+
+}
+
+
+function formatSlotDisplay(
+  start,
+  end
+) {
+
+  if (
+    !start
+  ) {
+
+    return clean(
+      end
+    );
+
+  }
+
+
+  if (
+    !end
+  ) {
+
+    return formatDisplayTime(
+      start
+    );
+
+  }
+
+
+  return (
+
+    `${formatDisplayTime(
+      start
+    )} – ` +
+
+    `${formatDisplayTime(
+      end
+    )}`
+
+  );
+
+}
+
+
+/* =========================================================
+   SLOT NORMALIZATION
+========================================================= */
 
 export function normalizeBookingSlot(
   value
 ) {
-  if (!value) {
-    return null;
-  }
 
   if (
-    typeof value === "object"
+    !value
   ) {
+
+    return null;
+
+  }
+
+
+  if (
+    typeof value ===
+    "object"
+  ) {
+
+    const rawStart =
+      value.start ??
+      value.startTime ??
+      value.from ??
+      value.begin ??
+      "";
+
+
+    const rawEnd =
+      value.end ??
+      value.endTime ??
+      value.to ??
+      value.finish ??
+      "";
+
+
     const start =
-      time24(value.start) ||
-      clean(value.start);
+      time24(
+        rawStart
+      ) ||
+      clean(
+        rawStart
+      );
+
 
     const end =
-      time24(value.end) ||
-      clean(value.end);
+      time24(
+        rawEnd
+      ) ||
+      clean(
+        rawEnd
+      );
 
-    if (!start && !end) {
+
+    if (
+      !start &&
+      !end
+    ) {
+
       return null;
+
     }
 
+
     return {
+
       id:
-        value.id ||
-        `${start}-${end}`,
+        clean(
+          value.id
+        ) ||
+        (
+          start &&
+          end
+            ? `${start}-${end}`
+            : start
+        ),
 
       start,
 
       end,
 
       display:
-        clean(value.display) ||
-        `${start}${end ? ` – ${end}` : ""}`,
+        clean(
+          value.display ||
+          value.label
+        ) ||
+        formatSlotDisplay(
+          start,
+          end
+        ),
+
+      centerId:
+        value.centerId ??
+        value.center_id ??
+        null,
+
     };
+
   }
 
-  const text =
-    clean(value);
 
-  const range =
-    text.match(
-      /(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\s*(?:-|to|–|—)\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/i
+  const text =
+    clean(
+      value
     );
 
-  if (range) {
-    const start =
-      time24(range[1]);
 
-    const end =
-      time24(range[2]);
+  if (
+    !text
+  ) {
 
-    if (start && end) {
+    return null;
+
+  }
+
+
+  const normalizedText =
+    text.replace(
+      /\b(to|until|till)\b/gi,
+      "-"
+    );
+
+
+  const range =
+    normalizedText.match(
+      /(\d{1,4}(?::\d{1,2})?\s*(?:am|pm)?)\s*(?:-|–|—)\s*(\d{1,4}(?::\d{1,2})?\s*(?:am|pm)?)/i
+    );
+
+
+  if (
+    range
+  ) {
+
+    let start =
+      time24(
+        range[1]
+      );
+
+
+    let end =
+      time24(
+        range[2]
+      );
+
+
+    /*
+     * Handle:
+     *
+     * 8 to 8:30
+     * 8 to 830
+     * 8:00 to 830
+     * 8am to 830am
+     */
+
+    if (
+      start &&
+      end
+    ) {
+
+      const startMinutes =
+        timeToMinutes(
+          start
+        );
+
+
+      let endMinutes =
+        timeToMinutes(
+          end
+        );
+
+
+      /*
+       * If both are plain 12-hour-looking values and
+       * end appears earlier, try PM for the end.
+       */
+
+      if (
+        startMinutes != null &&
+        endMinutes != null &&
+        endMinutes <=
+          startMinutes
+      ) {
+
+        const candidate =
+          endMinutes +
+          12 * 60;
+
+
+        if (
+          candidate >
+          startMinutes &&
+          candidate <
+          24 * 60
+        ) {
+
+          end =
+            minutesToTime(
+              candidate
+            );
+
+          endMinutes =
+            candidate;
+
+        }
+
+      }
+
+
       return {
+
         id:
           `${start}-${end}`,
 
@@ -681,160 +1991,296 @@ export function normalizeBookingSlot(
         end,
 
         display:
-          `${start} – ${end}`,
+          formatSlotDisplay(
+            start,
+            end
+          ),
+
       };
+
     }
+
   }
+
 
   const single =
-    time24(text);
+    time24(
+      text
+    );
 
-  if (single) {
+
+  if (
+    single
+  ) {
+
     return {
-      id: single,
-      start: single,
-      end: "",
-      display: single,
+
+      id:
+        single,
+
+      start:
+        single,
+
+      end:
+        "",
+
+      display:
+        formatSlotDisplay(
+          single,
+          ""
+        ),
+
     };
+
   }
 
+
   return {
-    id: text,
-    start: text,
-    end: "",
-    display: text,
+
+    id:
+      text,
+
+    start:
+      text,
+
+    end:
+      "",
+
+    display:
+      text,
+
   };
+
 }
+
+
+/* =========================================================
+   TIME REFERENCE EXTRACTION
+========================================================= */
 
 export function extractTimeReference(
   message
 ) {
-  const text =
-    norm(message);
 
-  const range =
-    text.match(
-      /(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\s*(?:-|to|–|—)\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/i
+  const text =
+    norm(
+      message
     );
 
-  if (range) {
+
+  if (
+    !text
+  ) {
+
+    return null;
+
+  }
+
+
+  const normalizedText =
+    text.replace(
+      /\b(to|until|till)\b/gi,
+      "-"
+    );
+
+
+  /*
+   * Range.
+   */
+
+  const range =
+    normalizedText.match(
+      /(\d{1,4}(?::\d{1,2})?\s*(?:am|pm)?)\s*(?:-|–|—)\s*(\d{1,4}(?::\d{1,2})?\s*(?:am|pm)?)/i
+    );
+
+
+  if (
+    range
+  ) {
+
     return normalizeBookingSlot(
       `${range[1]}-${range[2]}`
     );
+
   }
+
+
+  /*
+   * Explicit AM/PM.
+   */
 
   const twelve =
     text.match(
-      /\b(\d{1,2}(?::\d{2})?\s*(?:am|pm))\b/i
+      /\b(\d{1,4}(?::\d{1,2})?\s*(?:am|pm))\b/i
     );
 
-  if (twelve) {
+
+  if (
+    twelve
+  ) {
+
     return normalizeBookingSlot(
       twelve[1]
     );
+
   }
+
+
+  /*
+   * 24-hour HH:MM.
+   */
 
   const twentyFour =
     text.match(
       /\b([01]?\d|2[0-3]):[0-5]\d\b/
     );
 
-  if (twentyFour) {
+
+  if (
+    twentyFour
+  ) {
+
     return normalizeBookingSlot(
       twentyFour[0]
     );
+
   }
 
-  const contextualHour =
+
+  /*
+   * Contextual:
+   *
+   * at 8
+   * around 8
+   * about 8
+   */
+
+  const contextual =
     text.match(
-      /\b(?:at|around|about|near|approximately)\s+([01]?\d|2[0-3])(?:\s*(?:am|pm))?\b/i
+      /\b(?:at|around|about|near|approximately)\s+(\d{1,4})(?:\s*(am|pm))?\b/i
     );
 
-  if (contextualHour) {
-    const raw =
-      `${contextualHour[1]} ${
-        text.includes("pm")
-          ? "pm"
-          : text.includes("am")
-            ? "am"
-            : ""
-      }`.trim();
+
+  if (
+    contextual
+  ) {
 
     return normalizeBookingSlot(
-      raw
+      `${contextual[1]}${
+        contextual[2]
+          ? ` ${contextual[2]}`
+          : ""
+      }`
     );
+
   }
+
+
+  /*
+   * 8 morning
+   * 8 in the morning
+   */
 
   const morning =
     text.match(
-      /\b(\d{1,2})(?:\s*)\b(?:in the morning|morning)\b/i
+      /\b(\d{1,2})\s*(?:in the morning|morning)\b/i
     );
 
-  if (morning) {
+
+  if (
+    morning
+  ) {
+
     return normalizeBookingSlot(
       `${morning[1]} am`
     );
+
   }
+
 
   const afternoon =
     text.match(
-      /\b(\d{1,2})(?:\s*)\b(?:in the afternoon|afternoon)\b/i
+      /\b(\d{1,2})\s*(?:in the afternoon|afternoon)\b/i
     );
 
-  if (afternoon) {
+
+  if (
+    afternoon
+  ) {
+
     return normalizeBookingSlot(
       `${afternoon[1]} pm`
     );
+
   }
 
+
   return null;
+
 }
+
 
 /* =========================================================
-   WEEKDAY
+   DATE MATCHING
 ========================================================= */
-
-function weekdayIndex(name) {
-  return {
-    sunday: 0,
-    sun: 0,
-
-    monday: 1,
-    mon: 1,
-
-    tuesday: 2,
-    tue: 2,
-    tues: 2,
-
-    wednesday: 3,
-    wed: 3,
-
-    thursday: 4,
-    thu: 4,
-    thurs: 4,
-
-    friday: 5,
-    fri: 5,
-
-    saturday: 6,
-    sat: 6,
-  }[name];
-}
 
 export function findAvailableDate(
   message,
   availableDates = [],
   now = new Date()
 ) {
+
   const text =
-    norm(message);
+    norm(
+      message
+    );
+
 
   if (
     !text ||
-    !Array.isArray(availableDates)
+    !Array.isArray(
+      availableDates
+    )
   ) {
+
     return null;
+
   }
+
+
+  const normalizedDates =
+    availableDates
+      .map(
+        item => {
+
+          const dateValue =
+            item?.date ||
+            item?.id ||
+            item?.value ||
+            "";
+
+
+          return {
+
+            item,
+
+            date:
+              normalizeBookingDate(
+                dateValue
+              ),
+
+            label:
+              norm(
+                item?.label ||
+                item?.name ||
+                dateValue
+              ),
+
+          };
+
+        }
+      );
+
 
   const natural =
     extractNaturalBookingDate(
@@ -842,80 +2288,118 @@ export function findAvailableDate(
       now
     );
 
-  if (natural) {
-    return (
-      availableDates.find(
-        item =>
-          String(
-            item.date || item.id
-          ) === natural
-      ) || null
-    );
-  }
 
-  const dayMatch =
-    text.match(
-      /\b(sunday|sun|monday|mon|tuesday|tue|tues|wednesday|wed|thursday|thu|thurs|friday|fri|saturday|sat)\b/i
-    );
+  if (
+    natural
+  ) {
 
-  if (dayMatch) {
-    const index =
-      weekdayIndex(
-        dayMatch[1].toLowerCase()
+    const exact =
+      normalizedDates.find(
+        entry =>
+          entry.date ===
+          natural
       );
 
-    const today =
-      new Date(now).getDay();
-
-    const wantsNext =
-      /\bnext\s+/.test(text);
-
-    let delta =
-      (index - today + 7) % 7;
 
     if (
-      delta === 0 ||
-      wantsNext
+      exact
     ) {
-      delta += 7;
+
+      return exact.item;
+
     }
 
-    const target =
-      isoDate(
-        addDays(
-          delta,
-          now
-        )
-      );
-
-    return (
-      availableDates.find(
-        item =>
-          String(
-            item.date || item.id
-          ) === target
-      ) || null
-    );
   }
 
-  return (
-    availableDates.find(
-      item => {
-        const label =
-          norm(
-            item.label ||
-            item.date ||
-            item.id
-          );
 
-        return (
-          label &&
-          text.includes(label)
-        );
-      }
-    ) || null
+  const explicit =
+    normalizeBookingDate(
+      text
+    );
+
+
+  if (
+    explicit
+  ) {
+
+    const exact =
+      normalizedDates.find(
+        entry =>
+          entry.date ===
+          explicit
+      );
+
+
+    if (
+      exact
+    ) {
+
+      return exact.item;
+
+    }
+
+  }
+
+
+  const weekdayDate =
+    extractWeekdayDate(
+      text,
+      now
+    );
+
+
+  if (
+    weekdayDate
+  ) {
+
+    const exact =
+      normalizedDates.find(
+        entry =>
+          entry.date ===
+          weekdayDate
+      );
+
+
+    if (
+      exact
+    ) {
+
+      return exact.item;
+
+    }
+
+  }
+
+
+  /*
+   * Match labels such as:
+   *
+   * "Thursday 10 September"
+   * "10 Sep"
+   */
+
+  const labelMatch =
+    normalizedDates.find(
+      entry =>
+        entry.label &&
+        (
+          text.includes(
+            entry.label
+          ) ||
+          entry.label.includes(
+            text
+          )
+        )
+    );
+
+
+  return (
+    labelMatch?.item ||
+    null
   );
+
 }
+
 
 /* =========================================================
    CENTER MATCHING
@@ -925,35 +2409,131 @@ export function findAvailableCenter(
   message,
   availableCenters = []
 ) {
+
   const text =
-    norm(message);
+    norm(
+      message
+    );
+
 
   if (
     !text ||
-    !Array.isArray(availableCenters)
+    !Array.isArray(
+      availableCenters
+    )
   ) {
+
     return null;
+
   }
+
 
   return (
     availableCenters.find(
       center => {
+
         const id =
-          norm(center?.id);
+          norm(
+            center?.id
+          );
+
 
         const name =
-          norm(center?.name);
+          norm(
+            center?.name ||
+            center?.centerName ||
+            center?.title
+          );
+
 
         return (
-          (id &&
-            text.includes(id)) ||
-          (name &&
-            text.includes(name))
+
+          (
+            id &&
+            text.includes(
+              id
+            )
+          ) ||
+
+          (
+            name &&
+            text.includes(
+              name
+            )
+          )
+
         );
+
       }
-    ) || null
+    ) ||
+    null
   );
+
 }
+
+
+/* =========================================================
+   TIME NORMALIZATION FOR AVAILABILITY
+========================================================= */
+
+function normalizeTimeLike(
+  value
+) {
+
+  if (
+    value ===
+    null ||
+    value ===
+    undefined
+  ) {
+
+    return null;
+
+  }
+
+
+  const parsed =
+    time24(
+      value
+    );
+
+
+  if (
+    parsed
+  ) {
+
+    return parsed;
+
+  }
+
+
+  const text =
+    clean(
+      value
+    );
+
+
+  const hhmm =
+    text.match(
+      /(\d{1,2}):(\d{2})/
+    );
+
+
+  if (
+    hhmm
+  ) {
+
+    return time24(
+      `${hhmm[1]}:${hhmm[2]}`
+    );
+
+  }
+
+
+  return null;
+
+}
+
 
 /* =========================================================
    SLOT MATCHING
@@ -963,123 +2543,360 @@ export function findSlotReference(
   message,
   availableSlots = []
 ) {
+
   const text =
-    norm(message);
+    norm(
+      message
+    );
+
 
   if (
     !text ||
-    !Array.isArray(availableSlots)
+    !Array.isArray(
+      availableSlots
+    )
   ) {
+
     return null;
+
   }
 
-  let requested =
+
+  const requested =
     extractTimeReference(
       text
     );
 
-  if (
-    !requested &&
-    /^\d{1,2}(?::\d{2})?$/.test(text)
-  ) {
-    requested =
-      normalizeBookingSlot(
-        text
-      );
-  }
 
-  if (requested) {
+  if (
+    requested
+  ) {
+
+    const requestedStart =
+      timeToMinutes(
+        requested.start
+      );
+
+
+    const requestedEnd =
+      timeToMinutes(
+        requested.end
+      );
+
+
+    /*
+     * First try exact start/end.
+     */
+
     const exact =
       availableSlots.find(
-        item =>
-          String(item.start) ===
-            String(requested.start) &&
-          (
-            !requested.end ||
-            String(item.end) ===
-              String(requested.end)
-          )
+        item => {
+
+          const itemStart =
+            timeToMinutes(
+              item?.start ??
+              item?.startTime ??
+              item?.from
+            );
+
+
+          const itemEnd =
+            timeToMinutes(
+              item?.end ??
+              item?.endTime ??
+              item?.to
+            );
+
+
+          if (
+            requestedStart ==
+              null ||
+            itemStart ==
+              null
+          ) {
+
+            return false;
+
+          }
+
+
+          if (
+            requestedEnd ==
+              null
+          ) {
+
+            return (
+              itemStart ===
+              requestedStart
+            );
+
+          }
+
+
+          return (
+
+            itemStart ===
+            requestedStart &&
+
+            itemEnd ===
+            requestedEnd
+
+          );
+
+        }
       );
 
-    if (exact) {
+
+    if (
+      exact
+    ) {
+
       return exact;
+
     }
 
+
+    /*
+     * Normalize backend slot IDs/labels.
+     */
+
+    const normalizedStart =
+      requested.start;
+
+
+    const normalizedEnd =
+      requested.end;
+
+
+    const fallback =
+      availableSlots.find(
+        item => {
+
+          const itemStart =
+            normalizeTimeLike(
+              item?.start ??
+              item?.startTime ??
+              item?.from
+            );
+
+
+          const itemEnd =
+            normalizeTimeLike(
+              item?.end ??
+              item?.endTime ??
+              item?.to
+            );
+
+
+          return (
+
+            itemStart ===
+              normalizedStart &&
+
+            (
+              !normalizedEnd ||
+              itemEnd ===
+                normalizedEnd
+            )
+
+          );
+
+        }
+      );
+
+
+    if (
+      fallback
+    ) {
+
+      return fallback;
+
+    }
+
+
+    /*
+     * Final display-label matching.
+     */
+
+    const requestedDisplay =
+      norm(
+        formatSlotDisplay(
+          requested.start,
+          requested.end
+        )
+      );
+
+
     return (
+
       availableSlots.find(
         item =>
-          String(item.start) ===
-          String(requested.start)
-      ) || null
+          norm(
+            item?.display ||
+            item?.label ||
+            ""
+          ).includes(
+            requestedDisplay
+          )
+      ) ||
+      null
+
     );
+
   }
+
+
+  /*
+   * First available.
+   */
 
   if (
     /\b(first|earliest|first available)\b/i.test(
       text
     )
   ) {
+
     return (
       availableSlots[0] ||
       null
     );
+
   }
 
-  if (
-    /\b(morning|सुबह|ఉదయం)\b/i.test(text)
-  ) {
-    return (
-      availableSlots.find(
-        item =>
-          Number(
-            String(item.start).slice(
-              0,
-              2
-            )
-          ) < 12
-      ) || null
-    );
-  }
+
+  /*
+   * Morning.
+   */
 
   if (
-    /\b(afternoon|दोपहर|మధ్యాహ్నం)\b/i.test(text)
+    /\b(morning|सुबह|ఉదయం)\b/i.test(
+      text
+    )
   ) {
+
     return (
+
       availableSlots.find(
         item => {
-          const hour =
-            Number(
-              String(
-                item.start
-              ).slice(0, 2)
+
+          const minutes =
+            timeToMinutes(
+              item?.start ??
+              item?.startTime ??
+              item?.from
             );
 
+
           return (
-            hour >= 12 &&
-            hour < 17
+
+            minutes !=
+              null &&
+
+            minutes <
+              12 * 60
+
           );
+
         }
-      ) || null
+      ) ||
+      null
+
     );
+
   }
+
+
+  /*
+   * Afternoon.
+   */
 
   if (
-    /\b(evening|शाम|సాయంత్రం)\b/i.test(text)
+    /\b(afternoon|दोपहर|మధ్యాహ్నం)\b/i.test(
+      text
+    )
   ) {
+
     return (
+
       availableSlots.find(
-        item =>
-          Number(
-            String(
-              item.start
-            ).slice(0, 2)
-          ) >= 17
-      ) || null
+        item => {
+
+          const minutes =
+            timeToMinutes(
+              item?.start ??
+              item?.startTime ??
+              item?.from
+            );
+
+
+          return (
+
+            minutes !=
+              null &&
+
+            minutes >=
+              12 * 60 &&
+
+            minutes <
+              17 * 60
+
+          );
+
+        }
+      ) ||
+      null
+
     );
+
   }
 
+
+  /*
+   * Evening.
+   */
+
+  if (
+    /\b(evening|शाम|సాయంత్రం)\b/i.test(
+      text
+    )
+  ) {
+
+    return (
+
+      availableSlots.find(
+        item => {
+
+          const minutes =
+            timeToMinutes(
+              item?.start ??
+              item?.startTime ??
+              item?.from
+            );
+
+
+          return (
+
+            minutes !=
+              null &&
+
+            minutes >=
+              17 * 60
+
+          );
+
+        }
+      ) ||
+      null
+
+    );
+
+  }
+
+
   return null;
+
 }
+
 
 /* =========================================================
    SLOT FIELDS
@@ -1088,11 +2905,28 @@ export function findSlotReference(
 function slotFromFields(
   source = {}
 ) {
-  if (source.slot) {
+
+  if (
+    source.slot
+  ) {
+
     return normalizeBookingSlot(
       source.slot
     );
+
   }
+
+
+  if (
+    source.selectedSlot
+  ) {
+
+    return normalizeBookingSlot(
+      source.selectedSlot
+    );
+
+  }
+
 
   if (
     source.slotStart ||
@@ -1100,7 +2934,9 @@ function slotFromFields(
     source.slotId ||
     source.slotDisplay
   ) {
+
     return normalizeBookingSlot({
+
       id:
         source.slotId,
 
@@ -1112,11 +2948,16 @@ function slotFromFields(
 
       display:
         source.slotDisplay,
+
     });
+
   }
 
+
   return null;
+
 }
+
 
 /* =========================================================
    REQUIRED FIELDS
@@ -1125,47 +2966,78 @@ function slotFromFields(
 export function getMissingBookingFields(
   draft = {}
 ) {
-  const missing = [];
 
-  if (!draft.crop) {
+  const missing =
+    [];
+
+
+  if (
+    !draft.crop
+  ) {
+
     missing.push(
       BOOKING_FIELDS.CROP
     );
+
   }
+
 
   if (
     !validQuantity(
       draft.quantity
     )
   ) {
+
     missing.push(
       BOOKING_FIELDS.QUANTITY
     );
+
   }
 
-  if (!draft.centerId) {
+
+  if (
+    !draft.centerId
+  ) {
+
     missing.push(
       BOOKING_FIELDS.CENTER
     );
+
   }
 
-  if (!draft.date) {
+
+  if (
+    !draft.date
+  ) {
+
     missing.push(
       BOOKING_FIELDS.DATE
     );
+
   }
 
-  if (!slotFromFields(draft)) {
+
+  if (
+    !slotFromFields(
+      draft
+    )
+  ) {
+
     missing.push(
       BOOKING_FIELDS.SLOT
     );
+
   }
 
+
   return missing;
+
 }
+
 
 export const getMissingDetails =
   getMissingBookingFields;
+
 
 /* =========================================================
    STAGE
@@ -1174,51 +3046,99 @@ export const getMissingDetails =
 export function getBookingStage(
   draft = {}
 ) {
-  if (draft.confirmed) {
-    return BOOKING_STAGES.COMPLETE;
-  }
 
   if (
-    slotFromFields(draft)
+    draft.confirmed
   ) {
-    return BOOKING_STAGES.CONFIRM;
+
+    return BOOKING_STAGES.COMPLETE;
+
   }
+
+
+  if (
+    draft.awaitingConfirmation &&
+    slotFromFields(
+      draft
+    )
+  ) {
+
+    return BOOKING_STAGES.CONFIRM;
+
+  }
+
+
+  if (
+    slotFromFields(
+      draft
+    )
+  ) {
+
+    return BOOKING_STAGES.CONFIRM;
+
+  }
+
 
   if (
     draft.availabilityChecked
   ) {
+
     return BOOKING_STAGES.SLOT;
+
   }
 
-  if (draft.date) {
+
+  if (
+    draft.date
+  ) {
+
     return BOOKING_STAGES.AVAILABILITY;
+
   }
+
 
   if (
     draft.crop &&
-    validQuantity(draft.quantity) &&
+    validQuantity(
+      draft.quantity
+    ) &&
     !draft.centerId
   ) {
+
     return BOOKING_STAGES.CENTER;
+
   }
+
 
   if (
     draft.crop &&
-    validQuantity(draft.quantity)
+    validQuantity(
+      draft.quantity
+    )
   ) {
+
     return BOOKING_STAGES.DATE;
+
   }
 
+
   return (
+
     draft.crop ||
-    draft.quantity
+    validQuantity(
+      draft.quantity
+    )
+
   )
     ? BOOKING_STAGES.DETAILS
     : BOOKING_STAGES.EMPTY;
+
 }
+
 
 export const getBookingStep =
   getBookingStage;
+
 
 /* =========================================================
    NEXT FIELD
@@ -1227,32 +3147,60 @@ export const getBookingStep =
 export function getNextBookingField(
   draft = {}
 ) {
-  if (!draft.crop) {
+
+  if (
+    !draft.crop
+  ) {
+
     return BOOKING_FIELDS.CROP;
+
   }
+
 
   if (
     !validQuantity(
       draft.quantity
     )
   ) {
+
     return BOOKING_FIELDS.QUANTITY;
+
   }
 
-  if (!draft.centerId) {
+
+  if (
+    !draft.centerId
+  ) {
+
     return BOOKING_FIELDS.CENTER;
+
   }
 
-  if (!draft.date) {
+
+  if (
+    !draft.date
+  ) {
+
     return BOOKING_FIELDS.DATE;
+
   }
 
-  if (!slotFromFields(draft)) {
+
+  if (
+    !slotFromFields(
+      draft
+    )
+  ) {
+
     return BOOKING_FIELDS.SLOT;
+
   }
+
 
   return null;
+
 }
+
 
 /* =========================================================
    VALIDATION
@@ -1262,18 +3210,27 @@ export function validateBookingDraft(
   draft = {},
   options = {}
 ) {
+
   const maxQuantity =
     Number(
       options.maxQuantity ||
       MAX_QUANTITY
     );
 
-  const errors = {};
 
-  if (!draft.crop) {
+  const errors =
+    {};
+
+
+  if (
+    !draft.crop
+  ) {
+
     errors.crop =
       "Crop is required.";
+
   }
+
 
   if (
     !validQuantity(
@@ -1281,33 +3238,58 @@ export function validateBookingDraft(
       maxQuantity
     )
   ) {
+
     errors.quantity =
       "A valid quantity is required.";
+
   }
 
-  if (!draft.centerId) {
+
+  if (
+    !draft.centerId
+  ) {
+
     errors.centerId =
       "Procurement center is required.";
+
   }
 
-  if (!draft.date) {
+
+  if (
+    !draft.date
+  ) {
+
     errors.date =
       "Arrival date is required.";
+
   }
 
-  if (!slotFromFields(draft)) {
+
+  if (
+    !slotFromFields(
+      draft
+    )
+  ) {
+
     errors.slot =
       "Arrival window is required.";
+
   }
 
+
   return {
+
     valid:
-      Object.keys(errors)
-        .length === 0,
+      Object.keys(
+        errors
+      ).length === 0,
 
     errors,
+
   };
+
 }
+
 
 /* =========================================================
    CREATE DRAFT
@@ -1316,24 +3298,39 @@ export function validateBookingDraft(
 export function createBookingDraft(
   values = {}
 ) {
+
   const source =
     values &&
-    typeof values === "object"
+    typeof values ===
+      "object"
       ? values
       : {};
 
+
   const slot =
-    slotFromFields(source);
+    slotFromFields(
+      source
+    );
+
+
+  const date =
+    normalizeBookingDate(
+      source.date
+    );
+
 
   const draft = {
+
     schemaVersion:
       BOOKING_SCHEMA_VERSION,
 
     active:
-      source.active !== false,
+      source.active !==
+      false,
 
     assistantManaged:
-      source.assistantManaged === true,
+      source.assistantManaged ===
+      true,
 
     crop:
       source.crop ||
@@ -1343,11 +3340,14 @@ export function createBookingDraft(
       validQuantity(
         source.quantity
       )
-        ? Number(source.quantity)
+        ? Number(
+            source.quantity
+          )
         : null,
 
     centerId:
-      source.centerId == null
+      source.centerId ==
+        null
         ? null
         : normalizeCenter(
             source.centerId
@@ -1360,10 +3360,7 @@ export function createBookingDraft(
           )
         : null,
 
-    date:
-      normalizeBookingDate(
-        source.date
-      ),
+    date,
 
     dateLabel:
       source.dateLabel ||
@@ -1405,30 +3402,70 @@ export function createBookingDraft(
     readyForConfirmation:
       false,
 
+    token:
+      source.token ||
+      null,
+
+    bookingId:
+      source.bookingId ||
+      null,
+
     updatedAt:
+      Number(
+        source.updatedAt ||
+        0
+      ) ||
       Date.now(),
+
   };
 
-  draft.readyForConfirmation =
-    getMissingBookingFields(
-      draft
-    ).length === 0;
-
-  draft.step =
-    getBookingStage(draft);
 
   if (
     !draft.dateLabel &&
     draft.date
   ) {
+
     draft.dateLabel =
       getDateReference(
         draft.date
-      )?.label || null;
+      )?.label ||
+      null;
+
   }
 
+
+  /*
+   * If a slot exists then availability has effectively
+   * been checked from the conversational perspective.
+   */
+
+  if (
+    draft.slot
+  ) {
+
+    draft.availabilityChecked =
+      true;
+
+  }
+
+
+  draft.readyForConfirmation =
+    getMissingBookingFields(
+      draft
+    ).length === 0 &&
+    !draft.confirmed;
+
+
+  draft.step =
+    getBookingStage(
+      draft
+    );
+
+
   return draft;
+
 }
+
 
 /* =========================================================
    EMPTY
@@ -1437,7 +3474,9 @@ export function createBookingDraft(
 export function createEmpty(
   values = {}
 ) {
+
   return createBookingDraft({
+
     ...values,
 
     active:
@@ -1487,8 +3526,20 @@ export function createEmpty(
 
     awaitingConfirmation:
       false,
+
+    readyForConfirmation:
+      false,
+
+    token:
+      null,
+
+    bookingId:
+      null,
+
   });
+
 }
+
 
 /* =========================================================
    NORMALIZE
@@ -1497,27 +3548,74 @@ export function createEmpty(
 export function normalize(
   values = {}
 ) {
+
   return createBookingDraft(
     values
   );
+
 }
+
 
 export const normalizeBookingState =
   normalize;
+
 
 /* =========================================================
    MERGE
 ========================================================= */
 
+/*
+ * IMPORTANT:
+ * undefined / null fields from a partial update must not
+ * accidentally erase previously collected booking details.
+ *
+ * Explicit null is allowed when the caller intentionally
+ * wants to clear a value.
+ */
+
 export function mergeBookingDraft(
   current = {},
   updates = {}
 ) {
-  return createBookingDraft({
-    ...current,
-    ...updates,
-  });
+
+  const base =
+    createBookingDraft(
+      current
+    );
+
+
+  const source =
+    updates &&
+    typeof updates ===
+      "object"
+      ? updates
+      : {};
+
+
+  const merged = {
+    ...base,
+    ...source,
+  };
+
+
+  /*
+   * Partial conversational updates:
+   *
+   * { date: "..." }
+   *
+   * should not erase crop, quantity or center.
+   */
+
+  const booking =
+    createBookingDraft(
+      merged
+    );
+
+
+  return booking;
+
 }
+
 
 /* =========================================================
    UPDATE EXTRACTION
@@ -1527,52 +3625,87 @@ export function extractBookingUpdates(
   message,
   options = {}
 ) {
-  const text =
-    clean(message);
 
-  const updates = {};
+  const text =
+    clean(
+      message
+    );
+
+
+  const updates =
+    {};
+
 
   const crop =
     extractBookingCrop(
       text
     );
 
+
   const quantity =
     extractBookingQuantity(
       text
     );
 
+
   const date =
     extractNaturalBookingDate(
       text,
       options.now ||
-        new Date()
+      new Date()
     );
+
 
   const slot =
     extractTimeReference(
       text
     );
 
-  if (crop) {
-    updates.crop = crop;
+
+  if (
+    crop
+  ) {
+
+    updates.crop =
+      crop;
+
   }
 
-  if (quantity) {
+
+  if (
+    quantity
+  ) {
+
     updates.quantity =
       quantity;
+
   }
 
-  if (date) {
-    updates.date = date;
+
+  if (
+    date
+  ) {
+
+    updates.date =
+      date;
+
   }
 
-  if (slot) {
-    updates.slot = slot;
+
+  if (
+    slot
+  ) {
+
+    updates.slot =
+      slot;
+
   }
+
 
   return updates;
+
 }
+
 
 /* =========================================================
    STORAGE
@@ -1581,42 +3714,55 @@ export function extractBookingUpdates(
 export function saveBookingDraft(
   draft
 ) {
+
   return writeJson(
     BOOKING_STORAGE_KEY,
-    createBookingDraft(draft)
+    createBookingDraft(
+      draft
+    )
   );
+
 }
 
+
 export function loadBookingDraft() {
+
   const stored =
     readJson(
       BOOKING_STORAGE_KEY,
       null
     );
 
+
   return (
+
     stored &&
     typeof stored ===
       "object"
+
   )
-    ? normalize(stored)
+    ? normalize(
+        stored
+      )
     : null;
+
 }
 
+
 function loadBookingState() {
-  const draft =
-    readJson(
-      BOOKING_STORAGE_KEY,
-      null
-    );
+
+  const storedDraft =
+    loadBookingDraft();
+
 
   if (
-    draft &&
-    typeof draft ===
-      "object"
+    storedDraft
   ) {
-    return normalize(draft);
+
+    return storedDraft;
+
   }
+
 
   const stored =
     readJson(
@@ -1624,97 +3770,134 @@ function loadBookingState() {
       null
     );
 
+
   return (
+
     stored &&
     typeof stored ===
       "object"
+
   )
-    ? normalize(stored)
+    ? normalize(
+        stored
+      )
     : createEmpty();
+
 }
+
 
 function persistState(
   state,
   notify = true
 ) {
+
   const normalized =
-    normalize(state);
+    normalize(
+      state
+    );
+
 
   writeJson(
     BOOKING_STATE_STORAGE_KEY,
     normalized
   );
 
+
   writeJson(
     BOOKING_STORAGE_KEY,
     normalized
   );
 
-  if (notify) {
+
+  if (
+    notify
+  ) {
+
     dispatch(
       EVENT_BOOKING,
       normalized
     );
+
   }
 
+
   return normalized;
+
 }
+
 
 export function updateBookingDraft(
   updates = {}
 ) {
+
   const current =
     loadBookingDraft() ||
     loadBookingState();
+
 
   return persistState(
     {
       ...current,
       ...updates,
-      active: true,
+      active:
+        true,
     },
     true
   );
+
 }
+
 
 export function saveBookingState(
   state
 ) {
+
   return persistState(
     state,
     true
   );
+
 }
 
+
 export function clearBookingDraft() {
+
   removeKey(
     BOOKING_STORAGE_KEY
   );
+
 
   removeKey(
     BOOKING_STATE_STORAGE_KEY
   );
 
+
   removeKey(
     BOOKING_AVAILABILITY_STORAGE_KEY
   );
+
 
   dispatch(
     EVENT_BOOKING,
     createEmpty()
   );
 
+
   return true;
+
 }
 
+
 /* =========================================================
-   AVAILABILITY STORAGE
+   AVAILABILITY
 ========================================================= */
 
 export function saveBookingAvailabilityContext(
   context = {}
 ) {
+
   const value = {
+
     availableDates:
       Array.isArray(
         context.availableDates
@@ -1746,7 +3929,9 @@ export function saveBookingAvailabilityContext(
 
     updatedAt:
       Date.now(),
+
   };
+
 
   const ok =
     writeJson(
@@ -1754,24 +3939,48 @@ export function saveBookingAvailabilityContext(
       value
     );
 
-  if (ok) {
+
+  if (
+    ok
+  ) {
+
     dispatch(
       EVENT_AVAILABILITY,
       value
     );
+
   }
 
+
   return ok;
+
 }
 
+
 export function getBookingAvailabilityContext() {
+
   const empty = {
-    availableDates: [],
-    availableSlots: [],
-    availableCenters: [],
-    selectedDate: null,
-    selectedCenterId: null,
+
+    availableDates:
+      [],
+
+    availableSlots:
+      [],
+
+    availableCenters:
+      [],
+
+    selectedDate:
+      null,
+
+    selectedCenterId:
+      null,
+
+    updatedAt:
+      0,
+
   };
+
 
   const value =
     readJson(
@@ -1779,13 +3988,17 @@ export function getBookingAvailabilityContext() {
       null
     );
 
+
   if (
     !value ||
     typeof value !==
       "object"
   ) {
+
     return empty;
+
   }
+
 
   const updatedAt =
     Number(
@@ -1793,20 +4006,26 @@ export function getBookingAvailabilityContext() {
       0
     );
 
+
   if (
     updatedAt &&
     Date.now() -
       updatedAt >
       AVAILABILITY_TTL
   ) {
+
     removeKey(
       BOOKING_AVAILABILITY_STORAGE_KEY
     );
 
+
     return empty;
+
   }
 
+
   return {
+
     availableDates:
       Array.isArray(
         value.availableDates
@@ -1837,142 +4056,294 @@ export function getBookingAvailabilityContext() {
       null,
 
     updatedAt,
+
   };
+
 }
 
+
 export function requestBookingAvailabilitySync() {
+
   if (
     typeof window !==
     "undefined"
   ) {
+
     dispatch(
       EVENT_REQUEST_AVAILABILITY
     );
+
   }
 
+
   return getBookingAvailabilityContext();
+
 }
 
+
 /* =========================================================
-   INTENT DETECTION
+   BOOKING INTENT HELPERS
 ========================================================= */
 
 function isBookingStart(
   text
 ) {
+
   return (
+
     /\b(book|booking|reserve|reservation|procurement|sell)\b/i.test(
       text
     ) ||
-    /\b(बुक|बुकिंग|రిజర్వ్|బుక్|బుకింగ్)\b/i.test(
+
+    /\b(बुक|बुकिंग|रिजर्व|बिक्री|బుక్|బుకింగ్)\b/i.test(
       text
     )
+
   );
+
 }
+
 
 function isConfirmation(
   text
 ) {
-  return /^(yes|yeah|yep|ok|okay|confirm|confirmed|book it|do it|go ahead|haan|हां|हाँ|ठीक|ठीक है|అవును|సరే)\b/i.test(
+
+  return /^(yes|yeah|yep|yup|sure|ok|okay|k|confirm|confirmed|book it|do it|go ahead|continue|proceed|yes please|haan|हां|हाँ|ठीक|ठीक है|अवश्य|करो|कर दो|अवును|అవును|సరే|చేయండి)[.!\s]*$/i.test(
     text
   );
+
 }
+
 
 function isCancellation(
   text
 ) {
-  return /\b(cancel|cancel booking|stop booking|never mind|रद्द|रद्द करो|రద్దు|వద్దు)\b/i.test(
-    text
+
+  return (
+
+    /\b(cancel|stop booking|never mind|forget it)\b/i.test(
+      text
+    ) ||
+
+    /\b(रद्द|रद्द करो|रद्द करें|मत करो)\b/i.test(
+      text
+    ) ||
+
+    /\b(రద్దు|వద్దు|ఆపండి)\b/i.test(
+      text
+    )
+
   );
+
 }
+
 
 function asksForState(
   text
 ) {
+
   return (
-    /\b(what have i|what did i|show my|my booking|booking details|selected|what have we selected)\b/i.test(
+
+    /\b(what have i|what did i|show my|my booking|booking details|selected|what have we selected|booking summary|summary)\b/i.test(
       text
     ) ||
-    /क्या.*चुना|बुकिंग.*विवरण/i.test(
+
+    /क्या.*चुना|बुकिंग.*विवरण|सारांश/i.test(
+      text
+    ) ||
+
+    /బుకింగ్.*వివరాలు|సారాంశ/i.test(
       text
     )
+
   );
+
 }
+
 
 function asksForDates(
   text
 ) {
+
   return (
-    /\b(what|which|show|tell|give).*(date|dates)\b|\bavailable dates\b|\bdates available\b|\bwhich dates\b|\bdates?\b/i.test(
+
+    /\b(what|which|show|tell|give).*(date|dates)\b/i.test(
       text
     ) ||
-    /तारीख.*उपलब्ध|तारीखें.*बताओ|తేదీలు.*అందుబాటులో/i.test(
+
+    /\b(available dates|dates available|which dates)\b/i.test(
+      text
+    ) ||
+
+    /^dates?$/i.test(
+      text.trim()
+    ) ||
+
+    /तारीख.*उपलब्ध|तारीखें.*बताओ/i.test(
+      text
+    ) ||
+
+    /తేదీలు.*అందుబాటులో|ఏ తేదీలు/i.test(
       text
     )
+
   );
+
 }
 
-function asksForSlots(text) {
-  return /\b(what|which|show|tell).*(time|times|slot|slots)\b|\bavailable (time|times|slots)\b|\bwhat time\b|\b(there are|they are|i see|i can see).*(available|slots|times)\b|\b(available|slots|times).*(there|here|already)\b/i.test(text) ||
-    /समय.*उपलब्ध|समय.*बताओ|स्लॉट.*उपलब्ध|సమయం.*అందుబాటులో|స్లాట్లు.*అందుబాటులో/i.test(text);
+
+function asksForSlots(
+  text
+) {
+
+  return (
+
+    /\b(what|which|show|tell|give).*(time|times|slot|slots)\b/i.test(
+      text
+    ) ||
+
+    /\b(available\s+(time|times|slot|slots|timing|timings|timming|timmings))\b/i.test(
+      text
+    ) ||
+
+    /\b(slot timings?|booking timings?|procurement timings?)\b/i.test(
+      text
+    ) ||
+
+    /^time(s)?$/i.test(
+      text.trim()
+    ) ||
+
+    /^(timing|timings|timming|timmings|hours)$/i.test(
+      text.trim()
+    ) ||
+
+    /\bwhat time\b/i.test(
+      text
+    ) ||
+
+    /समय.*उपलब्ध|समय.*बताओ|स्लॉट.*उपलब्ध/i.test(
+      text
+    ) ||
+
+    /సమయం.*అందుబాటులో|స్లాట్.*అందుబాటులో/i.test(
+      text
+    )
+
+  );
+
 }
+
 
 function asksForCenters(
   text
 ) {
+
   return (
-    /\b(what|which|show|tell|give|list).*(center|centers|centre|centres|centeers|procurement center|procurement centers)\b|\bavailable (center|centers|centre|centres)\b|\bcenters?\b|\bcentres?\b|\bcenteers?\b/i.test(
+
+    /\b(what|which|show|tell|give|list).*(center|centers|centre|centres|centeers|procurement center|procurement centers)\b/i.test(
       text
     ) ||
-    /केंद्र.*उपलब्ध|केंद्र.*बताओ|కేంద్రాలు.*అందుబాటులో|కేంద్రాలు.*చెప్పు/i.test(
+
+    /\bavailable\s+(center|centers|centre|centres|centeers)\b/i.test(
+      text
+    ) ||
+
+    /^(center|centers|centre|centres|centeer|centeers)$/i.test(
+      text.trim()
+    ) ||
+
+    /केंद्र.*उपलब्ध|केंद्र.*बताओ|केंद्र कौन/i.test(
+      text
+    ) ||
+
+    /కేంద్రాలు.*అందుబాటులో|కేంద్రాలు.*చెప్పు/i.test(
       text
     )
+
   );
+
 }
+
 
 function asksForCenterTimings(
   text
 ) {
+
   const centerWords =
     /\b(center|centers|centre|centres|centeers|procurement|location|locations)\b/i.test(
       text
     );
+
 
   const timingWords =
     /\b(time|times|timing|timings|timming|timmings|hours|opening|closing|open|close)\b/i.test(
       text
     );
 
-  const standaloneTiming =
-    /^(time|times|timing|timings|timming|timmings|hours|opening|closing)$/i.test(
-      text.trim()
+
+  return (
+
+    centerWords &&
+    timingWords
+
+  );
+
+}
+
+
+export function isBookingInformationRequest(
+  text
+) {
+
+  const value =
+    norm(
+      text
     );
 
+
+  if (
+    !value
+  ) {
+
+    return false;
+
+  }
+
+
   return (
-    (centerWords && timingWords) ||
-    standaloneTiming
+
+    asksForCenters(
+      value
+    ) ||
+
+    asksForCenterTimings(
+      value
+    ) ||
+
+    asksForDates(
+      value
+    ) ||
+
+    asksForSlots(
+      value
+    )
+
   );
+
 }
 
-export function isBookingInformationRequest(text) {
-  const value = norm(text);
-  if (!value) return false;
-
-  return (
-    asksForCenters(value) ||
-    asksForCenterTimings(value) ||
-    asksForDates(value) ||
-    asksForSlots(value)
-  );
-}
 
 function asksForReview(
   text
 ) {
-  return /\b(review|summary|summarize|show details|read it back|final details)\b/i.test(
+
+  return /\b(review|summary|summarize|show details|read it back|final details|confirm details)\b/i.test(
     text
   );
+
 }
+
 
 /* =========================================================
    DISPLAY HELPERS
@@ -1981,54 +4352,82 @@ function asksForReview(
 function makeDateText(
   dates = []
 ) {
+
   return dates
-    .map(item => {
-      const ref =
-        getDateReference(
-          item.date ||
-          item.id
-        );
+    .map(
+      item => {
 
-      const label =
-        clean(item.label);
+        const ref =
+          getDateReference(
+            item?.date ||
+            item?.id
+          );
 
-      if (
-        ref?.label &&
-        label &&
-        !/^\d/.test(label)
-      ) {
+
+        const label =
+          clean(
+            item?.label
+          );
+
+
         return (
-          `${label} (${ref.label})`
-        );
-      }
 
-      return (
-        ref?.label ||
-        label ||
-        item.date ||
-        item.id
-      );
-    })
-    .filter(Boolean)
-    .join(", ");
+          ref?.label ||
+
+          label ||
+
+          item?.date ||
+
+          item?.id ||
+
+          ""
+
+        );
+
+      }
+    )
+    .filter(
+      Boolean
+    )
+    .join(
+      ", "
+    );
+
 }
+
 
 function makeSlotText(
   slots = []
 ) {
+
   return slots
     .map(
-      item =>
-        item.display ||
-        `${item.start || ""}${
-          item.end
-            ? ` – ${item.end}`
-            : ""
-        }`
+      item => (
+
+        item?.display ||
+
+        item?.label ||
+
+        formatSlotDisplay(
+          item?.start ||
+          item?.startTime ||
+          item?.from,
+          item?.end ||
+          item?.endTime ||
+          item?.to
+        )
+
+      )
     )
-    .filter(Boolean)
-    .join(", ");
+    .filter(
+      Boolean
+    )
+    .join(
+      ", "
+    );
+
 }
+
 
 /* =========================================================
    CENTER DISPLAY
@@ -2038,54 +4437,101 @@ export function formatCenterOptions(
   centers = [],
   language = "en"
 ) {
+
   const rows =
-    Array.isArray(centers)
+    Array.isArray(
+      centers
+    )
       ? centers
       : [];
 
-  if (!rows.length) {
-    if (language === "hi") {
+
+  if (
+    !rows.length
+  ) {
+
+    if (
+      language ===
+      "hi"
+    ) {
+
       return "अभी कोई सक्रिय खरीद केंद्र नहीं मिला।";
+
     }
 
-    if (language === "te") {
+
+    if (
+      language ===
+      "te"
+    ) {
+
       return "ప్రస్తుతం యాక్టివ్ కొనుగోలు కేంద్రాలు ఏవీ లభించలేదు.";
+
     }
+
 
     return "I couldn't find any active procurement centers right now.";
+
   }
+
 
   return rows
     .map(
-      (center, index) => {
+      (
+        center,
+        index
+      ) => {
+
         const name =
-          clean(center?.name) ||
-          `Center ${index + 1}`;
+          clean(
+            center?.name ||
+            center?.centerName ||
+            center?.title
+          ) ||
+          `Center ${
+            index + 1
+          }`;
+
 
         const open =
           clean(
             center?.openingTime ||
-            center?.opening_time
+            center?.opening_time ||
+            center?.openTime
           );
+
 
         const close =
           clean(
             center?.closingTime ||
-            center?.closing_time
+            center?.closing_time ||
+            center?.closeTime
           );
 
+
         const timing =
-          open && close
-            ? ` — ${open} to ${close}`
+          open &&
+          close
+            ? ` — ${formatDisplayTime(
+                open
+              )} to ${formatDisplayTime(
+                close
+              )}`
             : "";
+
 
         return (
           `${index + 1}. ${name}${timing}`
         );
+
       }
     )
-    .join("; ");
+    .join(
+      "; "
+    );
+
 }
+
 
 /* =========================================================
    BOOKING SUMMARY
@@ -2095,22 +4541,31 @@ export function getBookingSummary(
   draft = {},
   language = "en"
 ) {
+
   const safe =
-    normalize(draft);
+    normalize(
+      draft
+    );
+
 
   const code =
     languageCode(
       language
     );
 
+
   const date =
     getDateReference(
       safe.date
     );
 
+
   return {
+
     crop:
-      CROP_NAMES[code]?.[
+      CROP_NAMES[
+        code
+      ]?.[
         safe.crop
       ] ||
       safe.crop ||
@@ -2139,38 +4594,71 @@ export function getBookingSummary(
 
     slot:
       safe.slotDisplay ||
-      safe.slotStart ||
-      null,
+      (
+        safe.slotStart
+          ? formatSlotDisplay(
+              safe.slotStart,
+              safe.slotEnd
+            )
+          : null
+      ),
 
     complete:
       getMissingBookingFields(
         safe
-      ).length === 0,
+      ).length ===
+      0,
 
     stage:
       getBookingStage(
         safe
       ),
+
+    readyForConfirmation:
+      safe.readyForConfirmation,
+
+    awaitingConfirmation:
+      safe.awaitingConfirmation,
+
+    confirmed:
+      safe.confirmed,
+
+    token:
+      safe.token ||
+      null,
+
+    bookingId:
+      safe.bookingId ||
+      null,
+
   };
+
 }
+
 
 export function formatBookingProgress(
   draft = {},
   language = "en"
 ) {
+
   const summary =
     getBookingSummary(
       draft,
       language
     );
 
+
   const code =
     languageCode(
       language
     );
 
-  const label =
-    code === "hi"
+
+  const labels =
+
+    code ===
+    "hi"
+
       ? [
           "फसल",
           "मात्रा",
@@ -2178,7 +4666,10 @@ export function formatBookingProgress(
           "तारीख",
           "समय",
         ]
-      : code === "te"
+
+      : code ===
+          "te"
+
         ? [
             "పంట",
             "పరిమాణం",
@@ -2186,6 +4677,7 @@ export function formatBookingProgress(
             "తేదీ",
             "సమయం",
           ]
+
         : [
             "Crop",
             "Quantity",
@@ -2194,7 +4686,9 @@ export function formatBookingProgress(
             "Time",
           ];
 
-  const value = [
+
+  const values = [
+
     summary.crop ||
       "not selected",
 
@@ -2211,21 +4705,31 @@ export function formatBookingProgress(
 
     summary.slot ||
       "not selected",
+
   ];
 
-  return label
+
+  return labels
     .map(
-      (item, index) =>
-        `${item}: ${value[index]}`
+      (
+        label,
+        index
+      ) =>
+        `${label}: ${values[index]}`
     )
-    .join("\n");
+    .join(
+      "\n"
+    );
+
 }
+
 
 export const getStateSummary =
   formatBookingProgress;
 
 export const getBookingProgress =
   formatBookingProgress;
+
 
 /* =========================================================
    NEXT QUESTION
@@ -2235,13 +4739,17 @@ export function getNextBookingQuestion(
   draft = {},
   language = "en"
 ) {
+
   const code =
     languageCode(
       language
     );
 
+
   const copy = {
+
     en: {
+
       crop:
         "Which crop would you like to book?",
 
@@ -2258,10 +4766,12 @@ export function getNextBookingQuestion(
         "Which arrival time works for you? I can show the available slots for your selected date.",
 
       complete:
-        "All booking details are complete. I’ll show you the details before the final confirmation.",
+        "All booking details are complete. I'll show you the details before final confirmation.",
+
     },
 
     hi: {
+
       crop:
         "आप कौन सी फसल बुक करना चाहते हैं?",
 
@@ -2279,9 +4789,11 @@ export function getNextBookingQuestion(
 
       complete:
         "आपकी बुकिंग की सारी जानकारी तैयार है। अंतिम पुष्टि से पहले मैं विवरण दिखाऊँगा।",
+
     },
 
     te: {
+
       crop:
         "మీరు ఏ పంటను బుక్ చేయాలనుకుంటున్నారు?",
 
@@ -2299,22 +4811,38 @@ export function getNextBookingQuestion(
 
       complete:
         "మీ బుకింగ్ వివరాలన్నీ సిద్ధంగా ఉన్నాయి. తుది నిర్ధారణకు ముందు పూర్తి వివరాలను చూపిస్తాను.",
+
     },
+
   };
+
 
   const field =
     getNextBookingField(
       draft
     );
 
+
   return (
-    copy[code][field] ||
-    copy[code].complete
+
+    copy[
+      code
+    ]?.[
+      field
+    ] ||
+
+    copy[
+      code
+    ].complete
+
   );
+
 }
+
 
 export const nextPrompt =
   getNextBookingQuestion;
+
 
 /* =========================================================
    REVIEW
@@ -2324,10 +4852,15 @@ export function review(
   draft = {},
   language = "en"
 ) {
+
   const safe =
-    normalize(draft);
+    normalize(
+      draft
+    );
+
 
   return {
+
     ...getBookingSummary(
       safe,
       language
@@ -2336,9 +4869,13 @@ export function review(
     valid:
       getMissingBookingFields(
         safe
-      ).length === 0,
+      ).length ===
+      0,
+
   };
+
 }
+
 
 /* =========================================================
    CONTEXT
@@ -2348,10 +4885,15 @@ export function buildBookingContext(
   draft = {},
   language = "en"
 ) {
+
   const safe =
-    normalize(draft);
+    normalize(
+      draft
+    );
+
 
   return {
+
     draft:
       safe,
 
@@ -2386,8 +4928,28 @@ export function buildBookingContext(
       validateBookingDraft(
         safe
       ),
+
+    awaitingConfirmation:
+      safe.awaitingConfirmation,
+
+    readyForConfirmation:
+      safe.readyForConfirmation,
+
+    confirmed:
+      safe.confirmed,
+
+    token:
+      safe.token ||
+      null,
+
+    bookingId:
+      safe.bookingId ||
+      null,
+
   };
+
 }
+
 
 /* =========================================================
    ROUTE STATE
@@ -2396,27 +4958,378 @@ export function buildBookingContext(
 export function buildBookingRouteState(
   draft = {}
 ) {
+
   const safe =
-    normalize(draft);
+    normalize(
+      draft
+    );
+
 
   return {
+
     assistantBooking:
       safe,
 
     assistantAction:
       "OPEN_BOOKING",
+
   };
+
 }
+
 
 export function readBookingRouteState(
   locationState
 ) {
-  return locationState?.assistantBooking
+
+  return locationState
+    ?.assistantBooking
+
     ? normalize(
         locationState.assistantBooking
       )
+
     : null;
+
 }
+
+
+/* =========================================================
+   SMALL HELPERS FOR PROCESSOR
+========================================================= */
+
+function hasUsefulBookingUpdate(
+  updates
+) {
+
+  return Boolean(
+
+    updates &&
+    Object.keys(
+      updates
+    ).length >
+    0
+
+  );
+
+}
+
+
+function getSlotsForSelectedDate(
+  state,
+  availableSlots
+) {
+
+  if (
+    !state.date
+  ) {
+
+    return [];
+
+  }
+
+
+  const centerFiltered =
+    state.centerId
+      ? availableSlots.filter(
+          slot =>
+            String(
+              slot?.centerId ??
+              slot?.center_id ??
+              ""
+            ) ===
+            String(
+              state.centerId
+            )
+        )
+      : availableSlots;
+
+
+  /*
+   * Some frontend availability payloads already contain
+   * only the selected day's slots. Others may include date.
+   *
+   * Filter by date only when slot data explicitly carries
+   * a date.
+   */
+
+  const withDate =
+    centerFiltered.filter(
+      slot =>
+        slot?.date ||
+        slot?.bookingDate
+    );
+
+
+  if (
+    withDate.length
+  ) {
+
+    return withDate.filter(
+      slot =>
+        String(
+          slot?.date ??
+          slot?.bookingDate ??
+          ""
+        ) ===
+        String(
+          state.date
+        )
+    );
+
+  }
+
+
+  return centerFiltered;
+
+}
+
+
+function applySelectedDate(
+  state,
+  selectedDate
+) {
+
+  if (
+    !selectedDate
+  ) {
+
+    return state;
+
+  }
+
+
+  const date =
+    selectedDate.date ||
+    selectedDate.id ||
+    selectedDate.value ||
+    null;
+
+
+  return mergeBookingDraft(
+    state,
+    {
+
+      date,
+
+      dateLabel:
+        selectedDate.label ||
+        selectedDate.name ||
+        null,
+
+      /*
+       * Changing date MUST invalidate the old slot.
+       */
+
+      slot:
+        null,
+
+      slotId:
+        null,
+
+      slotStart:
+        null,
+
+      slotEnd:
+        null,
+
+      slotDisplay:
+        null,
+
+      availabilityChecked:
+        false,
+
+      confirmed:
+        false,
+
+      awaitingConfirmation:
+        false,
+
+      readyForConfirmation:
+        false,
+
+    }
+  );
+
+}
+
+
+function applySelectedSlot(
+  state,
+  selectedSlot
+) {
+
+  if (
+    !selectedSlot
+  ) {
+
+    return state;
+
+  }
+
+
+  const normalized =
+    normalizeBookingSlot(
+      selectedSlot
+    );
+
+
+  return mergeBookingDraft(
+    state,
+    {
+
+      slot:
+        normalized,
+
+      slotId:
+        normalized?.id ||
+        null,
+
+      slotStart:
+        normalized?.start ||
+        null,
+
+      slotEnd:
+        normalized?.end ||
+        null,
+
+      slotDisplay:
+        normalized?.display ||
+        null,
+
+      availabilityChecked:
+        true,
+
+      confirmed:
+        false,
+
+      awaitingConfirmation:
+        false,
+
+      readyForConfirmation:
+        false,
+
+    }
+  );
+
+}
+
+
+function ensurePreferredCenter(
+  state,
+  availableCenters,
+  availability
+) {
+
+  if (
+    state.centerId
+  ) {
+
+    const existing =
+      availableCenters.find(
+        center =>
+          String(
+            center?.id
+          ) ===
+          String(
+            state.centerId
+          )
+      );
+
+
+    if (
+      existing
+    ) {
+
+      return mergeBookingDraft(
+        state,
+        {
+
+          centerName:
+            existing.name ||
+            existing.centerName ||
+            state.centerName ||
+            null,
+
+        }
+      );
+
+    }
+
+  }
+
+
+  const preferredId =
+    availability.selectedCenterId ||
+    availableCenters[0]?.id ||
+    null;
+
+
+  if (
+    !preferredId
+  ) {
+
+    return state;
+
+  }
+
+
+  const preferred =
+    availableCenters.find(
+      center =>
+        String(
+          center?.id
+        ) ===
+        String(
+          preferredId
+        )
+    );
+
+
+  return mergeBookingDraft(
+    state,
+    {
+
+      centerId:
+        preferred?.id ||
+        preferredId,
+
+      centerName:
+        preferred?.name ||
+        preferred?.centerName ||
+        state.centerName ||
+        null,
+
+    }
+  );
+
+}
+
+
+function makeConfirmationReady(
+  state
+) {
+
+  return normalize({
+
+    ...state,
+
+    confirmed:
+      false,
+
+    awaitingConfirmation:
+      true,
+
+    readyForConfirmation:
+      true,
+
+    active:
+      true,
+
+  });
+
+}
+
 
 /* =========================================================
    MAIN BOOKING PROCESSOR
@@ -2427,30 +5340,79 @@ export function processBookingConversation(
   message,
   options = {}
 ) {
-  const text =
-    clean(message);
 
-  const normalized =
-    norm(text);
+  const text =
+    clean(
+      message
+    );
+
+
+  const normalizedText =
+    norm(
+      text
+    );
+
 
   const now =
     options.now ||
     new Date();
 
+
+  const previous =
+    normalize(
+      currentState ||
+      loadBookingState()
+    );
+
+
   let availability =
     getBookingAvailabilityContext();
 
+
+  /*
+   * Use explicitly supplied live data first.
+   */
+
   if (
-    !Array.isArray(
+    Array.isArray(
       options.availableDates
-    ) ||
-    !Array.isArray(
+    ) &&
+    Array.isArray(
       options.availableSlots
+    ) &&
+    Array.isArray(
+      options.availableCenters
     )
   ) {
-    availability =
-      requestBookingAvailabilitySync();
+
+    availability = {
+
+      ...availability,
+
+      availableDates:
+        options.availableDates,
+
+      availableSlots:
+        options.availableSlots,
+
+      availableCenters:
+        options.availableCenters,
+
+    };
+
+  } else {
+
+    /*
+     * Ask FarmerBook for a fresh snapshot.
+     *
+     * The event is asynchronous, so immediately after this
+     * call we still use the latest cached snapshot.
+     */
+
+    requestBookingAvailabilitySync();
+
   }
+
 
   const availableDates =
     Array.isArray(
@@ -2459,12 +5421,14 @@ export function processBookingConversation(
       ? options.availableDates
       : availability.availableDates;
 
+
   const availableSlots =
     Array.isArray(
       options.availableSlots
     )
       ? options.availableSlots
       : availability.availableSlots;
+
 
   const availableCenters =
     Array.isArray(
@@ -2473,86 +5437,26 @@ export function processBookingConversation(
       ? options.availableCenters
       : availability.availableCenters;
 
-  const previous =
-    normalize(
-      currentState ||
-        loadBookingState()
-    );
 
-  const crop =
-    extractBookingCrop(
-      text
-    );
+  if (
+    !text
+  ) {
 
-  const quantity =
-    extractBookingQuantity(
-      text
-    );
-
-  /*
-    A command like:
-
-      book 50kg maize
-
-    MUST start a new conversation.
-
-    It must not inherit a stale date,
-    stale slot, or stale confirmation
-    from an older booking.
-  */
-  const startingFresh =
-    isBookingStart(
-      normalized
-    ) &&
-    Boolean(
-      crop ||
-      quantity
-    );
-
-  const preferredCenterId =
-    previous.centerId ||
-    availability.selectedCenterId ||
-    availableCenters[0]?.id ||
-    null;
-
-  const preferredCenter =
-    availableCenters.find(
-      item =>
-        String(item?.id) ===
-        String(
-          preferredCenterId
-        )
-    ) || null;
-
-  let state =
-    startingFresh
-      ? createBookingDraft({
-          active: true,
-
-          assistantManaged:
-            true,
-
-          crop,
-
-          quantity,
-
-          centerId:
-            preferredCenterId,
-
-          centerName:
-            preferredCenter?.name ||
-            null,
-        })
-      : previous;
-
-  if (!text) {
     return {
-      handled: false,
+
+      handled:
+        false,
+
       intent:
         BOOKING_INTENTS.NONE,
-      state,
+
+      state:
+        previous,
+
     };
+
   }
+
 
   /* =======================================================
      CANCEL
@@ -2560,18 +5464,23 @@ export function processBookingConversation(
 
   if (
     isCancellation(
-      normalized
+      normalizedText
     )
   ) {
+
     const empty =
       createEmpty();
+
 
     persistState(
       empty
     );
 
+
     return {
-      handled: true,
+
+      handled:
+        true,
 
       intent:
         BOOKING_INTENTS.CANCEL,
@@ -2581,60 +5490,1124 @@ export function processBookingConversation(
 
       nextStep:
         BOOKING_STEPS.DETAILS,
+
     };
+
   }
 
+
   /* =======================================================
-     CONFIRM
+     CURRENT CONFIRMATION
   ======================================================= */
 
   if (
     isConfirmation(
-      normalized
+      normalizedText
     )
   ) {
+
     if (
-      state.readyForConfirmation &&
-      validateBookingDraft(
-        state
-      ).valid
+      previous.confirmed
     ) {
-      state =
-        createBookingDraft({
-          ...state,
+
+      return {
+
+        handled:
+          true,
+
+        intent:
+          BOOKING_INTENTS.CONFIRM,
+
+        state:
+          previous,
+
+        alreadyConfirmed:
+          true,
+
+        nextStep:
+          BOOKING_STEPS.COMPLETE,
+
+      };
+
+    }
+
+
+    const valid =
+      validateBookingDraft(
+        previous
+      ).valid;
+
+
+    if (
+      previous.readyForConfirmation &&
+      valid
+    ) {
+
+      /*
+       * IMPORTANT:
+       *
+       * confirmed=true here means:
+       *
+       * USER AUTHORIZED SUBMISSION
+       *
+       * It does NOT mean that the backend booking
+       * already exists.
+       *
+       * FarmerBook/controller performs the actual POST.
+       */
+
+      const authorized =
+        normalize({
+
+          ...previous,
 
           confirmed:
             true,
 
+          readyForConfirmation:
+            false,
+
           awaitingConfirmation:
             false,
+
         });
+
+
+      persistState(
+        authorized
+      );
+
+
+      return {
+
+        handled:
+          true,
+
+        intent:
+          BOOKING_INTENTS.CONFIRM,
+
+        state:
+          authorized,
+
+        booking:
+          authorized,
+
+        nextStep:
+          BOOKING_STEPS.COMPLETE,
+
+        executeBooking:
+          true,
+
+      };
+
+    }
+
+
+    return {
+
+      handled:
+        true,
+
+      intent:
+        BOOKING_INTENTS.UPDATE,
+
+      state:
+        previous,
+
+      missing:
+        getMissingBookingFields(
+          previous
+        ),
+
+      nextStep:
+        getBookingStage(
+          previous
+        ),
+
+      confirmationBlocked:
+        true,
+
+    };
+
+  }
+
+
+  /* =======================================================
+     EXTRACT CURRENT MESSAGE
+  ======================================================= */
+
+  const incomingCrop =
+    extractBookingCrop(
+      text
+    );
+
+
+  const incomingQuantity =
+    extractBookingQuantity(
+      text
+    );
+
+
+  const incomingDate =
+    extractNaturalBookingDate(
+      text,
+      now
+    );
+
+
+  const incomingSlot =
+    extractTimeReference(
+      text
+    );
+
+
+  const containsBookingStart =
+    isBookingStart(
+      normalizedText
+    );
+
+
+  /*
+   * A fresh booking starts only when the current message
+   * contains booking intent AND actual booking details.
+   *
+   * "book"
+   * alone should not destroy an existing draft.
+   */
+
+  const startingFresh =
+    containsBookingStart &&
+    Boolean(
+
+      incomingCrop ||
+      incomingQuantity ||
+      incomingDate ||
+      incomingSlot
+
+    );
+
+
+  let state =
+    startingFresh
+
+      ? createBookingDraft({
+
+          active:
+            true,
+
+          assistantManaged:
+            true,
+
+          crop:
+            incomingCrop,
+
+          quantity:
+            incomingQuantity,
+
+          centerId:
+            null,
+
+          centerName:
+            null,
+
+          date:
+            null,
+
+          slot:
+            null,
+
+          confirmed:
+            false,
+
+          awaitingConfirmation:
+            false,
+
+          readyForConfirmation:
+            false,
+
+        })
+
+      : previous;
+
+
+  /*
+   * If this is an actual new booking command, stale fields
+   * must never leak into it.
+   */
+
+  if (
+    startingFresh
+  ) {
+
+    state =
+      mergeBookingDraft(
+        createEmpty(),
+
+        {
+
+          active:
+            true,
+
+          assistantManaged:
+            true,
+
+          crop:
+            incomingCrop,
+
+          quantity:
+            incomingQuantity,
+
+          date:
+            null,
+
+          slot:
+            null,
+
+          centerId:
+            null,
+
+          centerName:
+            null,
+
+          confirmed:
+            false,
+
+          awaitingConfirmation:
+            false,
+
+        }
+
+      );
+
+  }
+
+
+  /* =======================================================
+     EXPLICIT CENTER
+  ======================================================= */
+
+  const explicitCenter =
+    findAvailableCenter(
+      text,
+      availableCenters
+    );
+
+
+  if (
+    explicitCenter
+  ) {
+
+    state =
+      mergeBookingDraft(
+        state,
+
+        {
+
+          centerId:
+            explicitCenter.id,
+
+          centerName:
+            explicitCenter.name ||
+            explicitCenter.centerName ||
+            null,
+
+          /*
+           * Changing center invalidates slot.
+           */
+
+          slot:
+            null,
+
+          slotId:
+            null,
+
+          slotStart:
+            null,
+
+          slotEnd:
+            null,
+
+          slotDisplay:
+            null,
+
+          availabilityChecked:
+            false,
+
+          confirmed:
+            false,
+
+          awaitingConfirmation:
+            false,
+
+          readyForConfirmation:
+            false,
+
+        }
+      );
+
+  }
+
+
+  /* =======================================================
+     BASIC DETAILS
+  ======================================================= */
+
+  if (
+    incomingCrop
+  ) {
+
+    state =
+      mergeBookingDraft(
+        state,
+
+        {
+
+          crop:
+            incomingCrop,
+
+          confirmed:
+            false,
+
+          awaitingConfirmation:
+            false,
+
+          readyForConfirmation:
+            false,
+
+        }
+      );
+
+  }
+
+
+  if (
+    incomingQuantity
+  ) {
+
+    state =
+      mergeBookingDraft(
+        state,
+
+        {
+
+          quantity:
+            incomingQuantity,
+
+          confirmed:
+            false,
+
+          awaitingConfirmation:
+            false,
+
+          readyForConfirmation:
+            false,
+
+        }
+      );
+
+  }
+
+
+  /*
+   * Choose a default/current center only when the user
+   * is actually progressing through a booking.
+   */
+
+  if (
+    (
+      incomingCrop ||
+      incomingQuantity ||
+      incomingDate ||
+      incomingSlot ||
+      containsBookingStart
+    ) &&
+    availableCenters.length &&
+    !state.centerId
+  ) {
+
+    state =
+      ensurePreferredCenter(
+        state,
+        availableCenters,
+        availability
+      );
+
+  }
+
+
+  /* =======================================================
+     INFORMATION REQUESTS
+  ======================================================= */
+
+  if (
+    asksForCenters(
+      normalizedText
+    ) ||
+    asksForCenterTimings(
+      normalizedText
+    )
+  ) {
+
+    persistState(
+      state
+    );
+
+
+    return {
+
+      handled:
+        true,
+
+      intent:
+        BOOKING_INTENTS.SHOW_CENTERS,
+
+      state,
+
+      centers:
+        availableCenters,
+
+      centerText:
+        formatCenterOptions(
+          availableCenters,
+          options.language ||
+            "en"
+        ),
+
+      dates:
+        availableDates,
+
+      dateText:
+        makeDateText(
+          availableDates
+        ),
+
+      nextStep:
+        getBookingStage(
+          state
+        ),
+
+    };
+
+  }
+
+
+  if (
+    asksForDates(
+      normalizedText
+    )
+  ) {
+
+    persistState(
+      state
+    );
+
+
+    return {
+
+      handled:
+        true,
+
+      intent:
+        BOOKING_INTENTS.ASK_DATES,
+
+      state,
+
+      dates:
+        availableDates,
+
+      dateText:
+        makeDateText(
+          availableDates
+        ),
+
+      nextStep:
+        BOOKING_STEPS.DATE,
+
+    };
+
+  }
+
+
+  if (
+    asksForSlots(
+      normalizedText
+    )
+  ) {
+
+    const relevantSlots =
+      getSlotsForSelectedDate(
+        state,
+        availableSlots
+      );
+
+
+    persistState(
+      state
+    );
+
+
+    return {
+
+      handled:
+        true,
+
+      intent:
+        BOOKING_INTENTS.ASK_SLOTS,
+
+      state,
+
+      slots:
+        relevantSlots.length
+          ? relevantSlots
+          : availableSlots,
+
+      slotText:
+        makeSlotText(
+          relevantSlots.length
+            ? relevantSlots
+            : availableSlots
+        ),
+
+      nextStep:
+        BOOKING_STEPS.SLOT,
+
+    };
+
+  }
+
+
+  /* =======================================================
+     DATE SELECTION
+  ======================================================= */
+
+  let selectedDate =
+    null;
+
+
+  if (
+    incomingDate
+  ) {
+
+    selectedDate =
+      availableDates.find(
+        item =>
+          normalizeBookingDate(
+            item?.date ||
+            item?.id ||
+            item?.value
+          ) ===
+          incomingDate
+      ) ||
+      null;
+
+  }
+
+
+  if (
+    !selectedDate
+  ) {
+
+    selectedDate =
+      findAvailableDate(
+        text,
+        availableDates,
+        now
+      );
+
+  }
+
+
+  const explicitlyMentionsDate =
+    Boolean(
+      incomingDate
+    ) ||
+
+    /\b(today|tomorrow|tommorow|tommorrow|tomorow|tmrw|yesterday|kal|next\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i.test(
+      normalizedText
+    );
+
+
+  if (
+    explicitlyMentionsDate
+  ) {
+
+    /*
+     * Never silently retain an old date when the user
+     * explicitly requested another date.
+     */
+
+    if (
+      !selectedDate
+    ) {
 
       persistState(
         state
       );
 
+
       return {
-        handled: true,
+
+        handled:
+          true,
 
         intent:
-          BOOKING_INTENTS.CONFIRM,
+          BOOKING_INTENTS.ASK_DATES,
 
         state,
 
-        booking:
-          state,
+        dates:
+          availableDates,
 
-        nextStep:
-          BOOKING_STEPS.COMPLETE,
+        dateText:
+          makeDateText(
+            availableDates
+          ),
+
+        unavailableDate:
+          incomingDate ||
+          normalizedText,
+
+        needsAvailability:
+          true,
+
       };
+
     }
 
+
+    state =
+      applySelectedDate(
+        state,
+        selectedDate
+      );
+
+
+    /*
+     * IMPORTANT:
+     *
+     * Do NOT return here.
+     *
+     * This lets:
+     *
+     * "book 234 kg paddy tomorrow 8 to 830"
+     *
+     * continue into slot matching inside the SAME call.
+     */
+
+  }
+
+
+  /* =======================================================
+     SLOT AVAILABILITY
+  ======================================================= */
+
+  let relevantSlots =
+    getSlotsForSelectedDate(
+      state,
+      availableSlots
+    );
+
+
+  /*
+   * Slot may have been supplied before date.
+   */
+
+  if (
+    incomingSlot &&
+    !state.date
+  ) {
+
+    persistState(
+      state
+    );
+
+
     return {
-      handled: true,
+
+      handled:
+        true,
 
       intent:
-        BOOKING_INTENTS.UPDATE,
+        BOOKING_INTENTS.SELECT_DATE,
+
+      state,
+
+      nextStep:
+        BOOKING_STEPS.DATE,
+
+      missing:
+        getMissingBookingFields(
+          state
+        ),
+
+      timeWithoutDate:
+        true,
+
+    };
+
+  }
+
+
+  /* =======================================================
+     SLOT SELECTION
+  ======================================================= */
+
+  if (
+    incomingSlot &&
+    state.date
+  ) {
+
+    let selectedSlot =
+      findSlotReference(
+        text,
+        relevantSlots
+      );
+
+
+    /*
+     * Some availability payloads do not attach centerId
+     * even though the slots belong to the selected center.
+     */
+
+    if (
+      !selectedSlot &&
+      relevantSlots.length ===
+        0
+    ) {
+
+      selectedSlot =
+        findSlotReference(
+          text,
+          availableSlots
+        );
+
+    }
+
+
+    if (
+      !selectedSlot
+    ) {
+
+      persistState(
+        state
+      );
+
+
+      return {
+
+        handled:
+          true,
+
+        intent:
+          BOOKING_INTENTS.ASK_SLOTS,
+
+        state,
+
+        slots:
+          relevantSlots.length
+            ? relevantSlots
+            : availableSlots,
+
+        slotText:
+          makeSlotText(
+            relevantSlots.length
+              ? relevantSlots
+              : availableSlots
+          ),
+
+        unavailableSlot:
+          incomingSlot,
+
+        nextStep:
+          BOOKING_STEPS.SLOT,
+
+      };
+
+    }
+
+
+    state =
+      applySelectedSlot(
+        state,
+        selectedSlot
+      );
+
+
+    /*
+     * Re-read slot list after state update.
+     */
+
+    relevantSlots =
+      getSlotsForSelectedDate(
+        state,
+        availableSlots
+      );
+
+  }
+
+
+  /* =======================================================
+     DATE-ONLY FOLLOW-UP
+  ======================================================= */
+
+  if (
+    selectedDate &&
+    !incomingSlot
+  ) {
+
+    persistState(
+      state
+    );
+
+
+    return {
+
+      handled:
+        true,
+
+      intent:
+        BOOKING_INTENTS.SELECT_DATE,
+
+      state,
+
+      selectedDate,
+
+      slots:
+        relevantSlots,
+
+      nextStep:
+        BOOKING_STEPS.SLOT,
+
+    };
+
+  }
+
+
+  /* =======================================================
+     STANDALONE TIME FOLLOW-UP
+  ======================================================= */
+
+  if (
+    incomingSlot &&
+    state.date &&
+    !slotFromFields(
+      state
+    )
+  ) {
+
+    persistState(
+      state
+    );
+
+
+    return {
+
+      handled:
+        true,
+
+      intent:
+        BOOKING_INTENTS.ASK_SLOTS,
+
+      state,
+
+      slots:
+        relevantSlots,
+
+      slotText:
+        makeSlotText(
+          relevantSlots
+        ),
+
+      unavailableSlot:
+        incomingSlot,
+
+      nextStep:
+        BOOKING_STEPS.SLOT,
+
+    };
+
+  }
+
+
+  /* =======================================================
+     REVIEW
+  ======================================================= */
+
+  if (
+    asksForReview(
+      normalizedText
+    )
+  ) {
+
+    const reviewed =
+      review(
+        state,
+        options.language ||
+          "en"
+      );
+
+
+    const reviewState =
+      reviewed.valid
+        ? makeConfirmationReady(
+            state
+          )
+        : state;
+
+
+    persistState(
+      reviewState
+    );
+
+
+    return {
+
+      handled:
+        true,
+
+      intent:
+        BOOKING_INTENTS.REVIEW,
+
+      state:
+        reviewState,
+
+      review:
+        review(
+          reviewState,
+          options.language ||
+            "en"
+        ),
+
+      nextStep:
+        reviewState.readyForConfirmation
+          ? BOOKING_STEPS.REVIEW
+          : getBookingStage(
+              reviewState
+            ),
+
+      awaitingConfirmation:
+        reviewState.awaitingConfirmation,
+
+      readyForConfirmation:
+        reviewState.readyForConfirmation,
+
+    };
+
+  }
+
+
+  /* =======================================================
+     COMPLETE DRAFT
+  ======================================================= */
+
+  const missing =
+    getMissingBookingFields(
+      state
+    );
+
+
+  if (
+    missing.length ===
+    0
+  ) {
+
+    const ready =
+      makeConfirmationReady(
+        state
+      );
+
+
+    persistState(
+      ready
+    );
+
+
+    return {
+
+      handled:
+        true,
+
+      intent:
+        state.slot &&
+        (
+          incomingSlot ||
+          selectedDate
+        )
+          ? BOOKING_INTENTS.SELECT_SLOT
+          : BOOKING_INTENTS.UPDATE,
+
+      state:
+        ready,
+
+      selectedDate,
+
+      selectedSlot:
+        slotFromFields(
+          ready
+        ),
+
+      review:
+        review(
+          ready,
+          options.language ||
+            "en"
+        ),
+
+      nextStep:
+        BOOKING_STEPS.REVIEW,
+
+      awaitingConfirmation:
+        true,
+
+      readyForConfirmation:
+        true,
+
+    };
+
+  }
+
+
+  /* =======================================================
+     BASIC UPDATE
+  ======================================================= */
+
+  const extractedUpdates = {
+
+    crop:
+      incomingCrop,
+
+    quantity:
+      incomingQuantity,
+
+    date:
+      incomingDate,
+
+    slot:
+      incomingSlot,
+
+  };
+
+
+  if (
+    hasUsefulBookingUpdate(
+      extractedUpdates
+    )
+  ) {
+
+    persistState(
+      state
+    );
+
+
+    return {
+
+      handled:
+        true,
+
+      intent:
+        startingFresh
+          ? BOOKING_INTENTS.START
+          : BOOKING_INTENTS.UPDATE,
 
       state,
 
@@ -2648,26 +6621,30 @@ export function processBookingConversation(
           state
         ),
 
-      confirmationBlocked:
-        true,
     };
+
   }
 
+
   /* =======================================================
-     SHOW CURRENT STATE
+     SHOW STATE
   ======================================================= */
 
   if (
     asksForState(
-      normalized
+      normalizedText
     )
   ) {
+
     persistState(
       state
     );
 
+
     return {
-      handled: true,
+
+      handled:
+        true,
 
       intent:
         BOOKING_INTENTS.SHOW_STATE,
@@ -2697,641 +6674,30 @@ export function processBookingConversation(
         getBookingStage(
           state
         ),
+
     };
+
   }
 
+
   /* =======================================================
-     CENTERS / CENTER TIMINGS
+     ACTIVE STATE
   ======================================================= */
 
   if (
-    asksForCenters(
-      normalized
-    ) ||
-    asksForCenterTimings(
-      normalized
-    )
+    startingFresh ||
+    state.active
   ) {
-    persistState(
-      state
-    );
-
-    return {
-      handled: true,
-
-      intent:
-        BOOKING_INTENTS.SHOW_CENTERS,
-
-      state,
-
-      centers:
-        availableCenters,
-
-      centerText:
-        formatCenterOptions(
-          availableCenters,
-          options.language ||
-            "en"
-        ),
-
-      dates:
-        availableDates,
-
-      dateText:
-        makeDateText(
-          availableDates
-        ),
-    };
-  }
-
-  /* =======================================================
-     DATES
-  ======================================================= */
-
-  if (
-    asksForDates(
-      normalized
-    )
-  ) {
-    persistState(
-      state
-    );
-
-    return {
-      handled: true,
-
-      intent:
-        BOOKING_INTENTS.ASK_DATES,
-
-      state,
-
-      dates:
-        availableDates,
-
-      dateText:
-        makeDateText(
-          availableDates
-        ),
-    };
-  }
-
-  /* =======================================================
-     SLOTS
-  ======================================================= */
-
-  if (
-    asksForSlots(
-      normalized
-    )
-  ) {
-    persistState(
-      state
-    );
-
-    return {
-      handled: true,
-
-      intent:
-        BOOKING_INTENTS.ASK_SLOTS,
-
-      state,
-
-      slots:
-        availableSlots,
-
-      slotText:
-        makeSlotText(
-          availableSlots
-        ),
-    };
-  }
-
-  /* =======================================================
-     CENTER SELECTION
-  ======================================================= */
-
-  let center =
-    findAvailableCenter(
-      text,
-      availableCenters
-    );
-
-  if (
-    !center &&
-    /\b(first|earliest|nearest|default)\s+(center|centre)\b/i.test(
-      text
-    )
-  ) {
-    center =
-      availableCenters[0] ||
-      null;
-  }
-
-  if (
-    !center &&
-    /\b(another|different|other)\s+(center|centre)\b/i.test(
-      text
-    ) &&
-    state.centerId
-  ) {
-    center =
-      availableCenters.find(
-        item =>
-          String(item?.id) !==
-          String(
-            state.centerId
-          )
-      ) || null;
-  }
-
-  if (center) {
-    state =
-      mergeBookingDraft(
-        state,
-        {
-          centerId:
-            center.id,
-
-          centerName:
-            center.name ||
-            null,
-
-          slot:
-            null,
-
-          slotStart:
-            null,
-
-          slotEnd:
-            null,
-
-          slotDisplay:
-            null,
-
-          availabilityChecked:
-            false,
-
-          confirmed:
-            false,
-
-          awaitingConfirmation:
-            false,
-        }
-      );
 
     persistState(
       state
     );
 
-    return {
-      handled: true,
-
-      intent:
-        BOOKING_INTENTS.UPDATE,
-
-      state,
-
-      nextStep:
-        getBookingStage(
-          state
-        ),
-
-      missing:
-        getMissingBookingFields(
-          state
-        ),
-    };
-  }
-
-  /* =======================================================
-     EXTRACT DETAILS
-  ======================================================= */
-
-  const updates =
-    extractBookingUpdates(
-      text,
-      {
-        now,
-      }
-    );
-
-  /* =======================================================
-     NATURAL DATE
-  ======================================================= */
-
-  if (updates.date) {
-    if (!availableDates.length) {
-      persistState(
-        state
-      );
-
-      return {
-        handled: true,
-
-        intent:
-          BOOKING_INTENTS.ASK_DATES,
-
-        state,
-
-        dates: [],
-
-        dateText:
-          "",
-
-        unavailableDate:
-          updates.date,
-
-        needsAvailability:
-          true,
-      };
-    }
-
-    const selectedDate =
-      availableDates.find(
-        item =>
-          String(
-            item.date ||
-              item.id
-          ) ===
-          String(
-            updates.date
-          )
-      );
-
-    if (!selectedDate) {
-      persistState(
-        state
-      );
-
-      return {
-        handled: true,
-
-        intent:
-          BOOKING_INTENTS.ASK_DATES,
-
-        state,
-
-        dates:
-          availableDates,
-
-        dateText:
-          makeDateText(
-            availableDates
-          ),
-
-        unavailableDate:
-          updates.date,
-      };
-    }
-
-    state =
-      mergeBookingDraft(
-        state,
-        {
-          ...updates,
-
-          date:
-            selectedDate.date ||
-            selectedDate.id,
-
-          slot:
-            null,
-
-          slotStart:
-            null,
-
-          slotEnd:
-            null,
-
-          slotDisplay:
-            null,
-
-          availabilityChecked:
-            false,
-
-          confirmed:
-            false,
-
-          awaitingConfirmation:
-            false,
-        }
-      );
-
-    persistState(
-      state
-    );
 
     return {
-      handled: true,
 
-      intent:
-        BOOKING_INTENTS.SELECT_DATE,
-
-      state,
-
-      selectedDate,
-
-      nextStep:
-        BOOKING_STEPS.SLOT,
-    };
-  }
-
-  /* =======================================================
-     DATE BY NAME / WEEKDAY
-  ======================================================= */
-
-  const selectedDate =
-    findAvailableDate(
-      text,
-      availableDates,
-      now
-    );
-
-  if (selectedDate) {
-    state =
-      mergeBookingDraft(
-        state,
-        {
-          date:
-            selectedDate.date ||
-            selectedDate.id,
-
-          slot:
-            null,
-
-          slotStart:
-            null,
-
-          slotEnd:
-            null,
-
-          slotDisplay:
-            null,
-
-          availabilityChecked:
-            false,
-
-          confirmed:
-            false,
-
-          awaitingConfirmation:
-            false,
-        }
-      );
-
-    persistState(
-      state
-    );
-
-    return {
-      handled: true,
-
-      intent:
-        BOOKING_INTENTS.SELECT_DATE,
-
-      state,
-
-      selectedDate,
-
-      nextStep:
-        BOOKING_STEPS.SLOT,
-    };
-  }
-
-  /* =======================================================
-     DATE-LIKE MESSAGE BUT UNAVAILABLE
-  ======================================================= */
-
-  const looksLikeDateChoice =
-    Boolean(
-      extractNaturalBookingDate(
-        text,
-        now
-      )
-    ) ||
-    /\b(today|tomorrow|day after tomorrow|next|monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|tues|wed|thu|thurs|fri|sat|sun)\b/i.test(
-      text
-    );
-
-  if (
-    looksLikeDateChoice
-  ) {
-    persistState(
-      state
-    );
-
-    return {
-      handled: true,
-
-      intent:
-        BOOKING_INTENTS.ASK_DATES,
-
-      state,
-
-      dates:
-        availableDates,
-
-      dateText:
-        makeDateText(
-          availableDates
-        ),
-
-      unavailableDate:
-        text,
-    };
-  }
-
-  /* =======================================================
-     SLOT SELECTION
-  ======================================================= */
-
-  const selectedSlot =
-    findSlotReference(
-      text,
-      availableSlots
-    );
-
-  if (selectedSlot) {
-    state =
-      mergeBookingDraft(
-        state,
-        {
-          slot:
-            selectedSlot,
-
-          availabilityChecked:
-            true,
-
-          confirmed:
-            false,
-
-          awaitingConfirmation:
-            false,
-        }
-      );
-
-    persistState(
-      state
-    );
-
-    return {
-      handled: true,
-
-      intent:
-        BOOKING_INTENTS.SELECT_SLOT,
-
-      state,
-
-      selectedSlot,
-
-      review:
-        review(
-          state,
-          options.language ||
-            "en"
-        ),
-
-      nextStep:
-        state.readyForConfirmation
-          ? BOOKING_STEPS.REVIEW
-          : getBookingStage(
-              state
-            ),
-    };
-  }
-
-  /* =======================================================
-     TIME WAS REQUESTED BUT NOT AVAILABLE
-  ======================================================= */
-
-  if (
-    extractTimeReference(
-      text
-    )
-  ) {
-    persistState(
-      state
-    );
-
-    return {
-      handled: true,
-
-      intent:
-        BOOKING_INTENTS.ASK_SLOTS,
-
-      state,
-
-      slots:
-        availableSlots,
-
-      slotText:
-        makeSlotText(
-          availableSlots
-        ),
-
-      unavailableSlot:
-        extractTimeReference(
-          text
-        ),
-    };
-  }
-
-  /* =======================================================
-     REVIEW
-  ======================================================= */
-
-  if (
-    asksForReview(
-      normalized
-    )
-  ) {
-    persistState(
-      state
-    );
-
-    return {
-      handled: true,
-
-      intent:
-        BOOKING_INTENTS.REVIEW,
-
-      state,
-
-      review:
-        review(
-          state,
-          options.language ||
-            "en"
-        ),
-
-      nextStep:
-        state.readyForConfirmation
-          ? BOOKING_STEPS.REVIEW
-          : getBookingStage(
-              state
-            ),
-    };
-  }
-
-  /* =======================================================
-     GENERIC FIELD UPDATES
-  ======================================================= */
-
-  if (
-    Object.keys(
-      updates
-    ).length
-  ) {
-    const dateChanged =
-      Boolean(
-        updates.date
-      );
-
-    state =
-      mergeBookingDraft(
-        state,
-        {
-          ...updates,
-
-          availabilityChecked:
-            dateChanged
-              ? false
-              : state.availabilityChecked,
-
-          slot:
-            dateChanged
-              ? null
-              : state.slot,
-
-          slotStart:
-            dateChanged
-              ? null
-              : state.slotStart,
-
-          slotEnd:
-            dateChanged
-              ? null
-              : state.slotEnd,
-
-          slotDisplay:
-            dateChanged
-              ? null
-              : state.slotDisplay,
-
-          confirmed:
-            false,
-
-          awaitingConfirmation:
-            false,
-        }
-      );
-
-    persistState(
-      state
-    );
-
-    return {
-      handled: true,
+      handled:
+        true,
 
       intent:
         startingFresh
@@ -3349,56 +6715,37 @@ export function processBookingConversation(
         getBookingStage(
           state
         ),
+
     };
+
   }
 
-  /* =======================================================
-     NEW BOOKING
-  ======================================================= */
-
-  if (startingFresh) {
-    persistState(
-      state
-    );
-
-    return {
-      handled: true,
-
-      intent:
-        BOOKING_INTENTS.START,
-
-      state,
-
-      missing:
-        getMissingBookingFields(
-          state
-        ),
-
-      nextStep:
-        getBookingStage(
-          state
-        ),
-    };
-  }
 
   return {
-    handled: false,
+
+    handled:
+      false,
 
     intent:
       BOOKING_INTENTS.NONE,
 
     state,
+
   };
+
 }
+
 
 export const process =
   processBookingConversation;
 
+
 /* =========================================================
-   DEFAULT OBJECT
+   PUBLIC OBJECT
 ========================================================= */
 
 export const assistantBooking = {
+
   BOOKING_ENGINE_VERSION,
 
   BOOKING_FIELDS,
@@ -3510,6 +6857,8 @@ export const assistantBooking = {
   isBookingInformationRequest,
 
   process,
+
 };
+
 
 export default assistantBooking;

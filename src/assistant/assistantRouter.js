@@ -1,33 +1,5 @@
 /* =========================================================
    KRISHISETU AI ASSISTANT ROUTER
-=========================================================
-
-   PURPOSE
-
-   This file is responsible for deciding WHAT the assistant
-   should do with a user message.
-
-   It does NOT render UI.
-   It does NOT speak.
-   It does NOT navigate directly.
-
-   It produces a clean routing decision for the UI/context
-   layer to execute.
-
-   FLOW
-
-   User message
-        ↓
-   assistantRouter
-        ↓
-   ┌──────────────────────────────────────────────┐
-   │ 1. Current-page question                     │
-   │ 2. Pending action confirmation/cancellation  │
-   │ 3. Local intent                              │
-   │ 4. Safe navigation                           │
-   │ 5. Backend AI                                │
-   └──────────────────────────────────────────────┘
-
 ========================================================= */
 
 import {
@@ -56,7 +28,7 @@ import {
 
 
 /* =========================================================
-   CONSTANTS
+   ROUTER TYPES
 ========================================================= */
 
 export const ROUTER_TYPES = {
@@ -79,6 +51,9 @@ export const ROUTER_TYPES = {
   CANCEL:
     "CANCEL",
 
+  BOOKING:
+    "BOOKING",
+
   ASK_AI:
     "ASK_AI",
 
@@ -88,17 +63,130 @@ export const ROUTER_TYPES = {
 };
 
 
+/* =========================================================
+   CONSTANTS
+========================================================= */
+
 const PENDING_ACTION_TTL =
   5 * 60 * 1000;
+
+export const DEFAULT_PENDING_ACTION_KEY =
+  "krishisetu_ai_pending_action";
+
+
+/* =========================================================
+   SMALL HELPERS
+========================================================= */
+
+function normalizeAction(
+  action
+) {
+
+  if (
+    !action ||
+    typeof action !==
+      "string"
+  ) {
+
+    return "NONE";
+
+  }
+
+  const normalized =
+    action
+      .trim()
+      .toUpperCase();
+
+  return isValidAction(
+    normalized
+  )
+    ? normalized
+    : "NONE";
+
+}
+
+
+function safeConfidence(
+  value,
+  fallback = 0.9
+) {
+
+  const number =
+    Number(value);
+
+  if (
+    Number.isFinite(number) &&
+    number >= 0 &&
+    number <= 1
+  ) {
+
+    return number;
+
+  }
+
+  return fallback;
+
+}
+
+
+function isBookingAction(
+  action
+) {
+
+  const normalized =
+    normalizeAction(
+      action
+    );
+
+  return (
+    normalized ===
+      "OPEN_BOOKING" ||
+    normalized ===
+      "BOOK" ||
+    normalized ===
+      "CONFIRM_BOOKING" ||
+    normalized ===
+      "CANCEL_BOOKING"
+  );
+
+}
+
+
+function hasBookingParameters(
+  object
+) {
+
+  if (
+    !object ||
+    typeof object !==
+      "object"
+  ) {
+
+    return false;
+
+  }
+
+  return Boolean(
+
+    object.crop ||
+    object.quantity ||
+    object.date ||
+    object.time ||
+    object.startTime ||
+    object.endTime ||
+    object.center ||
+    object.slot ||
+    object.selectedSlot ||
+    object.selectedCenter
+
+  );
+
+}
 
 
 /* =========================================================
    PENDING ACTION STORAGE
 ========================================================= */
-
-export const DEFAULT_PENDING_ACTION_KEY =
-  "krishisetu_ai_pending_action";
-
 
 export function loadPendingAction(
   storageKey =
@@ -114,14 +202,12 @@ export function loadPendingAction(
 
   }
 
-
   try {
 
     const raw =
       localStorage.getItem(
         storageKey
       );
-
 
     if (
       !raw
@@ -131,12 +217,10 @@ export function loadPendingAction(
 
     }
 
-
     const parsed =
       JSON.parse(
         raw
       );
-
 
     if (
       !parsed ||
@@ -148,13 +232,11 @@ export function loadPendingAction(
 
     }
 
-
     const createdAt =
       Number(
         parsed.createdAt ||
         0
       );
-
 
     if (
       createdAt &&
@@ -167,33 +249,31 @@ export function loadPendingAction(
         storageKey
       );
 
-
       return null;
 
     }
 
+    const action =
+      normalizeAction(
+        parsed.action
+      );
 
     if (
-      !parsed.action ||
-      !ACTIONS[
-        parsed.action
-      ]
+      action ===
+      "NONE"
     ) {
 
       localStorage.removeItem(
         storageKey
       );
 
-
       return null;
 
     }
 
-
     return {
 
-      action:
-        parsed.action,
+      action,
 
       booking:
         sanitizeActionParams(
@@ -206,7 +286,6 @@ export function loadPendingAction(
         ),
 
       createdAt:
-
         createdAt ||
         Date.now(),
 
@@ -236,7 +315,6 @@ export function savePendingAction(
 
   }
 
-
   try {
 
     if (
@@ -252,33 +330,29 @@ export function savePendingAction(
 
     }
 
-
     const action =
-      pendingAction.action;
-
+      normalizeAction(
+        pendingAction.action
+      );
 
     if (
-      !ACTIONS[
-        action
-      ]
+      action ===
+      "NONE"
     ) {
 
       return false;
 
     }
 
-
     const booking =
       sanitizeActionParams(
         pendingAction.booking
       );
 
-
     const params =
       sanitizeActionParams(
         pendingAction.params
       );
-
 
     const payload = {
 
@@ -296,14 +370,12 @@ export function savePendingAction(
 
     };
 
-
     localStorage.setItem(
       storageKey,
       JSON.stringify(
         payload
       )
     );
-
 
     return true;
 
@@ -330,13 +402,11 @@ export function clearPendingAction(
 
   }
 
-
   try {
 
     localStorage.removeItem(
       storageKey
     );
-
 
     return true;
 
@@ -357,8 +427,17 @@ export function isValidAction(
   action
 ) {
 
+  if (
+    !action ||
+    typeof action !==
+      "string"
+  ) {
+
+    return false;
+
+  }
+
   return Boolean(
-    action &&
     ACTIONS[
       action
     ]
@@ -380,50 +459,14 @@ export function isNavigationalAction(
 
   }
 
-
   const definition =
     getAction(
       action
     );
 
-
   return Boolean(
-    definition.route
+    definition?.route
   );
-
-}
-
-
-/* =========================================================
-   ACTION NORMALIZATION
-========================================================= */
-
-function normalizeAction(
-  action
-) {
-
-  if (
-    !action ||
-    typeof action !==
-      "string"
-  ) {
-
-    return "NONE";
-
-  }
-
-
-  const normalized =
-    action
-      .trim()
-      .toUpperCase();
-
-
-  return isValidAction(
-    normalized
-  )
-    ? normalized
-    : "NONE";
 
 }
 
@@ -438,13 +481,6 @@ function buildCurrentPageDecision(
   originalText
 ) {
 
-  const reply =
-    getCurrentPageReply(
-      pathname,
-      language
-    );
-
-
   return {
 
     type:
@@ -456,7 +492,11 @@ function buildCurrentPageDecision(
     confidence:
       0.99,
 
-    reply,
+    reply:
+      getCurrentPageReply(
+        pathname,
+        language
+      ),
 
     userText:
       originalText,
@@ -478,7 +518,287 @@ function buildCurrentPageDecision(
 
 
 /* =========================================================
-   PENDING ACTION
+   CANCEL REPLY
+========================================================= */
+
+function getCancelledReply(
+  language
+) {
+
+  if (
+    language ===
+    "hi"
+  ) {
+
+    return "ठीक है, मैंने यह कार्रवाई रद्द कर दी।";
+
+  }
+
+  if (
+    language ===
+    "te"
+  ) {
+
+    return "సరే, ఈ చర్యను రద్దు చేశాను.";
+
+  }
+
+  return "Okay, I cancelled that action.";
+
+}
+
+
+/* =========================================================
+   CONFIRMATION REPLY
+========================================================= */
+
+function getGenericConfirmationText(
+  language
+) {
+
+  if (
+    language ===
+    "hi"
+  ) {
+
+    return "मैं यह कार्रवाई कर सकता हूँ। आगे बढ़ने के लिए हाँ कहें।";
+
+  }
+
+  if (
+    language ===
+    "te"
+  ) {
+
+    return "నేను ఈ చర్య చేయగలను. కొనసాగించడానికి అవును అని చెప్పండి.";
+
+  }
+
+  return "I can do that. Say yes to continue.";
+
+}
+
+
+function getBookingConfirmationText(
+  booking,
+  language
+) {
+
+  const crop =
+    booking?.crop ||
+    null;
+
+  const quantity =
+    booking?.quantity ||
+    null;
+
+  const date =
+    booking?.date ||
+    null;
+
+  const time =
+    booking?.time ||
+    booking?.slot ||
+    null;
+
+  const cropNames = {
+
+    hi: {
+
+      wheat:
+        "गेहूं",
+
+      paddy:
+        "धान",
+
+      maize:
+        "मक्का",
+
+      cotton:
+        "कपास",
+
+    },
+
+    te: {
+
+      wheat:
+        "గోధుమ",
+
+      paddy:
+        "వరి",
+
+      maize:
+        "మొక్కజొన్న",
+
+      cotton:
+        "పత్తి",
+
+    },
+
+  };
+
+  const displayCrop =
+    language === "hi" ||
+    language === "te"
+      ? cropNames[
+          language
+        ]?.[
+          String(
+            crop
+          ).toLowerCase()
+        ] ||
+        crop
+      : crop;
+
+  const details = [];
+
+  if (
+    quantity
+  ) {
+
+    details.push(
+      `${quantity} kg`
+    );
+
+  }
+
+  if (
+    displayCrop
+  ) {
+
+    details.push(
+      displayCrop
+    );
+
+  }
+
+  if (
+    date
+  ) {
+
+    details.push(
+      date
+    );
+
+  }
+
+  if (
+    time
+  ) {
+
+    details.push(
+      time
+    );
+
+  }
+
+  if (
+    language ===
+    "hi"
+  ) {
+
+    if (
+      details.length
+    ) {
+
+      return (
+        `मैं ${details.join(
+          " "
+        )} की बुकिंग कर सकता हूँ। ` +
+        `आगे बढ़ने के लिए "हाँ" या "करो" कहें।`
+      );
+
+    }
+
+    return getGenericConfirmationText(
+      language
+    );
+
+  }
+
+  if (
+    language ===
+    "te"
+  ) {
+
+    if (
+      details.length
+    ) {
+
+      return (
+        `${details.join(
+          " "
+        )} బుకింగ్‌ను చేయగలను. ` +
+        `కొనసాగించడానికి "అవును" లేదా "చేయండి" అని చెప్పండి.`
+      );
+
+    }
+
+    return getGenericConfirmationText(
+      language
+    );
+
+  }
+
+  if (
+    details.length
+  ) {
+
+    return (
+      `I can book ${details.join(
+        " "
+      )}. ` +
+      `Say "yes" or "do it" to continue.`
+    );
+
+  }
+
+  return getGenericConfirmationText(
+    language
+  );
+
+}
+
+
+export function getConfirmationReply(
+  intent,
+  language
+) {
+
+  const action =
+    normalizeAction(
+      intent?.action
+    );
+
+  if (
+    isBookingAction(
+      action
+    ) &&
+    intent?.booking
+  ) {
+
+    return getBookingConfirmationText(
+      intent.booking,
+      language
+    );
+
+  }
+
+  return (
+    getActionReply(
+      action,
+      language
+    ) ||
+    getGenericConfirmationText(
+      language
+    )
+  );
+
+}
+
+
+/* =========================================================
+   PENDING ACTION DECISIONS
 ========================================================= */
 
 function buildConfirmationDecision(
@@ -489,9 +809,8 @@ function buildConfirmationDecision(
 
   const action =
     normalizeAction(
-      pending.action
+      pending?.action
     );
-
 
   if (
     action ===
@@ -502,42 +821,79 @@ function buildConfirmationDecision(
 
   }
 
+  const params =
+    sanitizeActionParams(
 
-  let params =
-    null;
+      pending?.booking ||
+      pending?.params ||
+      null
 
-
-  if (
-    pending.booking
-  ) {
-
-    params =
-      sanitizeActionParams(
-        pending.booking
-      );
-
-  }
-
-
-  if (
-    !params &&
-    pending.params
-  ) {
-
-    params =
-      sanitizeActionParams(
-        pending.params
-      );
-
-  }
-
-
-  const reply =
-    getActionReply(
-      action,
-      language
     );
 
+  /*
+   * IMPORTANT:
+   *
+   * OPEN_BOOKING is not treated as ordinary navigation.
+   *
+   * A confirmation means:
+   *
+   * "continue the booking flow with these details"
+   *
+   * rather than:
+   *
+   * "open booking page and stop".
+   */
+
+  if (
+    action ===
+    "OPEN_BOOKING"
+  ) {
+
+    return {
+
+      type:
+        ROUTER_TYPES.CONFIRM,
+
+      action:
+        "OPEN_BOOKING",
+
+      confidence:
+        0.99,
+
+      reply:
+        null,
+
+      userText:
+        originalText,
+
+      params,
+
+      pendingAction:
+        pending,
+
+      shouldCallAI:
+        false,
+
+      shouldNavigate:
+        false,
+
+      clearPending:
+        true,
+
+      continueBooking:
+        true,
+
+      executeBooking:
+        true,
+
+    };
+
+  }
+
+  const definition =
+    getAction(
+      action
+    );
 
   return {
 
@@ -549,7 +905,11 @@ function buildConfirmationDecision(
     confidence:
       0.99,
 
-    reply,
+    reply:
+      getActionReply(
+        action,
+        language
+      ),
 
     userText:
       originalText,
@@ -563,7 +923,9 @@ function buildConfirmationDecision(
       false,
 
     shouldNavigate:
-      true,
+      Boolean(
+        definition?.route
+      ),
 
     clearPending:
       true,
@@ -610,46 +972,21 @@ function buildCancellationDecision(
     clearPending:
       true,
 
+    cancelBooking:
+      Boolean(
+        pending &&
+        isBookingAction(
+          pending.action
+        )
+      ),
+
   };
 
 }
 
 
 /* =========================================================
-   CANCEL TEXT
-========================================================= */
-
-function getCancelledReply(
-  language
-) {
-
-  if (
-    language ===
-    "hi"
-  ) {
-
-    return "ठीक है, मैंने वह कार्रवाई रद्द कर दी।";
-
-  }
-
-
-  if (
-    language ===
-    "te"
-  ) {
-
-    return "సరే, ఆ చర్యను రద్దు చేశాను.";
-
-  }
-
-
-  return "Okay, I cancelled that action.";
-
-}
-
-
-/* =========================================================
-   LOCAL INTENT DECISION
+   LOCAL INTENT
 ========================================================= */
 
 function buildLocalIntentDecision(
@@ -667,12 +1004,10 @@ function buildLocalIntentDecision(
 
   }
 
-
   const action =
     normalizeAction(
       intent.action
     );
-
 
   if (
     action ===
@@ -683,7 +1018,6 @@ function buildLocalIntentDecision(
 
   }
 
-
   if (
     action ===
     "SHOW_CURRENT_PAGE"
@@ -692,7 +1026,6 @@ function buildLocalIntentDecision(
     return null;
 
   }
-
 
   if (
     action ===
@@ -708,10 +1041,10 @@ function buildLocalIntentDecision(
         "GO_BACK",
 
       confidence:
-        Number(
-          intent.confidence
-        ) ||
-        0.99,
+        safeConfidence(
+          intent.confidence,
+          0.99
+        ),
 
       reply:
         getActionReply(
@@ -732,12 +1065,10 @@ function buildLocalIntentDecision(
 
   }
 
-
   const definition =
     getAction(
       action
     );
-
 
   if (
     !definition
@@ -747,30 +1078,76 @@ function buildLocalIntentDecision(
 
   }
 
-
-  let params =
-    null;
-
-
-  if (
-    intent.booking
-  ) {
-
-    params =
-      sanitizeActionParams(
-        intent.booking
-      );
-
-  }
-
+  const params =
+    sanitizeActionParams(
+      intent.booking ||
+      intent.params ||
+      null
+    );
 
   /*
-   * Booking commands with extracted parameters are
-   * intentionally returned as a navigational intent.
+   * BOOKING COMMANDS
    *
-   * Whether navigation requires confirmation is decided
-   * by the action definition and booking flow.
+   * Booking is now a special conversation route.
+   *
+   * This prevents:
+   *
+   * "book 234 kg paddy tomorrow 8 to 830"
+   *
+   * from becoming a simple:
+   *
+   * NAVIGATE -> BOOKING PAGE
    */
+
+  if (
+    isBookingAction(
+      action
+    )
+  ) {
+
+    return {
+
+      type:
+        ROUTER_TYPES.BOOKING,
+
+      action,
+
+      confidence:
+        safeConfidence(
+          intent.confidence,
+          0.95
+        ),
+
+      reply:
+        null,
+
+      userText:
+        originalText,
+
+      params,
+
+      booking:
+        params,
+
+      intent,
+
+      shouldCallAI:
+        false,
+
+      shouldNavigate:
+        false,
+
+      continueBooking:
+        true,
+
+      hasBookingParameters:
+        hasBookingParameters(
+          params
+        ),
+
+    };
+
+  }
 
   return {
 
@@ -780,10 +1157,9 @@ function buildLocalIntentDecision(
     action,
 
     confidence:
-      Number(
+      safeConfidence(
         intent.confidence
-      ) ||
-      0.9,
+      ),
 
     reply:
       getActionReply(
@@ -810,7 +1186,7 @@ function buildLocalIntentDecision(
 
 
 /* =========================================================
-   ACTION REQUIRES CONFIRMATION
+   ACTION CONFIRMATION RULES
 ========================================================= */
 
 export function actionRequiresConfirmation(
@@ -819,9 +1195,10 @@ export function actionRequiresConfirmation(
 
   const definition =
     getAction(
-      action
+      normalizeAction(
+        action
+      )
     );
-
 
   return Boolean(
     definition
@@ -831,8 +1208,61 @@ export function actionRequiresConfirmation(
 }
 
 
+export function shouldAskForConfirmation(
+  intent
+) {
+
+  if (
+    !intent ||
+    !intent.action
+  ) {
+
+    return false;
+
+  }
+
+  const action =
+    normalizeAction(
+      intent.action
+    );
+
+  if (
+    action ===
+    "NONE"
+  ) {
+
+    return false;
+
+  }
+
+  /*
+   * Booking parameters start/continue the booking
+   * conversation. The booking engine decides whether
+   * confirmation is needed after all required details
+   * are available.
+   *
+   * This is deliberately NOT forced here.
+   */
+
+  if (
+    isBookingAction(
+      action
+    )
+  ) {
+
+    return false;
+
+  }
+
+  return actionRequiresConfirmation(
+    action
+  );
+
+}
+
+
 /* =========================================================
-   BUILD PENDING ACTION
+   CREATE PENDING ACTION
 ========================================================= */
 
 export function createPendingAction(
@@ -845,7 +1275,6 @@ export function createPendingAction(
       action
     );
 
-
   if (
     normalizedAction ===
     "NONE"
@@ -855,12 +1284,10 @@ export function createPendingAction(
 
   }
 
-
   const safeParams =
     sanitizeActionParams(
       params
     );
-
 
   return {
 
@@ -872,7 +1299,10 @@ export function createPendingAction(
 
     booking:
       normalizedAction ===
-        "OPEN_BOOKING"
+        "OPEN_BOOKING" ||
+      isBookingAction(
+        normalizedAction
+      )
         ? safeParams
         : null,
 
@@ -880,302 +1310,6 @@ export function createPendingAction(
       Date.now(),
 
   };
-
-}
-
-
-/* =========================================================
-   SHOULD ASK FOR CONFIRMATION
-========================================================= */
-
-export function shouldAskForConfirmation(
-  intent
-) {
-
-  if (
-    !intent ||
-    intent.action ===
-      "NONE"
-  ) {
-
-    return false;
-
-  }
-
-
-  if (
-    !actionRequiresConfirmation(
-      intent.action
-    )
-  ) {
-
-    /*
-     * Booking with parameters is treated specially.
-     */
-
-    if (
-      intent.action ===
-        "OPEN_BOOKING" &&
-      intent.booking
-    ) {
-
-      return true;
-
-    }
-
-
-    return false;
-
-  }
-
-
-  return true;
-
-}
-
-
-/* =========================================================
-   CONFIRMATION REPLY
-========================================================= */
-
-export function getConfirmationReply(
-  intent,
-  language
-) {
-
-  const action =
-    normalizeAction(
-      intent?.action
-    );
-
-
-  if (
-    action ===
-    "OPEN_BOOKING" &&
-    intent?.booking
-  ) {
-
-    return getBookingConfirmationText(
-      intent.booking,
-      language
-    );
-
-  }
-
-
-  return (
-    getActionReply(
-      action,
-      language
-    ) ||
-    getGenericConfirmationText(
-      language
-    )
-  );
-
-}
-
-
-function getGenericConfirmationText(
-  language
-) {
-
-  if (
-    language ===
-    "hi"
-  ) {
-
-    return "मैं यह कार्रवाई कर सकता हूँ। आगे बढ़ने के लिए हाँ कहें।";
-
-  }
-
-
-  if (
-    language ===
-    "te"
-  ) {
-
-    return "నేను ఈ చర్య చేయగలను. కొనసాగించడానికి అవును అని చెప్పండి.";
-
-  }
-
-
-  return "I can do that. Say yes to continue.";
-
-}
-
-
-/* =========================================================
-   BOOKING CONFIRMATION
-========================================================= */
-
-function getBookingConfirmationText(
-  booking,
-  language
-) {
-
-  const crop =
-    booking?.crop ||
-    null;
-
-
-  const quantity =
-    booking?.quantity ||
-    null;
-
-
-  const cropNames = {
-
-    hi: {
-
-      wheat:
-        "गेहूं",
-
-      paddy:
-        "धान",
-
-      maize:
-        "मक्का",
-
-      cotton:
-        "कपास",
-
-    },
-
-    te: {
-
-      wheat:
-        "గోధుమ",
-
-      paddy:
-        "వరి",
-
-      maize:
-        "మొక్కజొన్న",
-
-      cotton:
-        "పత్తి",
-
-    },
-
-  };
-
-
-  const displayCrop =
-    language ===
-      "hi" ||
-    language ===
-      "te"
-      ? cropNames[
-          language
-        ]?.[
-          crop
-        ] ||
-        crop
-      : crop;
-
-
-  if (
-    language ===
-    "hi"
-  ) {
-
-    if (
-      displayCrop &&
-      quantity
-    ) {
-
-      return `मैं ${quantity} kg ${displayCrop} की बुकिंग शुरू कर सकता हूँ। आगे बढ़ने के लिए "हाँ" या "करो" कहें।`;
-
-    }
-
-
-    if (
-      displayCrop
-    ) {
-
-      return `मैं ${displayCrop} की बुकिंग शुरू कर सकता हूँ। आगे बढ़ने के लिए "हाँ" कहें।`;
-
-    }
-
-
-    if (
-      quantity
-    ) {
-
-      return `मैं ${quantity} kg की बुकिंग शुरू कर सकता हूँ। आगे बढ़ने के लिए "हाँ" कहें।`;
-
-    }
-
-  }
-
-
-  if (
-    language ===
-    "te"
-  ) {
-
-    if (
-      displayCrop &&
-      quantity
-    ) {
-
-      return `${displayCrop} ${quantity} kg బుకింగ్‌ను ప్రారంభించగలను. కొనసాగించడానికి "అవును" లేదా "చేయండి" అని చెప్పండి.`;
-
-    }
-
-
-    if (
-      displayCrop
-    ) {
-
-      return `${displayCrop} బుకింగ్‌ను ప్రారంభించగలను. కొనసాగించడానికి "అవును" అని చెప్పండి.`;
-
-    }
-
-
-    if (
-      quantity
-    ) {
-
-      return `${quantity} kg బుకింగ్‌ను ప్రారంభించగలను. కొనసాగించడానికి "అవును" అని చెప్పండి.`;
-
-    }
-
-  }
-
-
-  if (
-    displayCrop &&
-    quantity
-  ) {
-
-    return `I can start a booking for ${quantity} kg of ${displayCrop}. Say "yes" or "do it" and I'll open the booking page with those details.`;
-
-  }
-
-
-  if (
-    displayCrop
-  ) {
-
-    return `I can start a ${displayCrop} booking. Say "yes" and I'll open the booking page.`;
-
-  }
-
-
-  if (
-    quantity
-  ) {
-
-    return `I can start a ${quantity} kg booking. Say "yes" and I'll open the booking page.`;
-
-  }
-
-
-  return getGenericConfirmationText(
-    language
-  );
 
 }
 
@@ -1200,6 +1334,12 @@ export function routeAssistantCommand(
     pendingAction =
       null,
 
+    bookingState =
+      null,
+
+    bookingDraft =
+      null,
+
   } =
     options;
 
@@ -1209,16 +1349,15 @@ export function routeAssistantCommand(
       message
     );
 
-
   const normalized =
     normalizeText(
       originalText
     );
 
 
-  /*
-   * Empty input.
-   */
+  /* =======================================================
+     EMPTY
+  ======================================================= */
 
   if (
     !normalized
@@ -1271,7 +1410,323 @@ export function routeAssistantCommand(
 
 
   /* =======================================================
-     2. PENDING ACTION
+     2. ACTIVE BOOKING CONVERSATION
+  ======================================================= */
+
+  /*
+   * This is intentionally checked BEFORE ordinary
+   * confirmation handling.
+   *
+   * Examples:
+   *
+   *   "tomorrow"
+   *   "8 to 830"
+   *   "morning"
+   *   "yes"
+   *   "select 300 kg wheat"
+   *
+   * When a booking draft already exists, these are
+   * continuation messages, not fresh navigation commands.
+   */
+
+  if (
+    bookingState ||
+    bookingDraft
+  ) {
+
+    const activeBooking =
+      bookingDraft ||
+      bookingState?.draft ||
+      bookingState?.booking ||
+      null;
+
+    if (
+      activeBooking
+    ) {
+
+      const bookingIntent =
+        detectIntent(
+          originalText,
+          currentPath
+        );
+
+      const detectedAction =
+        normalizeAction(
+          bookingIntent?.action
+        );
+
+      /*
+       * Explicit cancellation must win.
+       */
+
+      if (
+        isNegative(
+          originalText
+        )
+      ) {
+
+        return {
+
+          type:
+            ROUTER_TYPES.CANCEL,
+
+          action:
+            "NONE",
+
+          confidence:
+            0.99,
+
+          reply:
+            getCancelledReply(
+              language
+            ),
+
+          userText:
+            originalText,
+
+          params:
+            sanitizeActionParams(
+              activeBooking
+            ),
+
+          booking:
+            sanitizeActionParams(
+              activeBooking
+            ),
+
+          bookingState,
+
+          bookingDraft:
+            activeBooking,
+
+          shouldCallAI:
+            false,
+
+          shouldNavigate:
+            false,
+
+          clearPending:
+            true,
+
+          cancelBooking:
+            true,
+
+          continueBooking:
+            false,
+
+        };
+
+      }
+
+      /*
+       * A plain confirmation while booking is active
+       * means "continue with the current booking".
+       *
+       * It must NOT open the booking page again.
+       */
+
+      if (
+        isConfirmation(
+          originalText
+        )
+      ) {
+
+        return {
+
+          type:
+            ROUTER_TYPES.BOOKING,
+
+          action:
+            "CONFIRM_BOOKING",
+
+          confidence:
+            0.99,
+
+          reply:
+            null,
+
+          userText:
+            originalText,
+
+          params:
+            sanitizeActionParams(
+              activeBooking
+            ),
+
+          booking:
+            sanitizeActionParams(
+              activeBooking
+            ),
+
+          bookingState,
+
+          bookingDraft:
+            activeBooking,
+
+          intent:
+            bookingIntent,
+
+          shouldCallAI:
+            false,
+
+          shouldNavigate:
+            false,
+
+          continueBooking:
+            true,
+
+          executeBooking:
+            true,
+
+        };
+
+      }
+
+      /*
+       * Any booking-related intent remains inside the
+       * booking conversation.
+       */
+
+      if (
+        isBookingAction(
+          detectedAction
+        ) ||
+        bookingIntent?.booking ||
+        hasBookingParameters(
+          bookingIntent
+        )
+      ) {
+
+        return {
+
+          type:
+            ROUTER_TYPES.BOOKING,
+
+          action:
+            detectedAction ||
+            "OPEN_BOOKING",
+
+          confidence:
+            safeConfidence(
+              bookingIntent?.confidence,
+              0.95
+            ),
+
+          reply:
+            null,
+
+          userText:
+            originalText,
+
+          params:
+            sanitizeActionParams(
+              bookingIntent?.booking ||
+              bookingIntent?.params ||
+              activeBooking
+            ),
+
+          booking:
+            sanitizeActionParams(
+              bookingIntent?.booking ||
+              activeBooking
+            ),
+
+          bookingState,
+
+          bookingDraft:
+            activeBooking,
+
+          intent:
+            bookingIntent,
+
+          shouldCallAI:
+            false,
+
+          shouldNavigate:
+            false,
+
+          continueBooking:
+            true,
+
+        };
+
+      }
+
+      /*
+       * Short date/time confirmations frequently have
+       * no recognized "action". Preserve them for the
+       * booking engine instead of sending them to AI.
+       */
+
+        const bookingWords =
+  /\b(today|tomorrow|tommorow|tomorow|morning|afternoon|evening|night|am|pm|kg|kilogram|kilograms)\b/i.test(
+    originalText
+  ) ||
+  /\b\d{1,2}[:.]?\d{0,2}\s*(?:am|pm)?\b/i.test(
+    originalText
+  ) ||
+  /\b\d{1,2}\s*(?:to|-)\s*\d{1,2}\b/i.test(
+    originalText
+  );
+      if (
+        bookingWords
+      ) {
+
+        return {
+
+          type:
+            ROUTER_TYPES.BOOKING,
+
+          action:
+            "OPEN_BOOKING",
+
+          confidence:
+            0.95,
+
+          reply:
+            null,
+
+          userText:
+            originalText,
+
+          params:
+            sanitizeActionParams(
+              activeBooking
+            ),
+
+          booking:
+            sanitizeActionParams(
+              activeBooking
+            ),
+
+          bookingState,
+
+          bookingDraft:
+            activeBooking,
+
+          intent:
+            bookingIntent,
+
+          shouldCallAI:
+            false,
+
+          shouldNavigate:
+            false,
+
+          continueBooking:
+            true,
+
+        };
+
+      }
+
+    }
+
+  }
+
+
+  /* =======================================================
+     3. PENDING ACTION
   ======================================================= */
 
   if (
@@ -1292,7 +1747,6 @@ export function routeAssistantCommand(
 
     }
 
-
     if (
       isConfirmation(
         originalText
@@ -1311,7 +1765,7 @@ export function routeAssistantCommand(
 
 
   /* =======================================================
-     3. LOCAL INTENT
+     4. LOCAL INTENT
   ======================================================= */
 
   const intent =
@@ -1320,7 +1774,6 @@ export function routeAssistantCommand(
       currentPath
     );
 
-
   const localDecision =
     buildLocalIntentDecision(
       intent,
@@ -1328,20 +1781,33 @@ export function routeAssistantCommand(
       language
     );
 
-
   if (
     localDecision
   ) {
 
     /*
-     * Booking commands with extracted details are
-     * intercepted for confirmation.
+     * IMPORTANT:
+     *
+     * Booking no longer gets converted into a generic
+     * confirmation/navigation loop here.
      */
 
     if (
-      intent.action ===
-        "OPEN_BOOKING" &&
-      intent.booking &&
+      localDecision.type ===
+      ROUTER_TYPES.BOOKING
+    ) {
+
+      return localDecision;
+
+    }
+
+
+    /*
+     * Ordinary destructive/action commands may still
+     * require confirmation.
+     */
+
+    if (
       shouldAskForConfirmation(
         intent
       )
@@ -1353,13 +1819,15 @@ export function routeAssistantCommand(
           ROUTER_TYPES.CONFIRM,
 
         action:
-          "OPEN_BOOKING",
+          normalizeAction(
+            intent.action
+          ),
 
         confidence:
-          Number(
-            intent.confidence
-          ) ||
-          0.98,
+          safeConfidence(
+            intent.confidence,
+            0.98
+          ),
 
         reply:
           getConfirmationReply(
@@ -1372,7 +1840,9 @@ export function routeAssistantCommand(
 
         params:
           sanitizeActionParams(
-            intent.booking
+            intent.booking ||
+            intent.params ||
+            null
           ),
 
         intent,
@@ -1388,14 +1858,15 @@ export function routeAssistantCommand(
 
         pendingAction:
           createPendingAction(
-            "OPEN_BOOKING",
-            intent.booking
+            intent.action,
+            intent.booking ||
+            intent.params ||
+            null
           ),
 
       };
 
     }
-
 
     return localDecision;
 
@@ -1403,7 +1874,7 @@ export function routeAssistantCommand(
 
 
   /* =======================================================
-     4. NORMAL AI
+     5. BACKEND AI
   ======================================================= */
 
   return {
@@ -1439,7 +1910,7 @@ export function routeAssistantCommand(
 
 
 /* =========================================================
-   ROUTER WITH PERSISTED PENDING ACTION
+   ROUTER WITH STORED PENDING ACTION
 ========================================================= */
 
 export function routeWithStoredPendingAction(
@@ -1455,12 +1926,10 @@ export function routeWithStoredPendingAction(
   } =
     options;
 
-
   const pending =
     loadPendingAction(
       pendingStorageKey
     );
-
 
   return {
 
@@ -1485,26 +1954,6 @@ export function routeWithStoredPendingAction(
 /* =========================================================
    BACKEND ACTION MERGING
 ========================================================= */
-
-/*
- * A backend action is only allowed to influence navigation
- * when the local router did not already produce a decision.
- *
- * This is critical for:
- *
- * "What is my payment status?"
- *
- * Backend:
- *   OPEN_PAYMENTS
- *
- * Local router:
- *   ASK_AI
- *
- * Result:
- *   ASK_AI
- *
- * The backend MUST NOT hijack a normal question.
- */
 
 export function mergeBackendDecision(
   localDecision,
@@ -1537,13 +1986,16 @@ export function mergeBackendDecision(
       action:
         "NONE",
 
+      shouldCallAI:
+        true,
+
     };
 
   }
 
 
   /*
-   * Local decisions always win.
+   * NEVER overwrite an already-resolved local route.
    */
 
   if (
@@ -1561,7 +2013,6 @@ export function mergeBackendDecision(
       backendData?.action
     );
 
-
   if (
     backendAction ===
     "NONE"
@@ -1573,18 +2024,11 @@ export function mergeBackendDecision(
 
 
   /*
-   * Backend must explicitly confirm that it wants
-   * navigation.
+   * Backend must explicitly request navigation.
    */
 
-  const backendExplicit =
-    Boolean(
-      backendData?.explicitNavigation
-    );
-
-
   if (
-    !backendExplicit
+    !backendData?.explicitNavigation
   ) {
 
     return localDecision;
@@ -1593,7 +2037,8 @@ export function mergeBackendDecision(
 
 
   /*
-   * Current-page questions cannot become navigation.
+   * Questions about current page must never be
+   * converted into navigation.
    */
 
   if (
@@ -1607,10 +2052,6 @@ export function mergeBackendDecision(
   }
 
 
-  /*
-   * Backend action must correspond to a registered action.
-   */
-
   if (
     !isValidAction(
       backendAction
@@ -1618,6 +2059,65 @@ export function mergeBackendDecision(
   ) {
 
     return localDecision;
+
+  }
+
+
+  /*
+   * Backend booking action must stay inside the
+   * booking conversation.
+   */
+
+  if (
+    isBookingAction(
+      backendAction
+    )
+  ) {
+
+    const params =
+      sanitizeActionParams(
+        backendData?.booking ||
+        backendData?.params ||
+        null
+      );
+
+    return {
+
+      type:
+        ROUTER_TYPES.BOOKING,
+
+      action:
+        backendAction,
+
+      confidence:
+        safeConfidence(
+          backendData?.confidence,
+          0.9
+        ),
+
+      reply:
+        null,
+
+      userText:
+        originalText,
+
+      params,
+
+      booking:
+        params,
+
+      backendData,
+
+      shouldCallAI:
+        false,
+
+      shouldNavigate:
+        false,
+
+      continueBooking:
+        true,
+
+    };
 
   }
 
@@ -1631,10 +2131,9 @@ export function mergeBackendDecision(
       backendAction,
 
     confidence:
-      Number(
+      safeConfidence(
         backendData?.confidence
-      ) ||
-      0.9,
+      ),
 
     reply:
       getActionReply(
@@ -1648,6 +2147,12 @@ export function mergeBackendDecision(
 
     userText:
       originalText,
+
+    params:
+      sanitizeActionParams(
+        backendData?.params ||
+        null
+      ),
 
     backendData,
 
@@ -1663,15 +2168,8 @@ export function mergeBackendDecision(
 
 
 /* =========================================================
-   EXECUTION DESCRIPTION
+   EXECUTION PLAN
 ========================================================= */
-
-/*
- * Converts a router decision into a simple execution
- * description for AssistantContext.
- *
- * No navigation is performed here.
- */
 
 export function getExecutionPlan(
   decision
@@ -1751,23 +2249,116 @@ export function getExecutionPlan(
   }
 
 
+  /*
+   * BOOKING IS NOT ORDINARY NAVIGATION.
+   */
+
   if (
     decision.type ===
-    ROUTER_TYPES.NAVIGATE ||
+    ROUTER_TYPES.BOOKING
+  ) {
+
+    return {
+
+      type:
+        ROUTER_TYPES.BOOKING,
+
+      action:
+        normalizeAction(
+          decision.action
+        ),
+
+      execute:
+        true,
+
+      route:
+        null,
+
+      params:
+        sanitizeActionParams(
+          decision.params ||
+          decision.booking ||
+          decision.bookingDraft ||
+          null
+        ),
+
+      continueBooking:
+        true,
+
+      executeBooking:
+        Boolean(
+          decision.executeBooking
+        ),
+
+      cancelBooking:
+        Boolean(
+          decision.cancelBooking
+        ),
+
+    };
+
+  }
+
+
+  if (
     decision.type ===
     ROUTER_TYPES.CONFIRM
   ) {
+
+    /*
+     * OPEN_BOOKING confirmation continues booking,
+     * rather than navigating directly.
+     */
+
+    if (
+      isBookingAction(
+        decision.action
+      )
+    ) {
+
+      return {
+
+        type:
+          ROUTER_TYPES.BOOKING,
+
+        action:
+          "CONFIRM_BOOKING",
+
+        execute:
+          true,
+
+        route:
+          null,
+
+        params:
+          sanitizeActionParams(
+            decision.params ||
+            decision.pendingAction
+              ?.booking ||
+            decision.pendingAction
+              ?.params ||
+            null
+          ),
+
+        continueBooking:
+          true,
+
+        executeBooking:
+          true,
+
+      };
+
+    }
 
     const action =
       normalizeAction(
         decision.action
       );
 
-
     return {
 
       type:
-        decision.type,
+        ROUTER_TYPES.CONFIRM,
 
       action,
 
@@ -1783,9 +2374,82 @@ export function getExecutionPlan(
         sanitizeActionParams(
           decision.params ||
           decision.pendingAction
-            ?.booking ||
-          decision.pendingAction
-            ?.params
+            ?.params ||
+          null
+        ),
+
+    };
+
+  }
+
+
+  if (
+    decision.type ===
+    ROUTER_TYPES.CANCEL
+  ) {
+
+    return {
+
+      type:
+        ROUTER_TYPES.CANCEL,
+
+      action:
+        "NONE",
+
+      execute:
+        Boolean(
+          decision.cancelBooking
+        ),
+
+      route:
+        null,
+
+      params:
+        sanitizeActionParams(
+          decision.params ||
+          decision.booking ||
+          null
+        ),
+
+      cancelBooking:
+        Boolean(
+          decision.cancelBooking
+        ),
+
+    };
+
+  }
+
+
+  if (
+    decision.type ===
+    ROUTER_TYPES.NAVIGATE
+  ) {
+
+    const action =
+      normalizeAction(
+        decision.action
+      );
+
+    return {
+
+      type:
+        ROUTER_TYPES.NAVIGATE,
+
+      action,
+
+      execute:
+        true,
+
+      route:
+        getActionRoute(
+          action
+        ),
+
+      params:
+        sanitizeActionParams(
+          decision.params ||
+          null
         ),
 
     };
@@ -1816,7 +2480,7 @@ export function getExecutionPlan(
 
 
 /* =========================================================
-   ROUTER DEBUG
+   DEBUG
 ========================================================= */
 
 export function explainDecision(
@@ -1842,18 +2506,15 @@ export function explainDecision(
 
   }
 
-
   const action =
     normalizeAction(
       decision.action
     );
 
-
   const definition =
     getAction(
       action
     );
-
 
   return {
 
@@ -1863,10 +2524,12 @@ export function explainDecision(
     action,
 
     actionLabel:
-      definition.label,
+      definition?.label ||
+      action,
 
     actionCategory:
-      definition.category,
+      definition?.category ||
+      null,
 
     confidence:
       decision.confidence ||
@@ -1882,9 +2545,21 @@ export function explainDecision(
         decision.shouldNavigate
       ),
 
+    continueBooking:
+      Boolean(
+        decision.continueBooking
+      ),
+
+    executeBooking:
+      Boolean(
+        decision.executeBooking
+      ),
+
     hasParameters:
       Boolean(
-        decision.params
+        decision.params ||
+        decision.booking ||
+        decision.bookingDraft
       ),
 
     currentPage:
@@ -1897,14 +2572,8 @@ export function explainDecision(
 
 
 /* =========================================================
-   SMART COMMAND HELPERS
+   SMART HELPERS
 ========================================================= */
-
-/*
- * These helpers are deliberately conservative.
- * They are intended for future natural-language expansion,
- * not as replacements for the main intent engine.
- */
 
 export function isLikelyConfirmation(
   message
@@ -1959,6 +2628,12 @@ export function buildAssistantRequestContext(
     history =
       [],
 
+    bookingState =
+      null,
+
+    bookingDraft =
+      null,
+
   } =
     options;
 
@@ -1967,12 +2642,14 @@ export function buildAssistantRequestContext(
     getStoredFarmer();
 
 
-  const decision =
+  const routed =
     routeWithStoredPendingAction(
       message,
       {
         currentPath,
         language,
+        bookingState,
+        bookingDraft,
       }
     );
 
@@ -1999,16 +2676,23 @@ export function buildAssistantRequestContext(
       ),
 
     farmerId:
-      farmer.farmerId,
+      farmer?.farmerId ||
+      farmer?.id ||
+      null,
 
     phone:
-      farmer.phone,
+      farmer?.phone ||
+      null,
 
     decision:
-      decision.decision,
+      routed.decision,
 
     pendingAction:
-      decision.pendingAction,
+      routed.pendingAction,
+
+    bookingState,
+
+    bookingDraft,
 
     lastUserMessage:
       getLastUserMessage(
@@ -2024,7 +2708,7 @@ export function buildAssistantRequestContext(
 
 
 /* =========================================================
-   SAFE NAVIGATION CHECK
+   SAFE NAVIGATION
 ========================================================= */
 
 export function canExecuteNavigation(
@@ -2039,6 +2723,22 @@ export function canExecuteNavigation(
 
   }
 
+  /*
+   * Booking must never be handled by ordinary route
+   * execution.
+   */
+
+  if (
+    decision.type ===
+      ROUTER_TYPES.BOOKING ||
+    isBookingAction(
+      decision.action
+    )
+  ) {
+
+    return false;
+
+  }
 
   if (
     !decision.shouldNavigate
@@ -2048,7 +2748,6 @@ export function canExecuteNavigation(
 
   }
 
-
   if (
     decision.action ===
     "GO_BACK"
@@ -2057,7 +2756,6 @@ export function canExecuteNavigation(
     return true;
 
   }
-
 
   return Boolean(
     getActionRoute(
@@ -2125,10 +2823,6 @@ if (
   import.meta.env?.DEV
 ) {
 
-  /*
-   * Lightweight startup validation.
-   */
-
   const testCommands = [
 
     "open help",
@@ -2143,7 +2837,21 @@ if (
 
     "book 300 kg wheat",
 
-    "book page can you take me",
+    "book 234 kg paddy tomorrow 8 to 830",
+
+    "tomorrow",
+
+    "8 to 830",
+
+    "yes",
+
+    "what are the crops available?",
+
+    "centers?",
+
+    "show my latest token",
+
+    "what's my booking",
 
     "what is my payment status?",
 
@@ -2169,6 +2877,13 @@ if (
 
             pendingAction:
               null,
+
+            bookingState:
+              null,
+
+            bookingDraft:
+              null,
+
           }
         );
 
@@ -2177,7 +2892,8 @@ if (
         "[KrishiSetu AI router]",
         command,
         result.type,
-        result.action
+        result.action,
+        result
       );
 
     } catch (
