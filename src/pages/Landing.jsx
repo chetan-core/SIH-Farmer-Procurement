@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Smartphone,
   Wheat,
+  Truck,
   X,
 } from "lucide-react";
 
@@ -139,6 +140,13 @@ useEffect(() => {
 
 
           <Link
+            to="/transporter/login"
+            className="landing-nav-admin landing-nav-transporter"
+          >
+            Transporter Portal
+          </Link>
+
+          <Link
             to="/admin/login"
             className="landing-nav-admin"
           >
@@ -219,6 +227,13 @@ useEffect(() => {
 
 
           <Link
+            to="/transporter/login"
+            onClick={closeMenu}
+          >
+            Transporter Portal
+          </Link>
+
+          <Link
             to="/admin/login"
             onClick={closeMenu}
           >
@@ -288,10 +303,9 @@ useEffect(() => {
 
             <p className="landing-hero-description">
 
-              KrishiSetu helps farmers book procurement
-              slots, receive digital tokens, know when
-              to arrive, follow procurement status and
-              track payment from one connected system.
+              KrishiSetu connects the full crop journey — from
+              procurement booking and digital token to vehicle
+              matching, trip tracking, center delivery and payment.
 
             </p>
 
@@ -351,6 +365,21 @@ useEffect(() => {
 
                 <span>
                   Follow your payment
+                </span>
+              </div>
+
+            </div>
+
+            <div className="landing-hero-transport-note">
+
+              <div className="landing-hero-transport-icon">
+                <Truck size={18} />
+              </div>
+
+              <div>
+                <strong>Need a vehicle?</strong>
+                <span>
+                  Arrange crop transport after booking and follow the trip from pickup to the procurement center.
                 </span>
               </div>
 
@@ -772,7 +801,7 @@ useEffect(() => {
               <br />
 
               <em>
-                Two connected experiences.
+                Three connected experiences.
               </em>
 
             </h2>
@@ -780,10 +809,33 @@ useEffect(() => {
 
             <p>
 
-              Farmers and procurement teams work from
-              different sides of the same system.
+              Farmers plan the visit, transporters move the crop,
+              and procurement teams keep the journey visible from one system.
 
             </p>
+
+          </div>
+
+
+          <div className="landing-portal-guide scroll-reveal">
+
+            <div>
+              <span>01</span>
+              <strong>Farmers</strong>
+              <p>Plan procurement, request a vehicle and track your crop.</p>
+            </div>
+
+            <div>
+              <span>02</span>
+              <strong>Transporters</strong>
+              <p>Accept suitable jobs, move the crop and update the trip.</p>
+            </div>
+
+            <div>
+              <span>03</span>
+              <strong>Operations</strong>
+              <p>Monitor the queue, procurement and the connected workflow.</p>
+            </div>
 
           </div>
 
@@ -883,6 +935,96 @@ useEffect(() => {
 
 
             <Link
+              to="/transporter/login"
+              className="landing-portal-card transporter scroll-reveal-item"
+            >
+
+              <div className="portal-card-top">
+
+                <div className="portal-number">
+                  02
+                </div>
+
+
+                <div className="portal-card-icon">
+                  <Truck size={35} />
+                </div>
+
+              </div>
+
+
+              <div className="portal-card-content">
+
+                <span>
+                  TRANSPORTER PORTAL
+                </span>
+
+
+                <h3>
+
+                  Move crops safely.
+                  <br />
+                  Keep every trip visible.
+
+                </h3>
+
+
+                <p>
+
+                  Register your vehicle, set availability,
+                  receive nearby transport jobs, accept trips,
+                  update journey status and track your earnings.
+
+                </p>
+
+
+                <div className="portal-card-features">
+
+                  <span>
+                    <CheckCircle2 size={16} />
+                    See suitable transport jobs
+                  </span>
+
+
+                  <span>
+                    <CheckCircle2 size={16} />
+                    Accept and manage trips
+                  </span>
+
+
+                  <span>
+                    <CheckCircle2 size={16} />
+                    Share live trip location
+                  </span>
+
+
+                  <span>
+                    <CheckCircle2 size={16} />
+                    Track earnings and history
+                  </span>
+
+                </div>
+
+              </div>
+
+
+              <div className="portal-card-action">
+
+                <span>
+                  Enter Transporter Portal
+                </span>
+
+
+                <div>
+                  <ArrowRight size={21} />
+                </div>
+
+              </div>
+
+            </Link>
+
+
+            <Link
               to="/admin/login"
               className="landing-portal-card operations scroll-reveal-item"
             >
@@ -890,7 +1032,7 @@ useEffect(() => {
               <div className="portal-card-top">
 
                 <div className="portal-number">
-                  02
+                  03
                 </div>
 
 
@@ -970,6 +1112,47 @@ useEffect(() => {
               </div>
 
             </Link>
+
+          </div>
+
+
+          <div className="landing-transport-bridge scroll-reveal">
+
+            <div className="landing-transport-bridge-heading">
+              <span>HOW TRANSPORT CONNECTS THE SYSTEM</span>
+              <h3>One request. One vehicle. One visible journey.</h3>
+              <p>Once a farmer needs a vehicle, KrishiSetu connects the request to suitable transporters and keeps the trip tied to the same crop journey.</p>
+            </div>
+
+            <div className="landing-transport-bridge-flow">
+              <div>
+                <span>01</span>
+                <Truck size={20} />
+                <strong>Request</strong>
+                <small>Crop + quantity + pickup</small>
+              </div>
+              <ArrowRight className="bridge-arrow" size={20} />
+              <div>
+                <span>02</span>
+                <MapPin size={20} />
+                <strong>Match</strong>
+                <small>Capacity + location + availability</small>
+              </div>
+              <ArrowRight className="bridge-arrow" size={20} />
+              <div>
+                <span>03</span>
+                <Truck size={20} />
+                <strong>Move</strong>
+                <small>Pickup + live trip status</small>
+              </div>
+              <ArrowRight className="bridge-arrow" size={20} />
+              <div>
+                <span>04</span>
+                <CheckCircle2 size={20} />
+                <strong>Deliver</strong>
+                <small>Procurement center + completion</small>
+              </div>
+            </div>
 
           </div>
 
@@ -1142,8 +1325,8 @@ useEffect(() => {
             <p>
 
               Start from the portal built for you.
-              Farmers can plan their visit; operations
-              teams can manage the journey behind it.
+              Farmers plan the visit, transporters move the crop,
+              and operations teams manage the journey behind it.
 
             </p>
 
@@ -1158,6 +1341,20 @@ useEffect(() => {
                 <Wheat size={21} />
 
                 Farmer Portal
+
+                <ArrowRight size={18} />
+
+              </Link>
+
+
+              <Link
+                to="/transporter/login"
+                className="landing-final-admin-button landing-final-transporter-button"
+              >
+
+                <Truck size={21} />
+
+                Transporter Portal
 
                 <ArrowRight size={18} />
 
@@ -1283,6 +1480,27 @@ useEffect(() => {
 
             <Link to="/farmer/help">
               Farmer Help
+            </Link>
+
+          </div>
+
+
+          <div className="landing-footer-column">
+
+            <strong>
+              TRANSPORTERS
+            </strong>
+
+            <Link to="/transporter/login">
+              Transporter Login
+            </Link>
+
+            <Link to="/transporter/register">
+              Register Vehicle
+            </Link>
+
+            <Link to="/transporter/jobs">
+              Transport Jobs
             </Link>
 
           </div>

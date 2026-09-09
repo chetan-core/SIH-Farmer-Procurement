@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -91,6 +92,16 @@ app.get(
           "SELECT id, farmer_id, booking_id, type, channel, status, created_at FROM notifications ORDER BY created_at DESC"
         );
 
+      const transporters =
+        await dbQuery(
+          "SELECT id, name, phone, vehicle_type, vehicle_number, capacity_kg, is_online, current_lat, current_lng, location_updated_at, total_trips, total_earnings, rating FROM transporters ORDER BY updated_at DESC, id DESC"
+        );
+
+      const transportRequests =
+        await dbQuery(
+          "SELECT id, booking_id, farmer_id, center_id, crop, quantity_kg, pickup_address, requested_date, requested_slot_start, requested_slot_end, transporter_id, status, estimated_fare, final_fare, created_at, updated_at FROM transport_requests ORDER BY created_at DESC, id DESC"
+        );
+
       res.json({
 
         success:
@@ -108,6 +119,12 @@ app.get(
 
           notifications:
             notifications.rowCount,
+
+          transporters:
+            transporters.rowCount,
+
+          transportRequests:
+            transportRequests.rowCount,
         },
 
         farmers:
@@ -121,6 +138,12 @@ app.get(
 
         notifications:
           notifications.rows,
+
+        transporters:
+          transporters.rows,
+
+        transportRequests:
+          transportRequests.rows,
 
       });
 
@@ -208,6 +231,9 @@ const DEFAULT_SETTINGS = {
 
   maintenanceMode:
     false,
+
+  transportEnabled:
+    true,
 
 };
 
@@ -335,6 +361,251 @@ async function ensureBookingChangesTable() {
 }
 
 
+
+/* =========================================================
+   TRANSPORT & LOGISTICS TABLES
+========================================================= */
+
+async function ensureTransportTables() {
+  await query(`
+    CREATE TABLE IF NOT EXISTS transporters (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      phone TEXT,
+      password_hash TEXT,
+      password_salt TEXT,
+      vehicle_type TEXT NOT NULL DEFAULT 'TRUCK',
+      vehicle_number TEXT,
+      capacity_kg NUMERIC NOT NULL DEFAULT 1000,
+      village TEXT,
+      village_id TEXT,
+      mandal TEXT,
+      mandal_id TEXT,
+      district TEXT,
+      district_id TEXT,
+      state TEXT,
+      state_id TEXT,
+      pincode TEXT,
+      service_radius_km NUMERIC NOT NULL DEFAULT 0,
+      is_verified BOOLEAN NOT NULL DEFAULT FALSE,
+      verification_status TEXT NOT NULL DEFAULT 'PENDING',
+      is_online BOOLEAN NOT NULL DEFAULT FALSE,
+      current_lat DOUBLE PRECISION,
+      current_lng DOUBLE PRECISION,
+      location_updated_at TIMESTAMPTZ,
+      total_trips INTEGER NOT NULL DEFAULT 0,
+      total_earnings NUMERIC NOT NULL DEFAULT 0,
+      rating NUMERIC,
+      total_ratings INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  const transporterColumns = [
+    ['password_hash', 'TEXT'],
+    ['password_salt', 'TEXT'],
+    ['village', 'TEXT'],
+    ['village_id', 'TEXT'],
+    ['mandal', 'TEXT'],
+    ['mandal_id', 'TEXT'],
+    ['district', 'TEXT'],
+    ['district_id', 'TEXT'],
+    ['state', 'TEXT'],
+    ['state_id', 'TEXT'],
+    ['pincode', 'TEXT'],
+    ['service_radius_km', 'NUMERIC NOT NULL DEFAULT 0'],
+    ['is_verified', 'BOOLEAN NOT NULL DEFAULT FALSE'],
+    ['verification_status', "TEXT NOT NULL DEFAULT 'PENDING'"],
+    ['total_ratings', 'INTEGER NOT NULL DEFAULT 0'],
+  ];
+
+  for (const [column, definition] of transporterColumns) {
+    await query(`ALTER TABLE transporters ADD COLUMN IF NOT EXISTS ${column} ${definition}`);
+  }
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS transport_requests (
+      id TEXT PRIMARY KEY,
+      booking_id TEXT,
+      farmer_id TEXT NOT NULL,
+      center_id TEXT,
+      crop TEXT NOT NULL,
+      quantity_kg NUMERIC NOT NULL,
+      pickup_address TEXT NOT NULL,
+      pickup_lat DOUBLE PRECISION,
+      pickup_lng DOUBLE PRECISION,
+      pickup_note TEXT,
+      farmer_village TEXT,
+      farmer_village_id TEXT,
+      farmer_mandal TEXT,
+      farmer_mandal_id TEXT,
+      farmer_district TEXT,
+      farmer_district_id TEXT,
+      farmer_state TEXT,
+      farmer_state_id TEXT,
+      farmer_pincode TEXT,
+      requested_date TEXT,
+      requested_slot_start TEXT,
+      requested_slot_end TEXT,
+      transporter_id TEXT,
+      status TEXT NOT NULL DEFAULT 'REQUESTED',
+      estimated_fare NUMERIC,
+      final_fare NUMERIC,
+      notes TEXT,
+      cancellation_reason TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      accepted_at TIMESTAMPTZ,
+      picked_up_at TIMESTAMPTZ,
+      delivered_at TIMESTAMPTZ,
+      completed_at TIMESTAMPTZ,
+      cancelled_at TIMESTAMPTZ
+    )
+  `);
+
+  const requestColumns = [
+    ['farmer_village', 'TEXT'],
+    ['farmer_village_id', 'TEXT'],
+    ['farmer_mandal', 'TEXT'],
+    ['farmer_mandal_id', 'TEXT'],
+    ['farmer_district', 'TEXT'],
+    ['farmer_district_id', 'TEXT'],
+    ['farmer_state', 'TEXT'],
+    ['farmer_state_id', 'TEXT'],
+    ['farmer_pincode', 'TEXT'],
+    ['cancellation_reason', 'TEXT'],
+    ['cancelled_at', 'TIMESTAMPTZ'],
+  ];
+
+  for (const [column, definition] of requestColumns) {
+    await query(`ALTER TABLE transport_requests ADD COLUMN IF NOT EXISTS ${column} ${definition}`);
+  }
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS transport_request_events (
+      id BIGSERIAL PRIMARY KEY,
+      request_id TEXT NOT NULL,
+      status TEXT NOT NULL,
+      actor_type TEXT NOT NULL DEFAULT 'SYSTEM',
+      actor_id TEXT,
+      note TEXT,
+      metadata_json TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS transport_request_rejections (
+      id BIGSERIAL PRIMARY KEY,
+      request_id TEXT NOT NULL,
+      transporter_id TEXT NOT NULL,
+      reason TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE (request_id, transporter_id)
+    )
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS transporter_location_history (
+      id BIGSERIAL PRIMARY KEY,
+      transporter_id TEXT NOT NULL,
+      request_id TEXT,
+      lat DOUBLE PRECISION NOT NULL,
+      lng DOUBLE PRECISION NOT NULL,
+      recorded_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS transport_ratings (
+      id BIGSERIAL PRIMARY KEY,
+      request_id TEXT NOT NULL,
+      farmer_id TEXT NOT NULL,
+      transporter_id TEXT NOT NULL,
+      rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+      review TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE (request_id, farmer_id)
+    )
+  `);
+
+  await query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_transporters_vehicle_number
+    ON transporters (LOWER(vehicle_number))
+    WHERE vehicle_number IS NOT NULL
+      AND TRIM(vehicle_number) <> ''
+  `);
+
+  await query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_transporters_phone
+    ON transporters (phone)
+    WHERE phone IS NOT NULL
+      AND TRIM(phone) <> ''
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_transporters_online_capacity
+    ON transporters (is_online, capacity_kg)
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_transporters_region
+    ON transporters (LOWER(COALESCE(state,'')), LOWER(COALESCE(district,'')), LOWER(COALESCE(mandal,'')), LOWER(COALESCE(village,'')), is_online)
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_transport_requests_status
+    ON transport_requests (status, created_at DESC)
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_transport_requests_farmer
+    ON transport_requests (farmer_id, created_at DESC)
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_transport_requests_transporter
+    ON transport_requests (transporter_id, status, created_at DESC)
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_transport_requests_booking
+    ON transport_requests (booking_id, created_at DESC)
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_transport_requests_region
+    ON transport_requests (LOWER(COALESCE(farmer_state,'')), LOWER(COALESCE(farmer_district,'')), LOWER(COALESCE(farmer_mandal,'')), LOWER(COALESCE(farmer_village,'')), status, created_at DESC)
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_transport_request_events_request
+    ON transport_request_events (request_id, created_at ASC, id ASC)
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_transport_rejections_transporter
+    ON transport_request_rejections (transporter_id, created_at DESC)
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_transporter_location_history
+    ON transporter_location_history (transporter_id, recorded_at DESC)
+  `);
+
+  await query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_transport_active_booking
+    ON transport_requests (booking_id)
+    WHERE booking_id IS NOT NULL
+      AND status NOT IN (
+        'CANCELLED',
+        'REJECTED',
+        'COMPLETED'
+      )
+  `);
+}
+
 /* =========================================================
    COMMON HELPERS
 ========================================================= */
@@ -396,118 +667,104 @@ function generateFarmerId() {
 
   return (
     `F${Date.now()}${Math.floor(
-      Math.random() *
-      1000
+      Math.random() * 1000
     )}`
   );
-
 }
 
 
-async function findFarmerById(
-  farmerId
-) {
+/* =========================================================
+   FARMER LOOKUP HELPERS
+   ========================================================= */
 
-  if (
-    !farmerId
-  ) {
+async function findFarmerById(farmerId) {
+  const id = String(farmerId || "").trim();
 
+  if (!id) {
     return null;
-
   }
-
 
   return await get(
     `
       SELECT *
       FROM farmers
       WHERE id = $1
+      LIMIT 1
     `,
-    [
-      farmerId,
-    ]
+    [id]
   );
-
 }
 
 
-async function findFarmerByPhone(
-  phone
-) {
+async function findFarmerByPhone(phone) {
+  const normalizedPhone = normalisePhone(phone);
 
-  const normalized =
-    normalisePhone(
-      phone
-    );
-
-
-  if (
-    normalized.length !==
-    10
-  ) {
-
+  if (!normalizedPhone) {
     return null;
-
   }
-
 
   return await get(
     `
       SELECT *
       FROM farmers
-      WHERE
-        regexp_replace(
-          phone,
-          '[^0-9]',
-          '',
-          'g'
-        ) = $1
+      WHERE regexp_replace(COALESCE(phone, ''), '\\D', '', 'g') = $1
+      ORDER BY created_at DESC, id DESC
+      LIMIT 1
     `,
-    [
-      normalized,
-    ]
+    [normalizedPhone]
   );
-
 }
 
 
 async function resolveFarmer({
   farmerId = "",
   phone = "",
-}) {
+} = {}) {
+  const requestedId = String(
+    farmerId || ""
+  ).trim();
 
-  let farmer =
-    await findFarmerById(
-      farmerId
-    );
-
-
-  if (
-    farmer
-  ) {
-
-    return farmer;
-
-  }
-
-
-  farmer =
-    await findFarmerByPhone(
-      phone
-    );
-
-
-  return (
-    farmer ||
-    null
+  const normalizedPhone = normalisePhone(
+    phone
   );
 
+  /* First try the farmer ID */
+  if (requestedId) {
+    const farmerById =
+      await findFarmerById(
+        requestedId
+      );
+
+    if (farmerById) {
+      return farmerById;
+    }
+  }
+
+  /* Then try the phone number */
+  if (normalizedPhone) {
+    const farmerByPhone =
+      await findFarmerByPhone(
+        normalizedPhone
+      );
+
+    if (farmerByPhone) {
+      return farmerByPhone;
+    }
+  }
+
+  return null;
 }
 
+/* =========================================================
+   BOOKING LOOKUP HELPER
+   ========================================================= */
 
-async function getBookingById(
-  id
-) {
+async function getBookingById(bookingId) {
+  const id = String(bookingId || "").trim();
+
+  if (!id) {
+    return null;
+  }
 
   return await get(
     `
@@ -516,203 +773,763 @@ async function getBookingById(
 
         f.name AS farmer_name,
         f.phone AS farmer_phone,
+        f.state_id AS farmer_state_id,
+        f.district_id AS farmer_district_id,
+        f.mandal_id AS farmer_mandal_id,
         f.village AS farmer_village,
+        f.language AS farmer_language,
 
-        p.amount AS payment_amount,
-        p.method AS payment_method,
-        p.reference AS payment_reference,
-        p.status AS payment_record_status,
-        p.rate_per_kg AS payment_rate_per_kg,
-        p.notes AS payment_notes,
-        p.updated_at AS payment_updated_at,
-        p.sms_status AS payment_sms_status,
-        p.sms_sent_at AS payment_sms_sent_at
+        c.name AS center_name,
+        c.address AS center_address
 
       FROM bookings b
 
       LEFT JOIN farmers f
         ON f.id = b.farmer_id
 
-      LEFT JOIN payments p
-        ON p.id = (
-          SELECT p2.id
-          FROM payments p2
-          WHERE p2.booking_id = b.id
-          ORDER BY p2.id DESC
-          LIMIT 1
-        )
+      LEFT JOIN centers c
+        ON c.id = b.center_id
 
       WHERE b.id = $1
+
+      LIMIT 1
+    `,
+    [id]
+  );
+}
+/* =========================================================
+   BOOKING LOOKUP HELPER
+   ========================================================= */
+
+/* =========================================================
+   TRANSPORT HELPERS
+========================================================= */
+
+const TRANSPORT_STATUSES = new Set([
+  "REQUESTED",
+  "ASSIGNED",
+  "EN_ROUTE_TO_FARMER",
+  "CROP_PICKED_UP",
+  "EN_ROUTE_TO_CENTER",
+  "DELIVERED",
+  "COMPLETED",
+  "CANCELLED",
+]);
+
+
+const TRANSPORT_TERMINAL_STATUSES = new Set([
+  "COMPLETED",
+  "CANCELLED",
+]);
+
+
+const TRANSPORT_ACTIVE_STATUSES = new Set([
+  "REQUESTED",
+  "ASSIGNED",
+  "EN_ROUTE_TO_FARMER",
+  "CROP_PICKED_UP",
+  "EN_ROUTE_TO_CENTER",
+  "DELIVERED",
+]);
+
+
+const TRANSPORT_ALLOWED_TRANSITIONS = {
+  REQUESTED: [
+    "ASSIGNED",
+    "CANCELLED",
+  ],
+
+  ASSIGNED: [
+    "EN_ROUTE_TO_FARMER",
+    "CANCELLED",
+  ],
+
+  EN_ROUTE_TO_FARMER: [
+    "CROP_PICKED_UP",
+    "CANCELLED",
+  ],
+
+  CROP_PICKED_UP: [
+    "EN_ROUTE_TO_CENTER",
+    "CANCELLED",
+  ],
+
+  EN_ROUTE_TO_CENTER: [
+    "DELIVERED",
+  ],
+
+  DELIVERED: [
+    "COMPLETED",
+  ],
+
+  COMPLETED: [],
+
+  CANCELLED: [],
+};
+
+
+function generateTransporterId() {
+  return (
+    `T${Date.now()}${Math.floor(
+      Math.random() * 1000
+    )}`
+  );
+}
+
+
+function generateTransportRequestId() {
+  return (
+    `TR${Date.now()}${Math.floor(
+      Math.random() * 1000
+    )}`
+  );
+}
+
+
+function normalizeTransportStatus(
+  value
+) {
+  return String(
+    value ||
+    ""
+  )
+    .trim()
+    .toUpperCase()
+    .replace(
+      /\s+/g,
+      "_"
+    );
+}
+
+
+function isValidTransportStatus(
+  status
+) {
+  return TRANSPORT_STATUSES.has(
+    normalizeTransportStatus(
+      status
+    )
+  );
+}
+
+
+function getAllowedTransportTransitions(
+  status
+) {
+  return (
+    TRANSPORT_ALLOWED_TRANSITIONS[
+      normalizeTransportStatus(
+        status
+      )
+    ] ||
+    []
+  );
+}
+
+
+function isTransportActiveStatus(
+  status
+) {
+  return TRANSPORT_ACTIVE_STATUSES.has(
+    normalizeTransportStatus(
+      status
+    )
+  );
+}
+
+
+function parseCoordinate(
+  value,
+  min,
+  max
+) {
+  if (
+    value ===
+      null ||
+    value ===
+      undefined ||
+    String(
+      value
+    ).trim() ===
+      ""
+  ) {
+    return null;
+  }
+
+  const number =
+    Number(
+      value
+    );
+
+  if (
+    !Number.isFinite(
+      number
+    ) ||
+    number < min ||
+    number > max
+  ) {
+    return null;
+  }
+
+  return number;
+}
+
+
+function calculateDistanceKm(
+  lat1,
+  lng1,
+  lat2,
+  lng2
+) {
+  if (
+    ![
+      lat1,
+      lng1,
+      lat2,
+      lng2,
+    ].every(
+      value =>
+        Number.isFinite(
+          Number(
+            value
+          )
+        )
+    )
+  ) {
+    return null;
+  }
+
+  const earthRadiusKm =
+    6371;
+
+  const toRadians =
+    degrees =>
+      Number(
+        degrees
+      ) *
+      Math.PI /
+      180;
+
+  const dLat =
+    toRadians(
+      Number(
+        lat2
+      ) -
+      Number(
+        lat1
+      )
+    );
+
+  const dLng =
+    toRadians(
+      Number(
+        lng2
+      ) -
+      Number(
+        lng1
+      )
+    );
+
+  const a =
+    Math.sin(
+      dLat / 2
+    ) ** 2 +
+    Math.cos(
+      toRadians(
+        lat1
+      )
+    ) *
+    Math.cos(
+      toRadians(
+        lat2
+      )
+    ) *
+    Math.sin(
+      dLng / 2
+    ) ** 2;
+
+  const c =
+    2 *
+    Math.atan2(
+      Math.sqrt(
+        a
+      ),
+      Math.sqrt(
+        1 - a
+      )
+    );
+
+  return (
+    earthRadiusKm *
+    c
+  );
+}
+
+
+function normalizeTransporterBoolean(
+  value,
+  fallback = false
+) {
+  if (
+    value ===
+      undefined ||
+    value ===
+      null
+  ) {
+    return fallback;
+  }
+
+  if (
+    typeof value ===
+    "boolean"
+  ) {
+    return value;
+  }
+
+  const text =
+    String(
+      value
+    )
+      .trim()
+      .toLowerCase();
+
+  if (
+    [
+      "true",
+      "1",
+      "yes",
+      "on",
+    ].includes(
+      text
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    [
+      "false",
+      "0",
+      "no",
+      "off",
+    ].includes(
+      text
+    )
+  ) {
+    return false;
+  }
+
+  return fallback;
+}
+
+
+function sanitizeTransporter(transporter) {
+  if (!transporter) return transporter;
+  const { password_hash, password_salt, ...safe } = transporter;
+  return safe;
+}
+
+
+async function findTransporterById(
+  transporterId
+) {
+  const id =
+    String(
+      transporterId ||
+      ""
+    ).trim();
+
+  if (
+    !id
+  ) {
+    return null;
+  }
+
+  return await get(
+    `
+      SELECT *
+      FROM transporters
+      WHERE id = $1
     `,
     [
       id,
     ]
   );
-
 }
 
 
-function isValidStatus(
-  status
+async function resolveRequesterTransporter(
+  req
 ) {
+  const candidate =
+    String(
+      req.body?.transporterId ||
+      req.body?.transporter?.id ||
+      req.query?.transporterId ||
+      req.headers?.[
+        "x-transporter-id"
+      ] ||
+      ""
+    ).trim();
 
-  return [
+  if (
+    !candidate
+  ) {
+    return null;
+  }
 
-    "CONFIRMED",
-    "ARRIVED",
-    "LATE",
-    "WEIGHING",
-    "PROCURED",
-    "PAYMENT_PENDING",
-    "PAYMENT_SENT",
-    "CANCELLED",
-
-  ].includes(
-    status
+  return await findTransporterById(
+    candidate
   );
-
 }
 
 
-function getAllowedNextStatuses(
-  status
+async function getTransportRequestById(
+  requestId
 ) {
+  const id =
+    String(
+      requestId ||
+      ""
+    ).trim();
 
-  const transitions = {
+  if (
+    !id
+  ) {
+    return null;
+  }
 
-    CONFIRMED: [
-      "ARRIVED",
-      "LATE",
-      "CANCELLED",
-    ],
+  return await get(
+    `
+      SELECT
+        tr.*,
 
-    ARRIVED: [
-      "WEIGHING",
-      "LATE",
-    ],
+        f.name AS farmer_name,
+        f.phone AS farmer_phone,
+        f.village AS farmer_village,
+        f.mandal_id AS farmer_mandal_id,
+        f.district_id AS farmer_district_id,
+        f.state_id AS farmer_state_id,
+        f.language AS farmer_language,
 
-    LATE: [
-      "ARRIVED",
-      "WEIGHING",
-      "CANCELLED",
-    ],
+        c.name AS center_name,
+        c.address AS center_address,
 
-    WEIGHING: [
-      "PROCURED",
-    ],
+        t.name AS transporter_name,
+        t.phone AS transporter_phone,
+        t.vehicle_type AS transporter_vehicle_type,
+        t.vehicle_number AS transporter_vehicle_number,
+        t.capacity_kg AS transporter_capacity_kg,
+        t.is_online AS transporter_is_online,
+        t.current_lat AS transporter_lat,
+        t.current_lng AS transporter_lng,
+        t.location_updated_at AS transporter_location_updated_at
 
-    PROCURED: [
-      "PAYMENT_PENDING",
-    ],
+      FROM transport_requests tr
 
-    PAYMENT_PENDING: [
-      "PAYMENT_SENT",
-    ],
+      LEFT JOIN farmers f
+        ON f.id = tr.farmer_id
 
-    PAYMENT_SENT: [],
+      LEFT JOIN centers c
+        ON c.id = tr.center_id
 
-    CANCELLED: [],
+      LEFT JOIN transporters t
+        ON t.id = tr.transporter_id
 
+      WHERE tr.id = $1
+    `,
+    [
+      id,
+    ]
+  );
+}
+
+
+async function getTransportRequestEvents(
+  requestId
+) {
+  return await all(
+    `
+      SELECT
+        id,
+        request_id,
+        status,
+        actor_type,
+        actor_id,
+        note,
+        metadata_json,
+        created_at
+      FROM transport_request_events
+      WHERE request_id = $1
+      ORDER BY
+        created_at ASC,
+        id ASC
+    `,
+    [
+      requestId,
+    ]
+  );
+}
+
+
+async function recordTransportEvent({
+  requestId,
+  status,
+  actorType = "SYSTEM",
+  actorId = null,
+  note = null,
+  metadata = null,
+  client = null,
+}) {
+  const executor =
+    client ||
+    {
+      query,
+    };
+
+  await executor.query(
+    `
+      INSERT INTO transport_request_events (
+        request_id,
+        status,
+        actor_type,
+        actor_id,
+        note,
+        metadata_json
+      )
+      VALUES (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6
+      )
+    `,
+    [
+      requestId,
+      normalizeTransportStatus(
+        status
+      ),
+      actorType,
+      actorId,
+      note ||
+        null,
+      metadata
+        ? JSON.stringify(
+            metadata
+          )
+        : null,
+    ]
+  );
+}
+
+
+async function getActiveTransportRequestForBooking(
+  bookingId
+) {
+  return await get(
+    `
+      SELECT *
+      FROM transport_requests
+      WHERE booking_id = $1
+        AND status NOT IN (
+          'CANCELLED',
+          'REJECTED',
+          'COMPLETED'
+        )
+      ORDER BY
+        created_at DESC,
+        id DESC
+      LIMIT 1
+    `,
+    [
+      bookingId,
+    ]
+  );
+}
+
+
+function normaliseRegion(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+}
+
+function sameTransportRegion(transporter, request) {
+  const villageIdA = normaliseRegion(transporter?.village_id);
+  const villageIdB = normaliseRegion(request?.farmer_village_id);
+  const districtIdA = normaliseRegion(transporter?.district_id);
+  const districtIdB = normaliseRegion(request?.farmer_district_id);
+  const stateIdA = normaliseRegion(transporter?.state_id);
+  const stateIdB = normaliseRegion(request?.farmer_state_id);
+
+  if (villageIdA && villageIdB && villageIdA === villageIdB && districtIdA === districtIdB && stateIdA === stateIdB) {
+    return true;
+  }
+
+  const tv = normaliseRegion(transporter?.village);
+  const td = normaliseRegion(transporter?.district);
+  const ts = normaliseRegion(transporter?.state);
+  const rv = normaliseRegion(request?.farmer_village || request?.village);
+  const rd = normaliseRegion(request?.farmer_district || request?.district);
+  const rs = normaliseRegion(request?.farmer_state || request?.state);
+
+  return Boolean(tv && td && ts && rv && rd && rs && tv === rv && td === rd && ts === rs);
+}
+
+async function getTransportRegionForFarmer(farmerId) {
+  const farmer = await findFarmerById(farmerId);
+  if (!farmer) return null;
+  return {
+    village: String(farmer.village || '').trim(),
+    mandal: String(farmer.mandal_id || '').trim(),
+    district: String(farmer.district_id || '').trim(),
+    state: String(farmer.state_id || '').trim(),
+    pincode: String(farmer.pincode || '').trim(),
+  };
+}
+
+async function getTransportRejectionIds(transporterId, requestIds = []) {
+  if (!transporterId || !requestIds.length) return new Set();
+  const placeholders = requestIds.map((_, index) => `$${index + 2}`).join(', ');
+  const rows = await all(
+    `
+      SELECT request_id
+      FROM transport_request_rejections
+      WHERE transporter_id = $1
+        AND request_id IN (${placeholders})
+    `,
+    [transporterId, ...requestIds]
+  );
+  return new Set(rows.map(row => String(row.request_id)));
+}
+
+async function assertTransportRegionMatch(transporter, request) {
+  const transporterRegion = {
+    village: transporter?.village,
+    village_id: transporter?.village_id,
+    district: transporter?.district,
+    district_id: transporter?.district_id,
+    state: transporter?.state,
+    state_id: transporter?.state_id,
+  };
+  const requestRegion = {
+    farmer_village: request?.farmer_village || request?.village,
+    farmer_village_id: request?.farmer_village_id,
+    farmer_district: request?.farmer_district || request?.district,
+    farmer_district_id: request?.farmer_district_id,
+    farmer_state: request?.farmer_state || request?.state,
+    farmer_state_id: request?.farmer_state_id,
   };
 
-
-  return (
-    transitions[
-      status
-    ] ||
-    []
-  );
-
+  if (!sameTransportRegion(transporterRegion, requestRegion)) {
+    const error = new Error('Transporter and farmer are outside the allowed service village/region.');
+    error.code = 'TRANSPORT_REGION_MISMATCH';
+    throw error;
+  }
 }
 
-
-function getStatusSms(
-  token,
-  status
-) {
-
-  const messages = {
-
-    ARRIVED:
-      `KrishiSetu update: token ${token} has been marked arrived.`,
-
-    LATE:
-      `KrishiSetu update: token ${token} has been marked late.`,
-
-    WEIGHING:
-      `KrishiSetu update: token ${token} is now being weighed.`,
-
-    PROCURED:
-      `KrishiSetu update: token ${token} has completed procurement.`,
-
-    PAYMENT_PENDING:
-      `KrishiSetu update: payment for token ${token} is being processed.`,
-
-    PAYMENT_SENT:
-      `KrishiSetu update: payment for token ${token} has been sent.`,
-
-    CANCELLED:
-      `KrishiSetu update: booking for token ${token} has been cancelled.`,
-
-  };
-
-
-  return (
-    messages[
-      status
-    ] ||
-    null
-  );
-
+async function hashTransporterPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
+  const value = String(password || '');
+  if (value.length < 6) throw new Error('Password must contain at least 6 characters.');
+  const hash = crypto.scryptSync(value, salt, 64).toString('hex');
+  return { hash, salt };
 }
 
+function verifyTransporterPassword(password, salt, expectedHash) {
+  if (!password || !salt || !expectedHash) return false;
+  const actual = crypto.scryptSync(String(password), salt, 64).toString('hex');
+  return crypto.timingSafeEqual(Buffer.from(actual, 'hex'), Buffer.from(expectedHash, 'hex'));
+}
 
-function getNotificationTitle(
-  status
-) {
-
-  const titles = {
-
-    BOOKING_CONFIRMED:
-      "Booking confirmed",
-
-    ARRIVED:
-      "Arrival recorded",
-
-    LATE:
-      "Late arrival recorded",
-
-    WEIGHING:
-      "Weighing started",
-
-    PROCUREMENT_COMPLETED:
-      "Procurement completed",
-
-    PROCURED:
-      "Procurement completed",
-
-    PAYMENT_PENDING:
-      "Payment processing started",
-
-    PAYMENT_SENT:
-      "Payment sent",
-
-    CANCELLED:
-      "Booking cancelled",
-
-    BOOKING_UPDATED:
-      "Booking updated",
-
-  };
-
-
-  return (
-    titles[
-      status
-    ] ||
-    "Booking update"
+async function getTransportCandidates({
+  pickupLat,
+  pickupLng,
+  quantityKg,
+  request = null,
+  excludeTransporterId = null,
+}) {
+  const rows = await all(
+    `
+      SELECT
+        id,
+        name,
+        phone,
+        vehicle_type,
+        vehicle_number,
+        capacity_kg,
+        village,
+        mandal,
+        district,
+        state,
+        pincode,
+        service_radius_km,
+        is_verified,
+        verification_status,
+        is_online,
+        current_lat,
+        current_lng,
+        location_updated_at,
+        total_trips,
+        total_earnings,
+        rating,
+        total_ratings
+      FROM transporters
+      WHERE is_online = TRUE
+        AND capacity_kg >= $1
+        AND (
+          (
+            NULLIF($2, '') IS NOT NULL
+            AND LOWER(COALESCE(village_id,'')) = LOWER($2)
+            AND LOWER(COALESCE(district_id,'')) = LOWER($3)
+            AND LOWER(COALESCE(state_id,'')) = LOWER($4)
+          )
+          OR
+          (
+            NULLIF($2, '') IS NULL
+            AND LOWER(COALESCE(village,'')) = LOWER($5)
+            AND LOWER(COALESCE(district,'')) = LOWER($6)
+            AND LOWER(COALESCE(state,'')) = LOWER($7)
+          )
+        )
+        AND (
+          $8::text IS NULL
+          OR id != $8
+        )
+    `,
+    [
+      Number(quantityKg),
+      String(request?.farmer_village_id || '').trim(),
+      String(request?.farmer_district_id || '').trim(),
+      String(request?.farmer_state_id || '').trim(),
+      String(request?.farmer_village || '').trim(),
+      String(request?.farmer_district || '').trim(),
+      String(request?.farmer_state || '').trim(),
+      excludeTransporterId ? String(excludeTransporterId) : null,
+    ]
   );
 
+  return rows
+    .map(transporter => ({
+      ...transporter,
+      distanceKm: calculateDistanceKm(
+        pickupLat,
+        pickupLng,
+        transporter.current_lat,
+        transporter.current_lng
+      ),
+    }))
+    .sort((a, b) => {
+      const ad = a.distanceKm ?? Number.POSITIVE_INFINITY;
+      const bd = b.distanceKm ?? Number.POSITIVE_INFINITY;
+      if (ad !== bd) return ad - bd;
+      const ar = Number(a.rating || 0);
+      const br = Number(b.rating || 0);
+      if (ar !== br) return br - ar;
+      return Number(b.total_trips || 0) - Number(a.total_trips || 0);
+    });
 }
 
 
@@ -2152,6 +2969,43 @@ app.get(
 
 
 /* =========================================================
+   PHASE 2 READ-ONLY CENTER ALIAS
+   Existing /api/centers remains the source of truth.
+========================================================= */
+
+app.get(
+  "/api/procurement/centers",
+  async (req, res) => {
+    try {
+      const centers = await all(
+        `
+          SELECT *
+          FROM centers
+          WHERE active = 1
+          ORDER BY name ASC
+        `
+      );
+
+      return res.json({
+        success: true,
+        centers,
+      });
+    } catch (error) {
+      console.error(
+        "Phase 2 procurement centers alias error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to load procurement centers.",
+      });
+    }
+  }
+);
+
+
+/* =========================================================
    CREATE CENTER
 ========================================================= */
 
@@ -2822,6 +3676,2774 @@ app.patch(
 
     }
 
+  }
+);
+
+
+
+/* =========================================================
+   TRANSPORTERS
+========================================================= */
+
+app.post(
+  "/api/transporters",
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const body =
+        req.body ||
+        {};
+
+      const requestedId =
+        String(
+          body.id ||
+          ""
+        ).trim();
+
+      const name =
+        String(
+          body.name ||
+          ""
+        ).trim();
+
+      const phone =
+        normalisePhone(
+          body.phone
+        );
+
+      const vehicleType =
+        String(
+          body.vehicleType ||
+          body.vehicle_type ||
+          "TRUCK"
+        ).trim().toUpperCase();
+
+      const vehicleNumber =
+        String(
+          body.vehicleNumber ||
+          body.vehicle_number ||
+          ""
+        ).trim().toUpperCase();
+
+      const capacityKg =
+        Number(
+          body.capacityKg ??
+          body.capacity_kg ??
+          1000
+        );
+
+      const isOnline =
+        normalizeTransporterBoolean(
+          body.isOnline ??
+          body.is_online,
+          false
+        );
+
+      const village = String(body.village || body.region?.village || '').trim();
+      const villageId = String(body.villageId || body.village_id || body.region?.villageId || body.region?.village_id || '').trim();
+      const mandal = String(body.mandal || body.mandalName || body.region?.mandal || '').trim();
+      const mandalId = String(body.mandalId || body.mandal_id || body.region?.mandalId || body.region?.mandal_id || '').trim();
+      const district = String(body.district || body.districtName || body.region?.district || '').trim();
+      const districtId = String(body.districtId || body.district_id || body.region?.districtId || body.region?.district_id || '').trim();
+      const state = String(body.state || body.stateName || body.region?.state || '').trim();
+      const stateId = String(body.stateId || body.state_id || body.region?.stateId || body.region?.state_id || '').trim();
+      const pincode = String(body.pincode || body.pinCode || body.region?.pincode || '').trim();
+      const serviceRadiusKm = Number(body.serviceRadiusKm ?? body.service_radius_km ?? 0);
+      const password = String(body.password || '').trim();
+
+      const currentLat =
+        parseCoordinate(
+          body.currentLat ??
+          body.current_lat,
+          -90,
+          90
+        );
+
+      const currentLng =
+        parseCoordinate(
+          body.currentLng ??
+          body.current_lng,
+          -180,
+          180
+        );
+
+      if (
+        !name
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Transporter name is required.",
+          });
+      }
+
+      if (
+        !vehicleType
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Vehicle type is required.",
+          });
+      }
+
+      if (
+        !Number.isFinite(
+          capacityKg
+        ) ||
+        capacityKg <= 0
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Vehicle capacity must be greater than zero.",
+          });
+      }
+
+      if (!Number.isFinite(serviceRadiusKm) || serviceRadiusKm < 0 || serviceRadiusKm > 250) {
+        return res.status(400).json({
+          success: false,
+          message: "Service radius must be between 0 and 250 km.",
+        });
+      }
+
+      let transporter =
+        await findTransporterById(
+          requestedId
+        );
+
+      const transporterId =
+        transporter?.id ||
+        requestedId ||
+        generateTransporterId();
+
+      const resolvedIsOnline =
+        transporter
+          ? normalizeTransporterBoolean(
+              body.isOnline ??
+              body.is_online,
+              transporter.is_online === true
+            )
+          : isOnline;
+
+      let passwordHash = transporter?.password_hash || null;
+      let passwordSalt = transporter?.password_salt || null;
+
+      if (password) {
+        const hashed = await hashTransporterPassword(password);
+        passwordHash = hashed.hash;
+        passwordSalt = hashed.salt;
+      }
+
+      if (
+        transporter
+      ) {
+        await query(
+          `
+            UPDATE transporters
+            SET
+              name = $1,
+              phone = $2,
+              vehicle_type = $3,
+              vehicle_number = $4,
+              capacity_kg = $5,
+              village = $6,
+              village_id = $7,
+              mandal = $8,
+              mandal_id = $9,
+              district = $10,
+              district_id = $11,
+              state = $12,
+              state_id = $13,
+              pincode = $14,
+              service_radius_km = $15,
+              password_hash = COALESCE($16, password_hash),
+              password_salt = COALESCE($17, password_salt),
+              is_online = $18,
+              current_lat = COALESCE($19, current_lat),
+              current_lng = COALESCE($20, current_lng),
+              location_updated_at =
+                CASE
+                  WHEN $19 IS NOT NULL
+                    OR $20 IS NOT NULL
+                  THEN CURRENT_TIMESTAMP
+                  ELSE location_updated_at
+                END,
+              updated_at = CURRENT_TIMESTAMP
+            WHERE id = $21
+          `,
+          [
+            name,
+            phone ||
+              null,
+            vehicleType,
+            vehicleNumber ||
+              null,
+            capacityKg,
+            village || null,
+            villageId || null,
+            mandal || null,
+            mandalId || null,
+            district || null,
+            districtId || null,
+            state || null,
+            stateId || null,
+            pincode || null,
+            serviceRadiusKm,
+            passwordHash,
+            passwordSalt,
+            resolvedIsOnline,
+            currentLat,
+            currentLng,
+            transporterId,
+          ]
+        );
+      } else {
+        await query(
+          `
+            INSERT INTO transporters (
+              id,
+              name,
+              phone,
+              vehicle_type,
+              vehicle_number,
+              capacity_kg,
+              village,
+              village_id,
+              mandal,
+              mandal_id,
+              district,
+              district_id,
+              state,
+              state_id,
+              pincode,
+              service_radius_km,
+              password_hash,
+              password_salt,
+              is_online,
+              current_lat,
+              current_lng,
+              location_updated_at
+            )
+            VALUES (
+              $1,
+              $2,
+              $3,
+              $4,
+              $5,
+              $6,
+              $7,
+              $8,
+              $9,
+              $10,
+              $11,
+              $12,
+              $13,
+              $14,
+              $15,
+              $16,
+              $17,
+              $18,
+              CASE
+                WHEN $17 IS NOT NULL
+                  OR $18 IS NOT NULL
+                THEN CURRENT_TIMESTAMP
+                ELSE NULL
+              END
+            )
+          `,
+          [
+            transporterId,
+            name,
+            phone ||
+              null,
+            vehicleType,
+            vehicleNumber ||
+              null,
+            capacityKg,
+            village || null,
+            villageId || null,
+            mandal || null,
+            mandalId || null,
+            district || null,
+            districtId || null,
+            state || null,
+            stateId || null,
+            pincode || null,
+            serviceRadiusKm,
+            passwordHash,
+            passwordSalt,
+            isOnline,
+            currentLat,
+            currentLng,
+          ]
+        );
+      }
+
+      const saved =
+        await findTransporterById(
+          transporterId
+        );
+
+      return res.json({
+        success: true,
+        message:
+          "Transporter saved successfully.",
+        transporter:
+          sanitizeTransporter(saved),
+      });
+    } catch (
+      error
+    ) {
+      console.error(
+        "Save transporter error:",
+        error
+      );
+
+      if (
+        error?.code ===
+        "23505"
+      ) {
+        return res
+          .status(409)
+          .json({
+            success: false,
+            message:
+              "This vehicle number is already registered.",
+          });
+      }
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Failed to save transporter.",
+        });
+    }
+  }
+);
+
+
+app.post(
+  "/api/transporters/register",
+  async (req, res) => {
+    try {
+      const body = req.body || {};
+      const name = String(body.name || '').trim();
+      const phone = normalisePhone(body.phone);
+      const password = String(body.password || '').trim();
+      const vehicleType = String(body.vehicleType || body.vehicle_type || 'TRUCK').trim().toUpperCase();
+      const vehicleNumber = String(body.vehicleNumber || body.vehicle_number || '').trim().toUpperCase();
+      const capacityKg = Number(body.capacityKg ?? body.capacity_kg ?? 1000);
+      const village = String(body.village || body.region?.village || '').trim();
+      const villageId = String(body.villageId || body.village_id || body.region?.villageId || body.region?.village_id || '').trim();
+      const mandal = String(body.mandal || body.region?.mandal || '').trim();
+      const mandalId = String(body.mandalId || body.mandal_id || body.region?.mandalId || body.region?.mandal_id || '').trim();
+      const district = String(body.district || body.region?.district || '').trim();
+      const districtId = String(body.districtId || body.district_id || body.region?.districtId || body.region?.district_id || '').trim();
+      const state = String(body.state || body.region?.state || '').trim();
+      const stateId = String(body.stateId || body.state_id || body.region?.stateId || body.region?.state_id || '').trim();
+      const pincode = String(body.pincode || body.region?.pincode || '').trim();
+      const serviceRadiusKm = Number(body.serviceRadiusKm ?? body.service_radius_km ?? 0);
+
+      if (!name) return res.status(400).json({ success: false, message: 'Transporter name is required.' });
+      if (phone.length !== 10) return res.status(400).json({ success: false, message: 'A valid 10-digit mobile number is required.' });
+      if (password.length < 6) return res.status(400).json({ success: false, message: 'Password must contain at least 6 characters.' });
+      if (!vehicleType) return res.status(400).json({ success: false, message: 'Vehicle type is required.' });
+      if (!Number.isFinite(capacityKg) || capacityKg <= 0) return res.status(400).json({ success: false, message: 'Vehicle capacity must be greater than zero.' });
+      if ((!village && !villageId) || (!district && !districtId) || (!state && !stateId)) return res.status(400).json({ success: false, message: 'Village, district and state are required for transporter registration.' });
+      if (!Number.isFinite(serviceRadiusKm) || serviceRadiusKm < 0 || serviceRadiusKm > 250) return res.status(400).json({ success: false, message: 'Service radius must be between 0 and 250 km.' });
+
+      if (await get(`SELECT id FROM transporters WHERE phone = $1`, [phone])) return res.status(409).json({ success: false, message: 'A transporter account already exists for this mobile number.' });
+      if (vehicleNumber && await get(`SELECT id FROM transporters WHERE LOWER(vehicle_number) = LOWER($1)`, [vehicleNumber])) return res.status(409).json({ success: false, message: 'This vehicle number is already registered.' });
+
+      const hashed = await hashTransporterPassword(password);
+      const transporterId = generateTransporterId();
+      const result = await query(
+        `
+          INSERT INTO transporters (
+            id, name, phone, password_hash, password_salt, vehicle_type,
+            vehicle_number, capacity_kg, village, village_id, mandal, mandal_id,
+            district, district_id, state, state_id, pincode, service_radius_km, is_online
+          )
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,FALSE)
+          RETURNING *
+        `,
+        [transporterId, name, phone, hashed.hash, hashed.salt, vehicleType, vehicleNumber || null, capacityKg, village || null, villageId || null, mandal || null, mandalId || null, district || null, districtId || null, state || null, stateId || null, pincode || null, serviceRadiusKm]
+      );
+
+      return res.status(201).json({ success: true, message: 'Transporter account created successfully.', transporter: result.rows[0] });
+    } catch (error) {
+      console.error('Transporter registration error:', error);
+      if (error?.code === '23505') return res.status(409).json({ success: false, message: 'This mobile number or vehicle number is already registered.' });
+      return res.status(500).json({ success: false, message: 'Failed to register transporter.' });
+    }
+  }
+);
+
+app.post(
+  "/api/transporters/login",
+  async (req, res) => {
+    try {
+      const phone = normalisePhone(req.body?.phone);
+      const password = String(req.body?.password || "");
+      const transporter = await get(`SELECT * FROM transporters WHERE phone = $1`, [phone]);
+      if (!transporter || !verifyTransporterPassword(password, transporter.password_salt, transporter.password_hash)) {
+        return res.status(401).json({ success: false, message: "Invalid transporter mobile number or password." });
+      }
+      return res.json({ success: true, message: "Transporter login successful.", transporter: sanitizeTransporter(transporter) });
+    } catch (error) {
+      console.error("Transporter login error:", error);
+      return res.status(500).json({ success: false, message: "Failed to login transporter." });
+    }
+  }
+);
+
+app.get(
+  "/api/transporters/:id/profile",
+  async (req, res) => {
+    try {
+      const transporter = await findTransporterById(req.params.id);
+      if (!transporter) return res.status(404).json({ success: false, message: "Transporter not found." });
+      const { password_hash, password_salt, ...safe } = transporter;
+      return res.json({ success: true, transporter: safe });
+    } catch (error) {
+      console.error("Get transporter profile error:", error);
+      return res.status(500).json({ success: false, message: "Failed to load transporter profile." });
+    }
+  }
+);
+
+app.get(
+  "/api/transporters",
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const onlineOnly =
+        String(
+          req.query?.online ||
+          ""
+        ).trim().toLowerCase();
+
+      const params =
+        [];
+      let where =
+        "";
+
+      if (
+        [
+          "true",
+          "1",
+          "yes",
+        ].includes(
+          onlineOnly
+        )
+      ) {
+        where =
+          "WHERE is_online = TRUE";
+      }
+
+      const transporters =
+        await all(
+          `
+            SELECT *
+            FROM transporters
+            ${where}
+            ORDER BY
+              is_online DESC,
+              COALESCE(rating, 0) DESC,
+              total_trips DESC,
+              name ASC
+          `,
+          params
+        );
+
+      return res.json({
+        success: true,
+        transporters: transporters.map(sanitizeTransporter),
+      });
+    } catch (
+      error
+    ) {
+      console.error(
+        "Get transporters error:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Failed to load transporters.",
+        });
+    }
+  }
+);
+
+
+app.get(
+  "/api/transporters/:id",
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const transporter =
+        await findTransporterById(
+          req.params.id
+        );
+
+      if (
+        !transporter
+      ) {
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "Transporter not found.",
+          });
+      }
+
+      const activeTrips =
+        await all(
+          `
+            SELECT *
+            FROM transport_requests
+            WHERE transporter_id = $1
+              AND status IN (
+                'ASSIGNED',
+                'EN_ROUTE_TO_FARMER',
+                'CROP_PICKED_UP',
+                'EN_ROUTE_TO_CENTER',
+                'DELIVERED'
+              )
+            ORDER BY
+              created_at DESC,
+              id DESC
+          `,
+          [
+            transporter.id,
+          ]
+        );
+
+      return res.json({
+        success: true,
+        transporter: sanitizeTransporter(transporter),
+        activeTrips,
+      });
+    } catch (
+      error
+    ) {
+      console.error(
+        "Get transporter error:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Failed to load transporter.",
+        });
+    }
+  }
+);
+
+
+app.patch(
+  "/api/transporters/:id/availability",
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const transporter =
+        await findTransporterById(
+          req.params.id
+        );
+
+      if (
+        !transporter
+      ) {
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "Transporter not found.",
+          });
+      }
+
+      const isOnline =
+        normalizeTransporterBoolean(
+          req.body?.isOnline ??
+          req.body?.is_online,
+          transporter.is_online ===
+            true
+        );
+
+      const currentLat =
+        parseCoordinate(
+          req.body?.currentLat ??
+          req.body?.current_lat,
+          -90,
+          90
+        );
+
+      const currentLng =
+        parseCoordinate(
+          req.body?.currentLng ??
+          req.body?.current_lng,
+          -180,
+          180
+        );
+
+      await query(
+        `
+          UPDATE transporters
+          SET
+            is_online = $1,
+            current_lat = COALESCE($2, current_lat),
+            current_lng = COALESCE($3, current_lng),
+            location_updated_at =
+              CASE
+                WHEN $2 IS NOT NULL
+                  OR $3 IS NOT NULL
+                THEN CURRENT_TIMESTAMP
+                ELSE location_updated_at
+              END,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = $4
+        `,
+        [
+          isOnline,
+          currentLat,
+          currentLng,
+          transporter.id,
+        ]
+      );
+
+      const updated =
+        await findTransporterById(
+          transporter.id
+        );
+
+      return res.json({
+        success: true,
+        message:
+          isOnline
+            ? "You are now online and visible for transport jobs."
+            : "You are now offline.",
+        transporter:
+          updated,
+      });
+    } catch (
+      error
+    ) {
+      console.error(
+        "Transporter availability error:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Failed to update transporter availability.",
+        });
+    }
+  }
+);
+
+
+app.patch(
+  "/api/transporters/:id/location",
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const transporter =
+        await findTransporterById(
+          req.params.id
+        );
+
+      if (
+        !transporter
+      ) {
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "Transporter not found.",
+          });
+      }
+
+      const lat =
+        parseCoordinate(
+          req.body?.lat ??
+          req.body?.currentLat ??
+          req.body?.current_lat,
+          -90,
+          90
+        );
+
+      const lng =
+        parseCoordinate(
+          req.body?.lng ??
+          req.body?.currentLng ??
+          req.body?.current_lng,
+          -180,
+          180
+        );
+
+      if (
+        lat === null ||
+        lng === null
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Valid latitude and longitude are required.",
+          });
+      }
+
+      await query(
+        `
+          UPDATE transporters
+          SET
+            current_lat = $1,
+            current_lng = $2,
+            location_updated_at = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = $3
+        `,
+        [
+          lat,
+          lng,
+          transporter.id,
+        ]
+      );
+
+      const activeTrip = await get(`SELECT id FROM transport_requests WHERE transporter_id = $1 AND status IN ('ASSIGNED','EN_ROUTE_TO_FARMER','CROP_PICKED_UP','EN_ROUTE_TO_CENTER','DELIVERED') ORDER BY created_at DESC LIMIT 1`, [transporter.id]);
+      await query(`INSERT INTO transporter_location_history (transporter_id, request_id, lat, lng) VALUES ($1,$2,$3,$4)`, [transporter.id, activeTrip?.id || null, lat, lng]);
+
+      return res.json({
+        success: true,
+        location: {
+          lat,
+          lng,
+          updatedAt:
+            new Date().toISOString(),
+        },
+      });
+    } catch (
+      error
+    ) {
+      console.error(
+        "Transporter location error:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Failed to update transporter location.",
+        });
+    }
+  }
+);
+
+
+/* =========================================================
+   TRANSPORT REQUESTS
+========================================================= */
+
+async function createTransportRequestHandler(
+  req,
+  res
+) {
+    try {
+      const settings =
+        await getSettings();
+
+      if (
+        settings.transportEnabled ===
+        false
+      ) {
+        return res
+          .status(409)
+          .json({
+            success: false,
+            message:
+              "Transport requests are currently disabled by the administrator.",
+          });
+      }
+
+      const body =
+        req.body ||
+        {};
+
+      const farmer =
+        await resolveFarmer({
+          farmerId:
+            String(
+              body.farmerId ||
+              body.farmer?.id ||
+              ""
+            ).trim(),
+          phone:
+            normalisePhone(
+              body.phone ||
+              body.farmer?.phone ||
+              ""
+            ),
+        });
+
+      if (
+        !farmer
+      ) {
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "Farmer account not found. Please login again.",
+          });
+      }
+
+      const bookingId =
+        String(
+          body.bookingId ||
+          ""
+        ).trim();
+
+      let booking =
+        null;
+
+      if (
+        bookingId
+      ) {
+        booking =
+          await get(
+            `
+              SELECT *
+              FROM bookings
+              WHERE id = $1
+            `,
+            [
+              bookingId,
+            ]
+          );
+
+        if (
+          !booking
+        ) {
+          return res
+            .status(404)
+            .json({
+              success: false,
+              message:
+                "Linked booking not found.",
+            });
+        }
+
+        if (
+          !bookingBelongsToFarmer(
+            booking,
+            farmer
+          )
+        ) {
+          return res
+            .status(403)
+            .json({
+              success: false,
+              message:
+                "You are not authorised to request transport for this booking.",
+            });
+        }
+
+        if (
+          [
+            "CANCELLED",
+            "REJECTED",
+            "EXPIRED",
+            "PAYMENT_SENT",
+          ].includes(
+            String(
+              booking.status ||
+              ""
+            ).toUpperCase()
+          )
+        ) {
+          return res
+            .status(409)
+            .json({
+              success: false,
+              message:
+                "Transport cannot be requested for this booking in its current status.",
+            });
+        }
+
+        const existing =
+          await getActiveTransportRequestForBooking(
+            bookingId
+          );
+
+        if (
+          existing
+        ) {
+          const existingRequest =
+            await getTransportRequestById(
+              existing.id
+            );
+
+          return res.json({
+            success: true,
+            alreadyExists:
+              true,
+            message:
+              "An active transport request already exists for this booking.",
+            request:
+              existingRequest,
+          });
+        }
+      }
+
+      const centerId =
+        String(
+          body.centerId ||
+          booking?.center_id ||
+          ""
+        ).trim();
+
+      const crop =
+        String(
+          body.crop ||
+          booking?.crop ||
+          ""
+        ).trim();
+
+      const quantityKg =
+        Number(
+          body.quantityKg ??
+          body.quantity_kg ??
+          booking?.actual_quantity ??
+          booking?.estimated_quantity ??
+          0
+        );
+
+      const pickupAddress =
+        String(
+          body.pickupAddress ||
+          body.pickup_address ||
+          ""
+        ).trim();
+
+      const requestedDate =
+        String(
+          body.requestedDate ||
+          body.requested_date ||
+          booking?.date ||
+          ""
+        ).trim();
+
+      if (
+        requestedDate &&
+        !normalizeBookingDate(
+          requestedDate
+        )
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "A valid requested transport date is required.",
+          });
+      }
+
+      const requestedSlotStart =
+        String(
+          body.requestedSlotStart ||
+          body.requested_slot_start ||
+          booking?.slot_start ||
+          ""
+        ).trim();
+
+      const requestedSlotEnd =
+        String(
+          body.requestedSlotEnd ||
+          body.requested_slot_end ||
+          booking?.slot_end ||
+          ""
+        ).trim();
+
+      const pickupLat =
+        parseCoordinate(
+          body.pickupLat ??
+          body.pickup_lat,
+          -90,
+          90
+        );
+
+      const pickupLng =
+        parseCoordinate(
+          body.pickupLng ??
+          body.pickup_lng,
+          -180,
+          180
+        );
+
+      const pickupNote =
+        String(
+          body.pickupNote ||
+          body.pickup_note ||
+          ""
+        ).trim();
+
+      const notes =
+        String(
+          body.notes ||
+          ""
+        ).trim();
+
+      if (
+        (requestedSlotStart && !requestedSlotEnd) ||
+        (!requestedSlotStart && requestedSlotEnd)
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Both transport pickup start and end times are required.",
+          });
+      }
+
+      if (
+        requestedSlotStart &&
+        requestedSlotEnd
+      ) {
+        const slotStartMinutes =
+          parseBookingTimeMinutes(
+            requestedSlotStart
+          );
+
+        const slotEndMinutes =
+          parseBookingTimeMinutes(
+            requestedSlotEnd
+          );
+
+        if (
+          slotStartMinutes === null ||
+          slotEndMinutes === null ||
+          slotEndMinutes <= slotStartMinutes
+        ) {
+          return res
+            .status(400)
+            .json({
+              success: false,
+              message:
+                "A valid transport pickup time window is required.",
+            });
+        }
+      }
+
+      const estimatedFare =
+        Number(
+          body.estimatedFare ??
+          body.estimated_fare
+        );
+
+      if (
+        !centerId
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Procurement center is required.",
+          });
+      }
+
+      const center =
+        await get(
+          `
+            SELECT *
+            FROM centers
+            WHERE id = $1
+          `,
+          [
+            centerId,
+          ]
+        );
+
+      if (
+        !center
+      ) {
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "Procurement center not found.",
+          });
+      }
+
+      if (
+        !crop
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Crop is required for transport.",
+          });
+      }
+
+      if (
+        !Number.isFinite(
+          quantityKg
+        ) ||
+        quantityKg <= 0
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "A positive crop quantity is required.",
+          });
+      }
+
+      if (
+        !pickupAddress
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Pickup address is required.",
+          });
+      }
+
+      let safeEstimatedFare =
+        null;
+
+      if (
+        Number.isFinite(
+          estimatedFare
+        ) &&
+        estimatedFare >= 0
+      ) {
+        safeEstimatedFare =
+          estimatedFare;
+      }
+
+      const farmerRegion = {
+        village: String(farmer.village || '').trim(),
+        villageId: String(farmer.village_id || '').trim(),
+        mandal: String(farmer.mandal || farmer.mandal_name || farmer.mandal_id || '').trim(),
+        mandalId: String(farmer.mandal_id || '').trim(),
+        district: String(farmer.district || farmer.district_name || farmer.district_id || '').trim(),
+        districtId: String(farmer.district_id || '').trim(),
+        state: String(farmer.state || farmer.state_name || farmer.state_id || '').trim(),
+        stateId: String(farmer.state_id || '').trim(),
+        pincode: String(farmer.pincode || '').trim(),
+      };
+
+      if (!farmerRegion.village || !farmerRegion.district || !farmerRegion.state) {
+        return res.status(409).json({
+          success: false,
+          message: "Your farmer profile must have village, district and state before transport can be requested.",
+        });
+      }
+
+      const requestId =
+        generateTransportRequestId();
+
+      await transaction(
+        async (
+          client
+        ) => {
+          await client.query(
+            `
+              INSERT INTO transport_requests (
+                id,
+                booking_id,
+                farmer_id,
+                center_id,
+                crop,
+                quantity_kg,
+                pickup_address,
+                pickup_lat,
+                pickup_lng,
+                pickup_note,
+                farmer_village,
+                farmer_village_id,
+                farmer_mandal,
+                farmer_mandal_id,
+                farmer_district,
+                farmer_district_id,
+                farmer_state,
+                farmer_state_id,
+                farmer_pincode,
+                requested_date,
+                requested_slot_start,
+                requested_slot_end,
+                status,
+                estimated_fare,
+                notes
+              )
+              VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5,
+                $6,
+                $7,
+                $8,
+                $9,
+                $10,
+                $11,
+                $12,
+                $13,
+                $14,
+                $15,
+                $16,
+                $17,
+                $18,
+                $19,
+                $20,
+                $21,
+                $22,
+                'REQUESTED',
+                $23,
+                $24
+              )
+            `,
+            [
+              requestId,
+              bookingId ||
+                null,
+              farmer.id,
+              centerId,
+              crop,
+              quantityKg,
+              pickupAddress,
+              pickupLat,
+              pickupLng,
+              pickupNote ||
+                null,
+              farmerRegion.village,
+              farmerRegion.villageId || null,
+              farmerRegion.mandal,
+              farmerRegion.mandalId || null,
+              farmerRegion.district,
+              farmerRegion.districtId || null,
+              farmerRegion.state,
+              farmerRegion.stateId || null,
+              farmerRegion.pincode || null,
+              requestedDate ||
+                null,
+              requestedSlotStart ||
+                null,
+              requestedSlotEnd ||
+                null,
+              safeEstimatedFare,
+              notes ||
+                null,
+            ]
+          );
+
+          await recordTransportEvent({
+            requestId,
+            status:
+              "REQUESTED",
+            actorType:
+              "FARMER",
+            actorId:
+              farmer.id,
+            note:
+              "Transport request created.",
+            client,
+          });
+        }
+      );
+
+      const created =
+        await getTransportRequestById(
+          requestId
+        );
+
+      const candidates =
+        await getTransportCandidates({
+          pickupLat,
+          pickupLng,
+          quantityKg,
+          request: created,
+        });
+
+      await createNotification({
+        farmerId:
+          farmer.id,
+        bookingId:
+          bookingId ||
+          null,
+        type:
+          "TRANSPORT_REQUESTED",
+        title:
+          "Transport request created",
+        message:
+          `Your KrishiSetu transport request for ${quantityKg} kg of ${crop} is waiting for a transporter.`,
+        sms:
+          false,
+      });
+
+      return res
+        .status(201)
+        .json({
+          success: true,
+          message:
+            "Transport request created successfully.",
+          request:
+            created,
+          candidates:
+            candidates.slice(
+              0,
+              10
+            ),
+        });
+    } catch (
+      error
+    ) {
+      console.error(
+        "Create transport request error:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Failed to create transport request.",
+        });
+    }
+  }
+
+
+
+app.post(
+  "/api/transport/requests",
+  createTransportRequestHandler
+);
+
+
+app.post(
+  "/api/bookings/:id/transport-request",
+  async (
+    req,
+    res
+  ) => {
+    try {
+      req.body = {
+        ...(req.body || {}),
+        bookingId:
+          req.params.id,
+      };
+
+      return await createTransportRequestHandler(
+        req,
+        res
+      );
+    } catch (
+      error
+    ) {
+      console.error(
+        "Booking transport shortcut error:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Failed to create transport request for booking.",
+        });
+    }
+  }
+);
+
+
+app.get(
+  "/api/transport/requests",
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const params =
+        [];
+      const conditions =
+        [];
+
+      const farmerId =
+        String(
+          req.query?.farmerId ||
+          ""
+        ).trim();
+
+      const transporterId =
+        String(
+          req.query?.transporterId ||
+          ""
+        ).trim();
+
+      const status =
+        normalizeTransportStatus(
+          req.query?.status ||
+          ""
+        );
+
+      const activeOnly =
+        normalizeTransporterBoolean(
+          req.query?.activeOnly,
+          false
+        );
+
+      if (
+        farmerId
+      ) {
+        params.push(
+          farmerId
+        );
+        conditions.push(
+          `tr.farmer_id = $${params.length}`
+        );
+      }
+
+      if (
+        transporterId
+      ) {
+        params.push(
+          transporterId
+        );
+        conditions.push(
+          `(tr.transporter_id = $${params.length} OR (
+            tr.status = 'REQUESTED'
+            AND (
+              (
+                NULLIF((SELECT village_id FROM transporters WHERE id = $${params.length}), '') IS NOT NULL
+                AND LOWER(COALESCE(tr.farmer_village_id,'')) = LOWER((SELECT village_id FROM transporters WHERE id = $${params.length}))
+                AND LOWER(COALESCE(tr.farmer_district_id,'')) = LOWER((SELECT district_id FROM transporters WHERE id = $${params.length}))
+                AND LOWER(COALESCE(tr.farmer_state_id,'')) = LOWER((SELECT state_id FROM transporters WHERE id = $${params.length}))
+              )
+              OR
+              (
+                NULLIF((SELECT village_id FROM transporters WHERE id = $${params.length}), '') IS NULL
+                AND LOWER(COALESCE(tr.farmer_village,'')) = LOWER((SELECT village FROM transporters WHERE id = $${params.length}))
+                AND LOWER(COALESCE(tr.farmer_district,'')) = LOWER((SELECT district FROM transporters WHERE id = $${params.length}))
+                AND LOWER(COALESCE(tr.farmer_state,'')) = LOWER((SELECT state FROM transporters WHERE id = $${params.length}))
+              )
+            )
+          ))`
+        );
+        conditions.push(`NOT EXISTS (SELECT 1 FROM transport_request_rejections rr WHERE rr.request_id = tr.id AND rr.transporter_id = $${params.length})`);
+      }
+
+      if (
+        status
+      ) {
+        if (
+          !isValidTransportStatus(
+            status
+          )
+        ) {
+          return res
+            .status(400)
+            .json({
+              success: false,
+              message:
+                "Invalid transport status.",
+            });
+        }
+
+        params.push(
+          status
+        );
+        conditions.push(
+          `tr.status = $${params.length}`
+        );
+      }
+
+      if (
+        activeOnly
+      ) {
+        conditions.push(
+          `tr.status IN (
+            'REQUESTED',
+            'ASSIGNED',
+            'EN_ROUTE_TO_FARMER',
+            'CROP_PICKED_UP',
+            'EN_ROUTE_TO_CENTER',
+            'DELIVERED'
+          )`
+        );
+      }
+
+      const where =
+        conditions.length
+          ? `WHERE ${conditions.join(
+              " AND "
+            )}`
+          : "";
+
+      const requests =
+        await all(
+          `
+            SELECT
+              tr.*,
+
+              f.name AS farmer_name,
+              f.phone AS farmer_phone,
+              f.village AS farmer_village,
+              tr.farmer_village AS request_farmer_village,
+              tr.farmer_village_id AS request_farmer_village_id,
+              tr.farmer_mandal AS request_farmer_mandal,
+              tr.farmer_mandal_id AS request_farmer_mandal_id,
+              tr.farmer_district AS request_farmer_district,
+              tr.farmer_district_id AS request_farmer_district_id,
+              tr.farmer_state AS request_farmer_state,
+              tr.farmer_state_id AS request_farmer_state_id,
+              tr.farmer_mandal AS request_farmer_mandal,
+              tr.farmer_district AS request_farmer_district,
+              tr.farmer_state AS request_farmer_state,
+              tr.farmer_pincode AS request_farmer_pincode,
+
+              c.name AS center_name,
+              c.address AS center_address,
+
+              t.name AS transporter_name,
+              t.vehicle_type AS transporter_vehicle_type,
+              t.vehicle_number AS transporter_vehicle_number,
+              t.current_lat AS transporter_lat,
+              t.current_lng AS transporter_lng,
+              t.location_updated_at AS transporter_location_updated_at
+
+            FROM transport_requests tr
+
+            LEFT JOIN farmers f
+              ON f.id = tr.farmer_id
+
+            LEFT JOIN centers c
+              ON c.id = tr.center_id
+
+            LEFT JOIN transporters t
+              ON t.id = tr.transporter_id
+
+            ${where}
+
+            ORDER BY
+              CASE
+                WHEN tr.status = 'REQUESTED'
+                THEN 0
+                WHEN tr.status IN (
+                  'ASSIGNED',
+                  'EN_ROUTE_TO_FARMER',
+                  'CROP_PICKED_UP',
+                  'EN_ROUTE_TO_CENTER',
+                  'DELIVERED'
+                )
+                THEN 1
+                ELSE 2
+              END,
+              tr.created_at DESC,
+              tr.id DESC
+          `,
+          params
+        );
+
+      return res.json({
+        success: true,
+        requests,
+      });
+    } catch (
+      error
+    ) {
+      console.error(
+        "Get transport requests error:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Failed to load transport requests.",
+        });
+    }
+  }
+);
+
+
+app.get(
+  "/api/transport/requests/:id",
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const request =
+        await getTransportRequestById(
+          req.params.id
+        );
+
+      if (
+        !request
+      ) {
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "Transport request not found.",
+          });
+      }
+
+      const events =
+        await getTransportRequestEvents(
+          request.id
+        );
+
+      return res.json({
+        success: true,
+        request,
+        events,
+      });
+    } catch (
+      error
+    ) {
+      console.error(
+        "Get transport request error:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Failed to load transport request.",
+        });
+    }
+  }
+);
+
+
+app.get(
+  "/api/transport/requests/:id/tracking",
+  async (req, res) => {
+    try {
+      const request = await getTransportRequestById(req.params.id);
+      if (!request) return res.status(404).json({ success: false, message: "Transport request not found." });
+
+      const farmer = await resolveRequesterFarmer(req);
+      const transporterId = String(req.query?.transporterId || req.body?.transporterId || "").trim();
+      const allowedFarmer = farmer && String(farmer.id) === String(request.farmer_id);
+      const allowedTransporter = transporterId && String(request.transporter_id || "") === transporterId;
+      if (!allowedFarmer && !allowedTransporter) return res.status(403).json({ success: false, message: "You are not authorised to view live transport tracking." });
+
+      return res.json({
+        success: true,
+        tracking: {
+          requestId: request.id,
+          status: request.status,
+          transporterId: request.transporter_id,
+          transporterName: request.transporter_name,
+          vehicleType: request.transporter_vehicle_type,
+          vehicleNumber: request.transporter_vehicle_number,
+          isOnline: request.transporter_is_online,
+          lat: request.transporter_lat,
+          lng: request.transporter_lng,
+          locationUpdatedAt: request.transporter_location_updated_at,
+          pickupLat: request.pickup_lat,
+          pickupLng: request.pickup_lng,
+          pickupAddress: request.pickup_address,
+          centerName: request.center_name,
+          centerAddress: request.center_address,
+        },
+      });
+    } catch (error) {
+      console.error("Transport tracking error:", error);
+      return res.status(500).json({ success: false, message: "Failed to load live transport tracking." });
+    }
+  }
+);
+
+
+app.get(
+  "/api/transport/requests/:id/events",
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const request =
+        await getTransportRequestById(
+          req.params.id
+        );
+
+      if (
+        !request
+      ) {
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "Transport request not found.",
+          });
+      }
+
+      return res.json({
+        success: true,
+        events:
+          await getTransportRequestEvents(
+            request.id
+          ),
+      });
+    } catch (
+      error
+    ) {
+      console.error(
+        "Transport request events error:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Failed to load transport request history.",
+        });
+    }
+  }
+);
+
+
+app.patch(
+  "/api/transport/requests/:id/accept",
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const transporter =
+        await resolveRequesterTransporter(
+          req
+        );
+
+      if (
+        !transporter
+      ) {
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "Transporter account not found.",
+          });
+      }
+
+      if (
+        transporter.is_online !==
+        true
+      ) {
+        return res
+          .status(409)
+          .json({
+            success: false,
+            message:
+              "Go online before accepting transport jobs.",
+          });
+      }
+
+      const request =
+        await getTransportRequestById(
+          req.params.id
+        );
+
+      if (
+        !request
+      ) {
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "Transport request not found.",
+          });
+      }
+
+      if (
+        request.status !==
+        "REQUESTED"
+      ) {
+        return res
+          .status(409)
+          .json({
+            success: false,
+            message:
+              "This transport request is no longer available.",
+          });
+      }
+
+      try {
+        await assertTransportRegionMatch(transporter, request);
+      } catch (error) {
+        if (error?.code === "TRANSPORT_REGION_MISMATCH") {
+          return res.status(403).json({ success: false, message: error.message });
+        }
+        throw error;
+      }
+
+      const activeAssigned = await get(
+        `SELECT id FROM transport_requests WHERE transporter_id = $1 AND status IN ('ASSIGNED','EN_ROUTE_TO_FARMER','CROP_PICKED_UP','EN_ROUTE_TO_CENTER','DELIVERED') LIMIT 1`,
+        [transporter.id]
+      );
+
+      if (activeAssigned) {
+        return res.status(409).json({
+          success: false,
+          message: "Complete your active transport trip before accepting another job.",
+        });
+      }
+
+      if (
+        Number(
+          transporter.capacity_kg
+        ) <
+        Number(
+          request.quantity_kg
+        )
+      ) {
+        return res
+          .status(409)
+          .json({
+            success: false,
+            message:
+              `Your vehicle capacity is ${transporter.capacity_kg} kg, but this request needs ${request.quantity_kg} kg.`,
+          });
+      }
+
+      const assignment =
+        await transaction(
+          async (
+            client
+          ) => {
+            const claimed =
+              await client.query(
+                `
+                  UPDATE transport_requests
+                  SET
+                    transporter_id = $1,
+                    status = 'ASSIGNED',
+                    accepted_at = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
+                  WHERE id = $2
+                    AND status = 'REQUESTED'
+                    AND transporter_id IS NULL
+                  RETURNING *
+                `,
+                [
+                  transporter.id,
+                  request.id,
+                ]
+              );
+
+            if (
+              !claimed.rows.length
+            ) {
+              return null;
+            }
+
+            await recordTransportEvent({
+              requestId:
+                request.id,
+              status:
+                "ASSIGNED",
+              actorType:
+                "TRANSPORTER",
+              actorId:
+                transporter.id,
+              note:
+                "Transporter accepted the request.",
+              client,
+            });
+
+            return claimed.rows[0];
+          }
+        );
+
+      if (
+        !assignment
+      ) {
+        return res
+          .status(409)
+          .json({
+            success: false,
+            message:
+              "This transport request was just accepted by another transporter.",
+          });
+      }
+
+      const updated =
+        await getTransportRequestById(
+          request.id
+        );
+
+      await createNotification({
+        farmerId:
+          updated.farmer_id,
+        bookingId:
+          updated.booking_id ||
+          null,
+        type:
+          "TRANSPORT_ASSIGNED",
+        title:
+          "Transporter assigned",
+        message:
+          `${updated.transporter_name || "A transporter"} accepted your transport request.`,
+        sms:
+          false,
+      });
+
+      return res.json({
+        success: true,
+        message:
+          "Transport request accepted.",
+        request:
+          updated,
+      });
+    } catch (
+      error
+    ) {
+      console.error(
+        "Accept transport request error:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Failed to accept transport request.",
+        });
+    }
+  }
+);
+
+
+app.patch(
+  "/api/transport/requests/:id/reject",
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const transporter =
+        await resolveRequesterTransporter(
+          req
+        );
+
+      if (
+        !transporter
+      ) {
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "Transporter account not found.",
+          });
+      }
+
+      const request =
+        await getTransportRequestById(
+          req.params.id
+        );
+
+      if (
+        !request
+      ) {
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "Transport request not found.",
+          });
+      }
+
+      if (
+        request.status !==
+        "REQUESTED"
+      ) {
+        return res
+          .status(409)
+          .json({
+            success: false,
+            message:
+              "Only unassigned transport requests can be rejected.",
+          });
+      }
+
+      const note =
+        String(
+          req.body?.reason ||
+          req.body?.note ||
+          "Transporter declined the request."
+        ).trim();
+
+      await query(
+        `
+          INSERT INTO transport_request_rejections (
+            request_id, transporter_id, reason
+          )
+          VALUES ($1, $2, $3)
+          ON CONFLICT (request_id, transporter_id)
+          DO UPDATE SET reason = EXCLUDED.reason
+        `,
+        [request.id, transporter.id, note]
+      );
+
+      await recordTransportEvent({
+        requestId: request.id,
+        status: "REQUESTED",
+        actorType: "TRANSPORTER",
+        actorId: transporter.id,
+        note: `Rejected: ${note}`,
+        metadata: { event: "REJECTED" },
+      });
+
+      await createNotification({
+        farmerId:
+          request.farmer_id,
+        bookingId:
+          request.booking_id ||
+          null,
+        type:
+          "TRANSPORT_REJECTED",
+        title:
+          "Transport request still searching",
+        message:
+          "A transporter declined your request. KrishiSetu is keeping it open for another transporter.",
+        sms:
+          false,
+      });
+
+      return res.json({
+        success: true,
+        message:
+          "Request declined. It remains open for another transporter.",
+        request:
+          await getTransportRequestById(
+            request.id
+          ),
+      });
+    } catch (
+      error
+    ) {
+      console.error(
+        "Reject transport request error:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Failed to reject transport request.",
+        });
+    }
+  }
+);
+
+
+app.patch(
+  "/api/transport/requests/:id/status",
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const transporter =
+        await resolveRequesterTransporter(
+          req
+        );
+
+      if (
+        !transporter
+      ) {
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "Transporter account not found.",
+          });
+      }
+
+      const request =
+        await getTransportRequestById(
+          req.params.id
+        );
+
+      if (
+        !request
+      ) {
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "Transport request not found.",
+          });
+      }
+
+      if (
+        String(
+          request.transporter_id ||
+          ""
+        ) !==
+        String(
+          transporter.id
+        )
+      ) {
+        return res
+          .status(403)
+          .json({
+            success: false,
+            message:
+              "This transport request is assigned to another transporter.",
+          });
+      }
+
+      const nextStatus =
+        normalizeTransportStatus(
+          req.body?.status
+        );
+
+      if (
+        !isValidTransportStatus(
+          nextStatus
+        )
+      ) {
+        return res
+          .status(400)
+          .json({
+            success: false,
+            message:
+              "Invalid transport status.",
+          });
+      }
+
+      const allowed =
+        getAllowedTransportTransitions(
+          request.status
+        );
+
+      if (
+        !allowed.includes(
+          nextStatus
+        )
+      ) {
+        return res
+          .status(409)
+          .json({
+            success: false,
+            message:
+              `Transport status cannot move from ${request.status} to ${nextStatus}.`,
+          });
+      }
+
+      const note =
+        String(
+          req.body?.note ||
+          ""
+        ).trim();
+
+      const finalFareNumber =
+        Number(
+          req.body?.finalFare ??
+          req.body?.final_fare
+        );
+
+      const finalFare =
+        Number.isFinite(
+          finalFareNumber
+        ) &&
+        finalFareNumber >= 0
+          ? finalFareNumber
+          : request.final_fare;
+
+      const updated =
+        await transaction(
+          async (
+            client
+          ) => {
+            let updateSql = `
+              UPDATE transport_requests
+              SET
+                status = $1,
+                final_fare = $2,
+                updated_at = CURRENT_TIMESTAMP
+            `;
+
+            const updateParams = [
+              nextStatus,
+              finalFare,
+            ];
+
+            if (
+              nextStatus ===
+              "EN_ROUTE_TO_FARMER"
+            ) {
+              updateSql +=
+                `, accepted_at = COALESCE(accepted_at, CURRENT_TIMESTAMP)`;
+            }
+
+            if (
+              nextStatus ===
+              "CROP_PICKED_UP"
+            ) {
+              updateSql +=
+                `, picked_up_at = CURRENT_TIMESTAMP`;
+            }
+
+            if (
+              nextStatus ===
+              "DELIVERED"
+            ) {
+              updateSql +=
+                `, delivered_at = CURRENT_TIMESTAMP`;
+            }
+
+            if (
+              nextStatus ===
+              "COMPLETED"
+            ) {
+              updateSql +=
+                `, completed_at = CURRENT_TIMESTAMP`;
+            }
+
+            updateParams.push(
+              request.id,
+              transporter.id,
+              request.status
+            );
+
+            updateSql += `
+              WHERE id = $3
+                AND transporter_id = $4
+                AND status = $5
+              RETURNING *
+            `;
+
+            const result =
+              await client.query(
+                updateSql,
+                updateParams
+              );
+
+            if (
+              !result.rows.length
+            ) {
+              return null;
+            }
+
+            if (
+              nextStatus ===
+              "COMPLETED"
+            ) {
+              await client.query(
+                `
+                  UPDATE transporters
+                  SET
+                    total_trips =
+                      total_trips + 1,
+                    total_earnings =
+                      total_earnings +
+                      COALESCE($1, 0),
+                    updated_at =
+                      CURRENT_TIMESTAMP
+                  WHERE id = $2
+                `,
+                [
+                  finalFare,
+                  transporter.id,
+                ]
+              );
+            }
+
+            await recordTransportEvent({
+              requestId:
+                request.id,
+              status:
+                nextStatus,
+              actorType:
+                "TRANSPORTER",
+              actorId:
+                transporter.id,
+              note:
+                note ||
+                `Transport status changed to ${nextStatus}.`,
+              metadata: {
+                finalFare:
+                  finalFare,
+              },
+              client,
+            });
+
+            return result.rows[0];
+          }
+        );
+
+      if (
+        !updated
+      ) {
+        return res
+          .status(409)
+          .json({
+            success: false,
+            message:
+              "The transport request changed before this update could be saved.",
+          });
+      }
+
+      const hydrated =
+        await getTransportRequestById(
+          request.id
+        );
+
+      await createNotification({
+        farmerId:
+          hydrated.farmer_id,
+        bookingId:
+          hydrated.booking_id ||
+          null,
+        type:
+          `TRANSPORT_${nextStatus}`,
+        title:
+          getNotificationTitle(
+            nextStatus
+          ),
+        message:
+          getTransportStatusMessage(
+            nextStatus,
+            hydrated.farmer_language ||
+              "en"
+          ),
+        sms:
+          false,
+      });
+
+      return res.json({
+        success: true,
+        message:
+          "Transport status updated successfully.",
+        request:
+          hydrated,
+      });
+    } catch (
+      error
+    ) {
+      console.error(
+        "Update transport status error:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Failed to update transport status.",
+        });
+    }
+  }
+);
+
+
+app.patch(
+  "/api/transport/requests/:id/cancel",
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const request =
+        await getTransportRequestById(
+          req.params.id
+        );
+
+      if (
+        !request
+      ) {
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "Transport request not found.",
+          });
+      }
+
+      const farmer =
+        await resolveRequesterFarmer(
+          req
+        );
+
+      if (
+        !farmer ||
+        String(
+          request.farmer_id ||
+          ""
+        ) !==
+        String(
+          farmer.id
+        )
+      ) {
+        return res
+          .status(403)
+          .json({
+            success: false,
+            message:
+              "You are not authorised to cancel this transport request.",
+          });
+      }
+
+      if (
+        !isTransportActiveStatus(
+          request.status
+        )
+      ) {
+        return res
+          .status(409)
+          .json({
+            success: false,
+            message:
+              "This transport request is already closed.",
+          });
+      }
+
+      const reason =
+        String(
+          req.body?.reason ||
+          "Cancelled by farmer."
+        ).trim();
+
+      const updated =
+        await transaction(
+          async (
+            client
+          ) => {
+            const result =
+              await client.query(
+                `
+                  UPDATE transport_requests
+                  SET
+                    status = 'CANCELLED',
+                    cancellation_reason = $3,
+                    cancelled_at = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
+                  WHERE id = $1
+                    AND farmer_id = $2
+                    AND status NOT IN (
+                      'CANCELLED',
+                      'COMPLETED'
+                    )
+                  RETURNING *
+                `,
+                [
+                  request.id,
+                  farmer.id,
+                  reason,
+                ]
+              );
+
+            if (
+              !result.rows.length
+            ) {
+              return null;
+            }
+
+            await recordTransportEvent({
+              requestId:
+                request.id,
+              status:
+                "CANCELLED",
+              actorType:
+                "FARMER",
+              actorId:
+                farmer.id,
+              note:
+                reason,
+              client,
+            });
+
+            return result.rows[0];
+          }
+        );
+
+      if (
+        !updated
+      ) {
+        return res
+          .status(409)
+          .json({
+            success: false,
+            message:
+              "The transport request could not be cancelled.",
+          });
+      }
+
+      const hydrated =
+        await getTransportRequestById(
+          request.id
+        );
+
+      return res.json({
+        success: true,
+        message:
+          "Transport request cancelled.",
+        request:
+          hydrated,
+      });
+    } catch (
+      error
+    ) {
+      console.error(
+        "Cancel transport request error:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Failed to cancel transport request.",
+        });
+    }
+  }
+);
+
+
+app.patch(
+  "/api/transport/requests/:id",
+  async (req, res) => {
+    try {
+      const request = await getTransportRequestById(req.params.id);
+      if (!request) return res.status(404).json({ success: false, message: "Transport request not found." });
+
+      const farmer = await resolveRequesterFarmer(req);
+      if (!farmer || String(request.farmer_id) !== String(farmer.id)) {
+        return res.status(403).json({ success: false, message: "You are not authorised to edit this transport request." });
+      }
+
+      if (["CROP_PICKED_UP", "EN_ROUTE_TO_CENTER", "DELIVERED", "COMPLETED", "CANCELLED"].includes(String(request.status))) {
+        return res.status(409).json({ success: false, message: "This transport request can no longer be edited." });
+      }
+
+      const body = req.body || {};
+      const quantityKg = body.quantityKg != null ? Number(body.quantityKg) : Number(request.quantity_kg);
+      const pickupAddress = String(body.pickupAddress ?? request.pickup_address).trim();
+      const requestedDate = String(body.requestedDate ?? request.requested_date ?? "").trim();
+      const requestedSlotStart = String(body.requestedSlotStart ?? request.requested_slot_start ?? "").trim();
+      const requestedSlotEnd = String(body.requestedSlotEnd ?? request.requested_slot_end ?? "").trim();
+      const pickupNote = String(body.pickupNote ?? request.pickup_note ?? "").trim();
+      const notes = String(body.notes ?? request.notes ?? "").trim();
+
+      if (!Number.isFinite(quantityKg) || quantityKg <= 0) return res.status(400).json({ success: false, message: "A positive crop quantity is required." });
+      if (!pickupAddress) return res.status(400).json({ success: false, message: "Pickup address is required." });
+
+      const before = { ...request };
+      const updated = await transaction(async client => {
+        const result = await client.query(
+          `
+            UPDATE transport_requests
+            SET quantity_kg = $1,
+                pickup_address = $2,
+                requested_date = $3,
+                requested_slot_start = $4,
+                requested_slot_end = $5,
+                pickup_note = $6,
+                notes = $7,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = $8
+              AND farmer_id = $9
+              AND status IN ('REQUESTED','ASSIGNED')
+            RETURNING *
+          `,
+          [quantityKg, pickupAddress, requestedDate || null, requestedSlotStart || null, requestedSlotEnd || null, pickupNote || null, notes || null, request.id, farmer.id]
+        );
+        if (!result.rows.length) return null;
+        await recordTransportEvent({
+          requestId: request.id,
+          status: result.rows[0].status,
+          actorType: "FARMER",
+          actorId: farmer.id,
+          note: "Transport request details updated by farmer.",
+          metadata: { before, after: result.rows[0] },
+          client,
+        });
+        return result.rows[0];
+      });
+
+      if (!updated) return res.status(409).json({ success: false, message: "The transport request changed before it could be edited." });
+      return res.json({ success: true, message: "Transport request updated successfully.", request: await getTransportRequestById(request.id) });
+    } catch (error) {
+      console.error("Edit transport request error:", error);
+      return res.status(500).json({ success: false, message: "Failed to edit transport request." });
+    }
+  }
+);
+
+
+app.get(
+  "/api/transport/match/:id",
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const request =
+        await getTransportRequestById(
+          req.params.id
+        );
+
+      if (
+        !request
+      ) {
+        return res
+          .status(404)
+          .json({
+            success: false,
+            message:
+              "Transport request not found.",
+          });
+      }
+
+      if (
+        request.status !==
+        "REQUESTED"
+      ) {
+        return res.json({
+          success: true,
+          request,
+          candidates: [],
+          message:
+            "This request has already been assigned or closed.",
+        });
+      }
+
+      const candidates =
+        await getTransportCandidates({
+          pickupLat:
+            request.pickup_lat,
+          pickupLng:
+            request.pickup_lng,
+          quantityKg:
+            request.quantity_kg,
+          request,
+        });
+
+      return res.json({
+        success: true,
+        request,
+        candidates:
+          candidates.slice(
+            0,
+            20
+          ),
+      });
+    } catch (
+      error
+    ) {
+      console.error(
+        "Transport matching error:",
+        error
+      );
+
+      return res
+        .status(500)
+        .json({
+          success: false,
+          message:
+            "Failed to find transporters.",
+        });
+    }
+  }
+);
+
+
+app.post(
+  "/api/transport/requests/:id/rating",
+  async (req, res) => {
+    try {
+      const request = await getTransportRequestById(req.params.id);
+      if (!request) return res.status(404).json({ success: false, message: "Transport request not found." });
+      const farmer = await resolveRequesterFarmer(req);
+      if (!farmer || String(farmer.id) !== String(request.farmer_id)) return res.status(403).json({ success: false, message: "You are not authorised to rate this transport trip." });
+      if (request.status !== "COMPLETED") return res.status(409).json({ success: false, message: "Rating is available after the trip is completed." });
+      const rating = Number(req.body?.rating);
+      const review = String(req.body?.review || "").trim();
+      if (!Number.isInteger(rating) || rating < 1 || rating > 5) return res.status(400).json({ success: false, message: "Rating must be an integer from 1 to 5." });
+
+      const result = await transaction(async client => {
+        const inserted = await client.query(`INSERT INTO transport_ratings (request_id, farmer_id, transporter_id, rating, review) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (request_id, farmer_id) DO UPDATE SET rating=EXCLUDED.rating, review=EXCLUDED.review RETURNING *`, [request.id, farmer.id, request.transporter_id, rating, review || null]);
+        const aggregate = await client.query(`SELECT AVG(rating) AS rating, COUNT(*)::int AS total_ratings FROM transport_ratings WHERE transporter_id = $1`, [request.transporter_id]);
+        await client.query(`UPDATE transporters SET rating = $1, total_ratings = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3`, [Number(aggregate.rows[0].rating || 0), Number(aggregate.rows[0].total_ratings || 0), request.transporter_id]);
+        return inserted.rows[0];
+      });
+
+      return res.json({ success: true, message: "Transporter rating saved.", rating: result });
+    } catch (error) {
+      console.error("Transport rating error:", error);
+      return res.status(500).json({ success: false, message: "Failed to save transport rating." });
+    }
   }
 );
 
@@ -3679,11 +7301,16 @@ app.post(
         });
 
 
-      const created =
-        await getBookingById(
-          id
-        );
-
+      const created = await get(
+  `
+    SELECT
+      *
+    FROM bookings
+    WHERE id = $1
+    LIMIT 1
+  `,
+  [id]
+);
 
       console.log(
         "BOOKING NOTIFICATION RESULT:",
@@ -7915,6 +11542,8 @@ app.patch(
 
         "maintenanceMode",
 
+        "transportEnabled",
+
       ];
 
 
@@ -10588,6 +14217,74 @@ app.use(
 
 
 /* =========================================================
+   PHASE 2 ADMIN TRANSPORT SUMMARY
+   Read-only monitoring data for the SIH transport dashboard.
+========================================================= */
+
+app.get(
+  "/api/admin/transport/summary",
+  async (req, res) => {
+    try {
+      const [requestCounts, transporterCounts, activeTrips] = await Promise.all([
+        all(`
+          SELECT status, COUNT(*)::int AS count
+          FROM transport_requests
+          GROUP BY status
+          ORDER BY status
+        `),
+        all(`
+          SELECT
+            COUNT(*) FILTER (WHERE is_online = TRUE)::int AS online,
+            COUNT(*)::int AS total,
+            COUNT(*) FILTER (WHERE verification_status = 'PENDING')::int AS pending_verification
+          FROM transporters
+        `),
+        all(`
+          SELECT
+            tr.id, tr.status, tr.crop, tr.quantity_kg, tr.farmer_id,
+            tr.transporter_id, tr.requested_date, tr.updated_at,
+            f.name AS farmer_name,
+            t.name AS transporter_name,
+            t.vehicle_type AS transporter_vehicle_type,
+            t.vehicle_number AS transporter_vehicle_number
+          FROM transport_requests tr
+          LEFT JOIN farmers f ON f.id = tr.farmer_id
+          LEFT JOIN transporters t ON t.id = tr.transporter_id
+          WHERE tr.status IN (
+            'ASSIGNED', 'EN_ROUTE_TO_FARMER', 'CROP_PICKED_UP',
+            'EN_ROUTE_TO_CENTER', 'DELIVERED'
+          )
+          ORDER BY tr.updated_at DESC, tr.id DESC
+          LIMIT 100
+        `),
+      ]);
+
+      return res.json({
+        success: true,
+        requestCounts,
+        transporterCounts: transporterCounts[0] || {
+          online: 0,
+          total: 0,
+          pending_verification: 0,
+        },
+        activeTrips,
+      });
+    } catch (error) {
+      console.error(
+        "Admin transport summary error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to load transport summary.",
+      });
+    }
+  }
+);
+
+
+/* =========================================================
    START SERVER
 ========================================================= */
 
@@ -10599,6 +14296,8 @@ async function startServer() {
 
 
     await ensureBookingChangesTable();
+
+    await ensureTransportTables();
 
 
     await db.query(

@@ -1,4 +1,3 @@
-
 import {
   Routes,
   Route,
@@ -11,10 +10,22 @@ import FarmerRegister from "./pages/farmer/FarmerRegister";
 import FarmerHome from "./pages/farmer/FarmerHome";
 import FarmerBook from "./pages/farmer/FarmerBook";
 import FarmerToken from "./pages/farmer/FarmerToken";
+import FarmerTransport from "./pages/farmer/FarmerTransport";
+import FarmerLogistics from "./pages/farmer/FarmerLogistics";
+import TransportRequest from "./pages/farmer/TransportRequest";
+import FarmerTransportTracking from "./pages/farmer/FarmerTransportTracking";
 import FarmerHelp from "./pages/farmer/FarmerHelp";
 import FarmerHistory from "./pages/farmer/FarmerHistory";
 import FarmerPayments from "./pages/farmer/FarmerPayments";
 import FarmerSettings from "./pages/farmer/FarmerSettings";
+
+import TransporterRegister from "./pages/transporter/TransporterRegister";
+import TransporterLogin from "./pages/transporter/TransporterLogin";
+import TransporterDashboard from "./pages/transporter/TransporterDashboard";
+import TransporterJobs from "./pages/transporter/TransporterJobs";
+import TransporterTrip from "./pages/transporter/TransporterTrip";
+import TransporterEarnings from "./pages/transporter/TransporterEarnings";
+import TransporterProfile from "./pages/transporter/TransporterProfile";
 
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -28,16 +39,15 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminProcurement from "./pages/admin/AdminProcurement";
 import AdminActivityLog from "./pages/admin/AdminActivityLog";
 import AdminPaymentIssues from "./pages/admin/AdminPaymentIssues";
+import AdminTransportDashboard from "./pages/admin/AdminTransportDashboard";
 
 import PageTransition from "./components/PageTransition";
 import VoiceAssistant from "./components/VoiceAssistant";
 
 
-
 function FarmerPortalPage({
   children,
 }) {
-
   return (
     <>
       <VoiceAssistant />
@@ -47,15 +57,42 @@ function FarmerPortalPage({
       </PageTransition>
     </>
   );
+}
 
+
+function TransporterPortalPage({
+  children,
+}) {
+  return (
+    <>
+      <PageTransition>
+        {children}
+      </PageTransition>
+    </>
+  );
+}
+
+
+function AdminPortalPage({
+  children,
+}) {
+  return (
+    <>
+      <PageTransition>
+        {children}
+      </PageTransition>
+    </>
+  );
 }
 
 
 function App() {
-
   return (
-
     <Routes>
+
+      {/* =========================
+          LANDING
+      ========================== */}
 
       <Route
         path="/"
@@ -78,7 +115,6 @@ function App() {
         }
       />
 
-
       <Route
         path="/farmer/register"
         element={
@@ -87,7 +123,6 @@ function App() {
           </PageTransition>
         }
       />
-
 
       <Route
         path="/farmer/home"
@@ -98,7 +133,6 @@ function App() {
         }
       />
 
-
       <Route
         path="/farmer/book"
         element={
@@ -107,7 +141,6 @@ function App() {
           </FarmerPortalPage>
         }
       />
-
 
       <Route
         path="/farmer/token"
@@ -118,6 +151,55 @@ function App() {
         }
       />
 
+      {/* Existing farmer transport page */}
+      <Route
+        path="/farmer/transport"
+        element={
+          <FarmerPortalPage>
+            <FarmerTransport />
+          </FarmerPortalPage>
+        }
+      />
+
+      {/* New Phase 2 farmer logistics hub */}
+      <Route
+        path="/farmer/logistics"
+        element={
+          <FarmerPortalPage>
+            <FarmerLogistics />
+          </FarmerPortalPage>
+        }
+      />
+
+      {/* New Phase 2 transport request */}
+      <Route
+        path="/farmer/transport/request"
+        element={
+          <FarmerPortalPage>
+            <TransportRequest />
+          </FarmerPortalPage>
+        }
+      />
+
+      {/* New Phase 2 farmer tracking */}
+      <Route
+        path="/farmer/transport/tracking/:id"
+        element={
+          <FarmerPortalPage>
+            <FarmerTransportTracking />
+          </FarmerPortalPage>
+        }
+      />
+
+      {/* Optional convenience route to logistics hub */}
+      <Route
+        path="/farmer/transport/tracking"
+        element={
+          <FarmerPortalPage>
+            <FarmerLogistics />
+          </FarmerPortalPage>
+        }
+      />
 
       <Route
         path="/farmer/history"
@@ -128,7 +210,6 @@ function App() {
         }
       />
 
-
       <Route
         path="/farmer/payments"
         element={
@@ -137,7 +218,6 @@ function App() {
           </FarmerPortalPage>
         }
       />
-
 
       <Route
         path="/farmer/settings"
@@ -148,13 +228,89 @@ function App() {
         }
       />
 
-
       <Route
         path="/farmer/help"
         element={
           <FarmerPortalPage>
             <FarmerHelp />
           </FarmerPortalPage>
+        }
+      />
+
+
+      {/* =========================
+          TRANSPORTER PORTAL
+      ========================== */}
+
+      <Route
+        path="/transporter/register"
+        element={
+          <PageTransition>
+            <TransporterRegister />
+          </PageTransition>
+        }
+      />
+
+      <Route
+        path="/transporter/login"
+        element={
+          <PageTransition>
+            <TransporterLogin />
+          </PageTransition>
+        }
+      />
+
+      <Route
+        path="/transporter/dashboard"
+        element={
+          <TransporterPortalPage>
+            <TransporterDashboard />
+          </TransporterPortalPage>
+        }
+      />
+
+      <Route
+        path="/transporter/jobs"
+        element={
+          <TransporterPortalPage>
+            <TransporterJobs />
+          </TransporterPortalPage>
+        }
+      />
+
+      <Route
+        path="/transporter/trip"
+        element={
+          <TransporterPortalPage>
+            <TransporterTrip />
+          </TransporterPortalPage>
+        }
+      />
+
+      <Route
+        path="/transporter/trip/:id"
+        element={
+          <TransporterPortalPage>
+            <TransporterTrip />
+          </TransporterPortalPage>
+        }
+      />
+
+      <Route
+        path="/transporter/earnings"
+        element={
+          <TransporterPortalPage>
+            <TransporterEarnings />
+          </TransporterPortalPage>
+        }
+      />
+
+      <Route
+        path="/transporter/profile"
+        element={
+          <TransporterPortalPage>
+            <TransporterProfile />
+          </TransporterPortalPage>
         }
       />
 
@@ -172,7 +328,6 @@ function App() {
         }
       />
 
-
       <Route
         path="/admin/dashboard"
         element={
@@ -181,7 +336,6 @@ function App() {
           </PageTransition>
         }
       />
-
 
       <Route
         path="/admin/queue"
@@ -192,7 +346,6 @@ function App() {
         }
       />
 
-
       <Route
         path="/admin/weighing"
         element={
@@ -201,7 +354,6 @@ function App() {
           </PageTransition>
         }
       />
-
 
       <Route
         path="/admin/procurement"
@@ -212,6 +364,15 @@ function App() {
         }
       />
 
+      {/* New Phase 2 admin transport monitor */}
+      <Route
+        path="/admin/transport"
+        element={
+          <AdminPortalPage>
+            <AdminTransportDashboard />
+          </AdminPortalPage>
+        }
+      />
 
       <Route
         path="/admin/activity"
@@ -222,7 +383,6 @@ function App() {
         }
       />
 
-
       <Route
         path="/admin/payments"
         element={
@@ -231,7 +391,6 @@ function App() {
           </PageTransition>
         }
       />
-
 
       <Route
         path="/admin/payment-issues"
@@ -242,7 +401,6 @@ function App() {
         }
       />
 
-
       <Route
         path="/admin/reports"
         element={
@@ -251,7 +409,6 @@ function App() {
           </PageTransition>
         }
       />
-
 
       <Route
         path="/admin/farmers"
@@ -262,7 +419,6 @@ function App() {
         }
       />
 
-
       <Route
         path="/admin/centers"
         element={
@@ -271,7 +427,6 @@ function App() {
           </PageTransition>
         }
       />
-
 
       <Route
         path="/admin/settings"
@@ -302,7 +457,6 @@ function App() {
               textAlign: "center",
             }}
           >
-
             <h1>
               Page Not Found
             </h1>
@@ -310,15 +464,12 @@ function App() {
             <p>
               The page you are looking for does not exist.
             </p>
-
           </div>
         }
       />
 
     </Routes>
-
   );
-
 }
 
 

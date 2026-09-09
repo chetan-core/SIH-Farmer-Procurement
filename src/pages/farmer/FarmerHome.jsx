@@ -15,6 +15,7 @@ import {
   RefreshCw,
   Settings,
   ShieldCheck,
+  Truck,
   Wheat,
   X,
 } from "lucide-react";
@@ -2763,13 +2764,33 @@ function FarmerHome() {
                         )
                   }
 
-
                   <ArrowRight
                     size={18}
                   />
 
                 </Link>
 
+                <Link
+                  to={`/farmer/transport/request?booking=${encodeURIComponent(
+                    activeBooking.id
+                  )}`}
+                  className="home-secondary-action home-transport-action"
+                >
+
+                  <Truck
+                    size={17}
+                  />
+
+                  {
+                    getText(
+                      language,
+                      "Arrange transport",
+                      "परिवहन की व्यवस्था करें",
+                      "రవాణా ఏర్పాటు చేయండి"
+                    )
+                  }
+
+                </Link>
 
                 <Link
                   to="/farmer/book"
@@ -2925,6 +2946,58 @@ function FarmerHome() {
                   "Select your crop, quantity and convenient arrival window.",
                   "अपनी फसल, मात्रा और सुविधाजनक समय चुनें।",
                   "మీ పంట, పరిమాణం మరియు అనుకూలమైన రాక సమయాన్ని ఎంచుకోండి."
+                )
+              }
+
+            </p>
+
+          </Link>
+
+
+          <Link
+            to="/farmer/logistics"
+            className="home-feature-card transport-feature"
+          >
+
+            <div className="feature-card-top">
+
+              <div className="feature-icon">
+
+                <Truck
+                  size={21}
+                />
+
+              </div>
+
+              <ArrowRight
+                size={18}
+              />
+
+            </div>
+
+
+            <h2>
+
+              {
+                getText(
+                  language,
+                  "Transport & logistics",
+                  "परिवहन और लॉजिस्टिक्स",
+                  "రవాణా & లాజిస్టిక్స్"
+                )
+              }
+
+            </h2>
+
+
+            <p>
+
+              {
+                getText(
+                  language,
+                  "Find a suitable vehicle, arrange pickup and follow your crop journey to the center.",
+                  "उपयुक्त वाहन खोजें, पिकअप की व्यवस्था करें और अपनी फसल की केंद्र तक यात्रा देखें।",
+                  "తగిన వాహనం కనుగొని, పికప్ ఏర్పాటు చేసి, మీ పంట కేంద్రానికి చేరే వరకు ప్రయాణాన్ని చూడండి."
                 )
               }
 

@@ -17,6 +17,7 @@ import {
   Share2,
   ShieldCheck,
   Wheat,
+  Truck,
   X,
 } from "lucide-react";
 
@@ -4396,6 +4397,184 @@ function FarmerToken() {
                   </div>
                 )
               }
+
+
+              {/* =====================================================
+                  TRANSPORT / LOGISTICS
+              ===================================================== */}
+              {!bookingIsCancelled && (
+                <section
+                  style={{
+                    marginTop: "22px",
+                    padding: "22px",
+                    borderRadius: "20px",
+                    border: "1px solid #dbe8df",
+                    background:
+                      "linear-gradient(135deg, #f4faf6 0%, #ffffff 72%)",
+                    boxShadow:
+                      "0 10px 28px rgba(24, 84, 53, 0.07)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                      gap: "18px",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <div style={{ display: "flex", gap: "14px", minWidth: 0 }}>
+                      <div
+                        style={{
+                          width: "48px",
+                          height: "48px",
+                          borderRadius: "14px",
+                          display: "grid",
+                          placeItems: "center",
+                          flex: "0 0 auto",
+                          background: "#e3f2e8",
+                          color: "#16724b",
+                        }}
+                      >
+                        <Truck size={25} />
+                      </div>
+
+                      <div>
+                        <span
+                          className="page-eyebrow"
+                          style={{ marginBottom: "4px", display: "inline-block" }}
+                        >
+                          {getText(
+                            language,
+                            "CROP TRANSPORT",
+                            "फसल परिवहन",
+                            "పంట రవాణా"
+                          )}
+                        </span>
+
+                        <h2
+                          style={{
+                            margin: 0,
+                            fontSize: "20px",
+                            lineHeight: 1.25,
+                          }}
+                        >
+                          {getText(
+                            language,
+                            "Need a vehicle for this booking?",
+                            "इस बुकिंग के लिए वाहन चाहिए?",
+                            "ఈ బుకింగ్ కోసం వాహనం కావాలా?"
+                          )}
+                        </h2>
+
+                        <p
+                          style={{
+                            margin: "7px 0 0",
+                            color: "#637368",
+                            lineHeight: 1.55,
+                            maxWidth: "700px",
+                          }}
+                        >
+                          {getText(
+                            language,
+                            "Arrange pickup from your farm, get matched with a transporter, and track the journey to the procurement center.",
+                            "अपने खेत से फसल उठाने की व्यवस्था करें, ट्रांसपोर्टर से मिलान पाएं और खरीद केंद्र तक यात्रा ट्रैक करें।",
+                            "మీ పొలం నుంచి పంటను తీసుకెళ్లేందుకు వాహనాన్ని ఏర్పాటు చేసి, ట్రాన్స్‌పోర్టర్‌తో మ్యాచ్ అవుతూ కొనుగోలు కేంద్రం వరకు ప్రయాణాన్ని ట్రాక్ చేయండి."
+                          )}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "10px",
+                        flexWrap: "wrap",
+                        alignItems: "center",
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate("/farmer/logistics")
+                        }
+                        style={{
+                          border: "none",
+                          borderRadius: "12px",
+                          padding: "12px 17px",
+                          background: "#16724b",
+                          color: "#fff",
+                          fontWeight: 800,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Truck size={17} />
+                        {getText(
+                          language,
+                          "Manage Transport",
+                          "परिवहन प्रबंधित करें",
+                          "రవాణాను నిర్వహించండి"
+                        )}
+                        <ArrowRight size={16} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          navigate("/farmer/transport/request")
+                        }
+                        style={{
+                          border: "1px solid #cfe0d5",
+                          borderRadius: "12px",
+                          padding: "12px 15px",
+                          background: "#fff",
+                          color: "#24583e",
+                          fontWeight: 750,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {getText(
+                          language,
+                          "Request Vehicle",
+                          "वाहन रिक्वेस्ट करें",
+                          "వాహనం అభ్యర్థించండి"
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: "16px",
+                      paddingTop: "14px",
+                      borderTop: "1px solid #e4eee7",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      color: "#5e7568",
+                      fontSize: "13px",
+                      fontWeight: 650,
+                    }}
+                  >
+                    <MapPin size={15} />
+                    <span>
+                      {getText(
+                        language,
+                        "From pickup to procurement center",
+                        "खेत से खरीद केंद्र तक",
+                        "పికప్ నుంచి కొనుగోలు కేంద్రం వరకు"
+                      )}
+                    </span>
+                  </div>
+                </section>
+              )}
 
 
               <div className="token-arrival-grid">

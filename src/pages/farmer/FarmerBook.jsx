@@ -3625,7 +3625,16 @@ function FarmerBook() {
      */
     const requested =
       assistantBookingOverride &&
-      typeof assistantBookingOverride === "object"
+      typeof assistantBookingOverride === "object" &&
+      !("nativeEvent" in assistantBookingOverride) &&
+      (
+        "slotStart" in assistantBookingOverride ||
+        "slot" in assistantBookingOverride ||
+        "centerId" in assistantBookingOverride ||
+        "date" in assistantBookingOverride ||
+        "crop" in assistantBookingOverride ||
+        "quantity" in assistantBookingOverride
+      )
         ? assistantBookingOverride
         : null;
 
@@ -3699,6 +3708,36 @@ function FarmerBook() {
       requested?.slot?.id ||
       "";
 
+    /*
+     * Normal button confirmation must trust the slot the farmer actually
+     * clicked. `selectedSlotRecord` is only a derived lookup into the
+     * live availability array and can temporarily become null when that
+     * array is refreshed/recomputed. Keep the clicked slot as the stable
+     * source of truth, while still using the live record when available.
+     */
+    const selectedSlotFallback =
+      selectedSlot
+        ? {
+            id:
+              selectedSlot.id,
+            start:
+              String(selectedSlot.start || ""),
+            end:
+              String(selectedSlot.end || ""),
+            display:
+              selectedSlot.display ||
+              (selectedSlot.end
+                ? `${selectedSlot.start} – ${selectedSlot.end}`
+                : String(selectedSlot.start || "")),
+            remaining:
+              selectedSlot.remaining,
+            capacity:
+              selectedSlot.capacity,
+            loadClass:
+              selectedSlot.loadClass,
+          }
+        : null;
+
     const submissionSlot =
       requested
         ? (
@@ -3755,7 +3794,10 @@ function FarmerBook() {
                 : null
             )
           )
-        : selectedSlotRecord;
+        : (
+            selectedSlotRecord ||
+            selectedSlotFallback
+          );
 
     if (
       !submissionCenter
@@ -4351,15 +4393,12 @@ function FarmerBook() {
       assistantAutoConfirmKeyRef.current =
         "";
 
-      if (isEditMode) {
-        window.setTimeout(() => {
-          navigate(
-            `/farmer/token?booking=${encodeURIComponent(finalBooking.id)}`,
-            { replace: true }
-          );
-        }, 650);
-      }
-
+      window.setTimeout(() => {
+  navigate(
+    `/farmer/token?booking=${encodeURIComponent(finalBooking.id)}`,
+    { replace: true }
+  );
+}, 650);
       return {
         success:
           true,
@@ -7152,8 +7191,8 @@ function FarmerBook() {
 
 
                 <Button
-                  onClick={
-                    handleConfirmBooking
+                  onClick={() =>
+                    handleConfirmBooking()
                   }
                   disabled={
                     confirming
