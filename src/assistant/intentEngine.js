@@ -216,21 +216,16 @@ export function fuzzyWord(
   value,
   candidates
 ) {
-
   const word =
     normalizeText(
       value
     );
 
-
   if (
     !word
   ) {
-
     return false;
-
   }
-
 
   const words =
     Array.isArray(
@@ -239,38 +234,44 @@ export function fuzzyWord(
       ? candidates
       : [];
 
-
   return words.some(
     candidate => {
-
       const target =
         normalizeText(
           candidate
         );
 
-
       if (
         !target
       ) {
-
         return false;
-
       }
 
+      /*
+       * Exact match is always accepted.
+       */
 
       if (
         word ===
         target
       ) {
-
         return true;
-
       }
 
+      /*
+       * Do not allow very short words to match each other
+       * through broad substring/fuzzy rules.
+       *
+       * This prevents:
+       *
+       * token ↔ take
+       * help  ↔ he
+       * home  ↔ some
+       */
 
       if (
-        target.length >=
-          5 &&
+        target.length >= 5 &&
+        word.length >= 5 &&
         (
           word.includes(
             target
@@ -280,11 +281,8 @@ export function fuzzyWord(
           )
         )
       ) {
-
         return true;
-
       }
-
 
       const distance =
         levenshteinDistance(
@@ -292,42 +290,46 @@ export function fuzzyWord(
           target
         );
 
-
       const longest =
         Math.max(
           word.length,
           target.length
         );
 
+      /*
+       * Tight fuzzy matching.
+       *
+       * 1 character:
+       *   typo correction
+       *
+       * 2 characters:
+       *   reasonable typo correction for longer words
+       *
+       * Never use the old distance <= 3 rule for
+       * ordinary short navigation words.
+       */
 
       if (
-        longest <=
-        4
+        longest <= 4
       ) {
-
-        return distance <=
-          1;
-
+        return distance <= 1;
       }
-
 
       if (
-        longest <=
-        7
+        longest <= 7
       ) {
-
-        return distance <=
-          2;
-
+        return distance <= 1;
       }
 
+      if (
+        longest <= 10
+      ) {
+        return distance <= 2;
+      }
 
-      return distance <=
-        3;
-
+      return distance <= 3;
     }
   );
-
 }
 
 
