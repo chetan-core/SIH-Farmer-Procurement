@@ -22,6 +22,7 @@ import {
 
 import {
   Link,
+  useNavigate,
   useSearchParams,
 } from "react-router";
 
@@ -33,6 +34,11 @@ import {
 } from "react";
 
 import Header from "../../components/Header";
+
+import {
+  getCurrentFarmer,
+  updateBooking,
+} from "../../data/appStore";
 
 import {
   useLanguage,
@@ -76,6 +82,9 @@ const STATUS_ICONS = {
   PAYMENT_SENT:
     Check,
 
+  CANCELLED:
+    X,
+
 };
 
 
@@ -94,10 +103,19 @@ function FarmerToken() {
     useSearchParams();
 
 
+  const navigate =
+    useNavigate();
+
+
+  const farmer =
+    getCurrentFarmer();
+
+
   const bookingId =
     searchParams.get(
       "booking"
     );
+
 
   const assistantTokenAction =
     searchParams.get("assistantAction") ||
@@ -144,6 +162,41 @@ function FarmerToken() {
     setRefreshing,
   ] =
     useState(false);
+
+
+  const [
+    actionBusy,
+    setActionBusy,
+  ] =
+    useState(false);
+
+
+  const [
+    actionError,
+    setActionError,
+  ] =
+    useState("");
+
+
+  const [
+    actionMessage,
+    setActionMessage,
+  ] =
+    useState("");
+
+
+  const [
+    showCancelConfirmation,
+    setShowCancelConfirmation,
+  ] =
+    useState(false);
+
+
+  const [
+    cancelReason,
+    setCancelReason,
+  ] =
+    useState("");
 
 
   const [
@@ -663,6 +716,137 @@ function FarmerToken() {
     );
 
 
+  const bookingCanBeChanged =
+    ["CONFIRMED", "LATE"].includes(
+      String(currentStatus).toUpperCase()
+    );
+
+
+  const bookingIsCancelled =
+    String(currentStatus).toUpperCase() ===
+    "CANCELLED";
+
+
+  async function cancelCurrentBooking() {
+    if (!booking?.id || actionBusy) return;
+
+    setActionBusy(true);
+    setActionError("");
+    setActionMessage("");
+
+    try {
+      const response =
+        await fetch(
+          `${API_URL}/bookings/${encodeURIComponent(booking.id)}/cancel`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              farmerId:
+                farmer?.id ||
+                farmer?.farmerId ||
+                booking.farmer_id ||
+                null,
+              phone:
+                farmer?.phone ||
+                booking.farmer_phone ||
+                null,
+              reason:
+                cancelReason.trim() ||
+                "Cancelled by farmer",
+            }),
+          }
+        );
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message ||
+          "Unable to cancel this booking."
+        );
+      }
+
+      if (data?.booking) {
+        setBooking(data.booking);
+      }
+
+      setShowCancelConfirmation(false);
+      setCancelReason("");
+          setActionMessage(
+        getText(
+          language,
+          "Booking cancelled successfully.",
+          "बुकिंग सफलतापूर्वक रद्द कर दी गई।",
+          "బుకింగ్ విజయవంతంగా రద్దు చేయబడింది."
+        )
+      );
+
+      try {
+        if (data?.booking?.id) {
+          updateBooking(
+            data.booking.id,
+            {
+              status: "CANCELLED",
+              crop: data.booking.crop,
+              estimatedQuantity: Number(
+                data.booking.estimated_quantity ?? 0
+              ),
+              centerId: data.booking.center_id,
+              date: data.booking.date,
+              slotStart: data.booking.slot_start,
+              slotEnd: data.booking.slot_end,
+              token: data.booking.token,
+            }
+          );
+        }
+      } catch (prototypeSyncError) {
+        console.warn(
+          "FarmerToken prototype sync warning:",
+          prototypeSyncError
+        );
+      }
+
+      if (data?.booking?.farmer_id) {
+        await loadFarmerHistory(
+          data.booking.farmer_id
+        );
+      }
+    } catch (cancelError) {
+      console.error(
+        "FarmerToken cancel booking:",
+        cancelError
+      );
+      setActionError(
+        cancelError?.message ||
+        getText(
+          language,
+          "Unable to cancel this booking.",
+          "यह बुकिंग रद्द नहीं हो सकी।",
+          "ఈ బుకింగ్‌ను రద్దు చేయలేకపోయాము."
+        )
+      );
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
+
+  function openBookingEditor() {
+    if (!booking?.id || !bookingCanBeChanged) return;
+    navigate(
+      `/farmer/book?edit=${encodeURIComponent(booking.id)}`
+    );
+  }
+
+
   /*
    * ========================================================
    * LIVE QUEUE POSITION
@@ -698,14 +882,21 @@ function FarmerToken() {
 
     const run = async () => {
       try {
-        if (assistantTokenAction === "download-qr" && qrCodeUrl && !cancelled) {
+        if (
+          assistantTokenAction === "download-qr" &&
+          qrCodeUrl &&
+          !cancelled
+        ) {
           const anchor = document.createElement("a");
           anchor.href = qrCodeUrl;
           anchor.download = `KrishiSetu-${booking.token || booking.id}-QR.png`;
           document.body.appendChild(anchor);
           anchor.click();
           anchor.remove();
-        } else if (assistantTokenAction === "download-receipt" && !cancelled) {
+        } else if (
+          assistantTokenAction === "download-receipt" &&
+          !cancelled
+        ) {
           await downloadProcurementReceipt();
         }
       } catch (error) {
@@ -714,13 +905,21 @@ function FarmerToken() {
     };
 
     if (assistantTokenAction === "download-qr") {
-      if (qrCodeUrl) run();
+      if (qrCodeUrl) {
+        run();
+      }
     } else {
       run();
     }
 
-    return () => { cancelled = true; };
-  }, [booking?.id, assistantTokenAction, qrCodeUrl]);
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    booking?.id,
+    assistantTokenAction,
+    qrCodeUrl,
+  ]);
 
 
   /*
@@ -3238,6 +3437,186 @@ function FarmerToken() {
       <Header />
 
 
+      {(actionMessage || actionError) && (
+        <div
+          className="booking-error prominent"
+          style={{
+            margin: "16px auto 0",
+            maxWidth: "1180px",
+            color:
+              actionError
+                ? "#b42318"
+                : undefined,
+          }}
+        >
+          <Info size={17} />
+          <span>
+            {actionError || actionMessage}
+          </span>
+        </div>
+      )}
+
+
+      {showCancelConfirmation && (
+        <div
+          role="presentation"
+          onClick={() => {
+            if (!actionBusy) {
+              setShowCancelConfirmation(false);
+            }
+          }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+            background: "rgba(12, 24, 18, 0.52)",
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cancel-booking-title"
+            onClick={event => event.stopPropagation()}
+            style={{
+              width: "min(100%, 520px)",
+              borderRadius: "20px",
+              background: "#ffffff",
+              padding: "28px",
+              boxShadow: "0 24px 70px rgba(0,0,0,0.24)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                marginBottom: "14px",
+              }}
+            >
+              <div
+                style={{
+                  width: "42px",
+                  height: "42px",
+                  borderRadius: "50%",
+                  display: "grid",
+                  placeItems: "center",
+                  background: "#fff1f0",
+                  color: "#b42318",
+                }}
+              >
+                <X size={21} />
+              </div>
+              <div>
+                <span className="page-eyebrow">
+                  {getText(
+                    language,
+                    "BOOKING CHANGE",
+                    "बुकिंग बदलाव",
+                    "బుకింగ్ మార్పు"
+                  )}
+                </span>
+                <h2
+                  id="cancel-booking-title"
+                  style={{ margin: "4px 0 0" }}
+                >
+                  {getText(
+                    language,
+                    "Cancel this booking?",
+                    "क्या यह बुकिंग रद्द करें?",
+                    "ఈ బుకింగ్‌ను రద్దు చేయాలా?"
+                  )}
+                </h2>
+              </div>
+            </div>
+
+            <p style={{ margin: "0 0 18px", lineHeight: 1.6 }}>
+              {getText(
+                language,
+                `Token #${booking?.token || booking?.id || "—"} will be released and the booking will remain in your history as cancelled.`,
+                `टोकन #${booking?.token || booking?.id || "—"} रिलीज़ कर दिया जाएगा और बुकिंग हिस्ट्री में रद्द के रूप में रहेगी।`,
+                `టోకెన్ #${booking?.token || booking?.id || "—"} విడుదల అవుతుంది మరియు బుకింగ్ చరిత్రలో రద్దు అయినదిగా ఉంటుంది.`
+              )}
+            </p>
+
+            <textarea
+              value={cancelReason}
+              onChange={event => setCancelReason(event.target.value)}
+              placeholder={getText(
+                language,
+                "Reason (optional)",
+                "कारण (वैकल्पिक)",
+                "కారణం (ఐచ్ఛికం)"
+              )}
+              rows={3}
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                resize: "vertical",
+                border: "1px solid #d9e2dc",
+                borderRadius: "12px",
+                padding: "12px 13px",
+                marginBottom: "18px",
+                font: "inherit",
+              }}
+            />
+
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: "10px",
+                flexWrap: "wrap",
+              }}
+            >
+              <button
+                type="button"
+                className="token-inline-action"
+                onClick={() => setShowCancelConfirmation(false)}
+                disabled={actionBusy}
+              >
+                {getText(
+                  language,
+                  "Keep booking",
+                  "बुकिंग रखें",
+                  "బుకింగ్ ఉంచండి"
+                )}
+              </button>
+
+              <button
+                type="button"
+                className="token-inline-action"
+                onClick={cancelCurrentBooking}
+                disabled={actionBusy}
+                style={{
+                  color: "#b42318",
+                  borderColor: "#f2b8b5",
+                  fontWeight: 700,
+                }}
+              >
+                {actionBusy
+                  ? getText(
+                      language,
+                      "Cancelling...",
+                      "रद्द हो रही है...",
+                      "రద్దు చేస్తోంది..."
+                    )
+                  : getText(
+                      language,
+                      "Yes, cancel booking",
+                      "हाँ, बुकिंग रद्द करें",
+                      "అవును, బుకింగ్ రద్దు చేయండి"
+                    )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
       <main className="token-container">
 
 
@@ -3906,6 +4285,47 @@ function FarmerToken() {
 
                     </button>
 
+                    {
+                      bookingCanBeChanged && (
+                        <>
+                          <button
+                            type="button"
+                            className="token-inline-action"
+                            onClick={openBookingEditor}
+                            disabled={actionBusy}
+                          >
+                            <FileText size={15} />
+                            {getText(
+                              language,
+                              "Edit booking",
+                              "बुकिंग बदलें",
+                              "బుకింగ్ మార్చండి"
+                            )}
+                          </button>
+
+                          <button
+                            type="button"
+                            className="token-inline-action"
+                            onClick={() => {
+                              setActionError("");
+                              setActionMessage("");
+                              setShowCancelConfirmation(true);
+                            }}
+                            disabled={actionBusy}
+                            style={{ color: "#b42318" }}
+                          >
+                            <X size={15} />
+                            {getText(
+                              language,
+                              "Cancel booking",
+                              "बुकिंग रद्द करें",
+                              "బుకింగ్ రద్దు చేయండి"
+                            )}
+                          </button>
+                        </>
+                      )
+                    }
+
                   </div>
 
                 </div>
@@ -3920,6 +4340,62 @@ function FarmerToken() {
                 </div>
 
               </div>
+
+
+              {
+                bookingIsCancelled && (
+                  <div
+                    style={{
+                      marginTop: "18px",
+                      padding: "16px 18px",
+                      borderRadius: "14px",
+                      background: "#fff7f6",
+                      border: "1px solid #f5c2bd",
+                    }}
+                  >
+                    <strong
+                      style={{
+                        display: "block",
+                        color: "#a61b11",
+                        marginBottom: "5px",
+                      }}
+                    >
+                      {getText(
+                        language,
+                        "This booking is cancelled",
+                        "यह बुकिंग रद्द हो गई है",
+                        "ఈ బుకింగ్ రద్దు చేయబడింది"
+                      )}
+                    </strong>
+                    <span>
+                      {getText(
+                        language,
+                        "The slot has been released. You can create a new booking when you are ready.",
+                        "यह समय स्लॉट रिलीज़ हो गया है। जरूरत होने पर नई बुकिंग करें।",
+                        "ఈ సమయ స్లాట్ విడుదలైంది. అవసరమైతే కొత్త బుకింగ్ చేయండి."
+                      )}
+                    </span>
+                    <button
+                      type="button"
+                      className="token-inline-action"
+                      onClick={() => navigate("/farmer/book")}
+                      style={{
+                        marginTop: "12px",
+                        color: "#16724b",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {getText(
+                        language,
+                        "Book a new slot",
+                        "नई बुकिंग करें",
+                        "కొత్త స్లాట్ బుక్ చేయండి"
+                      )}
+                      <ArrowRight size={15} />
+                    </button>
+                  </div>
+                )
+              }
 
 
               <div className="token-arrival-grid">
@@ -7281,6 +7757,31 @@ function getNextAction(
 
     },
 
+    CANCELLED: {
+
+      en: {
+        title:
+          "Booking cancelled",
+        text:
+          "This booking is no longer active. Create a new booking whenever you are ready.",
+      },
+
+      hi: {
+        title:
+          "बुकिंग रद्द हो गई",
+        text:
+          "यह बुकिंग अब सक्रिय नहीं है। जरूरत होने पर नई बुकिंग करें।",
+      },
+
+      te: {
+        title:
+          "బుకింగ్ రద్దు చేయబడింది",
+        text:
+          "ఈ బుకింగ్ ఇప్పుడు యాక్టివ్ కాదు. అవసరమైతే కొత్త బుకింగ్ చేయండి.",
+      },
+
+    },
+
     PAYMENT_SENT: {
 
       en: {
@@ -8140,6 +8641,9 @@ function getStatusLabel(
     LATE:
       "status.late",
 
+    CANCELLED:
+      "status.cancelled",
+
   };
 
 
@@ -8189,6 +8693,8 @@ function getStatusLabel(
 
       LATE:
         "Late",
+      CANCELLED:
+        "Cancelled",
 
     },
 
@@ -8215,6 +8721,8 @@ function getStatusLabel(
 
       LATE:
         "देर से",
+      CANCELLED:
+        "रद्द",
 
     },
 
@@ -8241,6 +8749,8 @@ function getStatusLabel(
 
       LATE:
         "ఆలస్యం",
+      CANCELLED:
+        "రద్దు చేయబడింది",
 
     },
 
@@ -8291,6 +8801,8 @@ function getStatusMessage(
 
       LATE:
         "Your booking has been marked late by the procurement center.",
+      CANCELLED:
+        "This booking has been cancelled. You can create a new booking whenever you are ready.",
 
     },
 
@@ -8317,6 +8829,8 @@ function getStatusMessage(
 
       LATE:
         "केंद्र ने आपकी बुकिंग को देर से आने के रूप में दर्ज किया है।",
+      CANCELLED:
+        "यह बुकिंग रद्द कर दी गई है। आप जरूरत होने पर नई बुकिंग कर सकते हैं।",
 
     },
 
@@ -8343,6 +8857,8 @@ function getStatusMessage(
 
       LATE:
         "కేంద్రం మీ బుకింగ్‌ను ఆలస్యంగా వచ్చినట్లు నమోదు చేసింది.",
+      CANCELLED:
+        "ఈ బుకింగ్ రద్దు చేయబడింది. అవసరమైతే మీరు కొత్త బుకింగ్ చేయవచ్చు.",
 
     },
 
@@ -8367,6 +8883,13 @@ function getStatusMessage(
 function getStatusColor(
   status
 ) {
+
+  if (
+    status ===
+    "CANCELLED"
+  ) {
+    return "red";
+  }
 
   if (
     status ===
@@ -8406,6 +8929,13 @@ function getStatusColor(
 function getTimelineIndex(
   status
 ) {
+
+  if (
+    status ===
+    "CANCELLED"
+  ) {
+    return 0;
+  }
 
   if (
     status ===

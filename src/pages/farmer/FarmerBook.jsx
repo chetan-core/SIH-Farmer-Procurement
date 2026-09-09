@@ -78,8 +78,14 @@ const languageCopy = {
     title:
       "Plan your procurement visit.",
 
+    editTitle:
+      "Correct your booking.",
+
     description:
       "Tell us what you are bringing, choose your procurement center and reserve a time window that works for you.",
+
+    editDescription:
+      "Update the crop, quantity, center or arrival window for your existing booking. The system checks live capacity before saving.",
 
     secureTitle:
       "Secure booking record",
@@ -279,6 +285,9 @@ const languageCopy = {
     confirm:
       "Confirm booking",
 
+    saveChanges:
+      "Save booking changes",
+
     traceable:
       "Your booking is traceable",
 
@@ -314,8 +323,14 @@ const languageCopy = {
     title:
       "अपनी खरीद यात्रा की योजना बनाएं।",
 
+    editTitle:
+      "अपनी बुकिंग सुधारें।",
+
     description:
       "बताएं कि आप क्या लेकर आ रहे हैं, खरीद केंद्र चुनें और अपने लिए सही समय बुक करें।",
+
+    editDescription:
+      "अपनी मौजूदा बुकिंग में फसल, मात्रा, केंद्र या आने का समय बदलें। सेव करने से पहले लाइव उपलब्धता जाँची जाएगी।",
 
     secureTitle:
       "सुरक्षित बुकिंग रिकॉर्ड",
@@ -515,6 +530,9 @@ const languageCopy = {
     confirm:
       "बुकिंग की पुष्टि करें",
 
+    saveChanges:
+      "बुकिंग बदलाव सेव करें",
+
     traceable:
       "आपकी बुकिंग ट्रैक की जा सकती है",
 
@@ -550,8 +568,14 @@ const languageCopy = {
     title:
       "మీ కొనుగోలు సందర్శనను ప్లాన్ చేసుకోండి.",
 
+    editTitle:
+      "మీ బుకింగ్‌ను సరిచేయండి.",
+
     description:
       "మీరు తీసుకువచ్చే పంటను తెలియజేసి, కొనుగోలు కేంద్రాన్ని ఎంచుకుని, మీకు అనుకూలమైన సమయాన్ని బుక్ చేసుకోండి.",
+
+    editDescription:
+      "మీ ప్రస్తుత బుకింగ్‌లో పంట, పరిమాణం, కేంద్రం లేదా రాక సమయాన్ని మార్చండి. సేవ్ చేసే ముందు లైవ్ అందుబాటును తనిఖీ చేస్తాము.",
 
     secureTitle:
       "సురక్షిత బుకింగ్ రికార్డు",
@@ -751,6 +775,9 @@ const languageCopy = {
     confirm:
       "బుకింగ్ నిర్ధారించండి",
 
+    saveChanges:
+      "బుకింగ్ మార్పులను సేవ్ చేయండి",
+
     traceable:
       "మీ బుకింగ్ ట్రాక్ చేయవచ్చు",
 
@@ -789,6 +816,17 @@ function FarmerBook() {
 
   const location =
     useLocation();
+
+
+  const editBookingId =
+    new URLSearchParams(
+      location.search ||
+      ""
+    ).get("edit");
+
+
+  const isEditMode =
+    Boolean(editBookingId);
 
 
   const {
@@ -973,6 +1011,26 @@ function FarmerBook() {
   useState(false);
 
 
+  const [
+    editingBooking,
+    setEditingBooking,
+  ] =
+  useState(null);
+
+
+  const [
+    editingBookingLoading,
+    setEditingBookingLoading,
+  ] =
+  useState(false);
+
+
+  const editHydrationRef =
+    useRef(
+      ""
+    );
+
+
   /* =======================================================
      ASSISTANT BOOKING STATE
   ======================================================= */
@@ -1009,21 +1067,13 @@ function FarmerBook() {
 
 
   const assistantSlotAppliedRef =
-  useRef("");
-
-const assistantManagedRef =
-  useRef(
-    Boolean(assistantBooking)
-  );
-
-const handleConfirmBookingRef =
-  useRef(null);
+    useRef("");
 
 
-useEffect(() => {
-  handleConfirmBookingRef.current =
-    handleConfirmBooking;
-});
+  const assistantManagedRef =
+    useRef(
+      Boolean(assistantBooking)
+    );
 
 
   /* =======================================================
@@ -1304,7 +1354,8 @@ useEffect(() => {
       crop ||
       crops.length ===
         0 ||
-      assistantManagedRef.current
+      assistantManagedRef.current ||
+      isEditMode
     ) {
 
       return;
@@ -1340,6 +1391,7 @@ useEffect(() => {
     crop,
     farmer?.primaryCrop,
     farmer?.primary_crop,
+    isEditMode,
   ]);
 
 
@@ -1979,6 +2031,173 @@ useEffect(() => {
 
 
   /* =======================================================
+     EDIT / RESCHEDULE EXISTING BOOKING
+  ======================================================= */
+
+  useEffect(() => {
+    if (
+      !isEditMode ||
+      !editBookingId ||
+      !farmer?.id ||
+      centersLoading ||
+      settingsLoading ||
+      availableCenters.length === 0 ||
+      dates.length === 0
+    ) {
+      return;
+    }
+
+    const hydrationKey =
+      `${editBookingId}:${farmer.id}`;
+
+    if (
+      editHydrationRef.current ===
+      hydrationKey
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadEditableBooking() {
+      setEditingBookingLoading(true);
+      setError("");
+
+      try {
+        const response =
+          await fetch(
+            `${API_URL}/bookings/${encodeURIComponent(editBookingId)}`
+          );
+
+        let data = null;
+        try {
+          data = await response.json();
+        } catch {
+          data = null;
+        }
+
+        if (!response.ok || !data?.booking) {
+          throw new Error(
+            data?.message ||
+            "Unable to load the booking you want to edit."
+          );
+        }
+
+        const current = data.booking;
+
+        if (
+          String(current.farmer_id || "") !==
+          String(farmer.id || "")
+        ) {
+          throw new Error(
+            "You can only edit your own booking."
+          );
+        }
+
+        if (
+          !["CONFIRMED", "LATE"].includes(
+            String(current.status || "CONFIRMED").toUpperCase()
+          )
+        ) {
+          throw new Error(
+            "This booking can no longer be edited because processing has already started."
+          );
+        }
+
+        const matchedCrop =
+          crops.find(item =>
+            String(item?.id || "") ===
+              String(current.crop || "") ||
+            String(item?.name || "")
+              .trim()
+              .toLowerCase() ===
+              String(current.crop || "")
+                .trim()
+                .toLowerCase()
+          );
+
+        if (!matchedCrop) {
+          throw new Error(
+            "The crop in this booking is no longer available."
+          );
+        }
+
+        const matchedCenter =
+          availableCenters.find(item =>
+            String(item?.id || "") ===
+            String(current.center_id || "")
+          );
+
+        if (!matchedCenter) {
+          throw new Error(
+            "The procurement center for this booking is no longer active."
+          );
+        }
+
+        const matchedDate =
+          dates.find(item =>
+            String(item?.date || "") ===
+            String(current.date || "")
+          );
+
+        if (!matchedDate) {
+          throw new Error(
+            "This booking date is no longer within the editable booking window."
+          );
+        }
+
+        if (cancelled) return;
+
+        editHydrationRef.current = hydrationKey;
+        setEditingBooking(current);
+        setCrop(matchedCrop.id);
+        setQuantity(
+          String(current.estimated_quantity ?? "")
+        );
+        setCenterId(
+          String(matchedCenter.id)
+        );
+        setDate(
+          String(matchedDate.id)
+        );
+        setSelectedSlot(null);
+        setAvailable(false);
+        setAvailabilityCheckedAt(null);
+        setCenterSwitchMessage("");
+        setBookingConfirmed(false);
+      } catch (loadError) {
+        if (!cancelled) {
+          setEditingBooking(null);
+          setError(
+            loadError?.message ||
+            "Unable to load the booking you want to edit."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setEditingBookingLoading(false);
+        }
+      }
+    }
+
+    loadEditableBooking();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isEditMode,
+    editBookingId,
+    farmer?.id,
+    centersLoading,
+    settingsLoading,
+    availableCenters,
+    dates,
+    crops,
+  ]);
+
+
+  /* =======================================================
      AVAILABILITY TEMPLATE
   ======================================================= */
 
@@ -2113,7 +2332,8 @@ useEffect(() => {
                 selectedCenter.id,
                 selectedDate.date,
                 slot.start,
-                slot.end
+                slot.end,
+                isEditMode ? editBookingId : null
               );
 
 
@@ -2266,7 +2486,8 @@ useEffect(() => {
                   center.id,
                   day.date,
                   slot.start,
-                  slot.end
+                  slot.end,
+                  isEditMode ? editBookingId : null
                 );
 
               return booked < capacity;
@@ -3097,7 +3318,8 @@ useEffect(() => {
           center.id,
           selectedDate.date,
           slot.start,
-          slot.end
+          slot.end,
+          isEditMode ? editBookingId : null
         );
 
 
@@ -3744,7 +3966,8 @@ useEffect(() => {
           submissionCenter.id,
           submissionDate.date,
           submissionSlot.start,
-          submissionSlot.end
+          submissionSlot.end,
+          isEditMode ? editBookingId : null
         );
 
       const capacity =
@@ -3771,127 +3994,179 @@ useEffect(() => {
         );
       }
 
-      const bookingId =
-        `B${Date.now()}${Math.floor(
-          Math.random() *
-          1000
-        )}`;
-
-      const bookingToken =
-        String(
-          Date.now()
-        ).slice(
-          -6
-        );
-
-      const requestBody = {
-        id:
-          bookingId,
-
-        token:
-          bookingToken,
-
-        farmer: {
-          id:
-            serverFarmer.id,
-
-          name:
-            serverFarmer.name,
-
-          phone:
-            serverFarmer.phone,
-
-          stateId:
-            serverFarmer.stateId,
-
-          districtId:
-            serverFarmer.districtId,
-
-          mandalId:
-            serverFarmer.mandalId,
-
-          village:
-            serverFarmer.village,
-
-          language:
-            serverFarmer.language,
-
-          preferredCenterId:
-            serverFarmer.preferredCenterId,
-
-          primaryCrop:
-            serverFarmer.primaryCrop,
-
-          estimatedQuantity:
-            serverFarmer.estimatedQuantity,
-        },
-
-        centerId:
-          submissionCenter.id,
-
-        crop:
-          submissionCrop.id,
-
-        estimatedQuantity:
-          requestedQuantity,
-
-        date:
-          submissionDate.date,
-
-        slotStart:
-          submissionSlot.start,
-
-        slotEnd:
-          submissionSlot.end,
-      };
-
-      const response =
-        await fetch(
-          `${API_URL}/bookings`,
-          {
-            method:
-              "POST",
-
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-
-            body:
-              JSON.stringify(
-                requestBody
-              ),
-          }
-        );
-
-      let responseData =
-        null;
-
-      try {
-        responseData =
-          await response.json();
-      } catch {
-        responseData =
-          null;
-      }
+      /*
+       * A saved booking is edited in place. Never create a second
+       * booking or token when the farmer is correcting an existing one.
+       */
+      let response;
+      let responseData = null;
+      let bookingToken = null;
 
       if (
-        !response.ok
+        isEditMode &&
+        editBookingId
       ) {
-        throw new Error(
-          responseData?.message ||
-          "Failed to save your booking."
-        );
+        response =
+          await fetch(
+            `${API_URL}/bookings/${encodeURIComponent(editBookingId)}/reschedule`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                farmerId:
+                  serverFarmer.id,
+                phone:
+                  serverFarmer.phone,
+                crop:
+                  submissionCrop.id,
+                estimatedQuantity:
+                  requestedQuantity,
+                centerId:
+                  submissionCenter.id,
+                date:
+                  submissionDate.date,
+                slotStart:
+                  submissionSlot.start,
+                slotEnd:
+                  submissionSlot.end,
+                reason:
+                  "Updated by farmer",
+              }),
+            }
+          );
+
+        try {
+          responseData =
+            await response.json();
+        } catch {
+          responseData = null;
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            responseData?.message ||
+            "Unable to update your booking."
+          );
+        }
+      } else {
+        const bookingId =
+          `B${Date.now()}${Math.floor(
+            Math.random() *
+            1000
+          )}`;
+
+        bookingToken =
+          String(
+            Date.now()
+          ).slice(
+            -6
+          );
+
+        const requestBody = {
+          id:
+            bookingId,
+
+          token:
+            bookingToken,
+
+          farmer: {
+            id:
+              serverFarmer.id,
+
+            name:
+              serverFarmer.name,
+
+            phone:
+              serverFarmer.phone,
+
+            stateId:
+              serverFarmer.stateId,
+
+            districtId:
+              serverFarmer.districtId,
+
+            mandalId:
+              serverFarmer.mandalId,
+
+            village:
+              serverFarmer.village,
+
+            language:
+              serverFarmer.language,
+
+            preferredCenterId:
+              serverFarmer.preferredCenterId,
+
+            primaryCrop:
+              serverFarmer.primaryCrop,
+
+            estimatedQuantity:
+              serverFarmer.estimatedQuantity,
+          },
+
+          centerId:
+            submissionCenter.id,
+
+          crop:
+            submissionCrop.id,
+
+          estimatedQuantity:
+            requestedQuantity,
+
+          date:
+            submissionDate.date,
+
+          slotStart:
+            submissionSlot.start,
+
+          slotEnd:
+            submissionSlot.end,
+        };
+
+        response =
+          await fetch(
+            `${API_URL}/bookings`,
+            {
+              method:
+                "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              body:
+                JSON.stringify(
+                  requestBody
+                ),
+            }
+          );
+
+        try {
+          responseData =
+            await response.json();
+        } catch {
+          responseData = null;
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            responseData?.message ||
+            "Failed to save your booking."
+          );
+        }
       }
 
       const savedBooking =
         responseData?.booking;
 
-      if (
-        !savedBooking?.id
-      ) {
+      if (!savedBooking?.id) {
         throw new Error(
-          "Booking was accepted but the server did not return a valid booking record."
+          isEditMode
+            ? "Booking was updated but the server did not return a valid booking record."
+            : "Booking was accepted but the server did not return a valid booking record."
         );
       }
 
@@ -3911,7 +4186,8 @@ useEffect(() => {
             token:
               String(
                 savedBooking.token ||
-                bookingToken
+                bookingToken ||
+                ""
               ),
 
             date:
@@ -3969,9 +4245,7 @@ useEffect(() => {
           submissionCenter,
           submissionCrop
         );
-      } catch (
-        bridgeError
-      ) {
+      } catch (bridgeError) {
         console.warn(
           "Prototype sync warning:",
           bridgeError
@@ -4001,7 +4275,9 @@ useEffect(() => {
         !verifyData?.booking?.id
       ) {
         throw new Error(
-          "Booking was created but could not be verified. Please refresh and check your bookings."
+          isEditMode
+            ? "Booking was updated but could not be verified. Please refresh and check your booking."
+            : "Booking was created but could not be verified. Please refresh and check your bookings."
         );
       }
 
@@ -4067,38 +4343,33 @@ useEffect(() => {
         /* Booking itself is already saved. */
       }
 
-      setBookingConfirmed(
-  true
-);
+      clearBookingDraft();
 
-clearBookingDraft();
+      assistantConfirmRequestRef.current =
+        null;
 
-assistantConfirmRequestRef.current =
-  null;
+      assistantAutoConfirmKeyRef.current =
+        "";
 
-assistantAutoConfirmKeyRef.current =
-  "";
+      if (isEditMode) {
+        window.setTimeout(() => {
+          navigate(
+            `/farmer/token?booking=${encodeURIComponent(finalBooking.id)}`,
+            { replace: true }
+          );
+        }, 650);
+      }
 
-navigate(
-  `/farmer/token?booking=${encodeURIComponent(
-    verifyData.booking.id
-  )}`,
-  {
-    replace:
-      true,
-  }
-);
+      return {
+        success:
+          true,
 
-return {
-  success:
-    true,
+        booking:
+          finalBooking,
 
-  booking:
-    verifyData.booking,
-};
-
-      
-      
+        edited:
+          isEditMode,
+      };
 
     } catch (
       bookingError
@@ -4293,16 +4564,10 @@ return {
       window.setTimeout(
         () => {
           Promise.resolve(
-  handleConfirmBookingRef.current
-    ? handleConfirmBookingRef.current(
-        fallbackBooking
-      )
-    : {
-        success: false,
-        reason:
-          "Booking handler is not ready yet.",
-      }
-)
+            handleConfirmBooking(
+              fallbackBooking
+            )
+          )
             .then(
               result => {
                 if (
@@ -4419,6 +4684,32 @@ return {
     <div className="farmer-book-page">
 
       {
+        isEditMode && editingBookingLoading && (
+          <div
+            className="booking-error prominent"
+            style={{
+              margin: "0 auto 18px",
+              maxWidth: "1180px",
+            }}
+          >
+            <LoaderCircle
+              size={17}
+              className="loading-spin"
+            />
+            <span>
+              {
+                language === "hi"
+                  ? "आपकी बुकिंग लोड हो रही है..."
+                  : language === "te"
+                    ? "మీ బుకింగ్ లోడ్ అవుతోంది..."
+                    : "Loading your booking for editing..."
+              }
+            </span>
+          </div>
+        )
+      }
+
+      {
         bookingConfirmed && (
 
           <div className="booking-confirmed-overlay">
@@ -4458,7 +4749,7 @@ return {
                     : language ===
                         "te"
                       ? "మీ బుకింగ్ విజయవంతంగా సేవ్ చేయబడింది"
-                      : "Your booking is confirmed"
+                      : (isEditMode ? "Your booking has been updated" : "Your booking is confirmed")
                 }
 
               </h2>
@@ -4546,14 +4837,18 @@ return {
 
             <h1>
               {
-                copy.title
+                isEditMode
+                  ? copy.editTitle
+                  : copy.title
               }
             </h1>
 
 
             <p>
               {
-                copy.description
+                isEditMode
+                  ? copy.editDescription
+                  : copy.description
               }
             </p>
 
@@ -6886,7 +7181,9 @@ return {
                       <>
 
                         {
-                          copy.confirm
+                          isEditMode
+                            ? copy.saveChanges
+                            : copy.confirm
                         }
 
 
@@ -7349,7 +7646,8 @@ function getBookedCount(
   centerId,
   date,
   slotStart,
-  slotEnd
+  slotEnd,
+  excludeBookingId = null
 ) {
 
   if (
@@ -7411,6 +7709,11 @@ function getBookedCount(
         'EXPIRED',
       ]);
 
+      const excluded =
+        excludeBookingId &&
+        String(booking?.id ?? "") ===
+        String(excludeBookingId);
+
       return (
 
         bookingCenterId ===
@@ -7433,6 +7736,7 @@ function getBookedCount(
           slotEnd
         ) &&
 
+        !excluded &&
         !ignoredStatuses.has(status)
 
       );

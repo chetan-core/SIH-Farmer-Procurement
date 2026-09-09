@@ -316,6 +316,26 @@ async function saveSettings(
 
 
 /* =========================================================
+   BOOKING CHANGE AUDIT TABLE
+========================================================= */
+
+async function ensureBookingChangesTable() {
+  await query(`
+    CREATE TABLE IF NOT EXISTS booking_changes (
+      id BIGSERIAL PRIMARY KEY,
+      booking_id TEXT NOT NULL,
+      farmer_id TEXT NOT NULL,
+      change_type TEXT NOT NULL,
+      reason TEXT,
+      before_json TEXT NOT NULL,
+      after_json TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+}
+
+
+/* =========================================================
    COMMON HELPERS
 ========================================================= */
 
@@ -545,6 +565,7 @@ function isValidStatus(
     "PROCURED",
     "PAYMENT_PENDING",
     "PAYMENT_SENT",
+    "CANCELLED",
 
   ].includes(
     status
@@ -562,6 +583,7 @@ function getAllowedNextStatuses(
     CONFIRMED: [
       "ARRIVED",
       "LATE",
+      "CANCELLED",
     ],
 
     ARRIVED: [
@@ -572,6 +594,7 @@ function getAllowedNextStatuses(
     LATE: [
       "ARRIVED",
       "WEIGHING",
+      "CANCELLED",
     ],
 
     WEIGHING: [
@@ -587,6 +610,8 @@ function getAllowedNextStatuses(
     ],
 
     PAYMENT_SENT: [],
+
+    CANCELLED: [],
 
   };
 
@@ -625,6 +650,9 @@ function getStatusSms(
 
     PAYMENT_SENT:
       `KrishiSetu update: payment for token ${token} has been sent.`,
+
+    CANCELLED:
+      `KrishiSetu update: booking for token ${token} has been cancelled.`,
 
   };
 
@@ -668,6 +696,12 @@ function getNotificationTitle(
 
     PAYMENT_SENT:
       "Payment sent",
+
+    CANCELLED:
+      "Booking cancelled",
+
+    BOOKING_UPDATED:
+      "Booking updated",
 
   };
 
@@ -3449,7 +3483,7 @@ app.post(
               AND date = $2
               AND slot_start = $3
               AND slot_end = $4
-              AND status != 'PAYMENT_SENT'
+              AND status NOT IN ('PAYMENT_SENT', 'CANCELLED', 'REJECTED', 'EXPIRED')
           `,
           [
 
@@ -3814,6 +3848,1455 @@ app.get(
 
     }
 
+  }
+);
+
+
+/* =========================================================
+   BOOKING LIFECYCLE HELPERS
+========================================================= */
+
+const FARMER_EDITABLE_BOOKING_STATUSES = new Set([
+  "CONFIRMED",
+  "LATE",
+]);
+
+const FARMER_CANCELLABLE_BOOKING_STATUSES = new Set([
+  "CONFIRMED",
+  "LATE",
+]);
+
+
+async function resolveRequesterFarmer(req) {
+  const farmerIdCandidate =
+    String(
+      req.body?.farmerId ||
+      req.body?.farmer?.id ||
+      req.query?.farmerId ||
+      req.headers?.["x-farmer-id"] ||
+      ""
+    ).trim();
+
+  const phoneCandidate =
+    normalisePhone(
+      req.body?.phone ||
+      req.body?.farmer?.phone ||
+      req.query?.phone ||
+      req.headers?.["x-farmer-phone"] ||
+      ""
+    );
+
+  if (farmerIdCandidate) {
+    const farmerById =
+      await findFarmerById(
+        farmerIdCandidate
+      );
+
+    if (farmerById) {
+      return farmerById;
+    }
+  }
+
+  if (phoneCandidate) {
+    return await findFarmerByPhone(
+      phoneCandidate
+    );
+  }
+
+  return null;
+}
+
+
+function bookingBelongsToFarmer(
+  booking,
+  farmer
+) {
+  if (
+    !booking ||
+    !farmer
+  ) {
+    return false;
+  }
+
+  return (
+    String(
+      booking.farmer_id ||
+      ""
+    ) ===
+    String(
+      farmer.id ||
+      ""
+    )
+  );
+}
+
+
+function parseBookingTimeMinutes(
+  value
+) {
+  const text =
+    String(
+      value ||
+      ""
+    ).trim().toLowerCase();
+
+  if (!text) {
+    return null;
+  }
+
+  const amPmMatch =
+    text.match(
+      /^(\d{1,2})(?::?(\d{2}))?(?::?(\d{2}))?\s*(am|pm)$/i
+    );
+
+  if (amPmMatch) {
+    let hour =
+      Number(
+        amPmMatch[1]
+      );
+
+    const minute =
+      Number(
+        amPmMatch[2] ||
+        0
+      );
+
+    const second =
+      Number(
+        amPmMatch[3] ||
+        0
+      );
+
+    if (
+      !Number.isInteger(hour) ||
+      !Number.isInteger(minute) ||
+      !Number.isInteger(second) ||
+      hour < 1 ||
+      hour > 12 ||
+      minute < 0 ||
+      minute > 59 ||
+      second < 0 ||
+      second > 59
+    ) {
+      return null;
+    }
+
+    if (
+      amPmMatch[4].toLowerCase() ===
+      "pm" &&
+      hour !== 12
+    ) {
+      hour += 12;
+    }
+
+    if (
+      amPmMatch[4].toLowerCase() ===
+      "am" &&
+      hour === 12
+    ) {
+      hour = 0;
+    }
+
+    if (second !== 0) {
+      return null;
+    }
+
+    return (
+      hour * 60 +
+      minute
+    );
+  }
+
+  const colonMatch =
+    text.match(
+      /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/
+    );
+
+  if (colonMatch) {
+    const hour =
+      Number(
+        colonMatch[1]
+      );
+
+    const minute =
+      Number(
+        colonMatch[2]
+      );
+
+    const second =
+      Number(
+        colonMatch[3] ||
+        0
+      );
+
+    if (
+      !Number.isInteger(hour) ||
+      !Number.isInteger(minute) ||
+      !Number.isInteger(second) ||
+      hour < 0 ||
+      hour > 23 ||
+      minute < 0 ||
+      minute > 59 ||
+      second < 0 ||
+      second > 59 ||
+      second !== 0
+    ) {
+      return null;
+    }
+
+    return (
+      hour * 60 +
+      minute
+    );
+  }
+
+  const compactMatch =
+    text.match(
+      /^(\d{1,4})$/
+    );
+
+  if (!compactMatch) {
+    return null;
+  }
+
+  const compact =
+    compactMatch[1];
+
+  let hour;
+  let minute;
+
+  if (compact.length >= 3) {
+    hour =
+      Number(
+        compact.slice(
+          0,
+          -2
+        )
+      );
+
+    minute =
+      Number(
+        compact.slice(-2)
+      );
+  } else {
+    hour =
+      Number(
+        compact
+      );
+
+    minute = 0;
+  }
+
+  if (
+    !Number.isInteger(hour) ||
+    !Number.isInteger(minute) ||
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59
+  ) {
+    return null;
+  }
+
+  return (
+    hour * 60 +
+    minute
+  );
+}
+
+
+function normalizeBookingTime(
+  value
+) {
+  const minutes =
+    parseBookingTimeMinutes(
+      value
+    );
+
+  if (
+    minutes === null
+  ) {
+    return null;
+  }
+
+  const hours =
+    Math.floor(
+      minutes / 60
+    );
+
+  const minute =
+    minutes % 60;
+
+  return (
+    `${String(
+      hours
+    ).padStart(
+      2,
+      "0"
+    )}:${String(
+      minute
+    ).padStart(
+      2,
+      "0"
+    )}`
+  );
+}
+
+
+function normalizeBookingDate(
+  value
+) {
+  const text =
+    String(
+      value ||
+      ""
+    ).trim();
+
+  const match =
+    text.match(
+      /^(\d{4})-(\d{1,2})-(\d{1,2})(?:T.*)?$/
+    );
+
+  if (!match) {
+    return null;
+  }
+
+  const year =
+    Number(
+      match[1]
+    );
+
+  const month =
+    Number(
+      match[2]
+    );
+
+  const day =
+    Number(
+      match[3]
+    );
+
+  const date =
+    new Date(
+      year,
+      month - 1,
+      day
+    );
+
+  if (
+    date.getFullYear() !==
+      year ||
+    date.getMonth() !==
+      month - 1 ||
+    date.getDate() !==
+      day
+  ) {
+    return null;
+  }
+
+  return (
+    `${year}-${String(
+      month
+    ).padStart(
+      2,
+      "0"
+    )}-${String(
+      day
+    ).padStart(
+      2,
+      "0"
+    )}`
+  );
+}
+
+
+function getServerTodayDate() {
+  const now =
+    new Date();
+
+  return (
+    `${now.getFullYear()}-${String(
+      now.getMonth() + 1
+    ).padStart(
+      2,
+      "0"
+    )}-${String(
+      now.getDate()
+    ).padStart(
+      2,
+      "0"
+    )}`
+  );
+}
+
+
+function getServerDateAfterDays(
+  days
+) {
+  const date =
+    new Date();
+
+  date.setHours(
+    0,
+    0,
+    0,
+    0
+  );
+
+  date.setDate(
+    date.getDate() +
+    Number(
+      days ||
+      0
+    )
+  );
+
+  return (
+    `${date.getFullYear()}-${String(
+      date.getMonth() + 1
+    ).padStart(
+      2,
+      "0"
+    )}-${String(
+      date.getDate()
+    ).padStart(
+      2,
+      "0"
+    )}`
+  );
+}
+
+
+function validateEditableBookingSlot({
+  center,
+  date,
+  slotStart,
+  slotEnd,
+  settings,
+}) {
+  if (!center) {
+    return "Procurement center not found.";
+  }
+
+  const normalizedDate =
+    normalizeBookingDate(
+      date
+    );
+
+  if (!normalizedDate) {
+    return "A valid arrival date is required.";
+  }
+
+  const today =
+    getServerTodayDate();
+
+  const maximumDate =
+    getServerDateAfterDays(
+      Number(
+        settings?.advanceBookingDays ||
+        0
+      )
+    );
+
+  if (
+    normalizedDate <
+    today
+  ) {
+    return "The arrival date cannot be in the past.";
+  }
+
+  if (
+    normalizedDate >
+    maximumDate
+  ) {
+    return `Bookings can only be scheduled up to ${settings.advanceBookingDays} days in advance.`;
+  }
+
+  const startMinutes =
+    parseBookingTimeMinutes(
+      slotStart
+    );
+
+  const endMinutes =
+    parseBookingTimeMinutes(
+      slotEnd
+    );
+
+  if (
+    startMinutes === null ||
+    endMinutes === null ||
+    endMinutes <= startMinutes
+  ) {
+    return "A valid arrival time window is required.";
+  }
+
+  const openingMinutes =
+    parseBookingTimeMinutes(
+      center.opening_time ||
+      center.openingTime ||
+      "09:00"
+    );
+
+  const closingMinutes =
+    parseBookingTimeMinutes(
+      center.closing_time ||
+      center.closingTime ||
+      "17:00"
+    );
+
+  if (
+    openingMinutes === null ||
+    closingMinutes === null ||
+    closingMinutes <= openingMinutes
+  ) {
+    return "This procurement center has invalid opening hours.";
+  }
+
+  const slotDuration =
+    Math.max(
+      1,
+      Number(
+        settings?.slotDuration ||
+        30
+      )
+    );
+
+  const requestedDuration =
+    endMinutes -
+    startMinutes;
+
+  if (
+    requestedDuration !==
+    slotDuration
+  ) {
+    return `Arrival windows must be exactly ${slotDuration} minutes long.`;
+  }
+
+  if (
+    startMinutes <
+    openingMinutes
+  ) {
+    return "The selected arrival time is before this center opens.";
+  }
+
+  if (
+    endMinutes >
+    closingMinutes
+  ) {
+    return "The selected arrival time is after this center closes.";
+  }
+
+  if (
+    (startMinutes -
+      openingMinutes) %
+      slotDuration !==
+    0
+  ) {
+    return `The selected arrival time must align with this center's ${slotDuration}-minute booking slots.`;
+  }
+
+  return null;
+}
+
+
+async function getBookingSlotConflictCount({
+  centerId,
+  date,
+  slotStart,
+  slotEnd,
+  excludeBookingId = null,
+}) {
+  const params = [
+    centerId,
+    date,
+    slotStart,
+    slotEnd,
+  ];
+
+  let sql = `
+    SELECT COUNT(*)::int AS count
+    FROM bookings
+    WHERE
+      center_id = $1
+      AND date = $2
+      AND slot_start = $3
+      AND slot_end = $4
+      AND status NOT IN (
+        'PAYMENT_SENT',
+        'CANCELLED',
+        'REJECTED',
+        'EXPIRED'
+      )
+  `;
+
+  if (
+    excludeBookingId
+  ) {
+    sql +=
+      " AND id != $5";
+
+    params.push(
+      excludeBookingId
+    );
+  }
+
+  const result =
+    await query(
+      sql,
+      params
+    );
+
+  return Number(
+    result?.rows?.[0]?.count ||
+    0
+  );
+}
+
+
+async function recordBookingChange({
+  bookingId,
+  farmerId,
+  changeType,
+  reason,
+  before,
+  after,
+  client = null,
+}) {
+  const executor =
+    client ||
+    {
+      query,
+    };
+
+  await executor.query(
+    `
+      INSERT INTO booking_changes (
+        booking_id,
+        farmer_id,
+        change_type,
+        reason,
+        before_json,
+        after_json
+      )
+      VALUES (
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6
+      )
+    `,
+    [
+      bookingId,
+      farmerId,
+      changeType,
+      reason ||
+        null,
+      JSON.stringify(
+        before ||
+        {}
+      ),
+      JSON.stringify(
+        after ||
+        {}
+      ),
+    ]
+  );
+}
+
+
+/* =========================================================
+   CANCEL BOOKING
+========================================================= */
+
+app.patch(
+  "/api/bookings/:id/cancel",
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const bookingId =
+        String(
+          req.params.id ||
+          ""
+        ).trim();
+
+      if (!bookingId) {
+        return res.status(400).json({
+          success: false,
+          message: "Booking id is required.",
+        });
+      }
+
+      const booking =
+        await getBookingById(
+          bookingId
+        );
+
+      if (!booking) {
+        return res.status(404).json({
+          success: false,
+          message: "Booking not found.",
+        });
+      }
+
+      const farmer =
+        await resolveRequesterFarmer(
+          req
+        );
+
+      if (
+        !bookingBelongsToFarmer(
+          booking,
+          farmer
+        )
+      ) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "You are not authorised to change this booking.",
+        });
+      }
+
+      const currentStatus =
+        String(
+          booking.status ||
+          "CONFIRMED"
+        )
+          .trim()
+          .toUpperCase();
+
+      if (
+        currentStatus ===
+        "CANCELLED"
+      ) {
+        return res.json({
+          success: true,
+          alreadyCancelled: true,
+          message:
+            "This booking is already cancelled.",
+          booking,
+        });
+      }
+
+      if (
+        !FARMER_CANCELLABLE_BOOKING_STATUSES.has(
+          currentStatus
+        )
+      ) {
+        return res.status(409).json({
+          success: false,
+          code: "BOOKING_LOCKED",
+          message:
+            `This booking can no longer be cancelled because it is already ${currentStatus.toLowerCase().replace(/_/g, " ")}.`,
+          booking,
+        });
+      }
+
+      const reason =
+        String(
+          req.body?.reason ||
+          "Farmer requested cancellation."
+        )
+          .trim()
+          .slice(
+            0,
+            500
+          );
+
+      const before = {
+        id:
+          booking.id,
+        token:
+          booking.token,
+        crop:
+          booking.crop,
+        estimated_quantity:
+          booking.estimated_quantity,
+        center_id:
+          booking.center_id,
+        date:
+          booking.date,
+        slot_start:
+          booking.slot_start,
+        slot_end:
+          booking.slot_end,
+        status:
+          currentStatus,
+      };
+
+      const after = {
+        ...before,
+        status:
+          "CANCELLED",
+      };
+
+      await transaction(
+        async (
+          client
+        ) => {
+          await client.query(
+            `
+              UPDATE bookings
+              SET status = 'CANCELLED'
+              WHERE id = $1
+            `,
+            [
+              bookingId,
+            ]
+          );
+
+          await client.query(
+            `
+              INSERT INTO status_events (
+                booking_id,
+                status
+              )
+              VALUES (
+                $1,
+                'CANCELLED'
+              )
+            `,
+            [
+              bookingId,
+            ]
+          );
+
+          await recordBookingChange({
+            bookingId,
+            farmerId:
+              farmer.id,
+            changeType:
+              "CANCEL",
+            reason,
+            before,
+            after,
+            client,
+          });
+        }
+      );
+
+      const settings =
+        await getSettings();
+
+      const shouldSendSms =
+        settings.smsEnabled ===
+          true &&
+        settings.bookingConfirmationSms !==
+          false &&
+        SMS_ENABLED ===
+          true &&
+        Boolean(
+          booking.farmer_phone
+        );
+
+      const notification =
+        await createNotification({
+          farmerId:
+            booking.farmer_id,
+          bookingId,
+          type:
+            "CANCELLED",
+          title:
+            getNotificationTitle(
+              "CANCELLED"
+            ),
+          message:
+            getStatusSms(
+              booking.token,
+              "CANCELLED"
+            ),
+          sms:
+            shouldSendSms,
+          phone:
+            booking.farmer_phone,
+        });
+
+      return res.json({
+        success: true,
+        message:
+          "Booking cancelled successfully.",
+        booking:
+          await getBookingById(
+            bookingId
+          ),
+        smsStatus:
+          notification.status,
+        notificationId:
+          notification.id,
+      });
+    } catch (error) {
+      console.error(
+        "Cancel booking error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to cancel booking.",
+      });
+    }
+  }
+);
+
+
+/* =========================================================
+   RESCHEDULE / EDIT BOOKING
+========================================================= */
+
+app.patch(
+  "/api/bookings/:id/reschedule",
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const bookingId =
+        String(
+          req.params.id ||
+          ""
+        ).trim();
+
+      if (!bookingId) {
+        return res.status(400).json({
+          success: false,
+          message: "Booking id is required.",
+        });
+      }
+
+      const booking =
+        await getBookingById(
+          bookingId
+        );
+
+      if (!booking) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Booking not found.",
+        });
+      }
+
+      const farmer =
+        await resolveRequesterFarmer(
+          req
+        );
+
+      if (
+        !bookingBelongsToFarmer(
+          booking,
+          farmer
+        )
+      ) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "You are not authorised to change this booking.",
+        });
+      }
+
+      const currentStatus =
+        String(
+          booking.status ||
+          "CONFIRMED"
+        )
+          .trim()
+          .toUpperCase();
+
+      if (
+        !FARMER_EDITABLE_BOOKING_STATUSES.has(
+          currentStatus
+        )
+      ) {
+        return res.status(409).json({
+          success: false,
+          code: "BOOKING_LOCKED",
+          message:
+            `This booking can no longer be edited because it is already ${currentStatus.toLowerCase().replace(/_/g, " ")}.`,
+          booking,
+        });
+      }
+
+      const settings =
+        await getSettings();
+
+      if (
+        settings.bookingEnabled ===
+        false
+      ) {
+        return res.status(503).json({
+          success: false,
+          code:
+            "BOOKING_DISABLED",
+          message:
+            "Booking changes are temporarily disabled.",
+        });
+      }
+
+      if (
+        settings.maintenanceMode ===
+        true
+      ) {
+        return res.status(503).json({
+          success: false,
+          code:
+            "MAINTENANCE_MODE",
+          message:
+            "KrishiSetu is currently under maintenance.",
+        });
+      }
+
+      const centerId =
+        String(
+          req.body?.centerId ??
+          booking.center_id ??
+          ""
+        ).trim();
+
+      const crop =
+        String(
+          req.body?.crop ??
+          booking.crop ??
+          ""
+        ).trim();
+
+      const estimatedQuantity =
+        Number(
+          req.body?.estimatedQuantity ??
+          booking.estimated_quantity ??
+          0
+        );
+
+      const date =
+        normalizeBookingDate(
+          req.body?.date ??
+          booking.date
+        );
+
+      const slotStart =
+        normalizeBookingTime(
+          req.body?.slotStart ??
+          booking.slot_start
+        );
+
+      const slotEnd =
+        normalizeBookingTime(
+          req.body?.slotEnd ??
+          booking.slot_end
+        );
+
+      const reason =
+        String(
+          req.body?.reason ||
+          "Farmer updated booking."
+        )
+          .trim()
+          .slice(
+            0,
+            500
+          );
+
+      if (!crop) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Crop is required.",
+        });
+      }
+
+      if (
+        !Number.isFinite(
+          estimatedQuantity
+        ) ||
+        estimatedQuantity <=
+          0
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Estimated quantity must be greater than zero.",
+        });
+      }
+
+      const maxQuantity =
+        Number(
+          settings.maxQuantity ||
+          5000
+        );
+
+      if (
+        estimatedQuantity >
+        maxQuantity
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            `Quantity cannot exceed ${maxQuantity.toLocaleString()} kg.`,
+        });
+      }
+
+      const center =
+        await get(
+          `
+            SELECT *
+            FROM centers
+            WHERE id = $1
+          `,
+          [
+            centerId,
+          ]
+        );
+
+      if (!center) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Procurement center not found.",
+        });
+      }
+
+      if (
+        center.active !==
+          undefined &&
+        center.active !==
+          null &&
+        Number(
+          center.active
+        ) === 0
+      ) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "This procurement center is currently inactive.",
+        });
+      }
+
+      const validationError =
+        validateEditableBookingSlot({
+          center,
+          date,
+          slotStart,
+          slotEnd,
+          settings,
+        });
+
+      if (validationError) {
+        return res.status(400).json({
+          success: false,
+          message:
+            validationError,
+        });
+      }
+
+      const capacity =
+        Number(
+          center.capacity ||
+          settings.defaultCapacity ||
+          20
+        );
+
+      if (
+        !Number.isFinite(
+          capacity
+        ) ||
+        capacity <= 0
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Invalid slot capacity.",
+        });
+      }
+
+      const conflictCount =
+        await getBookingSlotConflictCount({
+          centerId,
+          date,
+          slotStart,
+          slotEnd,
+          excludeBookingId:
+            bookingId,
+        });
+
+      if (
+        conflictCount >=
+        capacity
+      ) {
+        return res.status(409).json({
+          success: false,
+          code:
+            "SLOT_FULL",
+          message:
+            "This arrival window is full. Please choose another slot.",
+        });
+      }
+
+      const before = {
+        id:
+          booking.id,
+        token:
+          booking.token,
+        crop:
+          booking.crop,
+        estimated_quantity:
+          booking.estimated_quantity,
+        center_id:
+          booking.center_id,
+        date:
+          booking.date,
+        slot_start:
+          booking.slot_start,
+        slot_end:
+          booking.slot_end,
+        status:
+          currentStatus,
+      };
+
+      const after = {
+        ...before,
+        crop,
+        estimated_quantity:
+          estimatedQuantity,
+        center_id:
+          centerId,
+        date,
+        slot_start:
+          slotStart,
+        slot_end:
+          slotEnd,
+        status:
+          "CONFIRMED",
+      };
+
+      await transaction(
+        async (
+          client
+        ) => {
+          await client.query(
+            `
+              UPDATE bookings
+              SET
+                crop = $1,
+                estimated_quantity = $2,
+                center_id = $3,
+                date = $4,
+                slot_start = $5,
+                slot_end = $6,
+                status = 'CONFIRMED'
+              WHERE id = $7
+            `,
+            [
+              crop,
+              estimatedQuantity,
+              centerId,
+              date,
+              slotStart,
+              slotEnd,
+              bookingId,
+            ]
+          );
+
+          if (
+            currentStatus !==
+            "CONFIRMED"
+          ) {
+            await client.query(
+              `
+                INSERT INTO status_events (
+                  booking_id,
+                  status
+                )
+                VALUES (
+                  $1,
+                  'CONFIRMED'
+                )
+              `,
+              [
+                bookingId,
+              ]
+            );
+          }
+
+          await recordBookingChange({
+            bookingId,
+            farmerId:
+              farmer.id,
+            changeType:
+              "EDIT",
+            reason,
+            before,
+            after,
+            client,
+          });
+        }
+      );
+
+      const updatedBooking =
+        await getBookingById(
+          bookingId
+        );
+
+      const notification =
+        await createNotification({
+          farmerId:
+            booking.farmer_id,
+          bookingId,
+          type:
+            "BOOKING_UPDATED",
+          title:
+            getNotificationTitle(
+              "BOOKING_UPDATED"
+            ),
+          message:
+            `Your KrishiSetu booking ${updatedBooking.token} was updated to ${updatedBooking.date}, ${updatedBooking.slot_start} to ${updatedBooking.slot_end}.`,
+          sms:
+            settings.smsEnabled ===
+              true &&
+            settings.bookingConfirmationSms !==
+              false &&
+            SMS_ENABLED ===
+              true &&
+            Boolean(
+              booking.farmer_phone
+            ),
+          phone:
+            booking.farmer_phone,
+        });
+
+      return res.json({
+        success: true,
+        message:
+          "Booking updated successfully.",
+        booking:
+          updatedBooking,
+        smsStatus:
+          notification.status,
+        notificationId:
+          notification.id,
+      });
+    } catch (error) {
+      console.error(
+        "Reschedule booking error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to update booking.",
+      });
+    }
+  }
+);
+
+
+/* =========================================================
+   BOOKING CHANGES / AUDIT
+========================================================= */
+
+app.get(
+  "/api/bookings/:id/changes",
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const bookingId =
+        String(
+          req.params.id ||
+          ""
+        ).trim();
+
+      if (!bookingId) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Booking id is required.",
+        });
+      }
+
+      const booking =
+        await get(
+          `
+            SELECT
+              id,
+              farmer_id
+            FROM bookings
+            WHERE id = $1
+          `,
+          [
+            bookingId,
+          ]
+        );
+
+      if (!booking) {
+        return res.status(404).json({
+          success: false,
+          message:
+            "Booking not found.",
+        });
+      }
+
+      const farmer =
+        await resolveRequesterFarmer(
+          req
+        );
+
+      if (
+        !bookingBelongsToFarmer(
+          booking,
+          farmer
+        )
+      ) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "You are not authorised to view these changes.",
+        });
+      }
+
+      const changes =
+        await all(
+          `
+            SELECT
+              id,
+              booking_id,
+              farmer_id,
+              change_type,
+              reason,
+              before_json,
+              after_json,
+              created_at
+            FROM booking_changes
+            WHERE booking_id = $1
+            ORDER BY
+              created_at DESC,
+              id DESC
+          `,
+          [
+            bookingId,
+          ]
+        );
+
+      return res.json({
+        success: true,
+        changes,
+      });
+    } catch (error) {
+      console.error(
+        "Booking changes error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to load booking changes.",
+      });
+    }
   }
 );
 
@@ -9113,6 +10596,9 @@ async function startServer() {
   try {
 
     await initializeDatabase();
+
+
+    await ensureBookingChangesTable();
 
 
     await db.query(

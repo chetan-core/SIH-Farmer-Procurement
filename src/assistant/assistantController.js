@@ -5522,6 +5522,266 @@ function isActuallyBookingRelated(
 }
 
 /* =========================================================
+   ACTUAL BOOKING MUTATIONS
+========================================================= */
+
+function isActualBookingCancelRequest(text) {
+  const value = normalizeFarmerQuery(text);
+  if (!value) return false;
+  return (
+    /\b(cancel|cancelled|cancelation|cancellation|remove|drop)\b/i.test(value) &&
+    /\b(my|this|that|latest|current|booking|reservation|slot)\b/i.test(value)
+  );
+}
+
+function isActualBookingEditRequest(text) {
+  const value = normalizeFarmerQuery(text);
+  if (!value) return false;
+  return (
+    /\b(edit|modify|change|update|reschedule|move)\b/i.test(value) &&
+    /\b(my|this|that|latest|current|booking|reservation|slot|date|time|quantity|crop|center|centre)\b/i.test(value)
+  );
+}
+
+async function executeActualBookingCancellation(pending, options = {}) {
+  const bookingId =
+    pending?.bookingId ||
+    pending?.booking?.id ||
+    pending?.params?.bookingId ||
+    null;
+
+  if (!bookingId) {
+    return controllerResult(
+      CONTROLLER_TYPES.ERROR,
+      CONTROLLER_STATUS.FAILED,
+      {
+        action: "CANCEL_BOOKING",
+        reply: "I couldn't determine which booking you want to cancel.",
+        shouldCallAI: false,
+        shouldNavigate: false,
+      }
+    );
+  }
+
+  const farmer = getStoredFarmer();
+
+  try {
+    const response = await fetch(
+      `${BOOKING_API_URL}/bookings/${encodeURIComponent(bookingId)}/cancel`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          farmerId:
+            farmer?.farmerId ||
+            farmer?.id ||
+            null,
+          phone:
+            farmer?.phone ||
+            null,
+          reason:
+            pending?.reason ||
+            "Cancelled through KrishiSetu assistant",
+        }),
+        signal:
+          options.signal ||
+          undefined,
+      }
+    );
+
+    let data = null;
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
+
+    if (!response.ok) {
+      return controllerResult(
+        CONTROLLER_TYPES.ERROR,
+        CONTROLLER_STATUS.FAILED,
+        {
+          action: "CANCEL_BOOKING",
+          reply:
+            data?.message ||
+            "I couldn't cancel that booking.",
+          booking:
+            data?.booking ||
+            pending?.booking ||
+            null,
+          shouldCallAI: false,
+          shouldNavigate: false,
+        }
+      );
+    }
+
+    clearPendingAction();
+
+    return controllerResult(
+      CONTROLLER_TYPES.CANCELLATION,
+      CONTROLLER_STATUS.SUCCESS,
+      {
+        action: "CANCEL_BOOKING",
+        reply:
+          options.language === "hi"
+            ? "ठीक है। आपकी बुकिंग सफलतापूर्वक रद्द कर दी गई है।"
+            : options.language === "te"
+              ? "సరే. మీ బుకింగ్ విజయవంతంగా రద్దు చేయబడింది."
+              : "Done. Your booking has been cancelled successfully.",
+        booking:
+          data?.booking ||
+          pending?.booking ||
+          null,
+        bookingId,
+        shouldCallAI: false,
+        shouldNavigate: false,
+      }
+    );
+  } catch (error) {
+    return controllerResult(
+      CONTROLLER_TYPES.ERROR,
+      CONTROLLER_STATUS.FAILED,
+      {
+        action: "CANCEL_BOOKING",
+        reply:
+          error?.message ||
+          "I couldn't cancel that booking.",
+        shouldCallAI: false,
+        shouldNavigate: false,
+      }
+    );
+  }
+}
+
+async function handleActualBookingMutationRequest(message, normalized) {
+  const wantsCancel = isActualBookingCancelRequest(message);
+  const wantsEdit = isActualBookingEditRequest(message);
+
+  if (!wantsCancel && !wantsEdit) return null;
+
+  const rows = sortBookings(
+    await getFarmerBookings()
+  );
+
+  const editable = new Set(["CONFIRMED", "LATE"]);
+
+  const tokenMatch =
+    normalizeFarmerQuery(message).match(
+      /\b(?:token\s*(?:no\.?|number|#)?\s*|#)([a-z0-9-]+)\b/i
+    );
+
+  const requestedToken =
+    tokenMatch?.[1] ||
+    null;
+
+  const target =
+    (requestedToken
+      ? rows.find(
+          row =>
+            editable.has(
+              String(row?.status || "CONFIRMED").toUpperCase()
+            ) &&
+            String(
+              row?.token ||
+              row?.tokenNumber ||
+              ""
+            ).toLowerCase() ===
+            String(requestedToken).toLowerCase()
+        )
+      : null) ||
+    rows.find(row =>
+      editable.has(
+        String(row?.status || "CONFIRMED").toUpperCase()
+      )
+    ) ||
+    null;
+
+  if (!target) {
+    return controllerResult(
+      CONTROLLER_TYPES.ERROR,
+      CONTROLLER_STATUS.FAILED,
+      {
+        action: wantsCancel ? "CANCEL_BOOKING" : "OPEN_BOOKING",
+        reply:
+          normalized.language === "hi"
+            ? "मुझे आपकी ऐसी सक्रिय बुकिंग नहीं मिली जिसे बदला या रद्द किया जा सके।"
+            : normalized.language === "te"
+              ? "మార్చడానికి లేదా రద్దు చేయడానికి యాక్టివ్ బుకింగ్ దొరకలేదు."
+              : "I couldn't find an active booking that can still be changed or cancelled.",
+        shouldCallAI: false,
+        shouldNavigate: false,
+      }
+    );
+  }
+
+  if (wantsEdit) {
+    const targetPath =
+      `/farmer/book?edit=${encodeURIComponent(target.id)}`;
+
+    clearPendingAction();
+
+    return controllerResult(
+      CONTROLLER_TYPES.NAVIGATION,
+      CONTROLLER_STATUS.SUCCESS,
+      {
+        action: "OPEN_BOOKING",
+        reply:
+          normalized.language === "hi"
+            ? "ठीक है। आपकी बुकिंग संपादन के लिए खोल रहा हूँ।"
+            : normalized.language === "te"
+              ? "సరే. మీ బుకింగ్‌ను మార్చడానికి తెరుస్తున్నాను."
+              : "Okay. I’m opening your booking so you can edit it.",
+        booking: target,
+        bookingId: target.id,
+        navigateTo: targetPath,
+        shouldNavigate: true,
+        shouldCallAI: false,
+        routeState: {
+          assistantBookingEdit: target,
+        },
+      }
+    );
+  }
+
+  const pending = {
+    action: "CANCEL_ACTUAL_BOOKING",
+    bookingId: target.id,
+    booking: target,
+    createdAt: Date.now(),
+    reason: "Cancelled through KrishiSetu assistant",
+  };
+
+  savePendingAction(pending);
+
+  const token =
+    target.token ||
+    target.id;
+
+  return controllerResult(
+    CONTROLLER_TYPES.CONFIRMATION,
+    CONTROLLER_STATUS.PENDING,
+    {
+      action: "CANCEL_BOOKING",
+      reply:
+        normalized.language === "hi"
+          ? `आपकी सक्रिय बुकिंग का टोकन #${token} है। इसे रद्द करने के लिए “हाँ” कहें।`
+          : normalized.language === "te"
+            ? `మీ యాక్టివ్ బుకింగ్ టోకెన్ #${token}. రద్దు చేయడానికి “అవును” అని చెప్పండి.`
+            : `Your active booking is token #${token}. Say “yes” to cancel it.`,
+      pendingAction: pending,
+      booking: target,
+      bookingId: target.id,
+      shouldCallAI: false,
+      shouldNavigate: false,
+      createPending: true,
+    }
+  );
+}
+
+
+/* =========================================================
    RESOLVE FARMER BOOKINGS
 ========================================================= */
 
@@ -8726,6 +8986,59 @@ export async function handleAssistantCommand(
       normalized.message
     );
 
+  const negative =
+    /^(no|nope|nah|not now|don't|do not|cancel that|never mind|n|नहीं|नही|मत करो|रहने दो|వద్దు|కాదు)[.!\s]*$/i.test(
+      String(normalized.message || "").trim()
+    );
+
+  /*
+   * =======================================================
+   * ACTIVE ACTION CONFIRMATION
+   *
+   * A pending real-booking cancellation is deliberately
+   * handled before the booking draft so a bare "yes" cannot
+   * accidentally resume a procurement booking conversation.
+   * =======================================================
+   */
+
+  const pendingAction =
+    loadPendingAction();
+
+  if (
+    affirmative &&
+    pendingAction?.action ===
+      "CANCEL_ACTUAL_BOOKING"
+  ) {
+    return executeActualBookingCancellation(
+      pendingAction,
+      normalized
+    );
+  }
+
+  if (
+    negative &&
+    pendingAction?.action ===
+      "CANCEL_ACTUAL_BOOKING"
+  ) {
+    clearPendingAction();
+
+    return controllerResult(
+      CONTROLLER_TYPES.CANCELLATION,
+      CONTROLLER_STATUS.CANCELLED,
+      {
+        action: "NONE",
+        reply:
+          normalized.language === "hi"
+            ? "ठीक है। मैंने बुकिंग रद्द करने की कार्रवाई रोक दी है।"
+            : normalized.language === "te"
+              ? "సరే. బుకింగ్ రద్దు చర్యను ఆపేశాను."
+              : "Okay. I kept the booking unchanged.",
+        shouldCallAI: false,
+        shouldNavigate: false,
+      }
+    );
+  }
+
   /*
    * =======================================================
    * INTENT PRIORITY
@@ -8813,7 +9126,22 @@ export async function handleAssistantCommand(
   }
 
   /* =======================================================
-     2. CROP AVAILABILITY
+     2. ACTUAL BOOKING EDIT / CANCEL
+  ======================================================= */
+
+  const actualBookingMutation =
+    await handleActualBookingMutationRequest(
+      normalized.message,
+      normalized
+    );
+
+  if (actualBookingMutation) {
+    return actualBookingMutation;
+  }
+
+
+  /* =======================================================
+     3. CROP AVAILABILITY
   ======================================================= */
 
   if (
@@ -10315,6 +10643,17 @@ export async function confirmPendingAction(
   }
 
 
+  if (
+    pending.action ===
+    "CANCEL_ACTUAL_BOOKING"
+  ) {
+    return executeActualBookingCancellation(
+      pending,
+      normalizeOptions(options)
+    );
+  }
+
+
   /*
    * Booking confirmations should go through the booking
    * conversation rather than generic navigation.
@@ -10953,5 +11292,3 @@ export const assistantController = {
 ========================================================= */
 
 export default assistantController;
-
-//
