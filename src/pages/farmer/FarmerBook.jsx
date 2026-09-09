@@ -4067,21 +4067,38 @@ useEffect(() => {
         /* Booking itself is already saved. */
       }
 
-      clearBookingDraft();
+      setBookingConfirmed(
+  true
+);
 
-      assistantConfirmRequestRef.current =
-        null;
+clearBookingDraft();
 
-      assistantAutoConfirmKeyRef.current =
-        "";
+assistantConfirmRequestRef.current =
+  null;
 
-      return {
-        success:
-          true,
+assistantAutoConfirmKeyRef.current =
+  "";
 
-        booking:
-          finalBooking,
-      };
+navigate(
+  `/farmer/token?booking=${encodeURIComponent(
+    verifyData.booking.id
+  )}`,
+  {
+    replace:
+      true,
+  }
+);
+
+return {
+  success:
+    true,
+
+  booking:
+    verifyData.booking,
+};
+
+      
+      
 
     } catch (
       bookingError
