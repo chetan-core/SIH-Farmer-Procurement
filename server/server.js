@@ -462,6 +462,10 @@ async function ensureTransportTables() {
       final_fare NUMERIC,
       notes TEXT,
       cancellation_reason TEXT,
+      payment_status TEXT NOT NULL DEFAULT 'UNPAID',
+      payment_method TEXT,
+      payment_reference TEXT,
+      payment_paid_at TIMESTAMPTZ,
       created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
       accepted_at TIMESTAMPTZ,
@@ -484,6 +488,10 @@ async function ensureTransportTables() {
     ['farmer_pincode', 'TEXT'],
     ['cancellation_reason', 'TEXT'],
     ['cancelled_at', 'TIMESTAMPTZ'],
+    ['payment_status', "TEXT NOT NULL DEFAULT 'UNPAID'"],
+    ['payment_method', 'TEXT'],
+    ['payment_reference', 'TEXT'],
+    ['payment_paid_at', 'TIMESTAMPTZ'],
   ];
 
   for (const [column, definition] of requestColumns) {
@@ -6922,7 +6930,7 @@ async function createTransportRequestHandler(
         Number.isFinite(
           estimatedFare
         ) &&
-        estimatedFare >= 0
+        estimatedFare > 0
       ) {
         safeEstimatedFare =
           estimatedFare;
@@ -8044,9 +8052,28 @@ app.patch(
         Number.isFinite(
           finalFareNumber
         ) &&
-        finalFareNumber >= 0
+        finalFareNumber > 0
           ? finalFareNumber
           : request.final_fare;
+
+      /*
+       * Final fare is the actual transporter charge, not the farmer's
+       * optional estimate. Never allow a request with no real final fare
+       * to reach COMPLETED, otherwise transporter earnings could become
+       * a silent ₹0 payout. We deliberately do not enforce this earlier
+       * because the current transporter trip UI advances statuses without
+       * sending finalFare yet; that UI will be updated separately.
+       */
+      if (
+        nextStatus === "COMPLETED" &&
+        !(Number.isFinite(Number(finalFare)) && Number(finalFare) > 0)
+      ) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "A valid final transport fare greater than ₹0 is required before completing the trip.",
+        });
+      }
 
       const updated =
         await transaction(
@@ -8555,6 +8582,212 @@ app.get(
 );
 
 
+/* =========================================================
+   TRANSPORT FARE PAYMENT
+   Additive only: does not change procurement payment records.
+========================================================= */
+
+app.get(
+  "/api/transport/requests/:id/payment",
+  async (req, res) => {
+    try {
+      const request = await getTransportRequestById(req.params.id);
+
+      if (!request) {
+        return res.status(404).json({
+          success: false,
+          message: "Transport request not found.",
+        });
+      }
+
+      const farmer = await resolveRequesterFarmer(req);
+      const transporterId = String(
+        req.query?.transporterId ||
+        req.body?.transporterId ||
+        ""
+      ).trim();
+
+      const allowedFarmer =
+        farmer &&
+        String(farmer.id) === String(request.farmer_id);
+
+      const allowedTransporter =
+        transporterId &&
+        String(request.transporter_id || "") === transporterId;
+
+      if (!allowedFarmer && !allowedTransporter) {
+        return res.status(403).json({
+          success: false,
+          message:
+            "You are not authorised to view this transport payment.",
+        });
+      }
+
+      return res.json({
+        success: true,
+        payment: {
+          status: request.payment_status || "UNPAID",
+          method: request.payment_method || null,
+          reference: request.payment_reference || null,
+          paidAt: request.payment_paid_at || null,
+          amount: Number(request.final_fare || 0),
+        },
+      });
+    } catch (error) {
+      console.error("Transport payment lookup error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to load transport payment.",
+      });
+    }
+  }
+);
+
+app.post(
+  "/api/transport/requests/:id/payment",
+  async (req, res) => {
+    try {
+      const request = await getTransportRequestById(req.params.id);
+
+      if (!request) {
+        return res.status(404).json({
+          success: false,
+          message: "Transport request not found.",
+        });
+      }
+
+      const farmer = await resolveRequesterFarmer(req);
+
+      if (
+        !farmer ||
+        String(farmer.id) !== String(request.farmer_id)
+      ) {
+        return res.status(403).json({
+          success: false,
+          message: "You are not authorised to pay this transport trip.",
+        });
+      }
+
+      if (
+        String(request.status || "").toUpperCase() !== "COMPLETED"
+      ) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "Transport fare can be paid after the trip is completed.",
+        });
+      }
+
+      const amount = Number(request.final_fare);
+
+      if (!Number.isFinite(amount) || amount <= 0) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "A valid final transport fare is required before payment.",
+        });
+      }
+
+      if (
+        String(request.payment_status || "UNPAID").toUpperCase() === "PAID"
+      ) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "This transport fare has already been marked as paid.",
+        });
+      }
+
+      const method = String(req.body?.method || "").trim().toUpperCase();
+      const reference = String(req.body?.reference || "").trim();
+      const allowedMethods = new Set(["UPI", "BANK_TRANSFER", "CASH"]);
+
+      if (!allowedMethods.has(method)) {
+        return res.status(400).json({
+          success: false,
+          message: "Choose UPI, bank transfer, or cash.",
+        });
+      }
+
+      if (method !== "CASH" && !reference) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Payment reference is required for digital payment.",
+        });
+      }
+
+      const updated = await transaction(async (client) => {
+        const result = await client.query(
+          `
+            UPDATE transport_requests
+            SET
+              payment_status = 'PAID',
+              payment_method = $1,
+              payment_reference = $2,
+              payment_paid_at = CURRENT_TIMESTAMP,
+              updated_at = CURRENT_TIMESTAMP
+            WHERE id = $3
+              AND farmer_id = $4
+              AND status = 'COMPLETED'
+              AND COALESCE(payment_status, 'UNPAID') <> 'PAID'
+            RETURNING *
+          `,
+          [method, reference || null, request.id, farmer.id]
+        );
+
+        if (!result.rows.length) {
+          return null;
+        }
+
+        await recordTransportEvent({
+          requestId: request.id,
+          status: "COMPLETED",
+          actorType: "FARMER",
+          actorId: farmer.id,
+          note: `Transport fare marked as paid via ${method}.`,
+          metadata: {
+            amount,
+            method,
+            reference: reference || null,
+          },
+          client,
+        });
+
+        return result.rows[0];
+      });
+
+      if (!updated) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "The transport payment changed before it could be recorded.",
+        });
+      }
+
+      return res.json({
+        success: true,
+        message: "Transport fare payment recorded successfully.",
+        payment: {
+          status: updated.payment_status,
+          method: updated.payment_method,
+          reference: updated.payment_reference,
+          paidAt: updated.payment_paid_at,
+          amount: Number(updated.final_fare || 0),
+        },
+        request: await getTransportRequestById(request.id),
+      });
+    } catch (error) {
+      console.error("Transport payment error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to record transport payment.",
+      });
+    }
+  }
+);
+
+
 app.post(
   "/api/transport/requests/:id/rating",
   async (req, res) => {
@@ -8579,6 +8812,113 @@ app.post(
     } catch (error) {
       console.error("Transport rating error:", error);
       return res.status(500).json({ success: false, message: "Failed to save transport rating." });
+    }
+  }
+);
+
+
+/* =========================================================
+   TRANSPORTER RATINGS HISTORY
+========================================================= */
+app.get(
+  "/api/transporters/:id/ratings",
+  async (req, res) => {
+    try {
+      const transporterId = String(req.params.id || "").trim();
+      if (!transporterId) {
+        return res.status(400).json({
+          success: false,
+          message: "Transporter id is required.",
+        });
+      }
+
+      const transporter = await get(
+        `SELECT id, name, rating, total_ratings FROM transporters WHERE id = $1 LIMIT 1`,
+        [transporterId]
+      );
+
+      if (!transporter) {
+        return res.status(404).json({
+          success: false,
+          message: "Transporter not found.",
+        });
+      }
+
+      const rows = await all(
+        `
+          SELECT
+            tr.id,
+            tr.request_id,
+            tr.farmer_id,
+            tr.transporter_id,
+            tr.rating,
+            tr.review,
+            tr.created_at AS rated_at,
+            r.booking_id,
+            r.crop,
+            r.quantity_kg,
+            r.pickup_address,
+            r.farmer_village,
+            r.farmer_mandal,
+            r.farmer_district,
+            r.farmer_state,
+            r.requested_date,
+            r.requested_slot_start,
+            r.requested_slot_end,
+            r.final_fare,
+            r.status,
+            f.name AS farmer_name,
+            c.name AS center_name,
+            c.village AS center_village
+          FROM transport_ratings tr
+          INNER JOIN transport_requests r ON r.id = tr.request_id
+          LEFT JOIN farmers f ON f.id = tr.farmer_id
+          LEFT JOIN centers c ON c.id = r.center_id
+          WHERE tr.transporter_id = $1
+          ORDER BY tr.created_at DESC, tr.id DESC
+        `,
+        [transporterId]
+      );
+
+      return res.json({
+        success: true,
+        transporter: {
+          id: transporter.id,
+          name: transporter.name,
+          rating: Number(transporter.rating || 0),
+          totalRatings: Number(transporter.total_ratings || 0),
+        },
+        ratings: rows.map((row) => ({
+          id: row.id,
+          requestId: row.request_id,
+          bookingId: row.booking_id,
+          farmerId: row.farmer_id,
+          farmerName: row.farmer_name || "Farmer",
+          rating: Number(row.rating || 0),
+          review: row.review || "",
+          ratedAt: row.rated_at,
+          crop: row.crop,
+          quantityKg: Number(row.quantity_kg || 0),
+          pickupAddress: row.pickup_address || "",
+          village: row.farmer_village || "",
+          mandal: row.farmer_mandal || "",
+          district: row.farmer_district || "",
+          state: row.farmer_state || "",
+          requestedDate: row.requested_date || "",
+          requestedSlotStart: row.requested_slot_start || "",
+          requestedSlotEnd: row.requested_slot_end || "",
+          finalFare: Number(row.final_fare || 0),
+          status: row.status,
+          centerName: row.center_name || "",
+          centerVillage: row.center_village || "",
+        })),
+      });
+    } catch (error) {
+      console.error("Transporter ratings history error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to load transporter ratings.",
+      });
     }
   }
 );
@@ -11063,78 +11403,6 @@ app.get(
   }
 );
 
-
-/* =========================================================
-   BOOKING STATUS HELPERS
-   Additive fix: keeps the existing booking lifecycle intact.
-========================================================= */
-
-const BOOKING_STATUSES = new Set([
-  "CONFIRMED",
-  "LATE",
-  "ARRIVED",
-  "WEIGHING",
-  "PROCURED",
-  "PAYMENT_PENDING",
-  "PAYMENT_SENT",
-  "CANCELLED",
-]);
-
-const BOOKING_ALLOWED_TRANSITIONS = {
-  CONFIRMED: [
-    "ARRIVED",
-    "LATE",
-    "CANCELLED",
-  ],
-
-  LATE: [
-    "ARRIVED",
-    "CANCELLED",
-  ],
-
-  ARRIVED: [
-    "WEIGHING",
-    "CANCELLED",
-  ],
-
-  WEIGHING: [
-    "PROCURED",
-    "CANCELLED",
-  ],
-
-  PROCURED: [
-    "PAYMENT_PENDING",
-  ],
-
-  PAYMENT_PENDING: [
-    "PAYMENT_SENT",
-  ],
-
-  PAYMENT_SENT: [],
-
-  CANCELLED: [],
-};
-
-function normalizeBookingStatus(value) {
-  return String(value || "")
-    .trim()
-    .toUpperCase()
-    .replace(/\s+/g, "_");
-}
-
-function isValidStatus(status) {
-  return BOOKING_STATUSES.has(
-    normalizeBookingStatus(status)
-  );
-}
-
-function getAllowedNextStatuses(status) {
-  return (
-    BOOKING_ALLOWED_TRANSITIONS[
-      normalizeBookingStatus(status)
-    ] || []
-  );
-}
 
 /* =========================================================
    BOOKING STATUS

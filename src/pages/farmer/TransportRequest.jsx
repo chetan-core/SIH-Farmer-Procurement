@@ -96,6 +96,10 @@ const COPY = {
     waiting: "Waiting for transporter",
     smart: "Smart matching",
     smartText: "Nearby matching uses your current GPS, transporter service radius, crop quantity and online status. Your registered area is used as a fallback.",
+    estimatedFare: "Estimated fare (optional)",
+    estimatedFareHint: "Leave blank or enter ₹0 if you do not know the transport cost. This is only an estimate, not the final fare.",
+    fareUnknown: "Fare to be agreed with transporter",
+    invalidFare: "Please enter a valid fare of ₹0 or more, or leave it blank.",
   },
   hi: {
     eyebrow: "KRISHISETU • किसान",
@@ -142,6 +146,10 @@ const COPY = {
     waiting: "ट्रांसपोर्टर की प्रतीक्षा",
     smart: "स्मार्ट मैचिंग",
     smartText: "मैचिंग आपके क्षेत्र, फसल की मात्रा और उपलब्ध वाहनों के आधार पर होती है।",
+    estimatedFare: "अनुमानित किराया (वैकल्पिक)",
+    estimatedFareHint: "परिवहन लागत पता न हो तो खाली छोड़ें या ₹0 लिखें। यह केवल अनुमान है, अंतिम किराया नहीं।",
+    fareUnknown: "किराया ट्रांसपोर्टर के साथ तय होगा",
+    invalidFare: "कृपया ₹0 या उससे अधिक सही किराया लिखें, या खाली छोड़ें।",
   },
   te: {
     eyebrow: "KRISHISETU • రైతు",
@@ -188,6 +196,10 @@ const COPY = {
     waiting: "ట్రాన్స్‌పోర్టర్ కోసం వేచి ఉంది",
     smart: "స్మార్ట్ మ్యాచ్ింగ్",
     smartText: "మీ ప్రాంతం, పంట పరిమాణం మరియు అందుబాటులో ఉన్న వాహనాల ఆధారంగా మ్యాచ్ చేస్తుంది.",
+    estimatedFare: "అంచనా రవాణా ఛార్జీ (ఐచ్ఛికం)",
+    estimatedFareHint: "ఖర్చు తెలియకపోతే ఖాళీగా ఉంచండి లేదా ₹0 నమోదు చేయండి. ఇది అంచనా మాత్రమే, తుది ఛార్జీ కాదు.",
+    fareUnknown: "రవాణాదారుతో ఛార్జీ నిర్ణయించబడుతుంది",
+    invalidFare: "₹0 లేదా అంతకంటే ఎక్కువ సరైన ఛార్జీ నమోదు చేయండి లేదా ఖాళీగా ఉంచండి.",
   },
 };
 
@@ -480,6 +492,7 @@ export default function TransportRequest() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [createdRequest, setCreatedRequest] = useState(null);
+  const [estimatedFare, setEstimatedFare] = useState("");
 
   const farmerId = farmerIdOf(farmer);
 
@@ -620,14 +633,43 @@ export default function TransportRequest() {
     setError("");
 
     navigator.geolocation.getCurrentPosition(
-      position => {
+      async position => {
         const lat = Number(position.coords.latitude).toFixed(7);
         const lng = Number(position.coords.longitude).toFixed(7);
+
+        // Keep the farmer's saved hierarchy immediately, then ask the
+        // backend location service to resolve the live GPS position. This
+        // avoids losing village/district/state matching when GPS is used.
         setLocation(prev => ({
           ...prev,
           lat,
           lng,
         }));
+
+        try {
+          const resolved = await api(
+            `/locations/resolve?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`
+          );
+          const live = resolved?.location;
+          if (live) {
+            setLocation(prev => ({
+              ...prev,
+              village: first(live.village, prev.village),
+              villageId: first(live.villageId, prev.villageId),
+              mandal: first(live.mandal, prev.mandal),
+              mandalId: first(live.mandalId, prev.mandalId),
+              district: first(live.district, prev.district),
+              districtId: first(live.districtId, prev.districtId),
+              state: first(live.state, prev.state),
+              stateId: first(live.stateId, prev.stateId),
+              lat,
+              lng,
+            }));
+          }
+        } catch (resolveError) {
+          console.warn("GPS region resolve failed; keeping registered farmer region.", resolveError);
+        }
+
         setLocating(false);
       },
       geoError => {
@@ -657,6 +699,17 @@ export default function TransportRequest() {
       return;
     }
 
+    const fareRaw = clean(estimatedFare);
+    const fareNumber = fareRaw === "" ? null : Number(fareRaw);
+
+    if (
+      fareRaw !== "" &&
+      (!Number.isFinite(fareNumber) || fareNumber < 0)
+    ) {
+      setError(t.invalidFare);
+      return;
+    }
+
     setSaving(true);
     setError("");
 
@@ -674,6 +727,7 @@ export default function TransportRequest() {
         requestedDate,
         requestedSlotStart: requestedStart,
         requestedSlotEnd: requestedEnd,
+        estimatedFare: fareNumber === null || fareNumber === 0 ? null : fareNumber,
         notes: "Requested from Farmer Token.",
       };
 
@@ -710,6 +764,7 @@ export default function TransportRequest() {
     bookingId,
     farmer,
     farmerId,
+    estimatedFare,
     location,
     pickupText,
     quantity,
@@ -912,6 +967,27 @@ export default function TransportRequest() {
           </div>
         </section>
 
+        <section className="ks-fare-panel">
+          <div className="ks-fare-icon">₹</div>
+          <div className="ks-fare-copy">
+            <strong>{t.estimatedFare}</strong>
+            <span>{t.estimatedFareHint}</span>
+          </div>
+          <div className="ks-fare-input-wrap">
+            <span>₹</span>
+            <input
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="1"
+              value={estimatedFare}
+              onChange={event => setEstimatedFare(event.target.value)}
+              placeholder="0"
+              aria-label={t.estimatedFare}
+            />
+          </div>
+        </section>
+
         <div className="ks-main-grid">
           <section className="ks-card">
             <div className="ks-card-head">
@@ -1013,7 +1089,13 @@ export default function TransportRequest() {
         <section className="ks-bottom-bar">
           <div>
             <span className="ks-bottom-title">{t.request}</span>
-            <span className="ks-bottom-sub">{cropLabel(crop)} • {quantity.toLocaleString("en-IN")} kg • #{token || bookingId}</span>
+            <span className="ks-bottom-sub">
+              {cropLabel(crop)} • {quantity.toLocaleString("en-IN")} kg • #{token || bookingId}
+              {" • "}
+              {estimatedFare && Number(estimatedFare) > 0
+                ? `₹${Number(estimatedFare).toLocaleString("en-IN")} est.`
+                : t.fareUnknown}
+            </span>
           </div>
           <button
             type="button"
@@ -1090,5 +1172,5 @@ function TransporterCard({ item, location, t, compact = false }) {
 }
 
 const STYLES = `
-.ks-transport-page{min-height:100vh;background:#f4f8f5;color:#173126}.ks-transport-page *{box-sizing:border-box}.ks-transport-shell{width:min(1160px,calc(100% - 30px));margin:0 auto;padding:28px 0 50px}.ks-back{border:1px solid #d9e4dd;background:#fff;color:#315046;border-radius:11px;padding:10px 13px;display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:12px;font-weight:800;cursor:pointer;margin-bottom:20px}.ks-page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:20px}.ks-eyebrow{display:block;color:#16824e;font-size:10px;font-weight:950;letter-spacing:.14em}.ks-page-head h1{margin:5px 0 8px;font-size:clamp(29px,4vw,43px);letter-spacing:-.04em;line-height:1.04}.ks-page-head p{margin:0;max-width:720px;color:#6c7c73;font-size:13px;line-height:1.6}.ks-live-pill{display:inline-flex;align-items:center;gap:7px;padding:9px 12px;background:#eff8f2;border:1px solid #cfe5d6;border-radius:999px;color:#2a714b;font-size:10px;font-weight:900;white-space:nowrap}.ks-live-pill>span{width:7px;height:7px;border-radius:50%;background:#2ea45a;box-shadow:0 0 0 4px rgba(46,164,90,.1)}.ks-alert{display:flex;align-items:center;gap:8px;padding:12px 14px;margin-bottom:15px;border:1px solid #efc9c9;border-radius:12px;background:#fff3f3;color:#8c2f2f;font-size:12px}.ks-booking-summary,.ks-card,.ks-bottom-bar{border:1px solid #dfe9e3;background:#fff;border-radius:20px;box-shadow:0 12px 32px rgba(22,61,43,.05)}.ks-booking-summary{padding:20px;margin-bottom:16px}.ks-summary-head{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:16px}.ks-summary-token{display:flex;gap:10px;align-items:center}.ks-summary-token>svg{color:#2d7751}.ks-summary-token small{display:block;color:#87968f;font-size:8px;font-weight:950;letter-spacing:.12em}.ks-summary-token strong{display:block;margin-top:3px;font-size:14px}.ks-confirmed-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;background:#eef9f1;color:#237344;border:1px solid #cee7d5;font-size:9px;font-weight:950}.ks-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.ks-summary-item{display:flex;gap:10px;padding:13px;border:1px solid #e5ece7;border-radius:14px;background:#fbfdfc;min-width:0}.ks-summary-icon{width:33px;height:33px;display:grid;place-items:center;border-radius:10px;background:#edf7f0;color:#28734e;flex:none}.ks-summary-item small{display:block;color:#87958e;font-size:9px;font-weight:950;letter-spacing:.08em;text-transform:uppercase}.ks-summary-item strong{display:block;margin-top:4px;font-size:12px;overflow:hidden;text-overflow:ellipsis}.ks-summary-item span{display:block;color:#718078;font-size:10px;margin-top:3px;line-height:1.35}.ks-main-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(340px,.85fr);gap:16px}.ks-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:18px 19px;border-bottom:1px solid #edf2ef}.ks-mini-label{display:block;color:#8a9891;font-size:8px;font-weight:950;letter-spacing:.12em}.ks-card-head h2{margin:4px 0 0;font-size:17px;letter-spacing:-.02em}.ks-card-head p{margin:4px 0 0;color:#78877f;font-size:10px;line-height:1.45}.ks-route-card{padding:24px 22px}.ks-route-point{display:flex;align-items:center;gap:11px}.ks-route-icon{width:39px;height:39px;border-radius:12px;display:grid;place-items:center;flex:none}.ks-route-icon.green{background:#ebf8ef;color:#25814f}.ks-route-icon.blue{background:#edf5fc;color:#3276a7}.ks-route-point small{display:block;color:#8a9791;font-size:9px;font-weight:950;text-transform:uppercase;letter-spacing:.08em}.ks-route-point strong{display:block;margin-top:4px;font-size:12px;line-height:1.45}.ks-route-line{height:38px;margin-left:19px;border-left:2px dashed #bfd3c7}.ks-location-panel{display:flex;align-items:center;gap:11px;margin:0 19px 19px;padding:14px;border:1px solid #dce9e0;border-radius:14px;background:#f8fcf9}.ks-location-icon{width:35px;height:35px;display:grid;place-items:center;border-radius:10px;background:#eaf7ef;color:#23734a;flex:none}.ks-location-copy{min-width:0;flex:1}.ks-location-copy small{display:block;color:#87948d;font-size:8px;font-weight:950;text-transform:uppercase;letter-spacing:.09em}.ks-location-copy strong{display:block;margin-top:3px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ks-location-copy span{display:block;margin-top:3px;color:#718078;font-size:9px;line-height:1.45}.ks-btn{min-height:42px;border-radius:11px;padding:0 13px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font:inherit;font-size:11px;font-weight:900;cursor:pointer;transition:.16s ease;text-decoration:none}.ks-btn-primary{border:0;background:#16833f;color:#fff;box-shadow:0 8px 20px rgba(22,131,63,.18)}.ks-btn-primary:hover{background:#0f6832}.ks-btn-light{border:1px solid #d8e4dd;background:#fff;color:#315046}.ks-btn-light:hover{background:#f7faf8}.ks-btn:disabled{opacity:.55;cursor:not-allowed}.ks-gps-btn{flex:none;min-height:38px}.ks-icon-btn{width:35px;height:35px;border:1px solid #dce6df;border-radius:10px;background:#fff;color:#527266;display:grid;place-items:center;cursor:pointer}.ks-match-side{overflow:hidden}.ks-transporter-list{padding:13px;display:grid;gap:9px}.ks-transporter-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:15px}.ks-transporter-card{border:1px solid #dde8e0;border-radius:14px;padding:13px;background:#fbfdfc}.ks-transporter-card.compact{padding:11px}.ks-transporter-top{display:flex;align-items:center;gap:9px}.ks-driver-avatar{width:39px;height:39px;display:grid;place-items:center;border-radius:11px;background:#edf7f0;color:#29764e;flex:none}.ks-driver-main{min-width:0;flex:1}.ks-driver-main strong{display:block;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ks-driver-main span{display:block;margin-top:3px;color:#74847b;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ks-online-dot{width:8px;height:8px;border-radius:50%;background:#36a35c;box-shadow:0 0 0 4px rgba(54,163,92,.10);flex:none}.ks-transporter-meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.ks-transporter-meta span{display:inline-flex;align-items:center;gap:4px;color:#6f8178;font-size:8px;font-weight:800}.ks-transporter-meta svg{color:#3a7a57}.ks-transporter-footer{display:flex;justify-content:space-between;align-items:center;margin-top:11px;padding-top:10px;border-top:1px dashed #dbe6df;color:#77867e;font-size:9px}.ks-transporter-footer a{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:#edf7f0;color:#26734b;text-decoration:none}.ks-side-loading{min-height:175px;display:grid;place-items:center;align-content:center;gap:8px;color:#73837a;font-size:10px}.ks-no-match{margin:13px;padding:23px 14px;border:1px dashed #d6e2da;border-radius:13px;text-align:center;display:grid;place-items:center;gap:6px;color:#7a8981}.ks-no-match svg{color:#39805b}.ks-no-match strong{font-size:10px;color:#53665b}.ks-no-match span{font-size:9px;line-height:1.45}.ks-no-match.compact{margin:13px}.ks-smart-note{display:flex;gap:9px;margin:0 13px 13px;padding:11px;border-radius:12px;background:#f2faf4;border:1px solid #d5eadb;color:#28704a}.ks-smart-note>svg{flex:none;margin-top:1px}.ks-smart-note strong{display:block;font-size:9px}.ks-smart-note span{display:block;margin-top:3px;color:#718178;font-size:8px;line-height:1.45}.ks-bottom-bar{position:sticky;bottom:12px;margin-top:16px;padding:13px 16px;display:flex;justify-content:space-between;align-items:center;gap:15px;z-index:5}.ks-bottom-title{display:block;font-size:11px;font-weight:950;color:#1f3d2d}.ks-bottom-sub{display:block;margin-top:3px;color:#74837b;font-size:9px}.ks-request-btn{min-width:190px}.ks-loading-card,.ks-error-card{min-height:260px;display:grid;place-items:center;align-content:center;gap:9px;border:1px dashed #d5e1d9;border-radius:20px;background:#fff;color:#6e7d75;text-align:center;padding:20px}.ks-error-card h2{margin:2px 0 0;font-size:16px;color:#4d6156}.ks-error-card p{margin:0;color:#718078;font-size:11px}.ks-spin{animation:ksSpin 1s linear infinite}@keyframes ksSpin{to{transform:rotate(360deg)}}.ks-success-card{width:min(930px,100%);margin:25px auto 0;padding:28px;border:1px solid #dfe9e3;border-radius:22px;background:#fff;box-shadow:0 15px 45px rgba(22,61,43,.07);text-align:center}.ks-success-icon{width:66px;height:66px;display:grid;place-items:center;margin:0 auto 12px;border-radius:20px;background:#e5f6ea;color:#2d7c50}.ks-success-card h1{margin:7px 0 6px;font-size:28px}.ks-success-card>p{margin:0 auto;max-width:600px;color:#6d7d74;font-size:12px;line-height:1.6}.ks-success-meta{display:flex;justify-content:center;gap:10px;margin:18px 0}.ks-success-meta>div{min-width:140px;padding:10px 13px;border:1px solid #e1e9e3;border-radius:12px;background:#fbfdfc}.ks-success-meta small{display:block;color:#8b9891;font-size:8px;font-weight:950;text-transform:uppercase}.ks-success-meta strong{display:block;margin-top:4px;font-size:13px}.ks-match-card{margin-top:18px;text-align:left;border:1px solid #dce8e0;border-radius:17px;padding:16px;background:#fbfefc}.ks-section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:15px}.ks-section-head h2{margin:3px 0;font-size:22px}.ks-section-head p{margin:0;color:#738279;font-size:10px}.ks-match-badge{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border-radius:999px;border:1px solid #cee4d5;background:#eff8f2;color:#28734b;font-size:8px;font-weight:950;white-space:nowrap}.ks-success-actions{display:flex;justify-content:center;gap:9px;margin-top:17px}.ks-success-actions .ks-btn{min-width:155px}@media(max-width:900px){.ks-summary-grid{grid-template-columns:repeat(2,1fr)}.ks-main-grid{grid-template-columns:1fr}.ks-transporter-grid{grid-template-columns:1fr 1fr}}@media(max-width:640px){.ks-transport-shell{width:calc(100% - 16px);padding-top:18px}.ks-page-head,.ks-summary-head,.ks-bottom-bar{flex-direction:column;align-items:stretch}.ks-live-pill{align-self:flex-start}.ks-summary-grid{grid-template-columns:1fr}.ks-transporter-grid{grid-template-columns:1fr}.ks-location-panel{align-items:flex-start;flex-wrap:wrap}.ks-gps-btn{width:100%}.ks-bottom-bar{gap:10px}.ks-request-btn{width:100%}.ks-success-actions{flex-direction:column}.ks-success-actions .ks-btn{width:100%}.ks-success-meta{flex-direction:column}.ks-success-meta>div{width:100%}}
+.ks-transport-page{min-height:100vh;background:#f4f8f5;color:#173126}.ks-transport-page *{box-sizing:border-box}.ks-transport-shell{width:min(1160px,calc(100% - 30px));margin:0 auto;padding:28px 0 50px}.ks-back{border:1px solid #d9e4dd;background:#fff;color:#315046;border-radius:11px;padding:10px 13px;display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:12px;font-weight:800;cursor:pointer;margin-bottom:20px}.ks-page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:20px}.ks-eyebrow{display:block;color:#16824e;font-size:10px;font-weight:950;letter-spacing:.14em}.ks-page-head h1{margin:5px 0 8px;font-size:clamp(29px,4vw,43px);letter-spacing:-.04em;line-height:1.04}.ks-page-head p{margin:0;max-width:720px;color:#6c7c73;font-size:13px;line-height:1.6}.ks-live-pill{display:inline-flex;align-items:center;gap:7px;padding:9px 12px;background:#eff8f2;border:1px solid #cfe5d6;border-radius:999px;color:#2a714b;font-size:10px;font-weight:900;white-space:nowrap}.ks-live-pill>span{width:7px;height:7px;border-radius:50%;background:#2ea45a;box-shadow:0 0 0 4px rgba(46,164,90,.1)}.ks-alert{display:flex;align-items:center;gap:8px;padding:12px 14px;margin-bottom:15px;border:1px solid #efc9c9;border-radius:12px;background:#fff3f3;color:#8c2f2f;font-size:12px}.ks-fare-panel{display:flex;align-items:center;gap:13px;margin-bottom:16px;padding:15px 17px;border:1px solid #dfe9e3;background:#fff;border-radius:17px;box-shadow:0 10px 27px rgba(22,61,43,.04)}.ks-fare-icon{width:39px;height:39px;border-radius:12px;display:grid;place-items:center;background:#eef8f1;color:#23734a;font-weight:950;font-size:18px;flex:none}.ks-fare-copy{min-width:0;flex:1}.ks-fare-copy strong{display:block;font-size:12px;color:#294238}.ks-fare-copy span{display:block;margin-top:4px;color:#74837b;font-size:9px;line-height:1.45}.ks-fare-input-wrap{width:150px;display:flex;align-items:center;border:1px solid #d7e3db;border-radius:11px;background:#fbfdfc;overflow:hidden;flex:none}.ks-fare-input-wrap>span{padding-left:12px;color:#6d7d73;font-weight:850}.ks-fare-input-wrap input{width:100%;min-width:0;border:0;outline:0;background:transparent;padding:11px 10px 11px 7px;font:inherit;font-size:13px;font-weight:850;color:#21372b}.ks-booking-summary,.ks-card,.ks-bottom-bar{border:1px solid #dfe9e3;background:#fff;border-radius:20px;box-shadow:0 12px 32px rgba(22,61,43,.05)}.ks-booking-summary{padding:20px;margin-bottom:16px}.ks-summary-head{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:16px}.ks-summary-token{display:flex;gap:10px;align-items:center}.ks-summary-token>svg{color:#2d7751}.ks-summary-token small{display:block;color:#87968f;font-size:8px;font-weight:950;letter-spacing:.12em}.ks-summary-token strong{display:block;margin-top:3px;font-size:14px}.ks-confirmed-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;background:#eef9f1;color:#237344;border:1px solid #cee7d5;font-size:9px;font-weight:950}.ks-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.ks-summary-item{display:flex;gap:10px;padding:13px;border:1px solid #e5ece7;border-radius:14px;background:#fbfdfc;min-width:0}.ks-summary-icon{width:33px;height:33px;display:grid;place-items:center;border-radius:10px;background:#edf7f0;color:#28734e;flex:none}.ks-summary-item small{display:block;color:#87958e;font-size:9px;font-weight:950;letter-spacing:.08em;text-transform:uppercase}.ks-summary-item strong{display:block;margin-top:4px;font-size:12px;overflow:hidden;text-overflow:ellipsis}.ks-summary-item span{display:block;color:#718078;font-size:10px;margin-top:3px;line-height:1.35}.ks-main-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(340px,.85fr);gap:16px}.ks-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:18px 19px;border-bottom:1px solid #edf2ef}.ks-mini-label{display:block;color:#8a9891;font-size:8px;font-weight:950;letter-spacing:.12em}.ks-card-head h2{margin:4px 0 0;font-size:17px;letter-spacing:-.02em}.ks-card-head p{margin:4px 0 0;color:#78877f;font-size:10px;line-height:1.45}.ks-route-card{padding:24px 22px}.ks-route-point{display:flex;align-items:center;gap:11px}.ks-route-icon{width:39px;height:39px;border-radius:12px;display:grid;place-items:center;flex:none}.ks-route-icon.green{background:#ebf8ef;color:#25814f}.ks-route-icon.blue{background:#edf5fc;color:#3276a7}.ks-route-point small{display:block;color:#8a9791;font-size:9px;font-weight:950;text-transform:uppercase;letter-spacing:.08em}.ks-route-point strong{display:block;margin-top:4px;font-size:12px;line-height:1.45}.ks-route-line{height:38px;margin-left:19px;border-left:2px dashed #bfd3c7}.ks-location-panel{display:flex;align-items:center;gap:11px;margin:0 19px 19px;padding:14px;border:1px solid #dce9e0;border-radius:14px;background:#f8fcf9}.ks-location-icon{width:35px;height:35px;display:grid;place-items:center;border-radius:10px;background:#eaf7ef;color:#23734a;flex:none}.ks-location-copy{min-width:0;flex:1}.ks-location-copy small{display:block;color:#87948d;font-size:8px;font-weight:950;text-transform:uppercase;letter-spacing:.09em}.ks-location-copy strong{display:block;margin-top:3px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ks-location-copy span{display:block;margin-top:3px;color:#718078;font-size:9px;line-height:1.45}.ks-btn{min-height:42px;border-radius:11px;padding:0 13px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font:inherit;font-size:11px;font-weight:900;cursor:pointer;transition:.16s ease;text-decoration:none}.ks-btn-primary{border:0;background:#16833f;color:#fff;box-shadow:0 8px 20px rgba(22,131,63,.18)}.ks-btn-primary:hover{background:#0f6832}.ks-btn-light{border:1px solid #d8e4dd;background:#fff;color:#315046}.ks-btn-light:hover{background:#f7faf8}.ks-btn:disabled{opacity:.55;cursor:not-allowed}.ks-gps-btn{flex:none;min-height:38px}.ks-icon-btn{width:35px;height:35px;border:1px solid #dce6df;border-radius:10px;background:#fff;color:#527266;display:grid;place-items:center;cursor:pointer}.ks-match-side{overflow:hidden}.ks-transporter-list{padding:13px;display:grid;gap:9px}.ks-transporter-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:15px}.ks-transporter-card{border:1px solid #dde8e0;border-radius:14px;padding:13px;background:#fbfdfc}.ks-transporter-card.compact{padding:11px}.ks-transporter-top{display:flex;align-items:center;gap:9px}.ks-driver-avatar{width:39px;height:39px;display:grid;place-items:center;border-radius:11px;background:#edf7f0;color:#29764e;flex:none}.ks-driver-main{min-width:0;flex:1}.ks-driver-main strong{display:block;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ks-driver-main span{display:block;margin-top:3px;color:#74847b;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ks-online-dot{width:8px;height:8px;border-radius:50%;background:#36a35c;box-shadow:0 0 0 4px rgba(54,163,92,.10);flex:none}.ks-transporter-meta{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.ks-transporter-meta span{display:inline-flex;align-items:center;gap:4px;color:#6f8178;font-size:8px;font-weight:800}.ks-transporter-meta svg{color:#3a7a57}.ks-transporter-footer{display:flex;justify-content:space-between;align-items:center;margin-top:11px;padding-top:10px;border-top:1px dashed #dbe6df;color:#77867e;font-size:9px}.ks-transporter-footer a{width:28px;height:28px;display:grid;place-items:center;border-radius:8px;background:#edf7f0;color:#26734b;text-decoration:none}.ks-side-loading{min-height:175px;display:grid;place-items:center;align-content:center;gap:8px;color:#73837a;font-size:10px}.ks-no-match{margin:13px;padding:23px 14px;border:1px dashed #d6e2da;border-radius:13px;text-align:center;display:grid;place-items:center;gap:6px;color:#7a8981}.ks-no-match svg{color:#39805b}.ks-no-match strong{font-size:10px;color:#53665b}.ks-no-match span{font-size:9px;line-height:1.45}.ks-no-match.compact{margin:13px}.ks-smart-note{display:flex;gap:9px;margin:0 13px 13px;padding:11px;border-radius:12px;background:#f2faf4;border:1px solid #d5eadb;color:#28704a}.ks-smart-note>svg{flex:none;margin-top:1px}.ks-smart-note strong{display:block;font-size:9px}.ks-smart-note span{display:block;margin-top:3px;color:#718178;font-size:8px;line-height:1.45}.ks-bottom-bar{position:sticky;bottom:12px;margin-top:16px;padding:13px 16px;display:flex;justify-content:space-between;align-items:center;gap:15px;z-index:5}.ks-bottom-title{display:block;font-size:11px;font-weight:950;color:#1f3d2d}.ks-bottom-sub{display:block;margin-top:3px;color:#74837b;font-size:9px}.ks-request-btn{min-width:190px}.ks-loading-card,.ks-error-card{min-height:260px;display:grid;place-items:center;align-content:center;gap:9px;border:1px dashed #d5e1d9;border-radius:20px;background:#fff;color:#6e7d75;text-align:center;padding:20px}.ks-error-card h2{margin:2px 0 0;font-size:16px;color:#4d6156}.ks-error-card p{margin:0;color:#718078;font-size:11px}.ks-spin{animation:ksSpin 1s linear infinite}@keyframes ksSpin{to{transform:rotate(360deg)}}.ks-success-card{width:min(930px,100%);margin:25px auto 0;padding:28px;border:1px solid #dfe9e3;border-radius:22px;background:#fff;box-shadow:0 15px 45px rgba(22,61,43,.07);text-align:center}.ks-success-icon{width:66px;height:66px;display:grid;place-items:center;margin:0 auto 12px;border-radius:20px;background:#e5f6ea;color:#2d7c50}.ks-success-card h1{margin:7px 0 6px;font-size:28px}.ks-success-card>p{margin:0 auto;max-width:600px;color:#6d7d74;font-size:12px;line-height:1.6}.ks-success-meta{display:flex;justify-content:center;gap:10px;margin:18px 0}.ks-success-meta>div{min-width:140px;padding:10px 13px;border:1px solid #e1e9e3;border-radius:12px;background:#fbfdfc}.ks-success-meta small{display:block;color:#8b9891;font-size:8px;font-weight:950;text-transform:uppercase}.ks-success-meta strong{display:block;margin-top:4px;font-size:13px}.ks-match-card{margin-top:18px;text-align:left;border:1px solid #dce8e0;border-radius:17px;padding:16px;background:#fbfefc}.ks-section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:15px}.ks-section-head h2{margin:3px 0;font-size:22px}.ks-section-head p{margin:0;color:#738279;font-size:10px}.ks-match-badge{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border-radius:999px;border:1px solid #cee4d5;background:#eff8f2;color:#28734b;font-size:8px;font-weight:950;white-space:nowrap}.ks-success-actions{display:flex;justify-content:center;gap:9px;margin-top:17px}.ks-success-actions .ks-btn{min-width:155px}@media(max-width:900px){.ks-summary-grid{grid-template-columns:repeat(2,1fr)}.ks-main-grid{grid-template-columns:1fr}.ks-transporter-grid{grid-template-columns:1fr 1fr}}@media(max-width:640px){.ks-transport-shell{width:calc(100% - 16px);padding-top:18px}.ks-page-head,.ks-summary-head,.ks-bottom-bar{flex-direction:column;align-items:stretch}.ks-live-pill{align-self:flex-start}.ks-summary-grid{grid-template-columns:1fr}.ks-transporter-grid{grid-template-columns:1fr}.ks-location-panel{align-items:flex-start;flex-wrap:wrap}.ks-gps-btn{width:100%}.ks-fare-panel{align-items:flex-start;flex-wrap:wrap}.ks-fare-copy{flex-basis:calc(100% - 54px)}.ks-fare-input-wrap{width:100%}.ks-bottom-bar{gap:10px}.ks-request-btn{width:100%}.ks-success-actions{flex-direction:column}.ks-success-actions .ks-btn{width:100%}.ks-success-meta{flex-direction:column}.ks-success-meta>div{width:100%}}
 `;

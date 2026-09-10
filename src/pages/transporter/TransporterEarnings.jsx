@@ -73,6 +73,13 @@ const COPY = {
     average: "Average per trip",
     rating: "Rating",
     noRating: "Not rated yet",
+    ratings: "Ratings & reviews",
+    ratingCount: "ratings",
+    jobRating: "Job rating",
+    review: "Review",
+    noReviews: "No ratings received yet",
+    noReviewsText: "Ratings from completed transport jobs will appear here.",
+    unrated: "Not rated",
     recent: "Recent completed trips",
     noTrips: "No completed trips yet",
     noTripsText:
@@ -116,6 +123,13 @@ const COPY = {
     average: "प्रति यात्रा औसत",
     rating: "रेटिंग",
     noRating: "अभी रेटिंग नहीं",
+    ratings: "रेटिंग और समीक्षाएँ",
+    ratingCount: "रेटिंग",
+    jobRating: "यात्रा रेटिंग",
+    review: "समीक्षा",
+    noReviews: "अभी कोई रेटिंग नहीं मिली",
+    noReviewsText: "पूरी हुई परिवहन यात्राओं की रेटिंग यहाँ दिखाई देगी।",
+    unrated: "रेटिंग नहीं",
     recent: "हाल की पूरी यात्राएँ",
     noTrips: "अभी कोई पूरी यात्रा नहीं",
     noTripsText:
@@ -159,6 +173,13 @@ const COPY = {
     average: "ఒక్క ట్రిప్ సగటు",
     rating: "రేటింగ్",
     noRating: "ఇంకా రేటింగ్ లేదు",
+    ratings: "రేటింగ్స్ & సమీక్షలు",
+    ratingCount: "రేటింగ్స్",
+    jobRating: "ట్రిప్ రేటింగ్",
+    review: "సమీక్ష",
+    noReviews: "ఇంకా రేటింగ్స్ లేవు",
+    noReviewsText: "పూర్తయిన రవాణా ట్రిప్స్ రేటింగ్స్ ఇక్కడ కనిపిస్తాయి.",
+    unrated: "రేటింగ్ లేదు",
     recent: "ఇటీవలి పూర్తయిన ట్రిప్స్",
     noTrips: "ఇంకా పూర్తయిన ట్రిప్స్ లేవు",
     noTripsText:
@@ -417,6 +438,15 @@ export default function TransporterEarnings() {
   const [requests, setRequests] =
     useState([]);
 
+  const [ratings, setRatings] =
+    useState([]);
+
+  const [ratingsSummary, setRatingsSummary] =
+    useState(null);
+
+  const [ratingsLoading, setRatingsLoading] =
+    useState(true);
+
   const [loading, setLoading] =
     useState(true);
 
@@ -443,11 +473,13 @@ export default function TransporterEarnings() {
         if (!silent) {
           setLoading(true);
         }
+        setRatingsLoading(true);
 
         try {
           const [
             transporterResponse,
             requestsResponse,
+            ratingsResponse,
           ] =
             await Promise.all([
               api(
@@ -459,6 +491,11 @@ export default function TransporterEarnings() {
                 `/api/transport/requests?transporterId=${encodeURIComponent(
                   transporterId
                 )}&activeOnly=false`
+              ),
+              api(
+                `/api/transporters/${encodeURIComponent(
+                  transporterId
+                )}/ratings`
               ),
             ]);
 
@@ -476,11 +513,27 @@ export default function TransporterEarnings() {
 
           setRequests(all);
 
+          const ratingRows =
+            Array.isArray(ratingsResponse?.ratings)
+              ? ratingsResponse.ratings
+              : Array.isArray(ratingsResponse?.items)
+              ? ratingsResponse.items
+              : [];
+
+          setRatings(ratingRows);
+          setRatingsSummary(
+            ratingsResponse?.summary ||
+              ratingsResponse?.aggregate ||
+              null
+          );
+          setRatingsLoading(false);
+
           setConnection(
             "connected"
           );
           setError("");
         } catch (loadError) {
+          setRatingsLoading(false);
           console.error(
             "Transporter earnings API request failed:",
             {
@@ -642,7 +695,20 @@ export default function TransporterEarnings() {
 
   const rating =
     Number(
-      transporter?.rating || 0
+      transporter?.rating ||
+        ratingsSummary?.rating ||
+        ratingsSummary?.averageRating ||
+        0
+    );
+
+  const ratingTotal =
+    Number(
+      transporter?.total_ratings ||
+        transporter?.totalRatings ||
+        ratingsSummary?.total_ratings ||
+        ratingsSummary?.totalRatings ||
+        ratings.length ||
+        0
     );
 
   const refresh =
@@ -661,6 +727,17 @@ export default function TransporterEarnings() {
       className="transporter-earnings-page"
       style={styles.page}
     >
+      <style>{`
+        @media (max-width: 760px) {
+          .transporter-earnings-page .ratingsSection { padding: 14px !important; }
+          .transporter-earnings-page .ratingDetails { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+        }
+        @media (max-width: 520px) {
+          .transporter-earnings-page .ratingCardTop { flex-direction: column !important; }
+          .transporter-earnings-page .ratingSummary { align-self: flex-start !important; }
+          .transporter-earnings-page .ratingDetails { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
       <Header />
 
       <main
@@ -967,6 +1044,239 @@ export default function TransporterEarnings() {
                   }
                 </p>
               </div>
+            </section>
+
+            <section
+              style={
+                styles.ratingsSection
+              }
+            >
+              <div
+                style={
+                  styles.sectionHeader
+                }
+              >
+                <div>
+                  <span
+                    style={
+                      styles.eyebrowSmall
+                    }
+                  >
+                    {copy.ratings}
+                  </span>
+                  <h2
+                    style={
+                      styles.sectionTitle
+                    }
+                  >
+                    {copy.ratings}
+                  </h2>
+                </div>
+
+                <div
+                  style={
+                    styles.ratingSummary
+                  }
+                >
+                  <strong
+                    style={
+                      styles.ratingSummaryValue
+                    }
+                  >
+                    {rating > 0 ? rating.toFixed(1) : "—"} ★
+                  </strong>
+                  <span
+                    style={
+                      styles.ratingSummaryCount
+                    }
+                  >
+                    {ratingTotal} {copy.ratingCount}
+                  </span>
+                </div>
+              </div>
+
+              {ratingsLoading ? (
+                <div
+                  style={styles.ratingsLoading}
+                >
+                  <Clock3 size={18} />
+                  <span>{copy.refreshing}</span>
+                </div>
+              ) : ratings.length ? (
+                <div
+                  className="transporter-earnings-ratings-list"
+                  style={styles.ratingsList}
+                >
+                  {ratings
+                    .slice(0, 50)
+                    .map((item, index) => {
+                      const itemRating = Number(
+                        item.rating ||
+                          item.stars ||
+                          0
+                      );
+                      const jobId =
+                        item.request_id ||
+                        item.requestId ||
+                        item.transport_request_id ||
+                        item.id ||
+                        "—";
+                      const tripDate =
+                        item.created_at ||
+                        item.createdAt ||
+                        item.rated_at ||
+                        item.ratedAt ||
+                        item.completed_at ||
+                        item.completedAt;
+                      const farmerName =
+                        item.farmer_name ||
+                        item.farmerName ||
+                        "Farmer";
+                      const crop =
+                        item.crop ||
+                        "Transport job";
+                      const quantity =
+                        item.quantity_kg ??
+                        item.quantityKg;
+                      const fare =
+                        item.final_fare ??
+                        item.finalFare ??
+                        item.estimated_fare ??
+                        item.estimatedFare;
+                      const review =
+                        item.review ||
+                        item.comment ||
+                        "";
+                      const center =
+                        item.center_name ||
+                        item.centerName ||
+                        item.center_address ||
+                        item.centerAddress ||
+                        "";
+
+                      return (
+                        <article
+                          key={`${jobId}-${index}`}
+                          style={styles.ratingCard}
+                        >
+                          <div
+                            style={styles.ratingCardTop}
+                          >
+                            <div>
+                              <strong
+                                style={styles.ratingJobTitle}
+                              >
+                                {crop}
+                              </strong>
+                              <span
+                                style={styles.ratingJobMeta}
+                              >
+                                Job #{jobId}
+                                {center
+                                  ? ` · ${center}`
+                                  : ""}
+                              </span>
+                            </div>
+                            <div
+                              style={styles.ratingStars}
+                              aria-label={`${itemRating} out of 5`}
+                            >
+                              {"★★★★★".slice(
+                                0,
+                                Math.max(
+                                  0,
+                                  Math.min(5, itemRating)
+                                )
+                              )}
+                              <span
+                                style={styles.ratingNumber}
+                              >
+                                {itemRating}/5
+                              </span>
+                            </div>
+                          </div>
+
+                          <div
+                            style={styles.ratingDetails}
+                          >
+                            <span>
+                              <b>{copy.farmer}:</b>{" "}
+                              {farmerName}
+                            </span>
+                            <span>
+                              <b>{copy.quantity}:</b>{" "}
+                              {quantity !== undefined &&
+                              quantity !== null
+                                ? `${number(quantity)} kg`
+                                : "—"}
+                            </span>
+                            <span>
+                              <b>{copy.fare}:</b>{" "}
+                              {fare !== undefined &&
+                              fare !== null
+                                ? money(fare)
+                                : "—"}
+                            </span>
+                            <span>
+                              <b>{copy.completed}:</b>{" "}
+                              {date(
+                                item.completed_at ||
+                                  item.completedAt ||
+                                  tripDate,
+                                language
+                              )}
+                            </span>
+                          </div>
+
+                          {review ? (
+                            <div
+                              style={styles.reviewBox}
+                            >
+                              <span
+                                style={styles.reviewLabel}
+                              >
+                                {copy.review}
+                              </span>
+                              <p
+                                style={styles.reviewText}
+                              >
+                                “{review}”
+                              </p>
+                            </div>
+                          ) : (
+                            <div
+                              style={styles.noReview}
+                            >
+                              {copy.review}: {copy.unrated}
+                            </div>
+                          )}
+
+                          <span
+                            style={styles.ratedAt}
+                          >
+                            {date(tripDate, language)}
+                          </span>
+                        </article>
+                      );
+                    })}
+                </div>
+              ) : (
+                <div
+                  style={styles.empty}
+                >
+                  <CheckCircle2 size={26} />
+                  <h3
+                    style={styles.emptyTitle}
+                  >
+                    {copy.noReviews}
+                  </h3>
+                  <p
+                    style={styles.emptyText}
+                  >
+                    {copy.noReviewsText}
+                  </p>
+                </div>
+              )}
             </section>
 
             <section
@@ -1661,6 +1971,146 @@ const styles = {
       "4px 0 0",
     color:
       "#75837a",
+  },
+
+  ratingsSection: {
+    marginTop: "18px",
+    padding: "18px",
+    borderRadius: "18px",
+    border: "1px solid #e1e9e4",
+    background: "#ffffff",
+    boxShadow: "0 10px 26px rgba(26,72,45,0.04)",
+  },
+
+  ratingSummary: {
+    display: "flex",
+    alignItems: "center",
+    gap: "9px",
+    padding: "8px 11px",
+    borderRadius: "12px",
+    background: "#fff8e8",
+    border: "1px solid #f1dfae",
+  },
+
+  ratingSummaryValue: {
+    color: "#9b6a12",
+    fontSize: "17px",
+    lineHeight: 1,
+  },
+
+  ratingSummaryCount: {
+    color: "#826f4a",
+    fontSize: "8px",
+    fontWeight: 800,
+  },
+
+  ratingsLoading: {
+    minHeight: "120px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "8px",
+    borderRadius: "14px",
+    border: "1px dashed #d9e4dc",
+    background: "#fbfdfb",
+    color: "#718078",
+    fontSize: "9px",
+  },
+
+  ratingsList: {
+    display: "grid",
+    gap: "10px",
+  },
+
+  ratingCard: {
+    padding: "14px",
+    borderRadius: "15px",
+    border: "1px solid #e4ebe6",
+    background: "linear-gradient(180deg,#ffffff 0%,#fbfdfb 100%)",
+  },
+
+  ratingCardTop: {
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: "12px",
+  },
+
+  ratingJobTitle: {
+    display: "block",
+    color: "#294233",
+    fontSize: "12px",
+  },
+
+  ratingJobMeta: {
+    display: "block",
+    marginTop: "4px",
+    color: "#7a887f",
+    fontSize: "8px",
+  },
+
+  ratingStars: {
+    color: "#d59620",
+    fontSize: "15px",
+    letterSpacing: "1px",
+    whiteSpace: "nowrap",
+  },
+
+  ratingNumber: {
+    marginLeft: "6px",
+    color: "#806b40",
+    fontSize: "9px",
+    fontWeight: 800,
+    letterSpacing: "normal",
+  },
+
+  ratingDetails: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4,minmax(0,1fr))",
+    gap: "8px",
+    marginTop: "12px",
+    paddingTop: "10px",
+    borderTop: "1px solid #edf1ee",
+    color: "#64736a",
+    fontSize: "8px",
+  },
+
+  reviewBox: {
+    marginTop: "10px",
+    padding: "9px 10px",
+    borderRadius: "11px",
+    background: "#f6faf7",
+    border: "1px solid #e1ebe4",
+  },
+
+  reviewLabel: {
+    display: "block",
+    color: "#5c7465",
+    fontSize: "7px",
+    fontWeight: 800,
+    textTransform: "uppercase",
+    letterSpacing: "0.1em",
+  },
+
+  reviewText: {
+    margin: "4px 0 0",
+    color: "#42574a",
+    fontSize: "9px",
+    lineHeight: 1.5,
+  },
+
+  noReview: {
+    marginTop: "10px",
+    color: "#8a958e",
+    fontSize: "8px",
+    fontStyle: "italic",
+  },
+
+  ratedAt: {
+    display: "block",
+    marginTop: "8px",
+    color: "#95a098",
+    fontSize: "7px",
   },
 
   tableSection: {

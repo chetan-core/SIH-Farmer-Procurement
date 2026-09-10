@@ -122,6 +122,32 @@ function fmtDate(v, language="en") { if (!dateOk(v)) return "—"; return new Da
 function fmtDateTime(v, language="en") { if (!v) return "—"; const d = new Date(v); return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString(language === "hi" ? "hi-IN" : language === "te" ? "te-IN" : "en-IN", {day:"numeric",month:"short",hour:"numeric",minute:"2-digit"}); }
 function statusLabel(status, language) { const s = clean(status).toUpperCase(); return LABELS[language]?.[s] || LABELS.en[s] || s || "Transport update"; }
 function statusMessage(status, language) { const s = clean(status).toUpperCase(); return MESSAGES[language]?.[s] || MESSAGES.en[s] || "Transport request updated."; }
+function fareDisplay(request, language) {
+  const finalFare = Number(request?.final_fare ?? request?.actual_fare);
+  if (Number.isFinite(finalFare) && finalFare > 0) {
+    return {
+      amount: `₹${finalFare.toLocaleString("en-IN")}`,
+      label: tx(language, "Final fare", "अंतिम किराया", "తుది ఛార్జీ"),
+      note: tx(language, "Final fare recorded", "अंतिम किराया दर्ज है", "తుది ఛార్జీ నమోదు అయింది"),
+      confirmed: true,
+    };
+  }
+  const estimatedFare = Number(request?.estimated_fare);
+  if (Number.isFinite(estimatedFare) && estimatedFare > 0) {
+    return {
+      amount: `₹${estimatedFare.toLocaleString("en-IN")}`,
+      label: tx(language, "Estimated fare", "अनुमानित किराया", "అంచనా ఛార్జీ"),
+      note: tx(language, "Only an estimate — not the final payable amount", "यह केवल अनुमान है — अंतिम भुगतान राशि नहीं", "ఇది కేవలం అంచనా — తుది చెల్లింపు మొత్తం కాదు"),
+      confirmed: false,
+    };
+  }
+  return {
+    amount: tx(language, "To be agreed", "तय किया जाना है", "నిర్ణయించాల్సి ఉంది"),
+    label: tx(language, "Fare", "किराया", "ఛార్జీ"),
+    note: tx(language, "No fare has been fixed yet. The transporter must confirm a positive final fare before completion.", "अभी किराया तय नहीं हुआ है। यात्रा पूरी करने से पहले ट्रांसपोर्टर को सकारात्मक अंतिम किराया तय करना होगा।", "ఇంకా ఛార్జీ నిర్ణయించలేదు. ట్రిప్ పూర్తి చేసే ముందు ట్రాన్స్‌పోర్టర్ సానుకూల తుది ఛార్జీని నిర్ధారించాలి."),
+    confirmed: false,
+  };
+}
 function statusIcon(status) { return ({REQUESTED:Search,ASSIGNED:UserRound,EN_ROUTE_TO_FARMER:Navigation,CROP_PICKED_UP:Package,EN_ROUTE_TO_CENTER:Route,DELIVERED:CheckCircle2,COMPLETED:ShieldCheck,CANCELLED:X}[status] || Truck); }
 function cropLabel(crop, crops, language) {
   const map = {wheat:tx(language,"Wheat","गेहूं","గోధుమ"),paddy:tx(language,"Paddy","धान","వరి"),maize:tx(language,"Maize","मक्का","మొక్కజొన్న"),cotton:tx(language,"Cotton","कपास","పత్తి"),sugarcane:tx(language,"Sugarcane","गन्ना","చెరకు"),soybean:tx(language,"Soybean","सोयाबीन","సోయాబీన్")};
@@ -155,6 +181,7 @@ export default function FarmerTransport() {
   const [editForm,setEditForm] = useState({quantityKg:"",pickupAddress:"",requestedDate:"",requestedSlotStart:"",requestedSlotEnd:"",pickupNote:"",notes:""});
   const [tracking,setTracking] = useState(null), [trackingLoading,setTrackingLoading] = useState(false);
   const [ratingValue,setRatingValue] = useState(0), [ratingReview,setRatingReview] = useState(""), [ratingSaving,setRatingSaving] = useState(false), [rated,setRated] = useState(false);
+  const [transportPayment,setTransportPayment] = useState(null), [paymentMethod,setPaymentMethod] = useState("UPI"), [paymentReference,setPaymentReference] = useState(""), [paymentSaving,setPaymentSaving] = useState(false);
   const [form,setForm] = useState({bookingId:"",timingMode:"scheduled",crop:"",quantityKg:"",centerId:"",pickupAddress:"",pickupLat:"",pickupLng:"",pickupNote:"",requestedDate:today(),requestedSlotStart:"",requestedSlotEnd:"",estimatedFare:"",notes:""});
   const crops = useMemo(() => Array.isArray(appState?.crops)&&appState.crops.length ? appState.crops : cropsFallback,[appState?.crops]);
   const activeBookings = useMemo(() => bookings.filter(b=>BOOKING_OK.has(String(b.status||"").toUpperCase())),[bookings]);
@@ -228,7 +255,7 @@ export default function FarmerTransport() {
   useEffect(()=>{const id=clean(params.get("booking"));if(!id||!bookings.length)return;const b=bookings.find(x=>String(x.id)===id);if(!b)return;setForm(x=>({...x,bookingId:String(b.id),crop:b.crop||x.crop,quantityKg:String(b.actual_quantity??b.estimated_quantity??x.quantityKg),centerId:String(b.center_id||x.centerId),requestedDate:dateOk(b.date)?b.date:x.requestedDate,requestedSlotStart:b.slot_start||x.requestedSlotStart,requestedSlotEnd:b.slot_end||x.requestedSlotEnd}));setParams(x=>{x.delete("booking");return x;},{replace:true});},[bookings,params,setParams]);
   useEffect(()=>{if(!selected?.id)return;const t=setInterval(()=>{detail(selected.id,true);loadAll(true);},5000);return()=>clearInterval(t);},[detail,loadAll,selected?.id]);
   useEffect(()=>{if(selected?.id)setTab("status");},[selected?.id]);
-  useEffect(()=>{setTracking(null);setRated(false);setRatingValue(0);setRatingReview("");},[selected?.id]);
+  useEffect(()=>{setTracking(null);setRated(false);setRatingValue(0);setRatingReview("");setTransportPayment(null);setPaymentMethod("UPI");setPaymentReference("");},[selected?.id]);
   const loadTracking = useCallback(async(silent=true)=>{
     if(!selected?.id || !selected?.transporter_id){setTracking(null);return;}
     if(!silent)setTrackingLoading(true);
@@ -237,7 +264,19 @@ export default function FarmerTransport() {
     finally{if(!silent)setTrackingLoading(false);}
   },[api,language,selected?.id,selected?.transporter_id]);
 
+  const loadTransportPayment = useCallback(async(silent=true)=>{
+    if(!selected?.id || String(selected.status||"").toUpperCase()!=="COMPLETED"){setTransportPayment(null);return;}
+    try{
+      const d=await api(`/transport/requests/${encodeURIComponent(selected.id)}/payment`);
+      setTransportPayment(d.payment||null);
+    }catch(err){
+      if(!silent)setError(err.message||tx(language,"Unable to load transport payment.","परिवहन भुगतान लोड नहीं हो सका।","రవాణా చెల్లింపు లోడ్ కాలేదు."));
+    }
+  },[api,language,selected?.id,selected?.status]);
+
   useEffect(()=>{if(!selected?.id||!selected?.transporter_id||!['ASSIGNED','EN_ROUTE_TO_FARMER','CROP_PICKED_UP','EN_ROUTE_TO_CENTER','DELIVERED'].includes(String(selected.status||"").toUpperCase())){setTracking(null);return;}loadTracking(true);const t=setInterval(()=>loadTracking(true),5000);return()=>clearInterval(t);},[loadTracking,selected?.id,selected?.status,selected?.transporter_id]);
+
+  useEffect(()=>{if(String(selected?.status||"").toUpperCase()!=="COMPLETED"){setTransportPayment(null);return;}loadTransportPayment(true);const t=setInterval(()=>loadTransportPayment(true),8000);return()=>clearInterval(t);},[loadTransportPayment,selected?.id,selected?.status]);
 
   const chooseBooking = useCallback(id=>{const b=activeBookings.find(x=>String(x.id)===String(id));if(!b){setForm(x=>({...x,bookingId:""}));return;}setForm(x=>({...x,bookingId:String(b.id),crop:b.crop||x.crop,quantityKg:String(b.actual_quantity??b.estimated_quantity??""),centerId:String(b.center_id||""),requestedDate:dateOk(b.date)?b.date:today(),requestedSlotStart:b.slot_start||"",requestedSlotEnd:b.slot_end||""}));setInfo(tx(language,"Booking details copied into transport request.","बुकिंग विवरण परिवहन रिक्वेस्ट में कॉपी हो गया।","బుకింగ్ వివరాలు రవాణా అభ్యర్థనలోకి కాపీ అయ్యాయి."));},[activeBookings,language]);
 
@@ -255,6 +294,7 @@ export default function FarmerTransport() {
   const maps = useCallback((lat,lng,address="")=>{const q=Number.isFinite(Number(lat))&&Number.isFinite(Number(lng))?`${lat},${lng}`:address;if(q)window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`,"_blank","noopener,noreferrer");},[]);
 
   const canEdit = useCallback(r=>["REQUESTED","ASSIGNED"].includes(String(r?.status||"").toUpperCase()),[]);
+  const canCancel = useCallback(r=>["REQUESTED","ASSIGNED","EN_ROUTE_TO_FARMER"].includes(String(r?.status||"").toUpperCase()),[]);
 
   const beginEdit = useCallback(r=>{
     if(!r || !canEdit(r)) return;
@@ -307,12 +347,51 @@ export default function FarmerTransport() {
   },[distanceKm,selected?.status]);
 
   const submitRating = useCallback(async()=>{
-    if(!selected?.id || ratingValue<1) return;
+    if(!selected?.id || ratingValue<1 || !farmer?.id) return;
     setRatingSaving(true);setError("");
-    try{const d=await api(`/transport/requests/${encodeURIComponent(selected.id)}/rating`,{method:"POST",body:JSON.stringify({rating:ratingValue,review:clean(ratingReview)})});setRated(true);setSuccess(d.message||tx(language,"Thanks for rating your transporter.","ट्रांसपोर्टर को रेट करने के लिए धन्यवाद।","ట్రాన్స్‌పోర్టర్‌కు రేటింగ్ ఇచ్చినందుకు ధన్యవాదాలు."));}
-    catch(err){setError(err.message||tx(language,"Unable to save the rating.","रेटिंग सेव नहीं हो सकी।","రేటింగ్ సేవ్ చేయలేకపోయాము."));}
+    try{
+      const d=await api(`/transport/requests/${encodeURIComponent(selected.id)}/rating`,{
+        method:"POST",
+        body:JSON.stringify({
+          farmerId:farmer.id,
+          phone:farmer.phone||"",
+          rating:ratingValue,
+          review:clean(ratingReview)
+        })
+      });
+      setRated(true);
+      setSuccess(d.message||tx(language,"Thanks for rating your transporter.","ट्रांसपोर्टर को रेट करने के लिए धन्यवाद।","ట్రాన్స్‌పోర్టర్‌కు రేటింగ్ ఇచ్చినందుకు ధన్యవాదాలు."));
+    }catch(err){setError(err.message||tx(language,"Unable to save the rating.","रेटिंग सेव नहीं हो सकी।","రేటింగ్ సేవ్ కాలేదు."));}
     finally{setRatingSaving(false);}
-  },[api,language,ratingReview,ratingValue,selected?.id]);
+  },[api,farmer?.id,farmer?.phone,language,ratingReview,ratingValue,selected?.id]);
+
+  const submitTransportPayment = useCallback(async()=>{
+    if(!selected?.id || String(selected.status||"").toUpperCase()!=="COMPLETED") return;
+    const method=clean(paymentMethod).toUpperCase();
+    const reference=clean(paymentReference);
+    if(!["UPI","BANK_TRANSFER","CASH"].includes(method)){
+      setError(tx(language,"Choose a payment method.","भुगतान का तरीका चुनें।","చెల్లింపు విధానాన్ని ఎంచుకోండి."));
+      return;
+    }
+    if(method!=="CASH" && !reference){
+      setError(tx(language,"Enter the payment reference for a digital payment.","डिजिटल भुगतान के लिए पेमेंट रेफरेंस दर्ज करें।","డిజిటల్ చెల్లింపుకు రిఫరెన్స్ నమోదు చేయండి."));
+      return;
+    }
+    setPaymentSaving(true);setError("");
+    try{
+      const d=await api(`/transport/requests/${encodeURIComponent(selected.id)}/payment`,{
+        method:"POST",
+        body:JSON.stringify({farmerId:farmer?.id||"",phone:farmer?.phone||"",method,reference})
+      });
+      setTransportPayment(d.payment||null);
+      setPaymentReference("");
+      setSuccess(d.message||tx(language,"Transport fare payment recorded successfully.","परिवहन किराया भुगतान सफलतापूर्वक दर्ज हो गया।","రవాణా ఛార్జీ చెల్లింపు విజయవంతంగా నమోదు అయింది."));
+      await loadAll(true);
+      await detail(selected.id,true);
+      await loadTransportPayment(true);
+    }catch(err){setError(err.message||tx(language,"Unable to record the transport payment.","परिवहन भुगतान दर्ज नहीं हो सका।","రవాణా చెల్లింపు నమోదు కాలేదు."));}
+    finally{setPaymentSaving(false);}
+  },[api,detail,farmer?.id,farmer?.phone,language,loadAll,loadTransportPayment,paymentMethod,paymentReference,selected?.id,selected?.status]);
 
   const clearForm = useCallback(()=>{skipDraftSaveRef.current=true;clearDraft();setForm({bookingId:"",timingMode:"scheduled",crop:farmer?.primaryCrop||farmer?.primary_crop||"",quantityKg:"",centerId:farmer?.preferredCenterId||farmer?.preferred_center_id||centers[0]?.id||"",pickupAddress:"",pickupLat:"",pickupLng:"",pickupNote:"",requestedDate:today(),requestedSlotStart:"",requestedSlotEnd:"",estimatedFare:"",notes:""});setRestored(false);setError("");setInfo("");},[centers,farmer?.preferredCenterId,farmer?.preferred_center_id,farmer?.primaryCrop,farmer?.primary_crop]);
 
@@ -330,14 +409,29 @@ export default function FarmerTransport() {
         <div className="ft-section"><div className="ft-sec-title"><b>03</b><div><strong>{tx(language,"Destination","गंतव्य","గమ్యం")}</strong><span>{tx(language,"Where the crop will be delivered","फसल कहाँ पहुंचेगी","పంట ఎక్కడికి చేరాలి")}</span></div></div><label className="ft-field"><span>{tx(language,"Procurement center","खरीद केंद्र","కొనుగోలు కేంద్రం")}</span><div className="ft-icon-input"><MapPin size={16}/><select value={form.centerId} onChange={e=>setField("centerId",e.target.value)}><option value="">{tx(language,"Select center","केंद्र चुनें","కేంద్రాన్ని ఎంచుకోండి")}</option>{centers.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div></label>{center&&<div className="ft-destination"><MapPin size={18}/><div><b>{center.name}</b><span>{center.address||"—"}</span></div><button type="button" onClick={()=>maps(null,null,center.address||center.name)}><Navigation size={14}/>Map</button></div>}</div>
         <div className="ft-section"><div className="ft-sec-title"><b>04</b><div><strong>{tx(language,"Pickup location","पिकअप स्थान","పికప్ ప్రదేశం")}</strong><span>{tx(language,"Where the vehicle should collect the crop","जहां से फसल उठानी है","వాహనం పంటను తీసుకోవాల్సిన ప్రదేశం")}</span></div></div><label className="ft-field"><span>{tx(language,"Pickup address","पिकअप पता","పికప్ చిరునామా")}</span><textarea rows="3" value={form.pickupAddress} onChange={e=>setField("pickupAddress",e.target.value)} placeholder={tx(language,"Farm / village / road / landmark","खेत / गांव / सड़क / लैंडमार्क","పొలం / గ్రామం / రోడ్ / ల్యాండ్‌మార్క్")}/></label><div className="ft-loc-actions"><button type="button" className="ft-btn ft-light" onClick={locate}><Crosshair size={16}/>{tx(language,"Use my location","मेरी लोकेशन लें","నా లొకేషన్ ఉపయోగించండి")}</button><button type="button" className={`ft-gps ${pickupReady?"ready":""}`} onClick={()=>setLocationOpen(x=>!x)}><LocateFixed size={16}/>{pickupReady?`${Number(form.pickupLat).toFixed(5)}, ${Number(form.pickupLng).toFixed(5)}`:tx(language,"GPS optional","GPS वैकल्पिक","GPS ఐచ్ఛికం")}<ChevronDown size={14}/></button></div>{locationOpen&&<div className="ft-gps-box"><div className="ft-two"><label className="ft-field"><span>Latitude</span><input value={form.pickupLat} onChange={e=>setField("pickupLat",e.target.value)}/></label><label className="ft-field"><span>Longitude</span><input value={form.pickupLng} onChange={e=>setField("pickupLng",e.target.value)}/></label></div>{pickupReady&&<button type="button" className="ft-link-btn" onClick={()=>maps(form.pickupLat,form.pickupLng)}><Navigation size={14}/>Open pickup in Maps</button>}</div>}<label className="ft-field"><span>{tx(language,"Pickup note","पिकअप नोट","పికప్ నోట్")}</span><input value={form.pickupNote} onChange={e=>setField("pickupNote",e.target.value)} placeholder={tx(language,"Gate / landmark / loading note","गेट / लैंडमार्क / लोडिंग नोट","గేట్ / ల్యాండ్‌మార్క్ / లోడింగ్ నోట్")}/></label></div>
         <div className="ft-section"><div className="ft-sec-title"><b>05</b><div><strong>{tx(language,"Timing","समय","సమయం")}</strong><span>{tx(language,"Scheduled or ASAP","शेड्यूल या जल्द से जल्द","షెడ్యూల్ లేదా వీలైనంత త్వరగా")}</span></div></div><div className="ft-toggle"><button type="button" className={form.timingMode==="scheduled"?"sel":""} onClick={()=>setField("timingMode","scheduled")}><CalendarDays size={15}/>Schedule</button><button type="button" className={form.timingMode==="asap"?"sel":""} onClick={()=>setField("timingMode","asap")}><Zap size={15}/>ASAP</button></div>{form.timingMode==="scheduled"&&<><div className="ft-two"><label className="ft-field"><span>{tx(language,"Pickup date","पिकअप तारीख","పికప్ తేదీ")}</span><div className="ft-icon-input"><CalendarDays size={16}/><input type="date" min={today()} max={maxDate()} value={form.requestedDate} onChange={e=>setField("requestedDate",e.target.value)}/></div></label><div className="ft-field"><span>{tx(language,"Pickup window","पिकअप विंडो","పికప్ విండో")}</span><div className="ft-time"><label><Clock3 size={15}/><input value={form.requestedSlotStart} onChange={e=>setField("requestedSlotStart",e.target.value)} placeholder="08:00"/></label><b>—</b><label><Clock3 size={15}/><input value={form.requestedSlotEnd} onChange={e=>setField("requestedSlotEnd",e.target.value)} placeholder="08:30"/></label></div></div></div>{slotOptions.length>0&&<div className="ft-slots">{slotOptions.slice(0,10).map(s=><button type="button" key={s.start} className={form.requestedSlotStart===s.start&&form.requestedSlotEnd===s.end?"sel":""} onClick={()=>{setField("requestedSlotStart",s.start);setField("requestedSlotEnd",s.end);}}>{fmtTime(s.start)} – {fmtTime(s.end)}</button>)}</div>}</>}</div>
-        <div className="ft-section"><div className="ft-sec-title"><b>06</b><div><strong>{tx(language,"Trip details","यात्रा विवरण","ట్రిప్ వివరాలు")}</strong><span>{tx(language,"Optional dispatch notes","वैकल्पिक डिस्पैच जानकारी","ఐచ్ఛిక డిస్పాచ్ సమాచారం")}</span></div></div><div className="ft-two"><label className="ft-field"><span>{tx(language,"Estimated fare","अनुमानित किराया","అంచనా ఛార్జీ")}</span><div className="ft-suffix"><input inputMode="decimal" value={form.estimatedFare} onChange={e=>setField("estimatedFare",e.target.value.replace(/[^0-9.]/g,""))} placeholder="Optional"/><b>₹</b></div></label><label className="ft-field"><span>{tx(language,"Extra notes","अतिरिक्त नोट","అదనపు నోట్")}</span><input value={form.notes} onChange={e=>setField("notes",e.target.value)} placeholder={tx(language,"Special handling request","विशेष हैंडलिंग","ప్రత్యేక హ్యాండ్లింగ్")}/></label></div></div>
+        <div className="ft-section"><div className="ft-sec-title"><b>06</b><div><strong>{tx(language,"Trip details","यात्रा विवरण","ట్రిప్ వివరాలు")}</strong><span>{tx(language,"Optional dispatch notes","वैकल्पिक डिस्पैच जानकारी","ఐచ్ఛిక డిస్పాచ్ సమాచారం")}</span></div></div><div className="ft-two"><label className="ft-field ft-fare-input"><span>{tx(language,"Estimated fare (optional)","अनुमानित किराया (वैकल्पिक)","అంచనా ఛార్జీ (ఐచ్ఛికం)")}</span><div className="ft-suffix"><input inputMode="decimal" min="0" value={form.estimatedFare} onChange={e=>setField("estimatedFare",e.target.value.replace(/[^0-9.]/g,""))} placeholder={tx(language,"Leave blank if unknown","पता न हो तो खाली छोड़ें","తెలియకపోతే ఖాళీగా ఉంచండి")}/><b>₹</b></div><small className="ft-field-help">{tx(language,"Enter 0 or leave blank when you do not know the cost. This is only an estimate; the transporter must confirm the final fare later.","लागत पता न हो तो 0 या खाली छोड़ें। यह केवल अनुमान है; अंतिम किराया बाद में ट्रांसपोर्टर तय करेगा।","ధర తెలియకపోతే 0 లేదా ఖాళీగా ఉంచండి. ఇది కేవలం అంచనా; తుది ఛార్జీని తర్వాత ట్రాన్స్‌పోర్టర్ నిర్ధారించాలి.")}</small></label><label className="ft-field"><span>{tx(language,"Extra notes","अतिरिक्त नोट","అదనపు నోట్")}</span><input value={form.notes} onChange={e=>setField("notes",e.target.value)} placeholder={tx(language,"Special handling request","विशेष हैंडलिंग","ప్రత్యేక హ్యాండ్లింగ్")}/></label></div></div>
         <div className="ft-footer"><span><FileText size={15}/>{tx(language,"Draft saved automatically on this device","ड्राफ्ट इस डिवाइस पर अपने आप सेव होता है","డ్రాఫ్ట్ ఈ డివైస్‌లో ఆటోమేటిక్‌గా సేవ్ అవుతుంది")}</span><div><button className="ft-btn ft-light" type="button" onClick={clearForm}><X size={15}/>Clear</button><button className="ft-btn ft-primary" type="submit" disabled={submitting||!online}>{submitting?<LoaderCircle className="ft-spin" size={16}/>:<Truck size={16}/>} {submitting?"Creating…":tx(language,"Request transport","परिवहन रिक्वेस्ट करें","రవాణా అభ్యర్థించండి")} {!submitting&&<ArrowRight size={16}/>}</button></div></div>
       </form>}
 
-      {tab==="status"&&<section className="ft-card ft-status">{!selected?<div className="ft-empty"><Truck size={30}/><h2>{tx(language,"No transport request selected","कोई परिवहन रिक्वेस्ट नहीं चुनी गई","రవాణా అభ్యర్థన ఎంచుకోలేదు")}</h2><p>{tx(language,"Create a request or select one from the list.","नई रिक्वेस्ट बनाएं या सूची से चुनें।","కొత్త అభ్యర్థనను సృష్టించండి లేదా జాబితా నుంచి ఎంచుకోండి.")}</p><button className="ft-btn ft-primary" type="button" onClick={()=>setTab("request")}><Truck size={16}/>Request vehicle</button></div>:<><div className="ft-card-head"><div><span>TRANSPORT REQUEST</span><button className="ft-id" type="button" onClick={copyId}><Copy size={13}/>{copied?"Copied":selected.id}</button><h2>{statusLabel(selected.status,language)}</h2><p>{statusMessage(selected.status,language)}</p></div><div className={`ft-status status-${String(selected.status).toLowerCase()}`}>{(()=>{const I=statusIcon(selected.status);return <I size={15}/>})()}{statusLabel(selected.status,language)}</div></div><div className="ft-actions"><button className="ft-btn ft-light" type="button" onClick={()=>detail(selected.id,false)} disabled={refreshing}><RefreshCw className={refreshing?"ft-spin":""} size={15}/>Refresh</button><button className="ft-btn ft-light" type="button" onClick={share}><Share2 size={15}/>Share</button><button className="ft-btn ft-light" type="button" onClick={()=>maps(selected.pickup_lat,selected.pickup_lng,selected.pickup_address)}><Navigation size={15}/>Pickup map</button>{canEdit(selected)&&<button className="ft-btn ft-light" type="button" onClick={()=>beginEdit(selected)}><Pencil size={15}/>Edit</button>}{!CLOSED.has(String(selected.status||"").toUpperCase())&&<button className="ft-btn ft-danger" type="button" onClick={()=>setCancelTarget(selected)}><X size={15}/>Cancel</button>}</div><div className="ft-summary"><div><small>Crop</small><b>{cropLabel(selected.crop,crops,language)}</b></div><div><small>Quantity</small><b>{Number(selected.quantity_kg||0).toLocaleString("en-IN")} kg</b></div><div><small>Center</small><b>{selected.center_name||selected.center_id||"—"}</b></div><div><small>Pickup</small><b>{selected.pickup_address||"—"}</b></div></div>{selected.requested_date&&<div className="ft-schedule"><CalendarDays size={16}/><b>{fmtDate(selected.requested_date,language)}</b><Clock3 size={16}/><b>{selected.requested_slot_start&&selected.requested_slot_end?`${fmtTime(selected.requested_slot_start)} – ${fmtTime(selected.requested_slot_end)}`:"Flexible"}</b></div>}<div className="ft-timeline">{FLOW.map((s,i)=>{const I=statusIcon(s),hit=rank>=i,current=selected.status===s,ev=[...events].reverse().find(x=>String(x.status||"").toUpperCase()===s);return <div className={`ft-tline ${hit?"hit":""} ${current?"current":""}`} key={s}><div className="ft-ticon"><I size={14}/></div><div><b>{statusLabel(s,language)}</b><span>{fmtDateTime(ev?.created_at||selected.created_at,language)}</span>{ev?.note&&<small>{ev.note}</small>}</div></div>})}{selected.status==="CANCELLED"&&<div className="ft-tline cancelled"><div className="ft-ticon"><X size={14}/></div><div><b>{statusLabel("CANCELLED",language)}</b><span>{fmtDateTime(selected.updated_at,language)}</span></div></div>}</div>{selected.transporter_id&&<div className="ft-transport-stack">
+      {tab==="status"&&<section className="ft-card ft-status">{!selected?<div className="ft-empty"><Truck size={30}/><h2>{tx(language,"No transport request selected","कोई परिवहन रिक्वेस्ट नहीं चुनी गई","రవాణా అభ్యర్థన ఎంచుకోలేదు")}</h2><p>{tx(language,"Create a request or select one from the list.","नई रिक्वेस्ट बनाएं या सूची से चुनें।","కొత్త అభ్యర్థనను సృష్టించండి లేదా జాబితా నుంచి ఎంచుకోండి.")}</p><button className="ft-btn ft-primary" type="button" onClick={()=>setTab("request")}><Truck size={16}/>Request vehicle</button></div>:<><div className="ft-card-head"><div><span>TRANSPORT REQUEST</span><button className="ft-id" type="button" onClick={copyId}><Copy size={13}/>{copied?"Copied":selected.id}</button><h2>{statusLabel(selected.status,language)}</h2><p>{statusMessage(selected.status,language)}</p></div><div className={`ft-status status-${String(selected.status).toLowerCase()}`}>{(()=>{const I=statusIcon(selected.status);return <I size={15}/>})()}{statusLabel(selected.status,language)}</div></div><div className="ft-actions"><button className="ft-btn ft-light" type="button" onClick={()=>detail(selected.id,false)} disabled={refreshing}><RefreshCw className={refreshing?"ft-spin":""} size={15}/>Refresh</button><button className="ft-btn ft-light" type="button" onClick={share}><Share2 size={15}/>Share</button><button className="ft-btn ft-light" type="button" onClick={()=>maps(selected.pickup_lat,selected.pickup_lng,selected.pickup_address)}><Navigation size={15}/>Pickup map</button>{canEdit(selected)&&<button className="ft-btn ft-light" type="button" onClick={()=>beginEdit(selected)}><Pencil size={15}/>Edit</button>}{canCancel(selected)&&<button className="ft-btn ft-danger" type="button" onClick={()=>setCancelTarget(selected)}><X size={15}/>Cancel</button>}</div><div className="ft-summary"><div><small>Crop</small><b>{cropLabel(selected.crop,crops,language)}</b></div><div><small>Quantity</small><b>{Number(selected.quantity_kg||0).toLocaleString("en-IN")} kg</b></div><div><small>Center</small><b>{selected.center_name||selected.center_id||"—"}</b></div><div><small>Pickup</small><b>{selected.pickup_address||"—"}</b></div></div>{selected.requested_date&&<div className="ft-schedule"><CalendarDays size={16}/><b>{fmtDate(selected.requested_date,language)}</b><Clock3 size={16}/><b>{selected.requested_slot_start&&selected.requested_slot_end?`${fmtTime(selected.requested_slot_start)} – ${fmtTime(selected.requested_slot_end)}`:"Flexible"}</b></div>}{["ASSIGNED","EN_ROUTE_TO_FARMER"].includes(String(selected.status||"").toUpperCase())&&!(Number(selected.final_fare??selected.actual_fare)>0)&&<div className="ft-fare-notice"><Info size={16}/><div><b>{tx(language,"Fare not fixed yet","किराया अभी तय नहीं हुआ है","ఛార్జీ ఇంకా నిర్ణయించలేదు")}</b><span>{tx(language,"The transporter has accepted the request, but no positive final fare is recorded yet. You can cancel before the crop is picked up if the fare is not acceptable.","ट्रांसपोर्टर ने रिक्वेस्ट स्वीकार कर ली है, लेकिन अभी सकारात्मक अंतिम किराया दर्ज नहीं है। फसल उठाए जाने से पहले किराया स्वीकार्य न होने पर आप रद्द कर सकते हैं।","ట్రాన్స్‌పోర్టర్ అభ్యర్థనను అంగీకరించారు, కానీ ఇంకా సానుకూల తుది ఛార్జీ నమోదు కాలేదు. పంట తీసుకునే ముందు ఛార్జీ సరిపోకపోతే మీరు రద్దు చేయవచ్చు.")}</span></div></div>}<div className="ft-timeline">{FLOW.map((s,i)=>{const I=statusIcon(s),hit=rank>=i,current=selected.status===s,ev=[...events].reverse().find(x=>String(x.status||"").toUpperCase()===s);return <div className={`ft-tline ${hit?"hit":""} ${current?"current":""}`} key={s}><div className="ft-ticon"><I size={14}/></div><div><b>{statusLabel(s,language)}</b><span>{fmtDateTime(ev?.created_at||selected.created_at,language)}</span>{ev?.note&&<small>{ev.note}</small>}</div></div>})}{selected.status==="CANCELLED"&&<div className="ft-tline cancelled"><div className="ft-ticon"><X size={14}/></div><div><b>{statusLabel("CANCELLED",language)}</b><span>{fmtDateTime(selected.updated_at,language)}</span></div></div>}</div>{selected.transporter_id&&<div className="ft-transport-stack">
   <div className="ft-transporter"><div className="ft-avatar"><Truck size={22}/></div><div><small>YOUR TRANSPORTER</small><h3>{selected.transporter_name||"Transporter"}</h3><p>{selected.transporter_vehicle_type||"Vehicle"}{selected.transporter_vehicle_number?` · ${selected.transporter_vehicle_number}`:""}{selected.transporter_capacity_kg?` · ${Number(selected.transporter_capacity_kg).toLocaleString("en-IN")} kg`:""}</p><div className="ft-contacts">{selected.transporter_phone&&<a href={`tel:${selected.transporter_phone}`}><Phone size={13}/>{selected.transporter_phone}</a>}{Number.isFinite(Number(selected.transporter_lat))&&<button type="button" onClick={()=>maps(selected.transporter_lat,selected.transporter_lng)}><Navigation size={13}/>Map</button>}</div></div><span className={`ft-live ${tracking?.isOnline===false?"offline":""}`}><i/>{tracking?.isOnline===false?"Offline":"Online"}</span></div>
   {['ASSIGNED','EN_ROUTE_TO_FARMER','CROP_PICKED_UP','EN_ROUTE_TO_CENTER','DELIVERED'].includes(String(selected.status||"").toUpperCase())&&<div className="ft-tracking-card"><div className="ft-tracking-head"><div><small>LIVE JOURNEY</small><h3>{tx(language,"Vehicle tracking","वाहन ट्रैकिंग","వాహన ట్రాకింగ్")}</h3><p>{tracking?.isOnline===false?tx(language,"The vehicle is offline. Showing the last known location.","वाहन ऑफलाइन है। अंतिम ज्ञात लोकेशन दिखाई जा रही है।","వాహనం ఆఫ్‌లైన్‌లో ఉంది. చివరి తెలిసిన లొకేషన్ చూపుతోంది."):tx(language,"Location refreshes automatically while the trip is active.","यात्रा के दौरान लोकेशन अपने आप अपडेट होती है।","ప్రయాణం యాక్టివ్‌గా ఉన్నప్పుడు లొకేషన్ ఆటోమేటిక్‌గా అప్డేట్ అవుతుంది.")}</p></div><button type="button" className="ft-btn ft-light" onClick={()=>loadTracking(false)} disabled={trackingLoading}><RefreshCw className={trackingLoading?"ft-spin":""} size={14}/>Refresh</button></div><div className="ft-route"><div className="ft-route-point"><span className="farm"/><div><b>Pickup</b><small>{tracking?.pickupAddress||selected.pickup_address||"—"}</small></div></div><div className="ft-route-line"><span className="ft-truck-pin"><Truck size={16}/></span></div><div className="ft-route-point"><span className="center"/><div><b>Procurement center</b><small>{tracking?.centerName||selected.center_name||selected.center_id||"—"}</small></div></div></div><div className="ft-live-stats"><div><small>LAST SEEN</small><b>{tracking?.locationUpdatedAt?fmtDateTime(tracking.locationUpdatedAt,language):"—"}</b></div><div><small>EST. ETA</small><b>{etaMinutes==null?"—":`~${etaMinutes} min`}</b></div><div><small>DISTANCE</small><b>{distanceKm==null?"—":`${distanceKm.toFixed(1)} km`}</b></div></div>{tracking?.lat!=null&&tracking?.lng!=null&&<button type="button" className="ft-link-btn" onClick={()=>maps(tracking.lat,tracking.lng)}><Navigation size={14}/>Open current vehicle location</button>}</div>}
-  <div className="ft-fare"><div><small>TRANSPARENT FARE</small><h3>₹{Number(selected.final_fare??selected.actual_fare??selected.estimated_fare??0).toLocaleString("en-IN")}</h3><p>{selected.final_fare!=null||selected.actual_fare!=null?"Final fare recorded":"Estimated transport cost"}</p></div><div className="ft-fare-grid"><span>Distance</span><b>{distanceKm==null?"—":`${distanceKm.toFixed(1)} km`}</b><span>Status</span><b>{statusLabel(selected.status,language)}</b></div></div>
+  <div className={`ft-fare ${fareDisplay(selected,language).confirmed?"confirmed":"pending"}`}><div><small>{fareDisplay(selected,language).label.toUpperCase()}</small><h3>{fareDisplay(selected,language).amount}</h3><p>{fareDisplay(selected,language).note}</p></div><div className="ft-fare-grid"><span>Distance</span><b>{distanceKm==null?"—":`${distanceKm.toFixed(1)} km`}</b><span>Status</span><b>{statusLabel(selected.status,language)}</b></div></div>
+  {String(selected.status||"").toUpperCase()==="COMPLETED"&&<div className={`ft-payment ${String(transportPayment?.status||"UNPAID").toUpperCase()==="PAID"?"paid":"due"}`}>
+    <div className="ft-payment-head">
+      <div><small>TRANSPORT PAYMENT</small><h3>{tx(language,"Pay your transporter","ट्रांसपोर्टर को भुगतान करें","ట్రాన్స్‌పోర్టర్‌కు చెల్లించండి")}</h3><p>{transportPayment?.status==="PAID"?tx(language,"This transport fare has already been marked as paid.","इस परिवहन किराए का भुगतान दर्ज हो चुका है।","ఈ రవాణా ఛార్జీ ఇప్పటికే చెల్లించినట్లు నమోదు అయింది."):tx(language,"Payment is due for the completed transport trip.","पूरी हुई परिवहन यात्रा का भुगतान बाकी है।","పూర్తైన రవాణా ప్రయాణానికి చెల్లింపు చేయాలి.")}</p></div>
+      <strong>{fareDisplay(selected,language).amount}</strong>
+    </div>
+    {transportPayment?.status==="PAID"?<div className="ft-payment-done"><CheckCircle2 size={18}/><div><b>{tx(language,"Payment recorded","भुगतान दर्ज है","చెల్లింపు నమోదు అయింది")}</b><span>{transportPayment.method||"—"}{transportPayment.reference?` · ${transportPayment.reference}`:""}{transportPayment.paidAt?` · ${fmtDateTime(transportPayment.paidAt,language)}`:""}</span></div></div>:<div className="ft-payment-form">
+      <div className="ft-payment-methods">
+        <button type="button" className={paymentMethod==="UPI"?"sel":""} onClick={()=>setPaymentMethod("UPI")}><Zap size={14}/>UPI</button>
+        <button type="button" className={paymentMethod==="BANK_TRANSFER"?"sel":""} onClick={()=>setPaymentMethod("BANK_TRANSFER")}><Navigation size={14}/>{tx(language,"Bank transfer","बैंक ट्रांसफर","బ్యాంక్ ట్రాన్స్‌ఫర్")}</button>
+        <button type="button" className={paymentMethod==="CASH"?"sel":""} onClick={()=>setPaymentMethod("CASH")}><Package size={14}/>{tx(language,"Cash","नकद","నగదు")}</button>
+      </div>
+      {paymentMethod!=="CASH"&&<label className="ft-field"><span>{tx(language,"Payment reference","पेमेंट रेफरेंस","చెల్లింపు రిఫరెన్స్")}</span><input value={paymentReference} onChange={e=>setPaymentReference(e.target.value)} placeholder={tx(language,"UPI transaction ID / bank reference","UPI ट्रांजैक्शन ID / बैंक रेफरेंस","UPI ట్రాన్సాక్షన్ ID / బ్యాంక్ రిఫరెన్స్")}/></label>}
+      <button type="button" className="ft-btn ft-pay-button" onClick={submitTransportPayment} disabled={paymentSaving}><Check size={16}/>{paymentSaving?tx(language,"Recording payment…","भुगतान दर्ज हो रहा है…","చెల్లింపు నమోదు అవుతోంది…"):tx(language,"Mark transport fare as paid","परिवहन किराया भुगतान दर्ज करें","రవాణా ఛార్జీ చెల్లింపును నమోదు చేయండి")}</button>
+    </div>}
+  </div>}
   {String(selected.status||"").toUpperCase()==="COMPLETED"&&<div className="ft-rating">{rated?<><div className="ft-rating-done"><ShieldCheck size={20}/><div><b>{tx(language,"Rating saved","रेटिंग सेव हो गई","రేటింగ్ సేవ్ అయింది")}</b><span>{tx(language,"Thanks for helping improve the transporter network.","ट्रांसपोर्ट नेटवर्क बेहतर बनाने में मदद के लिए धन्यवाद।","ట్రాన్స్‌పోర్టర్ నెట్‌వర్క్‌ను మెరుగుపరచడంలో సహాయపడినందుకు ధన్యవాదాలు.")}</span></div></div></>:<><div><small>RATE YOUR TRANSPORTER</small><h3>{tx(language,"How was the trip?","यात्रा कैसी रही?","ప్రయాణం ఎలా ఉంది?")}</h3></div><div className="ft-stars">{[1,2,3,4,5].map(n=><button type="button" key={n} className={ratingValue>=n?"sel":""} onClick={()=>setRatingValue(n)} aria-label={`${n} stars`}><Star size={22} fill={ratingValue>=n?"currentColor":"none"}/></button>)}</div><textarea rows="2" value={ratingReview} onChange={e=>setRatingReview(e.target.value)} placeholder="Optional review"/><button type="button" className="ft-btn ft-primary" onClick={submitRating} disabled={ratingSaving||ratingValue<1}>{ratingSaving?<LoaderCircle className="ft-spin" size={15}/>:<Star size={15}/>} {ratingSaving?"Saving…":"Submit rating"}</button></>}</div>}
   {selected.status!=="COMPLETED"&&<div className="ft-report"><AlertTriangle size={17}/><div><b>{tx(language,"Need help with this trip?","इस यात्रा में मदद चाहिए?","ఈ ప్రయాణంలో సహాయం కావాలా?")}</b><span>{tx(language,"Contact the transporter or report a pickup / vehicle issue.","ट्रांसपोर्टर से संपर्क करें या पिकअप/वाहन समस्या बताएं।","ట్రాన్స్‌పోర్టర్‌ను సంప్రదించండి లేదా పికప్ / వాహన సమస్యను రిపోర్ట్ చేయండి.")}</span></div>{selected.transporter_phone&&<a href={`tel:${selected.transporter_phone}`}><Phone size={14}/>Call</a>}</div>}
 </div>}{selected.booking_id&&<div className="ft-linked"><div><small>LINKED BOOKING</small><b>{selected.booking_id}</b></div><Link to={`/farmer/token?booking=${encodeURIComponent(selected.booking_id)}`} className="ft-link">Open booking<ArrowRight size={14}/></Link></div>}{selected.status==="REQUESTED"&&<div className="ft-matches"><div className="ft-match-head"><div><small>SMART MATCHING</small><h3>{tx(language,"Eligible transporters","उपयुक्त ट्रांसपोर्टर","అర్హత ఉన్న ట్రాన్స్‌పోర్టర్లు")}</h3><p>{tx(language,"Ranked using vehicle capacity, distance and transporter history.","वाहन क्षमता, दूरी और इतिहास के आधार पर रैंक किए गए हैं।","వాహన సామర్థ్యం, దూరం మరియు చరిత్ర ఆధారంగా ర్యాంక్ చేస్తాము.")}</p></div><button className="ft-btn ft-light" type="button" onClick={refreshMatches} disabled={matchLoading}><RefreshCw className={matchLoading?"ft-spin":""} size={14}/>Find again</button></div>{matches.length?<div className="ft-match-list">{matches.slice(0,8).map((m,i)=><div className="ft-match" key={m.id||i}><b>#{i+1}</b><Truck size={17}/><div><strong>{m.name}</strong><span>{m.vehicle_type}{m.vehicle_number?` · ${m.vehicle_number}`:""}</span></div><div><strong>{m.distanceKm==null?"—":`${Number(m.distanceKm).toFixed(1)} km`}</strong><span>{Number(m.capacity_kg||0).toLocaleString("en-IN")} kg</span></div><em>★ {Number(m.rating||0).toFixed(1)}</em></div>)}</div>:<div className="ft-no-match"><Search size={18}/><span>{tx(language,"No eligible transporter is visible yet. Your request stays open for new online vehicles.","अभी कोई योग्य ट्रांसपोर्टर नहीं दिख रहा। रिक्वेस्ट नए ऑनलाइन वाहनों के लिए खुली है।","ఇంకా అర్హత ఉన్న ట్రాన్స్‌పోర్టర్ కనిపించలేదు. కొత్త ఆన్‌లైన్ వాహనాల కోసం అభ్యర్థన ఓపెన్‌లో ఉంది.")}</span></div>}</div>}</>}</section>}
@@ -355,4 +449,90 @@ const styles=`
 .ft-transport-stack{display:grid;gap:9px;margin:5px 26px 17px}.ft-transport-stack .ft-transporter{margin:0}.ft-tracking-card{border:1px solid #dce9df;border-radius:17px;background:#fbfefb;padding:16px}.ft-tracking-head{display:flex;justify-content:space-between;gap:12px;align-items:start}.ft-tracking-head h3{font-size:16px;margin:5px 0}.ft-tracking-head p{font-size:10px;margin:0;line-height:1.5}.ft-tracking-head small,.ft-fare small,.ft-rating small{letter-spacing:.11em;font-size:9px;font-weight:900;color:#688070}.ft-route{display:grid;grid-template-columns:1fr 40px 1fr;gap:8px;align-items:center;margin:18px 0 12px}.ft-route-point{display:flex;gap:8px;align-items:flex-start}.ft-route-point>b,.ft-route-point small{display:block}.ft-route-point b{font-size:10px}.ft-route-point small{font-size:9px;color:#829189;line-height:1.4;margin-top:3px}.ft-route-point>span{width:13px;height:13px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px #b7ccc0;flex:0 0 auto;margin-top:2px}.ft-route-point>span.farm{background:#2d7650}.ft-route-point>span.center{background:#5d6f68}.ft-route-line{height:2px;background:#cddbd2;position:relative}.ft-truck-pin{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;place-items:center;width:30px;height:30px;border-radius:10px;background:#e7f3eb;color:#2c6d49;border:1px solid #d0e2d6}.ft-live-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#e4ece6;border:1px solid #e4ece6;border-radius:11px;overflow:hidden}.ft-live-stats>div{background:#fff;padding:9px}.ft-live-stats small,.ft-live-stats b{display:block}.ft-live-stats small{font-size:8px;font-weight:900;letter-spacing:.1em;color:#87958e}.ft-live-stats b{font-size:10px;margin-top:4px}.ft-link-btn{display:inline-flex;gap:6px;align-items:center;margin-top:10px;border:0;background:none;color:#2c6d48;font-size:10px;font-weight:900;padding:0;cursor:pointer}.ft-fare{display:grid;grid-template-columns:1fr 1.3fr;gap:12px;padding:14px 15px;border:1px solid #e2eae5;border-radius:15px;background:#fff}.ft-fare h3{font-size:22px;margin:5px 0 2px}.ft-fare p{font-size:9px;color:#7f8f88;margin:0}.ft-fare-grid{display:grid;grid-template-columns:1fr auto;gap:7px;align-content:center;font-size:10px}.ft-fare-grid span{color:#83928b}.ft-fare-grid b{text-align:right}.ft-rating{display:grid;gap:10px;padding:15px;border:1px solid #e2eae5;background:#fff;border-radius:15px}.ft-rating h3{font-size:15px;margin:4px 0 0}.ft-stars{display:flex;gap:4px}.ft-stars button{border:0;background:none;padding:4px;color:#a9b9b1;cursor:pointer}.ft-stars button.sel{color:#d3a63a}.ft-rating textarea{width:100%;box-sizing:border-box;resize:vertical;border:1px solid #d8e3dc;border-radius:11px;padding:10px;font:inherit;font-size:11px;outline:none}.ft-rating-done{display:flex;gap:10px;align-items:flex-start;color:#2d704b}.ft-rating-done b,.ft-rating-done span{display:block}.ft-rating-done b{font-size:12px}.ft-rating-done span{font-size:10px;color:#75867e;margin-top:3px}.ft-report{display:flex;gap:10px;align-items:center;padding:12px 13px;border:1px solid #eadfd9;background:#fffaf8;border-radius:13px;color:#805c51}.ft-report>div{min-width:0;flex:1}.ft-report b,.ft-report span{display:block}.ft-report b{font-size:11px;color:#574039}.ft-report span{font-size:10px;line-height:1.45;margin-top:3px}.ft-report a{display:inline-flex;gap:5px;align-items:center;text-decoration:none;color:#7d4a3d;font-size:10px;font-weight:900}.ft-live.offline{color:#855e54;background:#fff7f4;border-color:#ecdcd6}.ft-live.offline i{background:#bd7563}.ft-edit-modal{max-height:min(88vh,760px);overflow:auto}.ft-edit-modal .ft-field{margin-top:10px}
 @media(max-width:700px){.ft-route{grid-template-columns:1fr 28px 1fr}.ft-fare{grid-template-columns:1fr}.ft-transport-stack{margin-left:20px;margin-right:20px}.ft-live-stats{grid-template-columns:1fr}.ft-tracking-head{flex-direction:column}.ft-tracking-head .ft-btn{width:100%}}
 
+
+
+/* Transport payment */
+.ft-payment{margin:0 26px 17px;padding:18px;border-radius:18px;border:1px solid #dbe7df;background:linear-gradient(135deg,#f5fbf7,#ffffff);box-shadow:0 10px 30px rgba(27,76,46,.06)}
+.ft-payment.due{border-color:#ead9b8;background:linear-gradient(135deg,#fff9ed,#ffffff)}
+.ft-payment.paid{border-color:#cbe5d2;background:linear-gradient(135deg,#effaf2,#ffffff)}
+.ft-payment-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.ft-payment-head small{display:block;color:#9a7a2d;font-size:9px;font-weight:900;letter-spacing:.12em}
+.ft-payment-head h3{margin:5px 0 3px;color:#223b2c;font-size:18px}
+.ft-payment-head p{margin:0;color:#718078;font-size:10px;line-height:1.45}
+.ft-payment-head>strong{color:#1e7a45;font-size:23px;white-space:nowrap}
+.ft-payment-form{display:grid;gap:10px;margin-top:14px}
+.ft-payment-methods{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.ft-payment-methods button{min-height:42px;border:1px solid #d8e4dc;border-radius:10px;background:#fff;color:#607167;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+.ft-payment-methods button.sel{border-color:#246f40;background:#246f40;color:#fff;box-shadow:0 8px 18px rgba(36,111,64,.18)}
+.ft-pay-button{width:100%;background:#1f7a46!important;border-color:#1f7a46!important}
+.ft-payment-done{display:flex;align-items:center;gap:10px;margin-top:14px;padding:11px 12px;border-radius:11px;background:#eaf8ee;color:#277744}
+.ft-payment-done svg{flex:0 0 auto}
+.ft-payment-done div{display:grid;gap:2px}
+.ft-payment-done b{font-size:11px}
+.ft-payment-done span{font-size:9px;color:#66806f}
+@media(max-width:700px){
+  .ft-payment{margin-left:20px;margin-right:20px;padding:14px}
+  .ft-payment-head{flex-direction:column}
+  .ft-payment-head>strong{font-size:21px}
+  .ft-payment-methods{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+  .ft-payment{margin-left:16px;margin-right:16px}
+  .ft-payment-head h3{font-size:17px}
+  .ft-payment-methods button{min-height:46px;font-size:11px}
+}
+
+/* Farmer-first mobile overrides. */
+@media(max-width:700px){
+  .ft-route{grid-template-columns:1fr;gap:0;margin:16px 0 12px;padding-left:0;}
+  .ft-route-point{padding:2px 0;}
+  .ft-route-line{height:28px;width:2px;margin:0 0 0 6px;background:#cddbd2;}
+  .ft-fare-notice{margin:0 20px 14px;}
+  .ft-field-help{font-size:10px!important;line-height:1.45;color:#7a8b83;display:block;margin-top:-2px;}
+  .ft-fare.pending{background:#fffdf8;border-color:#eadfc6;}
+  .ft-fare.pending h3{font-size:20px;}
+  .ft-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .ft-actions .ft-btn{width:100%;min-width:0;}
+  .ft-actions .ft-danger{grid-column:1/-1;}
+  .ft-transporter{align-items:flex-start;}
+  .ft-live{margin-left:auto;flex:0 0 auto;}
+}
+@media(max-width:480px){
+  .ft-shell{width:calc(100% - 16px);padding:14px 0 54px;}
+  .ft-head{gap:12px;margin-bottom:13px;}
+  .ft-back{font-size:12px;margin-bottom:10px;}
+  .ft-head h1{font-size:29px;line-height:1.04;}
+  .ft-head p{font-size:12px;line-height:1.5;}
+  .ft-head-actions{gap:7px;align-items:stretch;flex-direction:column;}
+  .ft-head-actions .ft-btn{width:100%;}
+  .ft-features>div{padding:11px 12px;border-radius:13px;}
+  .ft-card{border-radius:17px;}
+  .ft-card-head{padding:16px;}
+  .ft-card-head h2{font-size:21px;}
+  .ft-section{padding:16px;}
+  .ft-sec-title{gap:9px;margin-bottom:11px;}
+  .ft-sec-title>b{width:30px;height:30px;}
+  .ft-field input,.ft-field select,.ft-field textarea,.ft-select select,.ft-time input{min-height:48px;font-size:16px;}
+  .ft-field textarea{min-height:96px;}
+  .ft-loc-actions{display:grid;grid-template-columns:1fr;gap:7px;}
+  .ft-loc-actions .ft-btn,.ft-loc-actions .ft-gps{width:100%;}
+  .ft-footer{padding:14px 16px;}
+  .ft-footer>span{font-size:9px;line-height:1.4;}
+  .ft-tabs{position:sticky;top:8px;z-index:4;}
+  .ft-tabs button{min-height:42px;font-size:10px;}
+  .ft-summary>div{padding:11px 12px;}
+  .ft-summary b{font-size:11px;}
+  .ft-schedule{margin-left:16px;margin-right:16px;font-size:10px;flex-wrap:wrap;}
+  .ft-timeline{padding:18px 16px 4px;}
+  .ft-transporter,.ft-matches{margin-left:16px;margin-right:16px;}
+  .ft-tracking-card{padding:13px;}
+  .ft-live-stats{grid-template-columns:1fr;}
+  .ft-live-stats>div{padding:10px 11px;}
+  .ft-fare{padding:13px;}
+  .ft-fare h3{font-size:21px;word-break:break-word;}
+  .ft-fare-notice{margin:0 16px 13px;padding:11px;}
+  .ft-match{padding:9px;}
+  .ft-modal-bg{padding:10px;}
+  .ft-modal{padding:18px;border-radius:18px;max-height:92vh;}
+}
 `;

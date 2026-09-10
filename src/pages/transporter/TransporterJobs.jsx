@@ -45,11 +45,8 @@ const RAW_API_BASE =
   String(import.meta.env.VITE_API_URL || "").trim();
 
 const API_BASE = (() => {
-  if (!RAW_API_BASE || RAW_API_BASE === "/api") {
-    return RAW_API_BASE === "/api"
-      ? ""
-      : "http://localhost:5000";
-  }
+  if (!RAW_API_BASE) return "http://localhost:5000";
+  if (RAW_API_BASE === "/api") return "";
 
   return RAW_API_BASE
     .replace(/\/+$/, "")
@@ -97,6 +94,8 @@ const COPY = {
     destination: "Destination",
     requestedFor: "Requested",
     fare: "Estimated fare",
+    fareUnknown: "Fare to be agreed",
+    estimateSuffix: "estimate",
     accept: "Accept",
     accepting: "Accepting…",
     reject: "Decline",
@@ -140,6 +139,16 @@ const COPY = {
       "Your transporter session is missing. Please sign in again.",
     updated:
       "Updated",
+    cancelTrip: "Cancel active trip",
+    cancelTripTitle: "Cancel this active trip?",
+    cancelTripReason: "Cancellation reason",
+    cancelTripReasonPlaceholder: "Tell the farmer why you are cancelling this trip",
+    confirmCancelTrip: "Cancel trip",
+    keepTrip: "Keep trip",
+    cancellationReasonRequired: "Please enter a reason before cancelling the trip.",
+    tripCancelled: "Active trip cancelled successfully.",
+    cancelTripError: "Unable to cancel this trip.",
+    viewTrip: "View active trip",
   },
   hi: {
     eyebrow: "परिवहन साझेदार",
@@ -172,6 +181,8 @@ const COPY = {
     destination: "गंतव्य",
     requestedFor: "अनुरोध",
     fare: "अनुमानित किराया",
+    fareUnknown: "किराया तय होना बाकी है",
+    estimateSuffix: "अनुमान",
     accept: "स्वीकार करें",
     accepting: "स्वीकार हो रहा है…",
     reject: "मना करें",
@@ -211,6 +222,16 @@ const COPY = {
     login:
       "परिवहनकर्ता सत्र नहीं मिला। कृपया फिर से साइन इन करें।",
     updated: "अपडेट",
+    cancelTrip: "सक्रिय यात्रा रद्द करें",
+    cancelTripTitle: "क्या यह सक्रिय यात्रा रद्द करें?",
+    cancelTripReason: "रद्द करने का कारण",
+    cancelTripReasonPlaceholder: "किसान को बताएं कि आप यह यात्रा क्यों रद्द कर रहे हैं",
+    confirmCancelTrip: "यात्रा रद्द करें",
+    keepTrip: "यात्रा जारी रखें",
+    cancellationReasonRequired: "यात्रा रद्द करने से पहले कारण दर्ज करें।",
+    tripCancelled: "सक्रिय यात्रा सफलतापूर्वक रद्द हो गई।",
+    cancelTripError: "यह यात्रा रद्द नहीं हो सकी।",
+    viewTrip: "सक्रिय यात्रा देखें",
   },
   te: {
     eyebrow: "రవాణా భాగస్వామి",
@@ -243,6 +264,8 @@ const COPY = {
     destination: "గమ్యం",
     requestedFor: "అభ్యర్థన",
     fare: "అంచనా ఛార్జీ",
+    fareUnknown: "ఛార్జీ నిర్ణయించాలి",
+    estimateSuffix: "అంచనా",
     accept: "అంగీకరించండి",
     accepting: "అంగీకరిస్తోంది…",
     reject: "తిరస్కరించండి",
@@ -282,6 +305,16 @@ const COPY = {
     login:
       "రవాణాదారు సెషన్ కనుగొనబడలేదు. మళ్లీ సైన్ ఇన్ చేయండి.",
     updated: "అప్డేట్",
+    cancelTrip: "యాక్టివ్ ట్రిప్ రద్దు",
+    cancelTripTitle: "ఈ యాక్టివ్ ట్రిప్‌ను రద్దు చేయాలా?",
+    cancelTripReason: "రద్దు కారణం",
+    cancelTripReasonPlaceholder: "ఈ ట్రిప్‌ను ఎందుకు రద్దు చేస్తున్నారో రైతుకు తెలియజేయండి",
+    confirmCancelTrip: "ట్రిప్ రద్దు చేయండి",
+    keepTrip: "ట్రిప్ కొనసాగించండి",
+    cancellationReasonRequired: "ట్రిప్ రద్దు చేయడానికి ముందు కారణం నమోదు చేయండి.",
+    tripCancelled: "యాక్టివ్ ట్రిప్ విజయవంతంగా రద్దు చేయబడింది.",
+    cancelTripError: "ఈ ట్రిప్‌ను రద్దు చేయలేకపోయాము.",
+    viewTrip: "యాక్టివ్ ట్రిప్ చూడండి",
   },
 };
 
@@ -485,19 +518,19 @@ function mapsLink(
   return "";
 }
 
-function formatMoney(
-  value
-) {
+function formatEstimatedFare(value, copy) {
   const n = Number(value);
 
-  return Number.isFinite(n)
-    ? `₹${n.toLocaleString(
-        "en-IN",
-        {
-          maximumFractionDigits: 0,
-        }
-      )}`
-    : "₹0";
+  if (!Number.isFinite(n) || n <= 0) {
+    return copy.fareUnknown;
+  }
+
+  return `₹${n.toLocaleString(
+    "en-IN",
+    {
+      maximumFractionDigits: 0,
+    }
+  )} ${copy.estimateSuffix}`;
 }
 
 function formatQuantity(
@@ -525,6 +558,85 @@ function routeRegion(
   ]
     .filter(Boolean)
     .join(" · ");
+}
+
+function formatRequestedDateTime(
+  request,
+  language
+) {
+  const rawDate =
+    request?.requested_date ||
+    request?.requestedDate;
+
+  const rawStart =
+    request?.requested_slot_start ||
+    request?.requestedSlotStart;
+
+  const rawEnd =
+    request?.requested_slot_end ||
+    request?.requestedSlotEnd;
+
+  const locale =
+    language === "hi"
+      ? "hi-IN"
+      : language === "te"
+      ? "te-IN"
+      : "en-IN";
+
+  if (rawDate) {
+    const d = new Date(
+      `${String(rawDate).slice(0, 10)}T00:00:00`
+    );
+
+    const dateText =
+      Number.isNaN(d.getTime())
+        ? String(rawDate)
+        : d.toLocaleDateString(
+            locale,
+            {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            }
+          );
+
+    const timeText = [
+      rawStart,
+      rawEnd,
+    ]
+      .filter(Boolean)
+      .map(value =>
+        String(value).slice(0, 5)
+      )
+      .join(" – ");
+
+    return timeText
+      ? `${dateText} • ${timeText}`
+      : dateText;
+  }
+
+  const created =
+    request?.created_at ||
+    request?.createdAt;
+
+  if (!created) return "Timing not set";
+
+  const d = new Date(created);
+
+  if (Number.isNaN(d.getTime())) {
+    return String(created);
+  }
+
+  return d.toLocaleString(
+    locale,
+    {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }
+  );
 }
 
 function JobCard({
@@ -585,6 +697,7 @@ function JobCard({
 
   return (
     <article
+      className="ks-job-card-hover"
       style={styles.jobCard}
     >
       <div
@@ -610,9 +723,19 @@ function JobCard({
         </div>
 
         <span
-          style={
-            styles.statusPill
-          }
+          style={{
+            ...styles.statusPill,
+            ...(status === "REQUESTED"
+              ? styles.statusRequested
+              : status === "ASSIGNED"
+              ? styles.statusAssigned
+              : status === "COMPLETED" ||
+                status === "DELIVERED"
+              ? styles.statusCompleted
+              : status === "CANCELLED"
+              ? styles.statusCancelled
+              : styles.statusActive),
+          }}
         >
           {statusText(
             status,
@@ -641,18 +764,20 @@ function JobCard({
 
         <Info
           label={copy.fare}
-          value={formatMoney(
-            request.estimated_fare
+          value={formatEstimatedFare(
+            request.estimated_fare,
+            copy
           )}
         />
 
         <Info
-          label={copy.requestedFor}
-          value={
-            request.requested_date ||
-            request.created_at ||
-            "—"
+          label={
+            copy.requestedFor
           }
+          value={formatRequestedDateTime(
+            request,
+            language
+          )}
         />
       </div>
 
@@ -1056,6 +1181,16 @@ export default function TransporterJobs() {
   ] = useState("");
 
   const [
+    cancelTarget,
+    setCancelTarget,
+  ] = useState(null);
+
+  const [
+    cancelReason,
+    setCancelReason,
+  ] = useState("");
+
+  const [
     connection,
     setConnection,
   ] = useState(
@@ -1433,6 +1568,78 @@ export default function TransporterJobs() {
       }
     };
 
+  const cancelActiveTrip =
+    async () => {
+      if (!cancelTarget?.id) return;
+
+      const status =
+        String(
+          cancelTarget.status || ""
+        ).toUpperCase();
+
+      if (
+        ![
+          "ASSIGNED",
+          "EN_ROUTE_TO_FARMER",
+          "CROP_PICKED_UP",
+        ].includes(status)
+      ) {
+        setError(copy.cancelTripError);
+        return;
+      }
+
+      const reason =
+        String(cancelReason || "").trim();
+
+      if (!reason) {
+        setError(
+          copy.cancellationReasonRequired
+        );
+        return;
+      }
+
+      setBusyId(String(cancelTarget.id));
+      setError("");
+      setSuccess("");
+
+      try {
+        const data =
+          await api(
+            `/api/transport/requests/${encodeURIComponent(
+              cancelTarget.id
+            )}/status`,
+            {
+              method: "PATCH",
+              body: JSON.stringify({
+                transporterId,
+                status: "CANCELLED",
+                note:
+                  `Transporter cancelled the active trip. Reason: ${reason}`,
+              }),
+            }
+          );
+
+        setCancelTarget(null);
+        setCancelReason("");
+
+        setSuccess(
+          data?.message ||
+            copy.tripCancelled
+        );
+
+        await load({
+          silent: true,
+        });
+      } catch (cancelError) {
+        setError(
+          cancelError?.message ||
+            copy.cancelTripError
+        );
+      } finally {
+        setBusyId("");
+      }
+    };
+
   const goDashboard =
     () =>
       navigate(
@@ -1445,6 +1652,7 @@ export default function TransporterJobs() {
 
   return (
     <div
+      className="ks-jobs-page"
       style={
         styles.page
       }
@@ -1849,42 +2057,237 @@ export default function TransporterJobs() {
         ) : null}
 
         {activeTrip ? (
-          <div
-            style={
-              styles.activeNotice
-            }
-          >
-            <Truck size={18} />
+          <>
+            <div
+              className="ks-active-trip-notice"
+              style={styles.activeNotice}
+            >
+              <div style={styles.activeNoticeIcon}>
+                <Truck size={21} />
+              </div>
 
-            <div>
-              <strong>
-                {copy.activeTrip}
-              </strong>
+              <div style={styles.activeNoticeMain}>
+                <div style={styles.activeNoticeTitleRow}>
+                  <div>
+                    <span style={styles.activeNoticeEyebrow}>
+                      {copy.active}
+                    </span>
+                    <strong style={styles.activeNoticeTitle}>
+                      {activeTrip.crop || "Transport trip"}
+                    </strong>
+                  </div>
 
-              <span>
-                {
-                  activeTrip.crop
-                }
-                {" · "}
-                {
-                  activeTrip.quantity_kg
-                }{" "}
-                kg
-              </span>
+                  <span style={styles.activeStatusPill}>
+                    {statusText(
+                      activeTrip.status,
+                      language
+                    )}
+                  </span>
+                </div>
+
+                <div
+                  className="ks-active-notice-meta"
+                  style={styles.activeNoticeMeta}
+                >
+                  <span style={styles.activeMetaGreen}>
+                    <Truck size={14} />
+                    <strong>
+                      {formatQuantity(
+                        activeTrip.quantity_kg
+                      )}{" "}
+                      kg
+                    </strong>
+                  </span>
+
+                  <span style={styles.activeMetaGreen}>
+                    <MapPin size={14} />
+                    <strong>
+                      {activeTrip.pickup_address ||
+                        activeTrip.farmer_village ||
+                        copy.pickup}
+                    </strong>
+                  </span>
+
+                  <span style={styles.activeMetaGold}>
+                    <Navigation size={14} />
+                    <strong>
+                      {activeTrip.center_name ||
+                        activeTrip.center_address ||
+                        copy.destination}
+                    </strong>
+                  </span>
+
+                  <span style={styles.activeMetaBlue}>
+                    <Clock3 size={14} />
+                    <strong>
+                      {formatRequestedDateTime(
+                        activeTrip,
+                        language
+                      )}
+                    </strong>
+                  </span>
+                </div>
+              </div>
+
+              <div style={styles.activeNoticeActions}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate(
+                      `/transporter/trip/${encodeURIComponent(
+                        activeTrip.id
+                      )}`
+                    )
+                  }
+                  style={styles.noticePrimaryButton}
+                >
+                  <Navigation size={14} />
+                  {copy.viewTrip}
+                </button>
+
+                {[
+                  "ASSIGNED",
+                  "EN_ROUTE_TO_FARMER",
+                  "CROP_PICKED_UP",
+                ].includes(
+                  String(
+                    activeTrip.status || ""
+                  ).toUpperCase()
+                ) ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCancelTarget(activeTrip);
+                      setCancelReason("");
+                      setError("");
+                    }}
+                    style={styles.noticeDangerButton}
+                    disabled={
+                      String(
+                        busyId || ""
+                      ) ===
+                      String(activeTrip.id)
+                    }
+                  >
+                    <X size={14} />
+                    {copy.cancelTrip}
+                  </button>
+                ) : null}
+              </div>
             </div>
 
-            <button
-              type="button"
-              onClick={
-                goDashboard
-              }
-              style={
-                styles.noticeButton
-              }
-            >
-              {copy.back}
-            </button>
-          </div>
+            {cancelTarget ? (
+              <div style={styles.cancelOverlay}>
+                <div
+                  style={styles.cancelModal}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="transporter-cancel-title"
+                >
+                  <div style={styles.cancelIcon}>
+                    <XCircle size={23} />
+                  </div>
+
+                  <span style={styles.cancelEyebrow}>
+                    {copy.cancelTrip}
+                  </span>
+
+                  <h2
+                    id="transporter-cancel-title"
+                    style={styles.cancelTitle}
+                  >
+                    {copy.cancelTripTitle}
+                  </h2>
+
+                  <p style={styles.cancelText}>
+                    {cancelTarget?.farmer_name
+                      ? `${cancelTarget.farmer_name} • `
+                      : ""}
+                    {cancelTarget?.crop ||
+                      "Transport trip"}
+                    {cancelTarget?.quantity_kg
+                      ? ` • ${formatQuantity(
+                          cancelTarget.quantity_kg
+                        )} kg`
+                      : ""}
+                  </p>
+
+                  <label style={styles.cancelLabel}>
+                    {copy.cancelTripReason}
+                    <span style={styles.requiredMark}>
+                      *
+                    </span>
+                  </label>
+
+                  <textarea
+                    value={cancelReason}
+                    onChange={event =>
+                      setCancelReason(
+                        event.target.value
+                      )
+                    }
+                    placeholder={
+                      copy.cancelTripReasonPlaceholder
+                    }
+                    rows={4}
+                    autoFocus
+                    maxLength={500}
+                    style={styles.cancelTextarea}
+                  />
+
+                  <div
+                    style={styles.cancelReasonHint}
+                  >
+                    {cancelReason.length}/500
+                  </div>
+
+                  <div
+                    style={styles.cancelModalActions}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCancelTarget(null);
+                        setCancelReason("");
+                        setError("");
+                      }}
+                      style={styles.cancelKeepButton}
+                      disabled={
+                        String(
+                          busyId || ""
+                        ) ===
+                        String(cancelTarget.id)
+                      }
+                    >
+                      {copy.keepTrip}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={cancelActiveTrip}
+                      style={styles.confirmCancelButton}
+                      disabled={
+                        String(
+                          busyId || ""
+                        ) ===
+                        String(cancelTarget.id)
+                      }
+                    >
+                      {String(
+                        busyId || ""
+                      ) ===
+                      String(cancelTarget.id) ? (
+                        <span style={styles.spinner} />
+                      ) : (
+                        <X size={15} />
+                      )}
+                      {copy.confirmCancelTrip}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </>
         ) : null}
 
         <div
@@ -2106,6 +2509,109 @@ export default function TransporterJobs() {
               align-items: stretch !important;
             }
           }
+
+          .ks-jobs-page .ks-job-card-hover {
+            transition:
+              transform .18s ease,
+              box-shadow .18s ease,
+              border-color .18s ease;
+          }
+
+          .ks-jobs-page .ks-job-card-hover:hover {
+            transform: translateY(-3px);
+            box-shadow:
+              0 20px 45px rgba(27,77,47,.11) !important;
+            border-color: #b9d8c4 !important;
+          }
+
+          .ks-jobs-page .ks-active-trip-notice {
+            animation:
+              ks-active-enter .45s ease-out both;
+          }
+
+          @keyframes ks-active-enter {
+            from {
+              opacity: 0;
+              transform: translateY(8px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+
+          .ks-jobs-page .ks-active-notice-meta strong {
+            overflow-wrap: anywhere;
+          }
+
+          .ks-jobs-page textarea:focus {
+            border-color: #c65b4d !important;
+            box-shadow:
+              0 0 0 4px rgba(198,91,77,.10);
+          }
+
+          @media (max-width: 900px) {
+            .ks-active-notice-meta {
+              grid-template-columns:
+                repeat(2, minmax(0, 1fr)) !important;
+            }
+
+            .ks-active-trip-notice {
+              flex-wrap: wrap;
+            }
+
+            .ks-active-trip-notice > div:nth-child(2) {
+              min-width: 0;
+              flex-basis:
+                calc(100% - 70px);
+            }
+
+            .ks-active-trip-notice > div:last-child {
+              width: 100%;
+              flex-direction: row !important;
+            }
+
+            .ks-active-trip-notice > div:last-child > button {
+              flex: 1;
+            }
+          }
+
+          @media (max-width: 600px) {
+            .ks-active-notice-meta {
+              grid-template-columns: 1fr !important;
+            }
+
+            .ks-active-trip-notice {
+              padding: 15px !important;
+            }
+
+            .ks-active-trip-notice > div:nth-child(2) {
+              flex-basis: calc(100% - 70px);
+            }
+
+            .ks-active-trip-notice > div:last-child {
+              width: 100%;
+              flex-direction: column !important;
+            }
+
+            .ks-active-trip-notice > div:last-child > button {
+              width: 100%;
+            }
+
+            .ks-jobs-toolbar {
+              gap: 10px !important;
+            }
+
+            .ks-jobs-page input,
+            .ks-jobs-page button,
+            .ks-jobs-page a {
+              min-height: 44px;
+            }
+
+            .ks-jobs-page .ks-job-card {
+              width: 100%;
+            }
+          }
         `}
       </style>
     </div>
@@ -2122,10 +2628,10 @@ const styles = {
 
   shell: {
     width:
-      "min(1200px, calc(100% - 30px))",
+      "min(1360px, calc(100% - 32px))",
     margin: "0 auto",
     padding:
-      "30px 0 50px",
+      "34px 0 70px",
   },
 
   header: {
@@ -2166,22 +2672,26 @@ const styles = {
 
   title: {
     margin:
-      "6px 0 0",
-    color: "#1d3928",
-    fontSize: "29px",
-    lineHeight: 1.1,
+      "7px 0 0",
+    color:
+      "#153b27",
+    fontSize:
+      "clamp(32px, 4vw, 46px)",
+    lineHeight: 1.08,
     letterSpacing:
-      "-0.025em",
+      "-0.035em",
   },
 
   subtitle: {
     margin:
-      "7px 0 0",
+      "10px 0 0",
     maxWidth:
-      "720px",
-    color: "#708078",
-    fontSize: "12px",
-    lineHeight: 1.55,
+      "820px",
+    color:
+      "#61786b",
+    fontSize:
+      "14px",
+    lineHeight: 1.6,
   },
 
   headerActions: {
@@ -2605,26 +3115,19 @@ const styles = {
   },
 
   activeNotice: {
-    display:
-      "flex",
-    alignItems:
-      "center",
-    gap:
-      "10px",
-    marginTop:
-      "13px",
-    padding:
-      "11px 13px",
-    borderRadius:
-      "11px",
+    display: "flex",
+    alignItems: "center",
+    gap: "14px",
+    marginTop: "17px",
+    padding: "19px",
+    borderRadius: "20px",
     background:
-      "#eef7f1",
+      "linear-gradient(135deg, #eef9f2 0%, #f8fcfa 100%)",
     border:
-      "1px solid #d5e8da",
-    color:
-      "#2d6e43",
-    fontSize:
-      "10px",
+      "1px solid #cde6d5",
+    color: "#205d3a",
+    boxShadow:
+      "0 16px 38px rgba(24,96,55,.09)",
   },
 
   noticeButton: {
@@ -2646,6 +3149,324 @@ const styles = {
       800,
     cursor:
       "pointer",
+  },
+
+  activeNoticeIcon: {
+    width: "56px",
+    height: "56px",
+    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "17px",
+    background:
+      "linear-gradient(135deg, #d8f3e1, #eefaf2)",
+    color: "#1c7a47",
+    boxShadow:
+      "0 9px 22px rgba(28,122,71,.13)",
+  },
+
+  activeNoticeMain: {
+    minWidth: 0,
+    flex: 1,
+  },
+
+  activeNoticeTitleRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "13px",
+  },
+
+  activeNoticeEyebrow: {
+    display: "block",
+    color: "#6c8b79",
+    fontSize: "9px",
+    fontWeight: 950,
+    letterSpacing: ".14em",
+    textTransform: "uppercase",
+  },
+
+  activeNoticeTitle: {
+    display: "block",
+    marginTop: "3px",
+    color: "#113b25",
+    fontSize: "21px",
+    fontWeight: 950,
+    lineHeight: 1.2,
+  },
+
+  activeStatusPill: {
+    flexShrink: 0,
+    padding: "8px 11px",
+    borderRadius: "999px",
+    background: "#fff3dc",
+    color: "#a26412",
+    border: "1px solid #efd7aa",
+    fontSize: "9px",
+    fontWeight: 950,
+  },
+
+  activeNoticeMeta: {
+    display: "grid",
+    gridTemplateColumns:
+      "repeat(4, minmax(0, 1fr))",
+    gap: "9px",
+    marginTop: "13px",
+  },
+
+  activeMetaGreen: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "6px",
+    minWidth: 0,
+    padding: "10px",
+    borderRadius: "11px",
+    background: "#ffffff",
+    border: "1px solid #dcebe1",
+    color: "#405f50",
+    fontSize: "10px",
+    lineHeight: 1.4,
+  },
+
+  activeMetaGold: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "6px",
+    minWidth: 0,
+    padding: "10px",
+    borderRadius: "11px",
+    background: "#fffaf0",
+    border: "1px solid #ebdfc8",
+    color: "#6d5e3f",
+    fontSize: "10px",
+    lineHeight: 1.4,
+  },
+
+  activeMetaBlue: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "6px",
+    minWidth: 0,
+    padding: "10px",
+    borderRadius: "11px",
+    background: "#f0f6ff",
+    border: "1px solid #d3def4",
+    color: "#49688e",
+    fontSize: "10px",
+    lineHeight: 1.4,
+  },
+
+  activeNoticeActions: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+    flexShrink: 0,
+  },
+
+  noticePrimaryButton: {
+    minHeight: "42px",
+    padding: "0 13px",
+    borderRadius: "11px",
+    border: "1px solid #1d6d40",
+    background: "#217445",
+    color: "#ffffff",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "6px",
+    fontSize: "10px",
+    fontWeight: 900,
+    cursor: "pointer",
+    boxShadow:
+      "0 7px 18px rgba(33,116,69,.17)",
+  },
+
+  noticeDangerButton: {
+    minHeight: "42px",
+    padding: "0 13px",
+    borderRadius: "11px",
+    border: "1px solid #e1bbb3",
+    background: "#fff2ef",
+    color: "#a04437",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "6px",
+    fontSize: "10px",
+    fontWeight: 900,
+    cursor: "pointer",
+  },
+
+  cancelOverlay: {
+    position: "fixed",
+    inset: 0,
+    zIndex: 10000,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "20px",
+    background:
+      "rgba(10,28,18,.62)",
+    backdropFilter: "blur(8px)",
+  },
+
+  cancelModal: {
+    width:
+      "min(540px, 100%)",
+    maxHeight:
+      "min(90vh, 700px)",
+    overflowY: "auto",
+    padding: "28px",
+    borderRadius: "24px",
+    background: "#ffffff",
+    border: "1px solid #dce8e0",
+    boxShadow:
+      "0 30px 100px rgba(0,0,0,.24)",
+  },
+
+  cancelIcon: {
+    width: "54px",
+    height: "54px",
+    display: "grid",
+    placeItems: "center",
+    borderRadius: "16px",
+    background: "#fff0ed",
+    color: "#aa4538",
+    marginBottom: "14px",
+  },
+
+  cancelEyebrow: {
+    display: "block",
+    color: "#9b655c",
+    fontSize: "10px",
+    fontWeight: 950,
+    letterSpacing: ".14em",
+    textTransform: "uppercase",
+  },
+
+  cancelTitle: {
+    margin:
+      "6px 0 8px",
+    color: "#40211d",
+    fontSize: "27px",
+    lineHeight: 1.15,
+  },
+
+  cancelText: {
+    margin: 0,
+    color: "#6a7a72",
+    fontSize: "12px",
+    lineHeight: 1.55,
+  },
+
+  cancelLabel: {
+    display: "block",
+    marginTop: "18px",
+    marginBottom: "7px",
+    color: "#574b47",
+    fontSize: "11px",
+    fontWeight: 900,
+  },
+
+  requiredMark: {
+    color: "#b13f32",
+    marginLeft: "3px",
+  },
+
+  cancelTextarea: {
+    width: "100%",
+    minHeight: "116px",
+    boxSizing: "border-box",
+    resize: "vertical",
+    border: "1px solid #dcc8c3",
+    borderRadius: "12px",
+    padding: "12px",
+    outline: "none",
+    fontFamily: "inherit",
+    fontSize: "13px",
+    lineHeight: 1.5,
+    color: "#2d3e35",
+    background: "#fffdfd",
+  },
+
+  cancelReasonHint: {
+    textAlign: "right",
+    marginTop: "4px",
+    color: "#9aaaa1",
+    fontSize: "9px",
+  },
+
+  cancelModalActions: {
+    display: "flex",
+    justifyContent: "flex-end",
+    gap: "9px",
+    marginTop: "16px",
+  },
+
+  cancelKeepButton: {
+    minHeight: "44px",
+    padding: "0 15px",
+    borderRadius: "11px",
+    border: "1px solid #d7e2dc",
+    background: "#ffffff",
+    color: "#4d6559",
+    fontSize: "11px",
+    fontWeight: 900,
+    cursor: "pointer",
+  },
+
+  confirmCancelButton: {
+    minHeight: "44px",
+    padding: "0 15px",
+    borderRadius: "11px",
+    border: "1px solid #9d3e31",
+    background: "#a44537",
+    color: "#ffffff",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "6px",
+    fontSize: "11px",
+    fontWeight: 900,
+    cursor: "pointer",
+    boxShadow:
+      "0 8px 20px rgba(164,69,55,.18)",
+  },
+
+  statusRequested: {
+    background: "#e8f6ed",
+    color: "#1c7a43",
+    border:
+      "1px solid #c4e1ce",
+  },
+
+  statusAssigned: {
+    background: "#eaf0ff",
+    color: "#3a5fa1",
+    border:
+      "1px solid #cbd8f4",
+  },
+
+  statusActive: {
+    background: "#fff2dc",
+    color: "#a46312",
+    border:
+      "1px solid #edd4a7",
+  },
+
+  statusCompleted: {
+    background: "#e8f7ef",
+    color: "#1a7149",
+    border:
+      "1px solid #c4e4d2",
+  },
+
+  statusCancelled: {
+    background: "#fff0ed",
+    color: "#a04437",
+    border:
+      "1px solid #edc9c1",
   },
 
   resultsHeader: {
@@ -2738,15 +3559,15 @@ const styles = {
 
   jobCard: {
     padding:
-      "19px",
+      "24px",
     borderRadius:
-      "18px",
+      "22px",
     background:
       "#ffffff",
     border:
-      "1px solid #e1e9e3",
+      "1px solid #dce8e0",
     boxShadow:
-      "0 11px 27px rgba(29, 75, 47, 0.045)",
+      "0 18px 44px rgba(29, 75, 47, 0.08)",
   },
 
   jobHead: {
@@ -2764,9 +3585,9 @@ const styles = {
     margin:
       "5px 0 0",
     color:
-      "#203a2b",
+      "#123b26",
     fontSize:
-      "17px",
+      "22px",
   },
 
   statusPill: {
@@ -2790,15 +3611,15 @@ const styles = {
     display:
       "grid",
     gridTemplateColumns:
-      "1.3fr .8fr .8fr 1fr",
+      "1.25fr .8fr .95fr 1.2fr",
     gap:
-      "9px",
+      "12px",
     marginTop:
-      "17px",
+      "20px",
     padding:
-      "11px",
+      "14px",
     borderRadius:
-      "11px",
+      "15px",
     background:
       "#f8fbf9",
   },
@@ -2807,11 +3628,11 @@ const styles = {
     display:
       "block",
     color:
-      "#87938c",
+      "#718579",
     fontSize:
-      "8px",
+      "10px",
     fontWeight:
-      800,
+      850,
     textTransform:
       "uppercase",
   },
@@ -2820,22 +3641,26 @@ const styles = {
     display:
       "block",
     marginTop:
-      "3px",
+      "5px",
     color:
-      "#32463a",
+      "#173d28",
     fontSize:
-      "11px",
+      "14px",
+    lineHeight:
+      1.4,
   },
 
   routeCard: {
     marginTop:
-      "13px",
+      "16px",
     padding:
-      "12px",
+      "16px",
     borderRadius:
-      "11px",
+      "15px",
     border:
-      "1px solid #e7ece8",
+      "1px solid #dce8e1",
+    background:
+      "#fbfdfc",
   },
 
   routeRow: {
@@ -2864,11 +3689,11 @@ const styles = {
     display:
       "block",
     color:
-      "#8b9690",
+      "#74877d",
     fontSize:
-      "8px",
+      "10px",
     fontWeight:
-      800,
+      850,
     textTransform:
       "uppercase",
   },
@@ -2877,13 +3702,15 @@ const styles = {
     display:
       "block",
     marginTop:
-      "3px",
+      "4px",
     color:
-      "#33473a",
+      "#173f29",
     fontSize:
-      "10px",
+      "13px",
+    fontWeight:
+      800,
     lineHeight:
-      1.45,
+      1.5,
   },
 
   routeConnector: {
@@ -2903,15 +3730,15 @@ const styles = {
     alignItems:
       "flex-start",
     gap:
-      "5px",
+      "6px",
     marginTop:
-      "10px",
+      "11px",
     color:
-      "#77847c",
+      "#557065",
     fontSize:
-      "9px",
+      "10px",
     lineHeight:
-      1.45,
+      1.5,
   },
 
   capacityWarning: {
@@ -2960,63 +3787,63 @@ const styles = {
     gap:
       "6px",
     minHeight:
-      "34px",
+      "42px",
     padding:
-      "0 9px",
+      "0 13px",
     borderRadius:
-      "9px",
+      "11px",
     border:
-      "1px solid #dce5df",
+      "1px solid #d5e2eb",
     background:
-      "#ffffff",
+      "#f8fbfe",
     color:
-      "#576b5d",
+      "#315a73",
     textDecoration:
       "none",
     fontSize:
-      "9px",
+      "10px",
     fontWeight:
-      800,
+      850,
   },
 
   declineButton: {
     minHeight:
-      "34px",
+      "42px",
     padding:
-      "0 9px",
+      "0 13px",
     borderRadius:
-      "9px",
+      "11px",
     border:
-      "1px solid #eedad4",
+      "1px solid #e6c7c0",
     background:
-      "#fff9f7",
+      "#fff2ef",
     color:
-      "#a25a4a",
+      "#a04437",
     display:
       "inline-flex",
     alignItems:
       "center",
     gap:
-      "5px",
+      "6px",
     fontSize:
-      "9px",
+      "10px",
     fontWeight:
-      800,
+      850,
     cursor:
       "pointer",
   },
 
   acceptButton: {
     minHeight:
-      "34px",
+      "42px",
     padding:
-      "0 11px",
+      "0 14px",
     borderRadius:
-      "9px",
+      "11px",
     border:
-      "1px solid #216e3f",
+      "1px solid #1b6b3e",
     background:
-      "#236f40",
+      "#1f7744",
     color:
       "#ffffff",
     display:
@@ -3024,11 +3851,11 @@ const styles = {
     alignItems:
       "center",
     gap:
-      "5px",
+      "6px",
     fontSize:
-      "9px",
+      "10px",
     fontWeight:
-      800,
+      900,
     cursor:
       "pointer",
   },

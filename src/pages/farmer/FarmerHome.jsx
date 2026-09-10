@@ -2144,6 +2144,8 @@ function FarmerHome() {
                         <div className="farmer-notification-list">
 
                           {
+
+                            
                             notificationsLoading ? (
 
                               <div className="farmer-notification-empty">

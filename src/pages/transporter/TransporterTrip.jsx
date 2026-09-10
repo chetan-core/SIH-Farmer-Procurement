@@ -108,6 +108,15 @@ const COPY = {
     crop: "Crop",
     quantity: "Quantity",
     fare: "Fare",
+    fareNotAgreed: "Fare not agreed yet",
+    estimatedFare: "Farmer estimate",
+    quoteFare: "Set agreed transport fare",
+    fareModalText: "Before pickup, enter the fare you have agreed with the farmer. This amount will be visible to the farmer and used for the completed trip.",
+    farePlaceholder: "Enter agreed fare",
+    fareRequired: "Enter a fare greater than ₹0.",
+    fareConfirm: "Save fare & continue",
+    fareCancel: "Not now",
+    fareNotice: "A positive fare is required before the crop can be marked as picked up.",
     requested: "Requested",
     status: "Status",
     nextStep: "Next step",
@@ -189,6 +198,15 @@ const COPY = {
     crop: "फसल",
     quantity: "मात्रा",
     fare: "किराया",
+    fareNotAgreed: "किराया अभी तय नहीं है",
+    estimatedFare: "किसान का अनुमान",
+    quoteFare: "तय किया गया किराया दर्ज करें",
+    fareModalText: "पिकअप से पहले किसान के साथ तय किया गया किराया दर्ज करें। यह राशि किसान को दिखाई जाएगी और पूरी हुई यात्रा की कमाई के लिए उपयोग होगी।",
+    farePlaceholder: "तय किराया दर्ज करें",
+    fareRequired: "₹0 से अधिक किराया दर्ज करें।",
+    fareConfirm: "किराया सेव करके आगे बढ़ें",
+    fareCancel: "अभी नहीं",
+    fareNotice: "फसल उठाई गई बताने से पहले सकारात्मक किराया जरूरी है।",
     requested: "अनुरोध",
     status: "स्थिति",
     nextStep: "अगला कदम",
@@ -270,6 +288,15 @@ const COPY = {
     crop: "పంట",
     quantity: "పరిమాణం",
     fare: "ఛార్జీ",
+    fareNotAgreed: "ఛార్జీ ఇంకా నిర్ణయించలేదు",
+    estimatedFare: "రైతు అంచనా",
+    quoteFare: "అంగీకరించిన ఛార్జీ నమోదు చేయండి",
+    fareModalText: "పికప్‌కు ముందు రైతుతో అంగీకరించిన ఛార్జీని నమోదు చేయండి. ఈ మొత్తం రైతుకు కనిపిస్తుంది మరియు పూర్తయిన ట్రిప్ ఆదాయంగా ఉపయోగించబడుతుంది.",
+    farePlaceholder: "అంగీకరించిన ఛార్జీ నమోదు చేయండి",
+    fareRequired: "₹0 కంటే ఎక్కువ ఛార్జీ నమోదు చేయండి.",
+    fareConfirm: "ఛార్జీ సేవ్ చేసి కొనసాగండి",
+    fareCancel: "ఇప్పుడు వద్దు",
+    fareNotice: "పంట తీసుకున్నట్లు గుర్తించే ముందు సానుకూల ఛార్జీ అవసరం.",
     requested: "అభ్యర్థన",
     status: "స్థితి",
     nextStep: "తదుపరి దశ",
@@ -564,14 +591,23 @@ function actionHint(
   }
 }
 
+function positiveMoneyValue(...values) {
+  for (const value of values) {
+    const n = Number(value);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return null;
+}
+
 function money(value) {
   const n =
     Number(value);
 
   if (
-    !Number.isFinite(n)
+    !Number.isFinite(n) ||
+    n <= 0
   ) {
-    return "₹0";
+    return "—";
   }
 
   return `₹${n.toLocaleString(
@@ -681,6 +717,7 @@ function Detail({
 }) {
   return (
     <div
+      className="detail"
       style={
         styles.detail
       }
@@ -695,6 +732,7 @@ function Detail({
 
       <div>
         <span
+          className="detail-label"
           style={
             styles.detailLabel
           }
@@ -703,6 +741,7 @@ function Detail({
         </span>
 
         <strong
+          className="detail-value"
           style={
             styles.detailValue
           }
@@ -974,6 +1013,15 @@ export default function TransporterTrip() {
 
   const [statusBusy, setStatusBusy] =
     useState(false);
+
+  const [fareModalOpen, setFareModalOpen] =
+    useState(false);
+
+  const [fareInput, setFareInput] =
+    useState("");
+
+  const [fareError, setFareError] =
+    useState("");
 
   const [locationBusy, setLocationBusy] =
     useState(false);
@@ -1282,8 +1330,8 @@ export default function TransporterTrip() {
         request?.center_name
     );
 
-  const updateStatus =
-    async () => {
+  const performStatusUpdate =
+    async (fareOverride = null) => {
       if (
         !effectiveRequestId ||
         !next
@@ -1296,6 +1344,21 @@ export default function TransporterTrip() {
       setSuccess("");
 
       try {
+        const body = {
+          transporterId,
+          status: next,
+          note:
+            `Updated by transporter from ${status} to ${next}.`,
+        };
+
+        const normalizedFare = Number(fareOverride);
+        if (
+          Number.isFinite(normalizedFare) &&
+          normalizedFare > 0
+        ) {
+          body.finalFare = normalizedFare;
+        }
+
         const response =
           await requestJson(
             `/api/transport/requests/${encodeURIComponent(
@@ -1303,14 +1366,7 @@ export default function TransporterTrip() {
             )}/status`,
             {
               method: "PATCH",
-              body:
-                JSON.stringify({
-                  transporterId,
-                  status:
-                    next,
-                  note:
-                    `Updated by transporter from ${status} to ${next}.`,
-                }),
+              body: JSON.stringify(body),
             }
           );
 
@@ -1320,8 +1376,7 @@ export default function TransporterTrip() {
         );
 
         setSuccess(
-          next ===
-          "COMPLETED"
+          next === "COMPLETED"
             ? copy.completeMessage
             : copy.statusSaved
         );
@@ -1329,9 +1384,7 @@ export default function TransporterTrip() {
         await loadTrip({
           silent: true,
         });
-      } catch (
-        statusError
-      ) {
+      } catch (statusError) {
         setError(
           statusError?.message ||
             copy.error
@@ -1339,6 +1392,69 @@ export default function TransporterTrip() {
       } finally {
         setStatusBusy(false);
       }
+    };
+
+  const openFareModal = () => {
+    setFareError("");
+    setFareInput(
+      positiveMoneyValue(
+        request?.final_fare,
+        request?.estimated_fare
+      )
+        ? String(
+            Math.round(
+              positiveMoneyValue(
+                request?.final_fare,
+                request?.estimated_fare
+              )
+            )
+          )
+        : ""
+    );
+    setFareModalOpen(true);
+  };
+
+  const updateStatus =
+    async () => {
+      if (!next) return;
+
+      const currentFare =
+        positiveMoneyValue(
+          request?.final_fare
+        );
+
+      const needsFareBeforePickup =
+        [
+          "EN_ROUTE_TO_FARMER",
+          "CROP_PICKED_UP",
+        ].includes(next) &&
+        !currentFare;
+
+      if (needsFareBeforePickup) {
+        openFareModal();
+        return;
+      }
+
+      await performStatusUpdate();
+    };
+
+  const confirmFareAndContinue =
+    async () => {
+      const fare = Number(
+        String(fareInput || "").replace(/,/g, "").trim()
+      );
+
+      if (
+        !Number.isFinite(fare) ||
+        fare <= 0
+      ) {
+        setFareError(copy.fareRequired);
+        return;
+      }
+
+      setFareError("");
+      setFareModalOpen(false);
+      await performStatusUpdate(fare);
     };
 
   const sendLocation =
@@ -1886,6 +2002,7 @@ export default function TransporterTrip() {
                   </h2>
 
                   <span
+                    className="route-summary"
                     style={
                       styles.routeSummary
                     }
@@ -1918,6 +2035,7 @@ export default function TransporterTrip() {
             >
               <div>
                 <section
+                  className="panel"
                   style={
                     styles.panel
                   }
@@ -2030,10 +2148,19 @@ export default function TransporterTrip() {
                       label={
                         copy.fare
                       }
-                      value={money(
-                        request.final_fare ??
+                      value={(() => {
+                        const finalFare = positiveMoneyValue(
+                          request.final_fare
+                        );
+                        const estimateFare = positiveMoneyValue(
                           request.estimated_fare
-                      )}
+                        );
+                        if (finalFare) return money(finalFare);
+                        if (estimateFare) {
+                          return `${money(estimateFare)} · ${copy.estimatedFare}`;
+                        }
+                        return copy.fareNotAgreed;
+                      })()}
                     />
 
                     <Detail
@@ -2133,6 +2260,7 @@ export default function TransporterTrip() {
                 </section>
 
                 <section
+                  className="panel"
                   style={
                     styles.panel
                   }
@@ -2178,6 +2306,7 @@ export default function TransporterTrip() {
                 </section>
 
                 <section
+                  className="panel"
                   style={
                     styles.panel
                   }
@@ -2273,6 +2402,7 @@ export default function TransporterTrip() {
 
               <aside>
                 <section
+                  className="action-panel"
                   style={
                     styles.actionPanel
                   }
@@ -2314,6 +2444,7 @@ export default function TransporterTrip() {
                   </h3>
 
                   <p
+                    className="action-help"
                     style={
                       styles.actionHelp
                     }
@@ -2321,6 +2452,14 @@ export default function TransporterTrip() {
                     {actionHelp ||
                       copy.finalStep}
                   </p>
+
+                  {next && !positiveMoneyValue(request.final_fare) &&
+                  ["EN_ROUTE_TO_FARMER", "CROP_PICKED_UP"].includes(next) ? (
+                    <div style={styles.fareNotice}>
+                      <CheckCircle2 size={15} />
+                      <span>{copy.fareNotice}</span>
+                    </div>
+                  ) : null}
 
                   {next ? (
                     <button
@@ -2374,6 +2513,7 @@ export default function TransporterTrip() {
                 </section>
 
                 <section
+                  className="location-panel"
                   style={
                     styles.locationPanel
                   }
@@ -2466,6 +2606,7 @@ export default function TransporterTrip() {
                     </div>
                   ) : (
                     <p
+                      className="location-text"
                       style={
                         styles.locationText
                       }
@@ -2645,6 +2786,97 @@ export default function TransporterTrip() {
         </footer>
       </main>
 
+      {fareModalOpen ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="transporter-fare-title"
+          style={styles.fareOverlay}
+          onClick={() => {
+            if (!statusBusy) setFareModalOpen(false);
+          }}
+        >
+          <div
+            style={styles.fareModal}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div style={styles.fareModalIcon}>
+              <CheckCircle2 size={23} />
+            </div>
+
+            <span style={styles.miniEyebrow}>
+              {copy.quoteFare}
+            </span>
+
+            <h2
+              id="transporter-fare-title"
+              style={styles.fareModalTitle}
+            >
+              {copy.quoteFare}
+            </h2>
+
+            <p style={styles.fareModalText}>
+              {copy.fareModalText}
+            </p>
+
+            {positiveMoneyValue(request?.estimated_fare) ? (
+              <div style={styles.fareEstimateBox}>
+                <span>{copy.estimatedFare}</span>
+                <strong>
+                  {money(request.estimated_fare)}
+                </strong>
+              </div>
+            ) : null}
+
+            <label style={styles.fareLabel}>
+              <span>{copy.fare}</span>
+              <input
+                autoFocus
+                type="number"
+                min="1"
+                step="1"
+                inputMode="numeric"
+                value={fareInput}
+                onChange={(event) => {
+                  setFareInput(event.target.value);
+                  if (fareError) setFareError("");
+                }}
+                placeholder={copy.farePlaceholder}
+                style={styles.fareInput}
+                disabled={statusBusy}
+              />
+            </label>
+
+            {fareError ? (
+              <div style={styles.fareError}>
+                <XCircle size={15} />
+                <span>{fareError}</span>
+              </div>
+            ) : null}
+
+            <div style={styles.fareModalButtons}>
+              <button
+                type="button"
+                onClick={() => setFareModalOpen(false)}
+                disabled={statusBusy}
+                style={styles.fareCancelButton}
+              >
+                {copy.fareCancel}
+              </button>
+
+              <button
+                type="button"
+                onClick={confirmFareAndContinue}
+                disabled={statusBusy}
+                style={styles.fareConfirmButton}
+              >
+                {statusBusy ? copy.updating : copy.fareConfirm}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <style>
         {`
           @keyframes transporter-trip-spin {
@@ -2673,8 +2905,8 @@ export default function TransporterTrip() {
 
           @media (max-width: 680px) {
             .transporter-trip-shell {
-              width: min(100% - 20px, 1200px) !important;
-              padding-top: 20px !important;
+              width: min(100% - 16px, 1200px) !important;
+              padding-top: 14px !important;
             }
 
             .transporter-trip-details {
@@ -2688,6 +2920,41 @@ export default function TransporterTrip() {
 
             .transporter-trip-action-buttons > * {
               width: 100% !important;
+            }
+
+            .transporter-trip-page button,
+            .transporter-trip-page a {
+              min-height: 44px !important;
+            }
+          }
+
+          @media (max-width: 480px) {
+            .transporter-trip-page .trip-header-card {
+              gap: 12px !important;
+              padding: 14px !important;
+            }
+
+            .transporter-trip-page .trip-title {
+              font-size: 17px !important;
+              line-height: 1.3 !important;
+            }
+
+            .transporter-trip-page .detail-value {
+              font-size: 12px !important;
+            }
+
+            .transporter-trip-page .detail-label,
+            .transporter-trip-page .route-summary,
+            .transporter-trip-page .action-help,
+            .transporter-trip-page .location-text {
+              font-size: 11px !important;
+            }
+
+            .transporter-trip-page .panel,
+            .transporter-trip-page .action-panel,
+            .transporter-trip-page .location-panel {
+              padding: 14px !important;
+              border-radius: 15px !important;
             }
           }
         `}
@@ -3905,6 +4172,152 @@ const styles = {
       "8px",
     lineHeight:
       1.45,
+  },
+
+  fareNotice: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "7px",
+    margin: "0 0 12px",
+    padding: "9px 10px",
+    borderRadius: "10px",
+    background: "#fff8e8",
+    border: "1px solid #f1dfad",
+    color: "#7a5a20",
+    fontSize: "9px",
+    fontWeight: 700,
+    lineHeight: 1.45,
+  },
+
+  fareOverlay: {
+    position: "fixed",
+    inset: 0,
+    zIndex: 2147483000,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "18px",
+    background: "rgba(18, 34, 25, 0.56)",
+    backdropFilter: "blur(6px)",
+  },
+
+  fareModal: {
+    width: "min(100%, 460px)",
+    maxHeight: "calc(100dvh - 36px)",
+    overflowY: "auto",
+    padding: "22px",
+    borderRadius: "22px",
+    background: "#ffffff",
+    border: "1px solid #dce8df",
+    boxShadow: "0 24px 70px rgba(9, 46, 24, 0.24)",
+  },
+
+  fareModalIcon: {
+    width: "50px",
+    height: "50px",
+    borderRadius: "16px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: "14px",
+    background: "#e7f5eb",
+    color: "#277246",
+  },
+
+  fareModalTitle: {
+    margin: "4px 0 0",
+    color: "#20382a",
+    fontSize: "22px",
+    lineHeight: 1.25,
+  },
+
+  fareModalText: {
+    margin: "9px 0 14px",
+    color: "#64746b",
+    fontSize: "12px",
+    lineHeight: 1.6,
+  },
+
+  fareEstimateBox: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "10px",
+    padding: "11px 12px",
+    marginBottom: "12px",
+    borderRadius: "11px",
+    background: "#f6faf7",
+    border: "1px solid #dfebe2",
+  },
+
+  fareEstimateBoxSpan: {
+    color: "#748179",
+    fontSize: "10px",
+    fontWeight: 800,
+  },
+
+  fareLabel: {
+    display: "block",
+    color: "#42564a",
+    fontSize: "11px",
+    fontWeight: 800,
+  },
+
+  fareInput: {
+    width: "100%",
+    boxSizing: "border-box",
+    height: "48px",
+    marginTop: "7px",
+    padding: "0 13px",
+    borderRadius: "12px",
+    border: "1px solid #cfded4",
+    outline: "none",
+    background: "#fbfdfb",
+    color: "#20382a",
+    fontSize: "16px",
+    fontWeight: 800,
+  },
+
+  fareError: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "7px",
+    marginTop: "8px",
+    padding: "9px 10px",
+    borderRadius: "9px",
+    background: "#fff5f2",
+    color: "#9b5444",
+    fontSize: "10px",
+    lineHeight: 1.4,
+  },
+
+  fareModalButtons: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1.4fr",
+    gap: "8px",
+    marginTop: "15px",
+  },
+
+  fareCancelButton: {
+    minHeight: "44px",
+    borderRadius: "11px",
+    border: "1px solid #dbe6df",
+    background: "#ffffff",
+    color: "#65746b",
+    fontSize: "11px",
+    fontWeight: 800,
+    cursor: "pointer",
+  },
+
+  fareConfirmButton: {
+    minHeight: "44px",
+    borderRadius: "11px",
+    border: "1px solid #236d3f",
+    background: "#236f40",
+    color: "#ffffff",
+    fontSize: "11px",
+    fontWeight: 800,
+    cursor: "pointer",
   },
 
   empty: {

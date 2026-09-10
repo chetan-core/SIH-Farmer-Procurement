@@ -3,7 +3,15 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useLanguage } from "../../translations/LanguageContext";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+const RAW_API_BASE =
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  "";
+
+const API_BASE = String(RAW_API_BASE)
+  .trim()
+  .replace(/\/+$/, "")
+  .replace(/\/api$/i, "");
 
 const COPY = {
   en: {
@@ -25,6 +33,12 @@ const COPY = {
     status: "Status",
     eta: "ETA",
     updated: "Last updated",
+    date: "Pickup date",
+    time: "Pickup time",
+    fare: "Transport fare",
+    farePending: "Fare to be agreed",
+    estimatedFare: "Estimated fare",
+    finalFare: "Final fare",
     noLocation: "Transporter location is not available yet.",
     waiting: "Waiting for transporter assignment",
     assigned: "Transporter assigned",
@@ -72,6 +86,12 @@ const COPY = {
     status: "स्थिति",
     eta: "अनुमानित समय",
     updated: "अंतिम अपडेट",
+    date: "पिकअप तारीख",
+    time: "पिकअप समय",
+    fare: "परिवहन किराया",
+    farePending: "किराया तय होना बाकी है",
+    estimatedFare: "अनुमानित किराया",
+    finalFare: "अंतिम किराया",
     noLocation: "अभी ट्रांसपोर्टर की लोकेशन उपलब्ध नहीं है।",
     waiting: "ट्रांसपोर्टर के चयन की प्रतीक्षा",
     assigned: "ट्रांसपोर्टर नियुक्त",
@@ -119,6 +139,12 @@ const COPY = {
     status: "స్థితి",
     eta: "అంచనా సమయం",
     updated: "చివరి అప్‌డేట్",
+    date: "పికప్ తేదీ",
+    time: "పికప్ సమయం",
+    fare: "రవాణా ఛార్జీ",
+    farePending: "ఛార్జీ ఇంకా నిర్ణయించలేదు",
+    estimatedFare: "అంచనా ఛార్జీ",
+    finalFare: "చివరి ఛార్జీ",
     noLocation: "రవాణాదారు స్థానం ఇంకా అందుబాటులో లేదు.",
     waiting: "రవాణాదారుని కేటాయించడానికి వేచి ఉంది",
     assigned: "రవాణాదారు కేటాయించబడ్డారు",
@@ -217,6 +243,8 @@ function normalizeTrip(raw) {
       locationUpdatedAt: transporter.location_updated_at || transporter.locationUpdatedAt || raw.locationUpdatedAt || null
     },
     eta: raw.eta || raw.etaMinutes || raw.estimatedArrival || raw.estimated_arrival || null,
+    estimatedFare: raw.estimatedFare ?? raw.estimated_fare ?? null,
+    finalFare: raw.finalFare ?? raw.final_fare ?? null,
     events: Array.isArray(raw.events) ? raw.events : Array.isArray(raw.transportEvents) ? raw.transportEvents : []
   };
 }
@@ -287,29 +315,127 @@ export default function FarmerTransportTracking() {
   const [ratingSaving, setRatingSaving] = useState(false);
   const [ratingMessage, setRatingMessage] = useState("");
 
-  const loadTrip = async () => {
+  const loadTrip = async ({ silent = false } = {}) => {
     if (!routeId) {
       setError(t.noTrip);
       setLoading(false);
       return;
     }
 
-    setLoading(true);
+    if (!silent) {
+      setLoading(true);
+    }
     setError("");
 
     try {
-      const data = await api(`/api/transport/requests/${encodeURIComponent(routeId)}`);
-      const request = extractRequest(data);
+      const requestPayload = await api(
+        `/api/transport/requests/${encodeURIComponent(routeId)}`
+      );
+
+      const request = extractRequest(requestPayload);
+
       if (!request) {
         setError(t.noTrip);
-      } else {
-        setTrip(normalizeTrip(request));
+        setTrip(null);
+        return;
       }
+
+      let events = Array.isArray(request.events) ? request.events : [];
+      let liveTracking = null;
+
+      /*
+       * The backend protects /tracking by farmer identity. The request
+       * itself already contains farmer_id, so use that ID for the tracking
+       * call instead of depending on a particular localStorage key.
+       */
+      const farmerId = String(
+        request.farmer_id ||
+        request.farmerId ||
+        request.farmer?.id ||
+        ""
+      ).trim();
+
+      const [eventsResult, trackingResult] = await Promise.allSettled([
+        api(
+          `/api/transport/requests/${encodeURIComponent(routeId)}/events`
+        ),
+        farmerId
+          ? api(
+              `/api/transport/requests/${encodeURIComponent(routeId)}/tracking?farmerId=${encodeURIComponent(
+                farmerId
+              )}`
+            )
+          : Promise.reject(new Error("Farmer identity unavailable"))
+      ]);
+
+      if (
+        eventsResult.status === "fulfilled" &&
+        Array.isArray(eventsResult.value?.events)
+      ) {
+        events = eventsResult.value.events;
+      }
+
+      if (trackingResult.status === "fulfilled") {
+        liveTracking = trackingResult.value?.tracking || null;
+      }
+
+      const normalized = normalizeTrip({
+        ...request,
+        events
+      });
+
+      /*
+       * Prefer the dedicated live-tracking endpoint because it is the
+       * freshest transporter position. Fall back to request data when the
+       * location service is temporarily unavailable.
+       */
+      if (liveTracking) {
+        normalized.transporter = {
+          ...normalized.transporter,
+          id:
+            liveTracking.transporterId ||
+            normalized.transporter.id ||
+            "",
+          name:
+            liveTracking.transporterName ||
+            normalized.transporter.name ||
+            "",
+          phone:
+            liveTracking.transporterPhone ||
+            normalized.transporter.phone ||
+            "",
+          vehicleType:
+            liveTracking.vehicleType ||
+            normalized.transporter.vehicleType ||
+            "",
+          vehicleNumber:
+            liveTracking.vehicleNumber ||
+            normalized.transporter.vehicleNumber ||
+            "",
+          lat:
+            liveTracking.lat ??
+            normalized.transporter.lat ??
+            null,
+          lng:
+            liveTracking.lng ??
+            normalized.transporter.lng ??
+            null,
+          locationUpdatedAt:
+            liveTracking.locationUpdatedAt ||
+            normalized.transporter.locationUpdatedAt ||
+            null
+        };
+      }
+
+      setTrip(normalized);
     } catch (requestError) {
       console.error("Transport tracking load failed:", requestError);
       setError(requestError?.message || t.network);
+      setTrip(null);
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   };
 
@@ -321,9 +447,13 @@ export default function FarmerTransportTracking() {
     if (!trip) return;
     if (["COMPLETED", "CANCELLED", "REJECTED"].includes(trip.status)) return;
 
-    const interval = window.setInterval(loadTrip, 15000);
+    const interval = window.setInterval(
+      () => loadTrip({ silent: true }),
+      10000
+    );
+
     return () => window.clearInterval(interval);
-  }, [trip?.id, trip?.status]);
+  }, [routeId, trip?.id, trip?.status]);
 
   const progressIndex = useMemo(() => {
     const index = STATUS_ORDER.indexOf(trip?.status);
@@ -360,7 +490,7 @@ export default function FarmerTransportTracking() {
         method: "POST",
         body: JSON.stringify({
           rating,
-          comment: comment.trim() || undefined
+          review: comment.trim() || undefined
         })
       });
       setRatingMessage(t.ratingSaved);
@@ -547,6 +677,35 @@ export default function FarmerTransportTracking() {
                 <h3>{trip.crop || "—"}</h3>
                 <strong>{trip.quantityKg != null ? `${Number(trip.quantityKg).toLocaleString()} kg` : "—"}</strong>
               </div>
+            </section>
+
+            <section className="card fare-card">
+              <span className="eyebrow">{t.fare}</span>
+              {Number(trip.finalFare) > 0 ? (
+                <>
+                  <div className="fare-title">
+                    <strong>₹{Number(trip.finalFare).toLocaleString("en-IN")}</strong>
+                    <span>{t.finalFare}</span>
+                  </div>
+                  <p className="fare-note">{t.finalFare}</p>
+                </>
+              ) : Number(trip.estimatedFare) > 0 ? (
+                <>
+                  <div className="fare-title">
+                    <strong>₹{Number(trip.estimatedFare).toLocaleString("en-IN")}</strong>
+                    <span>{t.estimatedFare}</span>
+                  </div>
+                  <p className="fare-note">{t.estimatedFare}</p>
+                </>
+              ) : (
+                <>
+                  <div className="fare-title pending">
+                    <strong>₹—</strong>
+                    <span>{t.farePending}</span>
+                  </div>
+                  <p className="fare-note">{t.farePending}</p>
+                </>
+              )}
             </section>
 
             <section className="card route-card">
@@ -749,7 +908,7 @@ const styles = `
 .crop-title{display:flex;align-items:end;justify-content:space-between;gap:10px;margin-top:12px}
 .crop-title h3{font-size:20px}
 .crop-title strong{font-size:15px;color:#16823e}
-.route-card{padding-bottom:18px}
+.fare-card{padding-bottom:18px}.fare-title{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:10px}.fare-title strong{font-size:28px;color:#176b3d;letter-spacing:-.03em}.fare-title span{font-size:9px;text-transform:uppercase;letter-spacing:.06em;font-weight:900;color:#78857d;text-align:right}.fare-title.pending strong{color:#68756d}.fare-title.pending span{color:#a06a27}.fare-note{margin:9px 0 0;color:#718077;font-size:10px;line-height:1.45} .route-card{padding-bottom:18px}
 .route-place{display:grid;grid-template-columns:29px 1fr auto;gap:10px;align-items:start;margin-top:15px}
 .route-dot{
   width:25px;height:25px;border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:900
@@ -789,15 +948,40 @@ const styles = `
   .home-btn{grid-column:1/-1}
 }
 @media(max-width:650px){
-  .tracking-page{padding:17px 10px 35px}
-  .tracking-header{align-items:flex-start}
-  .refresh{font-size:10px;padding:9px}
-  .status-hero{padding:19px;align-items:flex-start;flex-direction:column}
+  .tracking-page{padding:12px 8px 28px}
+  .tracking-shell{width:100%}
+  .tracking-header{display:grid;grid-template-columns:42px 1fr;gap:10px;margin-bottom:12px}
+  .tracking-header .refresh{grid-column:1/-1;width:100%;min-height:42px}
+  .tracking-header h1{font-size:28px;line-height:1.08}
+  .tracking-header p{font-size:12px}
+  .back{width:42px;height:42px}
+  .status-hero{padding:16px;align-items:flex-start;flex-direction:column;gap:10px}
+  .status-hero h2{font-size:21px;line-height:1.2}
+  .status-pill{font-size:10px}
+  .progress-card{padding:15px}
   .progress-points{display:none}
   .main-grid{display:block}
-  .right-column{display:flex;margin-top:15px}
-  .transporter-meta{grid-template-columns:1fr 1fr}
+  .left-column,.right-column{gap:10px}
+  .right-column{display:flex;margin-top:10px}
+  .card{padding:16px;border-radius:17px}
+  .card h3{font-size:17px}
+  .transporter-meta{grid-template-columns:1fr 1fr;gap:7px}
+  .transporter-meta div,.details-list div{padding:10px}
+  .transporter-meta strong,.details-list strong{font-size:12px;word-break:break-word}
   .button-row{flex-direction:column}
+  .primary,.secondary{width:100%;min-height:44px}
+  .route-place{grid-template-columns:28px minmax(0,1fr);gap:9px}
+  .mini-map{grid-column:2;justify-self:start;margin-top:2px}
+  .crop-title,.fare-title{align-items:flex-start;flex-direction:column;gap:6px}
+  .fare-title span{text-align:left}
+  .fare-title strong{font-size:25px}
+  .event{flex-direction:column;gap:4px}
+  .details-list div{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px}
+  .details-list small{margin:0}
+  .details-list strong{margin:0;text-align:right}
+  .rating-modal{padding:20px;border-radius:18px;max-height:calc(100dvh - 24px);overflow:auto}
+  .stars{justify-content:space-between}
+  .stars button{font-size:28px}
 }
 `;
 
