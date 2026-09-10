@@ -243,7 +243,16 @@ const DEFAULT_SETTINGS = {
 };
 
 
+let settingsCache = null;
+let settingsCacheAt = 0;
+const SETTINGS_CACHE_TTL = 10 * 1000;
+
 async function getSettings() {
+
+  const now = Date.now();
+  if (settingsCache && now - settingsCacheAt < SETTINGS_CACHE_TTL) {
+    return { ...settingsCache };
+  }
 
   const rows =
     await all(`
@@ -254,35 +263,22 @@ async function getSettings() {
       ORDER BY key ASC
     `);
 
-
   const settings = {
     ...DEFAULT_SETTINGS,
   };
 
-
-  for (
-    const row
-    of rows
-  ) {
-
+  for (const row of rows) {
     try {
-
-      settings[row.key] =
-        JSON.parse(
-          row.value
-        );
-
+      settings[row.key] = JSON.parse(row.value);
     } catch {
-
-      settings[row.key] =
-        row.value;
-
+      settings[row.key] = row.value;
     }
-
   }
 
+  settingsCache = { ...settings };
+  settingsCacheAt = Date.now();
 
-  return settings;
+  return { ...settingsCache };
 
 }
 
@@ -342,6 +338,9 @@ async function saveSettings(
 
     }
   );
+
+  settingsCache = { ...settings };
+  settingsCacheAt = Date.now();
 
 }
 
@@ -741,6 +740,11 @@ async function ensureFarmerProfileColumns() {
       LOWER(COALESCE(mandal_id, '')),
       LOWER(COALESCE(village, ''))
     )
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_farmers_phone
+    ON farmers (phone)
   `);
 }
 
@@ -1827,6 +1831,23 @@ async function findFarmerByPhone(phone) {
     return null;
   }
 
+  // Fast path for normalized phone numbers; this can use idx_farmers_phone.
+  const exact = await get(
+    `
+      SELECT *
+      FROM farmers
+      WHERE phone = $1
+      ORDER BY created_at DESC, id DESC
+      LIMIT 1
+    `,
+    [normalizedPhone]
+  );
+
+  if (exact) {
+    return exact;
+  }
+
+  // Compatibility fallback for older rows with formatted phone numbers.
   return await get(
     `
       SELECT *
@@ -4417,25 +4438,26 @@ app.post(
         });
       }
 
-      await query(
+      // Do not delay the visible login response for an audit-only write.
+      void query(
         `
           UPDATE farmers
           SET last_login_at = CURRENT_TIMESTAMP
           WHERE id = $1
         `,
         [farmer.id]
-      );
-
-      const refreshed =
-        await findFarmerById(
-          farmer.id
+      ).catch(error => {
+        console.warn(
+          "Farmer last-login audit update failed:",
+          error?.message || error
         );
+      });
 
       const {
         password_hash,
         password_salt,
         ...safeFarmer
-      } = refreshed || {};
+      } = farmer;
 
       return res.json({
         success: true,
@@ -17144,13 +17166,14 @@ async function startServer() {
     await initializeDatabase();
 
 
-    await ensureBookingChangesTable();
+    await Promise.all([
+      ensureBookingChangesTable(),
+      ensureTransportTables(),
+      ensureFarmerProfileColumns(),
+      ensureLocationMasterTables(),
+    ]);
 
-    await ensureTransportTables();
-
-    await ensureFarmerProfileColumns();
-
-    await ensureLocationMasterTables();
+    // Center verification depends on center columns being ready.
     await ensureCenterLocationColumns();
     await ensureVerifiedCenterData();
 
