@@ -11065,6 +11065,78 @@ app.get(
 
 
 /* =========================================================
+   BOOKING STATUS HELPERS
+   Additive fix: keeps the existing booking lifecycle intact.
+========================================================= */
+
+const BOOKING_STATUSES = new Set([
+  "CONFIRMED",
+  "LATE",
+  "ARRIVED",
+  "WEIGHING",
+  "PROCURED",
+  "PAYMENT_PENDING",
+  "PAYMENT_SENT",
+  "CANCELLED",
+]);
+
+const BOOKING_ALLOWED_TRANSITIONS = {
+  CONFIRMED: [
+    "ARRIVED",
+    "LATE",
+    "CANCELLED",
+  ],
+
+  LATE: [
+    "ARRIVED",
+    "CANCELLED",
+  ],
+
+  ARRIVED: [
+    "WEIGHING",
+    "CANCELLED",
+  ],
+
+  WEIGHING: [
+    "PROCURED",
+    "CANCELLED",
+  ],
+
+  PROCURED: [
+    "PAYMENT_PENDING",
+  ],
+
+  PAYMENT_PENDING: [
+    "PAYMENT_SENT",
+  ],
+
+  PAYMENT_SENT: [],
+
+  CANCELLED: [],
+};
+
+function normalizeBookingStatus(value) {
+  return String(value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "_");
+}
+
+function isValidStatus(status) {
+  return BOOKING_STATUSES.has(
+    normalizeBookingStatus(status)
+  );
+}
+
+function getAllowedNextStatuses(status) {
+  return (
+    BOOKING_ALLOWED_TRANSITIONS[
+      normalizeBookingStatus(status)
+    ] || []
+  );
+}
+
+/* =========================================================
    BOOKING STATUS
 ========================================================= */
 
