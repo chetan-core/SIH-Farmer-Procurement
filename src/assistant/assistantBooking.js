@@ -2657,6 +2657,95 @@ export function findSlotReference(
 
 
     /*
+     * Conversational 12-hour fallback.
+     *
+     * Users commonly say:
+     *   "1 to 1:30"
+     *   "1 to 130"
+     * when the displayed list is in afternoon time.
+     *
+     * Plain numeric times are parsed as 24-hour values by
+     * time24(), so the examples above initially become
+     * 01:00–01:30. If that exact range is not present, also
+     * try the corresponding PM range (13:00–13:30).
+     *
+     * Exact matching still wins, so an actual 01:00–01:30
+     * slot is never overridden.
+     */
+    const requestHadMeridiem =
+      /\b(?:am|pm)\b/i.test(text);
+
+    if (
+      !requestHadMeridiem &&
+      requestedStart != null
+    ) {
+
+      const pmStart =
+        requestedStart < 12 * 60
+          ? requestedStart + 12 * 60
+          : requestedStart;
+
+      const pmEnd =
+        requestedEnd == null
+          ? null
+          : requestedEnd < 12 * 60
+            ? requestedEnd + 12 * 60
+            : requestedEnd;
+
+      const pmMatch =
+        availableSlots.find(
+          item => {
+
+            const itemStart =
+              timeToMinutes(
+                item?.start ??
+                item?.startTime ??
+                item?.from
+              );
+
+            const itemEnd =
+              timeToMinutes(
+                item?.end ??
+                item?.endTime ??
+                item?.to
+              );
+
+            if (
+              itemStart == null
+            ) {
+
+              return false;
+
+            }
+
+            if (
+              pmEnd == null
+            ) {
+
+              return itemStart === pmStart;
+
+            }
+
+            return (
+              itemStart === pmStart &&
+              itemEnd === pmEnd
+            );
+
+          }
+        );
+
+      if (
+        pmMatch
+      ) {
+
+        return pmMatch;
+
+      }
+
+    }
+
+
+    /*
      * Normalize backend slot IDs/labels.
      */
 
