@@ -5267,16 +5267,47 @@ function getFarmerDataKind(
 }
 
 
+function isBookingAvailabilityQuestion(
+  text
+) {
+
+  const value =
+    normalizeFarmerQuery(
+      text
+    );
+
+  if (!value) {
+    return false;
+  }
+
+  /* Availability is a booking-system question, not farmer history/data. */
+  return (
+    /\bavailable\s+(?:booking\s+)?dates?\b/i.test(value) ||
+    /\bdates?\s+(?:are\s+)?available\b/i.test(value) ||
+    /\b(?:what|which)\s+(?:are\s+)?(?:the\s+)?(?:available\s+)?dates?\b/i.test(value) ||
+    /\b(?:what|which)\s+dates?\b.*\b(?:book|booking|slot|slots|available)\b/i.test(value) ||
+    /\b(?:show|list|tell\s+me|give\s+me)\b.*\bavailable\b.*\bdates?\b/i.test(value)
+  );
+}
+
+
 function isBookingDataQuestion(
   text
 ) {
+
+  if (
+    isBookingAvailabilityQuestion(
+      text
+    )
+  ) {
+    return false;
+  }
 
   return Boolean(
     getFarmerDataKind(
       text
     )
   );
-
 }
 
 
@@ -9884,6 +9915,11 @@ const hasBookingConfirmationPending =
             ?.readyForConfirmation
         );
 
+
+      const immediateBookingApproval =
+        isImmediateBookingApproval(
+          normalized.message
+        );
 
       const shouldImmediatelySubmit =
         immediateBookingApproval &&
