@@ -313944,3 +313944,6976 @@ body:has(
       auto !important;
   }
 }
+
+/* =========================================================
+   KRISHISETU — FARMER BOOKING / PROCUREMENT PAGE
+   PREMIUM REAL-AGRICULTURE DESIGN
+   Paste at the VERY END of src/index.css
+========================================================= */
+
+
+/* =========================================================
+   1. FULL FARM PHOTO BACKGROUND
+========================================================= */
+
+.farmer-book-page {
+  position: relative !important;
+
+  min-height: 100dvh !important;
+
+  width: 100% !important;
+
+  overflow-x: hidden !important;
+
+  color:
+    #244c5d !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(243,251,247,.90) 0%,
+      rgba(246,250,248,.95) 46%,
+      rgba(248,251,250,.98) 100%
+    ),
+    url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=2200&q=88")
+    center top / cover fixed no-repeat !important;
+}
+
+.farmer-book-page::before {
+  content:
+    "" !important;
+
+  position:
+    fixed !important;
+
+  inset:
+    0 !important;
+
+  z-index:
+    0 !important;
+
+  pointer-events:
+    none !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(17,112,74,.11),
+      rgba(255,255,255,.02) 43%,
+      rgba(22,111,140,.08)
+    ) !important;
+}
+
+.farmer-book-page > * {
+  position:
+    relative !important;
+
+  z-index:
+    1 !important;
+}
+
+
+/* =========================================================
+   2. MAIN BOOKING CONTAINER
+========================================================= */
+
+.farmer-book-page .booking-container {
+  width:
+    min(
+      1440px,
+      calc(100% - 44px)
+    ) !important;
+
+  margin:
+    0 auto !important;
+
+  padding:
+    28px 0 72px !important;
+}
+
+
+/* =========================================================
+   3. TOP HEADING
+========================================================= */
+
+.farmer-book-page .booking-top-row {
+  display:
+    grid !important;
+
+  grid-template-columns:
+    minmax(0,1fr)
+    minmax(280px,360px) !important;
+
+  align-items:
+    end !important;
+
+  gap:
+    38px !important;
+
+  margin-bottom:
+    22px !important;
+
+  padding:
+    4px 4px 0 !important;
+}
+
+.farmer-book-page .booking-title-area {
+  min-width:
+    0 !important;
+}
+
+.farmer-book-page .booking-title-area .back-link {
+  display:
+    inline-flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    8px !important;
+
+  min-height:
+    42px !important;
+
+  margin-bottom:
+    18px !important;
+
+  padding:
+    8px 13px !important;
+
+  border:
+    1px solid #d0e1e4 !important;
+
+  border-radius:
+    12px !important;
+
+  background:
+    rgba(255,255,255,.88) !important;
+
+  color:
+    #4a6e79 !important;
+
+  font-size:
+    14px !important;
+
+  font-weight:
+    850 !important;
+
+  text-decoration:
+    none !important;
+
+  box-shadow:
+    0 6px 18px
+    rgba(30,67,76,.05) !important;
+
+  transition:
+    transform .16s ease,
+    box-shadow .16s ease,
+    background .16s ease !important;
+}
+
+.farmer-book-page .booking-title-area .back-link:hover {
+  transform:
+    translateX(-3px) !important;
+
+  background:
+    #ffffff !important;
+
+  box-shadow:
+    0 10px 22px
+    rgba(30,67,76,.09) !important;
+}
+
+
+/* Eyebrow */
+.farmer-book-page .booking-eyebrow-row {
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  flex-wrap:
+    wrap !important;
+
+  gap:
+    11px !important;
+
+  margin-bottom:
+    11px !important;
+}
+
+.farmer-book-page .booking-eyebrow-row .page-eyebrow {
+  display:
+    inline-flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    8px !important;
+
+  color:
+    #cc7416 !important;
+
+  font-size:
+    12px !important;
+
+  font-weight:
+    950 !important;
+
+  letter-spacing:
+    .15em !important;
+
+  text-transform:
+    uppercase !important;
+}
+
+.farmer-book-page .booking-eyebrow-row .page-eyebrow::before {
+  content:
+    "" !important;
+
+  width:
+    8px !important;
+
+  height:
+    8px !important;
+
+  border-radius:
+    50% !important;
+
+  background:
+    #ef941d !important;
+
+  box-shadow:
+    0 0 0 5px
+    rgba(239,148,29,.11) !important;
+}
+
+
+/* Live availability */
+.farmer-book-page .booking-live-pill {
+  display:
+    inline-flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    7px !important;
+
+  min-height:
+    32px !important;
+
+  padding:
+    5px 11px !important;
+
+  border:
+    1px solid #bedfcd !important;
+
+  border-radius:
+    999px !important;
+
+  background:
+    #edf9f2 !important;
+
+  color:
+    #1b7c55 !important;
+
+  font-size:
+    11px !important;
+
+  font-weight:
+    850 !important;
+}
+
+.farmer-book-page .booking-live-pill > span {
+  width:
+    7px !important;
+
+  height:
+    7px !important;
+
+  border-radius:
+    50% !important;
+
+  background:
+    #17a166 !important;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(23,161,102,.10) !important;
+}
+
+
+/* Main title */
+.farmer-book-page .booking-title-area h1 {
+  max-width:
+    850px !important;
+
+  margin:
+    0 0 10px !important;
+
+  color:
+    #163e53 !important;
+
+  font-size:
+    clamp(36px,4.4vw,61px) !important;
+
+  line-height:
+    1.00 !important;
+
+  letter-spacing:
+    -.043em !important;
+
+  font-weight:
+    950 !important;
+}
+
+.farmer-book-page .booking-title-area > p {
+  max-width:
+    820px !important;
+
+  margin:
+    0 !important;
+
+  color:
+    #5e7a84 !important;
+
+  font-size:
+    17px !important;
+
+  line-height:
+    1.65 !important;
+
+  font-weight:
+    550 !important;
+}
+
+
+/* =========================================================
+   4. THREE-STEP PROGRESS
+========================================================= */
+
+.farmer-book-page .booking-process-mini {
+  display:
+    grid !important;
+
+  grid-template-columns:
+    1fr auto 1fr auto 1fr !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    8px !important;
+
+  min-height:
+    82px !important;
+
+  padding:
+    14px 16px !important;
+
+  border:
+    1px solid #d2e2e4 !important;
+
+  border-radius:
+    18px !important;
+
+  background:
+    rgba(255,255,255,.93) !important;
+
+  box-shadow:
+    0 13px 32px
+    rgba(29,70,79,.075) !important;
+
+  backdrop-filter:
+    blur(8px) !important;
+
+  -webkit-backdrop-filter:
+    blur(8px) !important;
+}
+
+.farmer-book-page .mini-step {
+  display:
+    flex !important;
+
+  flex-direction:
+    column !important;
+
+  align-items:
+    center !important;
+
+  justify-content:
+    center !important;
+
+  gap:
+    6px !important;
+
+  color:
+    #91a3a8 !important;
+
+  font-size:
+    11px !important;
+
+  line-height:
+    1.2 !important;
+
+  font-weight:
+    800 !important;
+
+  text-align:
+    center !important;
+}
+
+.farmer-book-page .mini-step span {
+  width:
+    34px !important;
+
+  height:
+    34px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border:
+    1px solid #cedde0 !important;
+
+  border-radius:
+    50% !important;
+
+  background:
+    #f3f7f8 !important;
+
+  color:
+    #708991 !important;
+
+  font-size:
+    12px !important;
+
+  font-weight:
+    900 !important;
+}
+
+.farmer-book-page .mini-step.active {
+  color:
+    #1a7f59 !important;
+}
+
+.farmer-book-page .mini-step.active span {
+  border-color:
+    #1a8e64 !important;
+
+  background:
+    #e5f7ed !important;
+
+  color:
+    #15825a !important;
+
+  box-shadow:
+    0 0 0 5px
+    rgba(26,142,100,.08) !important;
+}
+
+.farmer-book-page .mini-step-line {
+  height:
+    2px !important;
+
+  min-width:
+    25px !important;
+
+  background:
+    #dce7e9 !important;
+}
+
+
+/* =========================================================
+   5. INFORMATION BAR
+========================================================= */
+
+.farmer-book-page .booking-info-bar {
+  display:
+    grid !important;
+
+  grid-template-columns:
+    repeat(3,minmax(0,1fr)) !important;
+
+  gap:
+    12px !important;
+
+  margin-bottom:
+    22px !important;
+}
+
+.farmer-book-page .booking-info-bar > div {
+  min-width:
+    0 !important;
+
+  display:
+    grid !important;
+
+  grid-template-columns:
+    48px minmax(0,1fr) !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    12px !important;
+
+  padding:
+    15px !important;
+
+  border:
+    1px solid #d4e3e5 !important;
+
+  border-radius:
+    16px !important;
+
+  background:
+    rgba(255,255,255,.91) !important;
+
+  box-shadow:
+    0 9px 23px
+    rgba(30,67,77,.055) !important;
+
+  backdrop-filter:
+    blur(7px) !important;
+
+  -webkit-backdrop-filter:
+    blur(7px) !important;
+}
+
+.farmer-book-page .booking-info-icon {
+  width:
+    48px !important;
+
+  height:
+    48px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    14px !important;
+}
+
+.farmer-book-page .booking-info-icon.green {
+  color:
+    #178b61 !important;
+
+  background:
+    #e7f7ee !important;
+
+  border:
+    1px solid #c9e6d5 !important;
+}
+
+.farmer-book-page .booking-info-icon.blue {
+  color:
+    #247e9c !important;
+
+  background:
+    #e8f6fb !important;
+
+  border:
+    1px solid #cbe4ed !important;
+}
+
+.farmer-book-page .booking-info-icon.gold {
+  color:
+    #b67a17 !important;
+
+  background:
+    #fff4dc !important;
+
+  border:
+    1px solid #efdfb5 !important;
+}
+
+.farmer-book-page .booking-info-bar strong {
+  display:
+    block !important;
+
+  margin-bottom:
+    3px !important;
+
+  color:
+    #2e5261 !important;
+
+  font-size:
+    14px !important;
+
+  line-height:
+    1.35 !important;
+
+  font-weight:
+    900 !important;
+}
+
+.farmer-book-page .booking-info-bar span {
+  display:
+    block !important;
+
+  color:
+    #81959c !important;
+
+  font-size:
+    11px !important;
+
+  line-height:
+    1.45 !important;
+
+  font-weight:
+    550 !important;
+}
+
+
+/* =========================================================
+   6. MAIN TWO-COLUMN AREA
+========================================================= */
+
+.farmer-book-page .booking-layout {
+  display:
+    grid !important;
+
+  grid-template-columns:
+    minmax(0,1.55fr)
+    minmax(320px,.85fr) !important;
+
+  gap:
+    20px !important;
+
+  align-items:
+    start !important;
+}
+
+.farmer-book-page .booking-form-column {
+  min-width:
+    0 !important;
+
+  display:
+    grid !important;
+
+  gap:
+    18px !important;
+}
+
+.farmer-book-page .booking-side-column {
+  min-width:
+    0 !important;
+
+  position:
+    sticky !important;
+
+  top:
+    18px !important;
+
+  align-self:
+    start !important;
+}
+
+
+/* =========================================================
+   7. BOOKING PANELS
+========================================================= */
+
+.farmer-book-page .booking-panel {
+  position:
+    relative !important;
+
+  overflow:
+    hidden !important;
+
+  padding:
+    27px !important;
+
+  border:
+    1px solid #d1e1e3 !important;
+
+  border-radius:
+    21px !important;
+
+  background:
+    rgba(255,255,255,.95) !important;
+
+  box-shadow:
+    0 15px 37px
+    rgba(29,67,77,.07) !important;
+
+  backdrop-filter:
+    blur(8px) !important;
+
+  -webkit-backdrop-filter:
+    blur(8px) !important;
+}
+
+.farmer-book-page .booking-panel::after {
+  content:
+    "" !important;
+
+  position:
+    absolute !important;
+
+  right:
+    -55px !important;
+
+  bottom:
+    -65px !important;
+
+  width:
+    180px !important;
+
+  height:
+    180px !important;
+
+  border-radius:
+    50% !important;
+
+  opacity:
+    .075 !important;
+
+  pointer-events:
+    none !important;
+
+  background:
+    url("https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=700&q=80")
+    center / cover no-repeat !important;
+}
+
+.farmer-book-page .booking-panel-number {
+  position:
+    absolute !important;
+
+  top:
+    25px !important;
+
+  right:
+    27px !important;
+
+  color:
+    #dbe5e6 !important;
+
+  font-size:
+    32px !important;
+
+  line-height:
+    1 !important;
+
+  font-weight:
+    950 !important;
+
+  letter-spacing:
+    -.04em !important;
+}
+
+.farmer-book-page .booking-panel-heading {
+  position:
+    relative !important;
+
+  z-index:
+    2 !important;
+
+  display:
+    grid !important;
+
+  grid-template-columns:
+    53px minmax(0,1fr) !important;
+
+  gap:
+    14px !important;
+
+  align-items:
+    start !important;
+
+  margin-bottom:
+    23px !important;
+}
+
+.farmer-book-page .panel-icon {
+  width:
+    53px !important;
+
+  height:
+    53px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    15px !important;
+}
+
+.farmer-book-page .panel-icon.green {
+  color:
+    #188c61 !important;
+
+  background:
+    #e7f7ee !important;
+
+  border:
+    1px solid #c8e7d5 !important;
+}
+
+.farmer-book-page .panel-icon.blue {
+  color:
+    #237e9d !important;
+
+  background:
+    #e8f6fb !important;
+
+  border:
+    1px solid #cbe4ed !important;
+}
+
+.farmer-book-page .panel-step-label {
+  display:
+    block !important;
+
+  margin-bottom:
+    5px !important;
+
+  color:
+    #17885e !important;
+
+  font-size:
+    11px !important;
+
+  font-weight:
+    950 !important;
+
+  letter-spacing:
+    .14em !important;
+
+  text-transform:
+    uppercase !important;
+}
+
+.farmer-book-page .booking-panel-heading h2 {
+  margin:
+    0 0 5px !important;
+
+  color:
+    #294d5e !important;
+
+  font-size:
+    clamp(23px,2.4vw,31px) !important;
+
+  line-height:
+    1.15 !important;
+
+  letter-spacing:
+    -.028em !important;
+
+  font-weight:
+    950 !important;
+}
+
+.farmer-book-page .booking-panel-heading p {
+  max-width:
+    720px !important;
+
+  margin:
+    0 !important;
+
+  color:
+    #80959d !important;
+
+  font-size:
+    13px !important;
+
+  line-height:
+    1.55 !important;
+}
+
+
+/* =========================================================
+   8. FORM LABELS
+========================================================= */
+
+.farmer-book-page .booking-form-field {
+  position:
+    relative !important;
+
+  z-index:
+    3 !important;
+
+  min-width:
+    0 !important;
+
+  margin-bottom:
+    19px !important;
+}
+
+.farmer-book-page .booking-form-field > label,
+.farmer-book-page .field-heading-row label {
+  color:
+    #345767 !important;
+
+  font-size:
+    14px !important;
+
+  line-height:
+    1.35 !important;
+
+  font-weight:
+    900 !important;
+}
+
+.farmer-book-page .field-heading-row {
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  justify-content:
+    space-between !important;
+
+  gap:
+    15px !important;
+
+  margin-bottom:
+    9px !important;
+}
+
+.farmer-book-page .field-heading-row > span {
+  color:
+    #8a9ca2 !important;
+
+  font-size:
+    11px !important;
+
+  font-weight:
+    700 !important;
+}
+
+
+/* =========================================================
+   9. CROP SELECT
+========================================================= */
+
+.farmer-book-page .crop-options {
+  display:
+    grid !important;
+
+  grid-template-columns:
+    repeat(4,minmax(0,1fr)) !important;
+
+  gap:
+    10px !important;
+}
+
+.farmer-book-page .crop-option {
+  position:
+    relative !important;
+
+  min-height:
+    88px !important;
+
+  display:
+    flex !important;
+
+  flex-direction:
+    column !important;
+
+  align-items:
+    center !important;
+
+  justify-content:
+    center !important;
+
+  gap:
+    7px !important;
+
+  padding:
+    12px !important;
+
+  border:
+    1.5px solid #d5e4e6 !important;
+
+  border-radius:
+    14px !important;
+
+  background:
+    #ffffff !important;
+
+  color:
+    #55737e !important;
+
+  font-size:
+    13px !important;
+
+  font-weight:
+    850 !important;
+
+  cursor:
+    pointer !important;
+
+  transition:
+    transform .17s ease,
+    box-shadow .17s ease,
+    border-color .17s ease,
+    background-color .17s ease !important;
+}
+
+.farmer-book-page .crop-option:hover {
+  transform:
+    translateY(-2px) !important;
+
+  border-color:
+    #aed0ce !important;
+
+  box-shadow:
+    0 9px 20px
+    rgba(32,79,78,.08) !important;
+}
+
+.farmer-book-page .crop-option.selected {
+  border-color:
+    #188b60 !important;
+
+  background:
+    linear-gradient(
+      145deg,
+      #effaf4,
+      #e4f6eb
+    ) !important;
+
+  color:
+    #176e4d !important;
+
+  box-shadow:
+    0 9px 22px
+    rgba(24,139,96,.12),
+    inset 0 0 0 1px
+    rgba(24,139,96,.05) !important;
+}
+
+.farmer-book-page .crop-option.selected::after {
+  content:
+    "✓" !important;
+
+  position:
+    absolute !important;
+
+  top:
+    7px !important;
+
+  right:
+    8px !important;
+
+  width:
+    20px !important;
+
+  height:
+    20px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    50% !important;
+
+  background:
+    #188b60 !important;
+
+  color:
+    #ffffff !important;
+
+  font-size:
+    11px !important;
+
+  font-weight:
+    900 !important;
+}
+
+
+/* =========================================================
+   10. QUANTITY INPUT
+========================================================= */
+
+.farmer-book-page .quantity-input-wrapper {
+  min-height:
+    62px !important;
+
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    10px !important;
+
+  padding:
+    0 16px !important;
+
+  border:
+    1.5px solid #cfdee1 !important;
+
+  border-radius:
+    15px !important;
+
+  background:
+    #ffffff !important;
+
+  box-shadow:
+    0 4px 13px
+    rgba(34,70,78,.035) !important;
+
+  transition:
+    border-color .17s ease,
+    box-shadow .17s ease !important;
+}
+
+.farmer-book-page .quantity-input-wrapper:focus-within {
+  border-color:
+    #188e65 !important;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(24,142,101,.09) !important;
+}
+
+.farmer-book-page .quantity-input-wrapper input {
+  flex:
+    1 1 auto !important;
+
+  min-width:
+    0 !important;
+
+  height:
+    58px !important;
+
+  border:
+    0 !important;
+
+  outline:
+    0 !important;
+
+  background:
+    transparent !important;
+
+  color:
+    #2d5262 !important;
+
+  font-size:
+    18px !important;
+
+  font-weight:
+    800 !important;
+}
+
+.farmer-book-page .quantity-input-wrapper strong {
+  color:
+    #5e7983 !important;
+
+  font-size:
+    15px !important;
+
+  font-weight:
+    900 !important;
+}
+
+.farmer-book-page .field-help {
+  display:
+    block !important;
+
+  margin-top:
+    6px !important;
+
+  color:
+    #889ba1 !important;
+
+  font-size:
+    11px !important;
+
+  line-height:
+    1.45 !important;
+}
+
+
+/* =========================================================
+   11. BOOKING TIP
+========================================================= */
+
+.farmer-book-page .booking-tip-card {
+  display:
+    grid !important;
+
+  grid-template-columns:
+    38px minmax(0,1fr) !important;
+
+  gap:
+    11px !important;
+
+  align-items:
+    start !important;
+
+  padding:
+    14px !important;
+
+  border:
+    1px solid #d4e5eb !important;
+
+  border-left:
+    4px solid #2c91b3 !important;
+
+  border-radius:
+    13px !important;
+
+  background:
+    #f1f9fc !important;
+}
+
+.farmer-book-page .booking-tip-card > div {
+  width:
+    38px !important;
+
+  height:
+    38px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    11px !important;
+
+  color:
+    #227d9b !important;
+
+  background:
+    #e0f2f8 !important;
+}
+
+.farmer-book-page .booking-tip-card p {
+  margin:
+    0 !important;
+
+  color:
+    #607c87 !important;
+
+  font-size:
+    12px !important;
+
+  line-height:
+    1.58 !important;
+}
+
+
+/* =========================================================
+   12. CENTER SELECT
+========================================================= */
+
+.farmer-book-page .custom-select {
+  position:
+    relative !important;
+
+  z-index:
+    30 !important;
+}
+
+.farmer-book-page .select-control {
+  width:
+    100% !important;
+
+  min-height:
+    76px !important;
+
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  justify-content:
+    space-between !important;
+
+  gap:
+    14px !important;
+
+  padding:
+    9px 14px !important;
+
+  border:
+    1.5px solid #cbdee2 !important;
+
+  border-radius:
+    15px !important;
+
+  background:
+    #ffffff !important;
+
+  color:
+    #355767 !important;
+
+  text-align:
+    left !important;
+
+  cursor:
+    pointer !important;
+
+  transition:
+    border-color .17s ease,
+    box-shadow .17s ease,
+    background-color .17s ease !important;
+}
+
+.farmer-book-page .select-control:hover:not(:disabled) {
+  border-color:
+    #a8c9cf !important;
+
+  background:
+    #fcfefe !important;
+}
+
+.farmer-book-page .select-control:focus-visible {
+  outline:
+    3px solid
+    rgba(25,139,99,.12) !important;
+
+  outline-offset:
+    2px !important;
+
+  border-color:
+    #188d63 !important;
+}
+
+.farmer-book-page .select-main {
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    12px !important;
+
+  min-width:
+    0 !important;
+}
+
+.farmer-book-page .center-select-icon.large {
+  width:
+    48px !important;
+
+  height:
+    48px !important;
+
+  min-width:
+    48px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    13px !important;
+
+  color:
+    #27819d !important;
+
+  background:
+    #e8f6fb !important;
+
+  border:
+    1px solid #cae4ed !important;
+}
+
+.farmer-book-page .selected-value-stack {
+  min-width:
+    0 !important;
+}
+
+.farmer-book-page .selected-value-stack strong {
+  display:
+    block !important;
+
+  overflow:
+    hidden !important;
+
+  text-overflow:
+    ellipsis !important;
+
+  white-space:
+    nowrap !important;
+
+  color:
+    #2c5264 !important;
+
+  font-size:
+    15px !important;
+
+  line-height:
+    1.35 !important;
+
+  font-weight:
+    900 !important;
+}
+
+.farmer-book-page .selected-value-stack span {
+  display:
+    block !important;
+
+  margin-top:
+    3px !important;
+
+  overflow:
+    hidden !important;
+
+  text-overflow:
+    ellipsis !important;
+
+  white-space:
+    nowrap !important;
+
+  color:
+    #81969d !important;
+
+  font-size:
+    11px !important;
+
+  line-height:
+    1.35 !important;
+}
+
+
+/* Center dropdown */
+.farmer-book-page .select-menu {
+  position:
+    absolute !important;
+
+  top:
+    calc(100% + 7px) !important;
+
+  left:
+    0 !important;
+
+  right:
+    0 !important;
+
+  max-height:
+    320px !important;
+
+  padding:
+    7px !important;
+
+  overflow-y:
+    auto !important;
+
+  overscroll-behavior:
+    contain !important;
+
+  border:
+    1px solid #d2e1e4 !important;
+
+  border-radius:
+    15px !important;
+
+  background:
+    #ffffff !important;
+
+  box-shadow:
+    0 22px 50px
+    rgba(28,66,77,.16) !important;
+
+  z-index:
+    100 !important;
+}
+
+.farmer-book-page .center-option {
+  width:
+    100% !important;
+
+  min-height:
+    65px !important;
+
+  display:
+    grid !important;
+
+  grid-template-columns:
+    42px minmax(0,1fr) !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    11px !important;
+
+  padding:
+    9px !important;
+
+  border:
+    0 !important;
+
+  border-radius:
+    11px !important;
+
+  background:
+    transparent !important;
+
+  color:
+    #355767 !important;
+
+  text-align:
+    left !important;
+
+  cursor:
+    pointer !important;
+}
+
+.farmer-book-page .center-option:hover,
+.farmer-book-page .center-option.selected {
+  background:
+    #edf8f4 !important;
+}
+
+.farmer-book-page .center-option.selected {
+  box-shadow:
+    inset 4px 0 0
+    #188d63 !important;
+}
+
+.farmer-book-page .center-option-icon {
+  width:
+    42px !important;
+
+  height:
+    42px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    11px !important;
+
+  color:
+    #267f9b !important;
+
+  background:
+    #edf7fb !important;
+}
+
+.farmer-book-page .center-option strong {
+  display:
+    block !important;
+
+  color:
+    #365969 !important;
+
+  font-size:
+    13px !important;
+
+  line-height:
+    1.3 !important;
+
+  font-weight:
+    850 !important;
+}
+
+.farmer-book-page .center-option span {
+  display:
+    block !important;
+
+  margin-top:
+    3px !important;
+
+  color:
+    #85989e !important;
+
+  font-size:
+    10px !important;
+
+  line-height:
+    1.4 !important;
+}
+
+.farmer-book-page .booking-menu-empty {
+  padding:
+    22px 15px !important;
+
+  color:
+    #7f949a !important;
+
+  text-align:
+    center !important;
+
+  font-size:
+    12px !important;
+
+  font-weight:
+    700 !important;
+}
+
+
+/* =========================================================
+   13. CENTER DETAILS
+========================================================= */
+
+.farmer-book-page .center-detail-meta {
+  display:
+    flex !important;
+
+  flex-wrap:
+    wrap !important;
+
+  gap:
+    7px !important;
+
+  margin-top:
+    9px !important;
+}
+
+.farmer-book-page .center-detail-meta span {
+  display:
+    inline-flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    5px !important;
+
+  min-height:
+    28px !important;
+
+  padding:
+    4px 9px !important;
+
+  border:
+    1px solid #dbe7e9 !important;
+
+  border-radius:
+    999px !important;
+
+  background:
+    #f7fafb !important;
+
+  color:
+    #718990 !important;
+
+  font-size:
+    10px !important;
+
+  font-weight:
+    750 !important;
+}
+
+
+/* =========================================================
+   14. DATE SELECTOR
+========================================================= */
+
+.farmer-book-page .date-options {
+  display:
+    grid !important;
+
+  grid-template-columns:
+    repeat(7,minmax(0,1fr)) !important;
+
+  gap:
+    8px !important;
+
+  overflow-x:
+    auto !important;
+
+  padding:
+    3px !important;
+
+  scrollbar-width:
+    none !important;
+}
+
+.farmer-book-page .date-options::-webkit-scrollbar {
+  display:
+    none !important;
+}
+
+.farmer-book-page .date-option {
+  position:
+    relative !important;
+
+  min-width:
+    76px !important;
+
+  min-height:
+    96px !important;
+
+  display:
+    flex !important;
+
+  flex-direction:
+    column !important;
+
+  align-items:
+    center !important;
+
+  justify-content:
+    center !important;
+
+  gap:
+    4px !important;
+
+  padding:
+    10px 8px !important;
+
+  border:
+    1.5px solid #d5e3e5 !important;
+
+  border-radius:
+    14px !important;
+
+  background:
+    #ffffff !important;
+
+  color:
+    #587781 !important;
+
+  cursor:
+    pointer !important;
+
+  transition:
+    transform .17s ease,
+    border-color .17s ease,
+    background-color .17s ease,
+    box-shadow .17s ease !important;
+}
+
+.farmer-book-page .date-option:hover {
+  transform:
+    translateY(-2px) !important;
+
+  border-color:
+    #a9cacd !important;
+
+  box-shadow:
+    0 9px 19px
+    rgba(32,77,83,.08) !important;
+}
+
+.farmer-book-page .date-option.selected {
+  border-color:
+    #1a8d64 !important;
+
+  background:
+    linear-gradient(
+      145deg,
+      #edf9f3,
+      #e3f6eb
+    ) !important;
+
+  color:
+    #186c4d !important;
+
+  box-shadow:
+    0 10px 22px
+    rgba(25,141,100,.13) !important;
+}
+
+.farmer-book-page .date-weekday {
+  font-size:
+    10px !important;
+
+  font-weight:
+    850 !important;
+
+  text-transform:
+    uppercase !important;
+}
+
+.farmer-book-page .date-option strong {
+  color:
+    inherit !important;
+
+  font-size:
+    25px !important;
+
+  line-height:
+    1 !important;
+
+  font-weight:
+    950 !important;
+}
+
+.farmer-book-page .date-option small {
+  color:
+    inherit !important;
+
+  font-size:
+    10px !important;
+
+  font-weight:
+    750 !important;
+}
+
+.farmer-book-page .date-check {
+  position:
+    absolute !important;
+
+  top:
+    6px !important;
+
+  right:
+    6px !important;
+
+  width:
+    19px !important;
+
+  height:
+    19px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    50% !important;
+
+  background:
+    #198d64 !important;
+
+  color:
+    #ffffff !important;
+}
+
+
+/* =========================================================
+   15. AVAILABILITY RESULTS
+========================================================= */
+
+.farmer-book-page .availability-result-panel,
+.farmer-book-page .booking-availability-panel {
+  position:
+    relative !important;
+}
+
+.farmer-book-page .availability-header {
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  justify-content:
+    space-between !important;
+
+  gap:
+    12px !important;
+
+  margin-bottom:
+    15px !important;
+}
+
+.farmer-book-page .availability-header h3 {
+  margin:
+    0 !important;
+
+  color:
+    #2e5362 !important;
+
+  font-size:
+    19px !important;
+
+  font-weight:
+    900 !important;
+}
+
+
+/* =========================================================
+   16. TIME SLOT GRID
+========================================================= */
+
+.farmer-book-page .slot-grid {
+  display:
+    grid !important;
+
+  grid-template-columns:
+    repeat(3,minmax(0,1fr)) !important;
+
+  gap:
+    12px !important;
+}
+
+.farmer-book-page .slot-card {
+  position:
+    relative !important;
+
+  min-width:
+    0 !important;
+
+  min-height:
+    174px !important;
+
+  display:
+    flex !important;
+
+  flex-direction:
+    column !important;
+
+  padding:
+    15px !important;
+
+  border:
+    1.5px solid #d5e3e5 !important;
+
+  border-radius:
+    16px !important;
+
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #f8fbfb
+    ) !important;
+
+  color:
+    #385967 !important;
+
+  text-align:
+    left !important;
+
+  cursor:
+    pointer !important;
+
+  box-shadow:
+    0 7px 19px
+    rgba(30,70,78,.045) !important;
+
+  transition:
+    transform .17s ease,
+    border-color .17s ease,
+    background-color .17s ease,
+    box-shadow .17s ease !important;
+}
+
+.farmer-book-page .slot-card:hover:not(:disabled) {
+  transform:
+    translateY(-3px) !important;
+
+  border-color:
+    #9ccbc2 !important;
+
+  box-shadow:
+    0 14px 27px
+    rgba(29,79,72,.10) !important;
+}
+
+.farmer-book-page .slot-card.selected {
+  border-color:
+    #198d64 !important;
+
+  background:
+    linear-gradient(
+      145deg,
+      #effaf4,
+      #e5f7ed
+    ) !important;
+
+  box-shadow:
+    0 12px 28px
+    rgba(25,141,100,.14),
+    inset 0 0 0 1px
+    rgba(25,141,100,.08) !important;
+}
+
+.farmer-book-page .slot-card.slot-full,
+.farmer-book-page .slot-card.past {
+  opacity:
+    .55 !important;
+
+  background:
+    #f5f6f6 !important;
+
+  cursor:
+    not-allowed !important;
+}
+
+.farmer-book-page .slot-card-header {
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  justify-content:
+    space-between !important;
+}
+
+.farmer-book-page .slot-card-clock {
+  width:
+    40px !important;
+
+  height:
+    40px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    12px !important;
+
+  color:
+    #257f98 !important;
+
+  background:
+    #e9f6fa !important;
+}
+
+.farmer-book-page .slot-card-selected {
+  width:
+    25px !important;
+
+  height:
+    25px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    50% !important;
+
+  background:
+    #198e64 !important;
+
+  color:
+    #ffffff !important;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(25,142,100,.09) !important;
+}
+
+.farmer-book-page .slot-card-time {
+  margin-top:
+    17px !important;
+}
+
+.farmer-book-page .slot-card-time strong {
+  color:
+    #294f60 !important;
+
+  font-size:
+    20px !important;
+
+  line-height:
+    1.2 !important;
+
+  font-weight:
+    950 !important;
+}
+
+.farmer-book-page .slot-capacity-label {
+  margin-top:
+    11px !important;
+}
+
+.farmer-book-page .slot-capacity-label span {
+  display:
+    inline-flex !important;
+
+  min-height:
+    26px !important;
+
+  align-items:
+    center !important;
+
+  padding:
+    4px 8px !important;
+
+  border-radius:
+    999px !important;
+
+  font-size:
+    10px !important;
+
+  line-height:
+    1 !important;
+
+  font-weight:
+    850 !important;
+}
+
+.farmer-book-page .slot-normal-label {
+  background:
+    #eaf7ef !important;
+
+  color:
+    #287653 !important;
+}
+
+.farmer-book-page .slot-limited-label {
+  background:
+    #fff5df !important;
+
+  color:
+    #a36e12 !important;
+}
+
+.farmer-book-page .slot-busy-label {
+  background:
+    #fff0dd !important;
+
+  color:
+    #bf6f14 !important;
+}
+
+.farmer-book-page .slot-full-label {
+  background:
+    #fff0ee !important;
+
+  color:
+    #b45149 !important;
+}
+
+.farmer-book-page .slot-capacity-bar {
+  height:
+    7px !important;
+
+  margin-top:
+    13px !important;
+
+  overflow:
+    hidden !important;
+
+  border-radius:
+    999px !important;
+
+  background:
+    #e4ecee !important;
+}
+
+.farmer-book-page .slot-capacity-bar > div {
+  height:
+    100% !important;
+
+  border-radius:
+    inherit !important;
+
+  background:
+    linear-gradient(
+      90deg,
+      #72c89e,
+      #1b9669
+    ) !important;
+}
+
+.farmer-book-page .slot-card-footer {
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  justify-content:
+    space-between !important;
+
+  gap:
+    8px !important;
+
+  margin-top:
+    auto !important;
+
+  padding-top:
+    13px !important;
+
+  color:
+    #80959b !important;
+
+  font-size:
+    11px !important;
+
+  font-weight:
+    750 !important;
+}
+
+
+/* =========================================================
+   17. SELECTED SLOT
+========================================================= */
+
+.farmer-book-page .selected-slot-banner {
+  display:
+    grid !important;
+
+  grid-template-columns:
+    43px minmax(0,1fr) auto !important;
+
+  gap:
+    12px !important;
+
+  align-items:
+    center !important;
+
+  margin-top:
+    15px !important;
+
+  padding:
+    14px !important;
+
+  border:
+    1px solid #bfe0cd !important;
+
+  border-radius:
+    15px !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #eaf8ef,
+      #f4fbf7
+    ) !important;
+}
+
+.farmer-book-page .selected-slot-check {
+  width:
+    43px !important;
+
+  height:
+    43px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    12px !important;
+
+  background:
+    #d8f1e2 !important;
+
+  color:
+    #17885f !important;
+}
+
+.farmer-book-page .selected-slot-banner span {
+  display:
+    block !important;
+
+  color:
+    #759087 !important;
+
+  font-size:
+    10px !important;
+
+  font-weight:
+    800 !important;
+}
+
+.farmer-book-page .selected-slot-banner strong {
+  display:
+    block !important;
+
+  margin-top:
+    3px !important;
+
+  color:
+    #286249 !important;
+
+  font-size:
+    15px !important;
+
+  font-weight:
+    900 !important;
+}
+
+.farmer-book-page .selected-slot-banner button {
+  min-height:
+    38px !important;
+
+  padding:
+    7px 10px !important;
+
+  border:
+    1px solid #bddbd0 !important;
+
+  border-radius:
+    9px !important;
+
+  background:
+    #ffffff !important;
+
+  color:
+    #33755d !important;
+
+  font-size:
+    11px !important;
+
+  font-weight:
+    850 !important;
+
+  cursor:
+    pointer !important;
+}
+
+
+/* =========================================================
+   18. FINAL CONFIRMATION
+========================================================= */
+
+.farmer-book-page .booking-confirm-section {
+  position:
+    relative !important;
+
+  overflow:
+    hidden !important;
+
+  padding:
+    27px !important;
+
+  border:
+    1px solid #bfdfcf !important;
+
+  border-left:
+    6px solid #198e63 !important;
+
+  border-radius:
+    21px !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,.98),
+      rgba(240,250,245,.96)
+    ) !important;
+
+  box-shadow:
+    0 20px 42px
+    rgba(26,111,75,.10) !important;
+}
+
+.farmer-book-page .booking-confirm-section::after {
+  content:
+    "" !important;
+
+  position:
+    absolute !important;
+
+  right:
+    -60px !important;
+
+  top:
+    -70px !important;
+
+  width:
+    220px !important;
+
+  height:
+    220px !important;
+
+  border-radius:
+    50% !important;
+
+  opacity:
+    .13 !important;
+
+  pointer-events:
+    none !important;
+
+  background:
+    url("https://images.unsplash.com/photo-1499529112087-3cb3b73cec95?auto=format&fit=crop&w=800&q=80")
+    center / cover no-repeat !important;
+}
+
+.farmer-book-page .confirm-section-heading {
+  position:
+    relative !important;
+
+  z-index:
+    2 !important;
+
+  display:
+    flex !important;
+
+  align-items:
+    flex-start !important;
+
+  justify-content:
+    space-between !important;
+
+  gap:
+    15px !important;
+
+  margin-bottom:
+    20px !important;
+}
+
+.farmer-book-page .confirm-section-heading h2 {
+  margin:
+    6px 0 7px !important;
+
+  color:
+    #285244 !important;
+
+  font-size:
+    clamp(22px,2.5vw,31px) !important;
+
+  line-height:
+    1.18 !important;
+
+  font-weight:
+    950 !important;
+}
+
+.farmer-book-page .confirm-section-heading p {
+  max-width:
+    700px !important;
+
+  margin:
+    0 !important;
+
+  color:
+    #718980 !important;
+
+  font-size:
+    13px !important;
+
+  line-height:
+    1.55 !important;
+}
+
+.farmer-book-page .confirm-ready-pill {
+  flex:
+    0 0 auto !important;
+
+  display:
+    inline-flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    6px !important;
+
+  min-height:
+    34px !important;
+
+  padding:
+    6px 10px !important;
+
+  border:
+    1px solid #bfe0ce !important;
+
+  border-radius:
+    999px !important;
+
+  background:
+    #e9f8ef !important;
+
+  color:
+    #24724f !important;
+
+  font-size:
+    10px !important;
+
+  font-weight:
+    900 !important;
+}
+
+.farmer-book-page .confirm-review-grid {
+  position:
+    relative !important;
+
+  z-index:
+    2 !important;
+
+  display:
+    grid !important;
+
+  grid-template-columns:
+    repeat(4,minmax(0,1fr)) !important;
+
+  gap:
+    10px !important;
+}
+
+.farmer-book-page .confirm-review-card {
+  min-width:
+    0 !important;
+
+  padding:
+    15px !important;
+
+  border:
+    1px solid #d6e4df !important;
+
+  border-radius:
+    14px !important;
+
+  background:
+    rgba(255,255,255,.90) !important;
+}
+
+.farmer-book-page .confirm-review-card strong {
+  display:
+    block !important;
+
+  color:
+    #315b4a !important;
+
+  font-size:
+    14px !important;
+
+  font-weight:
+    900 !important;
+}
+
+.farmer-book-page .confirm-review-card span {
+  color:
+    #81978d !important;
+
+  font-size:
+    10px !important;
+}
+
+.farmer-book-page .confirm-notice {
+  position:
+    relative !important;
+
+  z-index:
+    2 !important;
+
+  display:
+    grid !important;
+
+  grid-template-columns:
+    44px minmax(0,1fr) !important;
+
+  gap:
+    11px !important;
+
+  align-items:
+    start !important;
+
+  margin-top:
+    15px !important;
+
+  padding:
+    14px !important;
+
+  border:
+    1px solid #cfe3db !important;
+
+  border-radius:
+    14px !important;
+
+  background:
+    #f2faf6 !important;
+}
+
+.farmer-book-page .confirm-notice-icon {
+  width:
+    44px !important;
+
+  height:
+    44px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    12px !important;
+
+  background:
+    #def3e7 !important;
+
+  color:
+    #21835e !important;
+}
+
+.farmer-book-page .confirm-notice strong {
+  display:
+    block !important;
+
+  margin-bottom:
+    3px !important;
+
+  color:
+    #286048 !important;
+
+  font-size:
+    14px !important;
+
+  font-weight:
+    900 !important;
+}
+
+.farmer-book-page .confirm-notice p {
+  margin:
+    0 !important;
+
+  color:
+    #718980 !important;
+
+  font-size:
+    12px !important;
+
+  line-height:
+    1.55 !important;
+}
+
+.farmer-book-page .confirm-bottom {
+  position:
+    relative !important;
+
+  z-index:
+    2 !important;
+
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  justify-content:
+    space-between !important;
+
+  gap:
+    15px !important;
+
+  margin-top:
+    17px !important;
+}
+
+.farmer-book-page .confirm-arrival-reminder {
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    8px !important;
+
+  color:
+    #6f867d !important;
+
+  font-size:
+    12px !important;
+
+  line-height:
+    1.45 !important;
+
+  font-weight:
+    700 !important;
+}
+
+.farmer-book-page .confirm-bottom button {
+  min-height:
+    55px !important;
+
+  min-width:
+    210px !important;
+
+  display:
+    inline-flex !important;
+
+  align-items:
+    center !important;
+
+  justify-content:
+    center !important;
+
+  gap:
+    9px !important;
+
+  padding:
+    12px 20px !important;
+
+  border:
+    1px solid #12855b !important;
+
+  border-radius:
+    14px !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #168b60,
+      #239b6c
+    ) !important;
+
+  color:
+    #ffffff !important;
+
+  font-size:
+    15px !important;
+
+  font-weight:
+    900 !important;
+
+  box-shadow:
+    0 12px 26px
+    rgba(22,139,96,.20) !important;
+
+  cursor:
+    pointer !important;
+
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    filter .18s ease !important;
+}
+
+.farmer-book-page .confirm-bottom button:hover:not(:disabled) {
+  transform:
+    translateY(-2px) !important;
+
+  filter:
+    brightness(1.04) !important;
+
+  box-shadow:
+    0 16px 31px
+    rgba(22,139,96,.26) !important;
+}
+
+
+/* =========================================================
+   19. BOTTOM INFORMATION CARDS
+========================================================= */
+
+.farmer-book-page .booking-bottom-information {
+  display:
+    grid !important;
+
+  grid-template-columns:
+    repeat(3,minmax(0,1fr)) !important;
+
+  gap:
+    13px !important;
+
+  margin-top:
+    21px !important;
+}
+
+.farmer-book-page .booking-bottom-card {
+  position:
+    relative !important;
+
+  min-width:
+    0 !important;
+
+  min-height:
+    128px !important;
+
+  display:
+    grid !important;
+
+  grid-template-columns:
+    46px minmax(0,1fr) !important;
+
+  gap:
+    11px !important;
+
+  align-items:
+    start !important;
+
+  padding:
+    17px !important;
+
+  overflow:
+    hidden !important;
+
+  border:
+    1px solid #d7e4e6 !important;
+
+  border-top:
+    5px solid #8aa5aa !important;
+
+  border-radius:
+    16px !important;
+
+  background:
+    rgba(255,255,255,.92) !important;
+
+  box-shadow:
+    0 9px 24px
+    rgba(31,68,78,.055) !important;
+
+  text-decoration:
+    none !important;
+
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    border-color .18s ease !important;
+}
+
+.farmer-book-page .booking-bottom-card:hover {
+  transform:
+    translateY(-3px) !important;
+
+  box-shadow:
+    0 15px 31px
+    rgba(31,68,78,.10) !important;
+}
+
+.farmer-book-page .booking-bottom-card.green {
+  border-top-color:
+    #198e64 !important;
+}
+
+.farmer-book-page .booking-bottom-card.blue {
+  border-top-color:
+    #2589aa !important;
+}
+
+.farmer-book-page .booking-bottom-card.gold {
+  border-top-color:
+    #d28a20 !important;
+}
+
+.farmer-book-page .bottom-card-icon {
+  width:
+    46px !important;
+
+  height:
+    46px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    13px !important;
+}
+
+.farmer-book-page .booking-bottom-card.green
+.bottom-card-icon {
+  color:
+    #17875f !important;
+
+  background:
+    #e8f7ee !important;
+}
+
+.farmer-book-page .booking-bottom-card.blue
+.bottom-card-icon {
+  color:
+    #237e9e !important;
+
+  background:
+    #e8f6fa !important;
+}
+
+.farmer-book-page .booking-bottom-card.gold
+.bottom-card-icon {
+  color:
+    #b57615 !important;
+
+  background:
+    #fff3db !important;
+}
+
+.farmer-book-page .booking-bottom-card strong {
+  display:
+    block !important;
+
+  margin-bottom:
+    4px !important;
+
+  color:
+    #315566 !important;
+
+  font-size:
+    14px !important;
+
+  line-height:
+    1.35 !important;
+
+  font-weight:
+    900 !important;
+}
+
+.farmer-book-page .booking-bottom-card span {
+  display:
+    block !important;
+
+  color:
+    #81949a !important;
+
+  font-size:
+    11px !important;
+
+  line-height:
+    1.5 !important;
+}
+
+
+/* =========================================================
+   20. ERROR STATES
+========================================================= */
+
+.farmer-book-page .booking-error.prominent {
+  display:
+    flex !important;
+
+  align-items:
+    flex-start !important;
+
+  gap:
+    9px !important;
+
+  padding:
+    13px 15px !important;
+
+  border:
+    1px solid #efc3bd !important;
+
+  border-left:
+    4px solid #d35c50 !important;
+
+  border-radius:
+    13px !important;
+
+  background:
+    #fff5f3 !important;
+
+  color:
+    #ac4c43 !important;
+
+  font-size:
+    13px !important;
+
+  line-height:
+    1.5 !important;
+
+  font-weight:
+    750 !important;
+}
+
+
+/* =========================================================
+   21. SUCCESS OVERLAY
+========================================================= */
+
+.farmer-book-page .booking-confirmed-overlay {
+  position:
+    fixed !important;
+
+  inset:
+    0 !important;
+
+  z-index:
+    50000 !important;
+
+  display:
+    flex !important;
+
+  align-items:
+    flex-start !important;
+
+  justify-content:
+    center !important;
+
+  padding:
+    50px 20px !important;
+
+  overflow:
+    hidden !important;
+
+  background:
+    rgba(18,45,37,.46) !important;
+
+  backdrop-filter:
+    blur(9px) !important;
+
+  -webkit-backdrop-filter:
+    blur(9px) !important;
+}
+
+.farmer-book-page .booking-confirmed-card {
+  width:
+    min(560px,96vw) !important;
+
+  padding:
+    35px !important;
+
+  border:
+    1px solid #c9dfd3 !important;
+
+  border-radius:
+    24px !important;
+
+  background:
+    rgba(255,255,255,.98) !important;
+
+  box-shadow:
+    0 30px 70px
+    rgba(14,54,38,.22) !important;
+
+  text-align:
+    center !important;
+}
+
+.farmer-book-page .booking-confirmed-icon {
+  width:
+    70px !important;
+
+  height:
+    70px !important;
+
+  margin:
+    0 auto 17px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    20px !important;
+
+  background:
+    #e6f7ed !important;
+
+  color:
+    #188b60 !important;
+
+  border:
+    1px solid #c5e5d2 !important;
+}
+
+
+/* =========================================================
+   22. TABLET
+========================================================= */
+
+@media (max-width: 1100px) {
+
+  .farmer-book-page .booking-container {
+    width:
+      min(
+        calc(100% - 32px),
+        980px
+      ) !important;
+  }
+
+  .farmer-book-page .booking-top-row {
+    grid-template-columns:
+      1fr !important;
+
+    gap:
+      18px !important;
+  }
+
+  .farmer-book-page .booking-layout {
+    grid-template-columns:
+      1fr !important;
+  }
+
+  .farmer-book-page .booking-side-column {
+    position:
+      static !important;
+  }
+
+  .farmer-book-page .slot-grid {
+    grid-template-columns:
+      repeat(2,minmax(0,1fr)) !important;
+  }
+
+  .farmer-book-page .confirm-review-grid {
+    grid-template-columns:
+      repeat(2,minmax(0,1fr)) !important;
+  }
+}
+
+
+/* =========================================================
+   23. MOBILE
+========================================================= */
+
+@media (max-width: 720px) {
+
+  .farmer-book-page {
+    background-attachment:
+      scroll !important;
+
+    background-position:
+      center top !important;
+  }
+
+  .farmer-book-page .booking-container {
+    width:
+      calc(100% - 16px) !important;
+
+    padding:
+      14px 0 42px !important;
+  }
+
+
+  /* Heading */
+  .farmer-book-page .booking-title-area .back-link {
+    margin-bottom:
+      13px !important;
+  }
+
+  .farmer-book-page .booking-title-area h1 {
+    font-size:
+      clamp(31px,8vw,43px) !important;
+  }
+
+  .farmer-book-page .booking-title-area > p {
+    font-size:
+      14px !important;
+  }
+
+
+  /* Process */
+  .farmer-book-page .booking-process-mini {
+    grid-template-columns:
+      repeat(3,1fr) !important;
+
+    gap:
+      5px !important;
+
+    min-height:
+      74px !important;
+
+    padding:
+      10px !important;
+  }
+
+  .farmer-book-page .mini-step-line {
+    display:
+      none !important;
+  }
+
+  .farmer-book-page .mini-step {
+    font-size:
+      9px !important;
+  }
+
+  .farmer-book-page .mini-step span {
+    width:
+      30px !important;
+
+    height:
+      30px !important;
+  }
+
+
+  /* Information bar */
+  .farmer-book-page .booking-info-bar {
+    grid-template-columns:
+      1fr !important;
+
+    gap:
+      9px !important;
+  }
+
+
+  /* Panels */
+  .farmer-book-page .booking-panel {
+    padding:
+      20px !important;
+
+    border-radius:
+      18px !important;
+  }
+
+  .farmer-book-page .booking-panel-number {
+    top:
+      18px !important;
+
+    right:
+      19px !important;
+
+    font-size:
+      26px !important;
+  }
+
+  .farmer-book-page .booking-panel-heading {
+    grid-template-columns:
+      46px minmax(0,1fr) !important;
+
+    gap:
+      11px !important;
+  }
+
+  .farmer-book-page .panel-icon {
+    width:
+      46px !important;
+
+    height:
+      46px !important;
+  }
+
+  .farmer-book-page .booking-panel-heading h2 {
+    font-size:
+      22px !important;
+  }
+
+
+  /* Crops */
+  .farmer-book-page .crop-options {
+    grid-template-columns:
+      repeat(2,minmax(0,1fr)) !important;
+  }
+
+  .farmer-book-page .crop-option {
+    min-height:
+      78px !important;
+  }
+
+
+  /* Center */
+  .farmer-book-page .select-control {
+    min-height:
+      70px !important;
+  }
+
+  .farmer-book-page .select-menu {
+    max-height:
+      48vh !important;
+  }
+
+
+  /* Dates */
+  .farmer-book-page .date-options {
+    display:
+      flex !important;
+
+    overflow-x:
+      auto !important;
+  }
+
+  .farmer-book-page .date-option {
+    flex:
+      0 0 76px !important;
+  }
+
+
+  /* Slots */
+  .farmer-book-page .slot-grid {
+    grid-template-columns:
+      1fr !important;
+
+    gap:
+      10px !important;
+  }
+
+  .farmer-book-page .slot-card {
+    min-height:
+      155px !important;
+  }
+
+
+  /* Selected slot */
+  .farmer-book-page .selected-slot-banner {
+    grid-template-columns:
+      38px minmax(0,1fr) !important;
+  }
+
+  .farmer-book-page .selected-slot-check {
+    width:
+      38px !important;
+
+    height:
+      38px !important;
+  }
+
+  .farmer-book-page .selected-slot-banner button {
+    grid-column:
+      2 !important;
+
+    justify-self:
+      start !important;
+  }
+
+
+  /* Confirmation */
+  .farmer-book-page .booking-confirm-section {
+    padding:
+      20px !important;
+
+    border-left-width:
+      4px !important;
+  }
+
+  .farmer-book-page .confirm-section-heading {
+    flex-direction:
+      column !important;
+  }
+
+  .farmer-book-page .confirm-review-grid {
+    grid-template-columns:
+      1fr !important;
+  }
+
+  .farmer-book-page .confirm-bottom {
+    flex-direction:
+      column !important;
+
+    align-items:
+      stretch !important;
+  }
+
+  .farmer-book-page .confirm-bottom button {
+    width:
+      100% !important;
+
+    min-width:
+      0 !important;
+  }
+
+
+  /* Bottom cards */
+  .farmer-book-page .booking-bottom-information {
+    grid-template-columns:
+      1fr !important;
+  }
+
+  .farmer-book-page .booking-bottom-card {
+    min-height:
+      112px !important;
+  }
+
+
+  /* Success modal */
+  .farmer-book-page .booking-confirmed-overlay {
+    padding:
+      20px 10px !important;
+  }
+
+  .farmer-book-page .booking-confirmed-card {
+    width:
+      100% !important;
+
+    padding:
+      25px 18px !important;
+
+    border-radius:
+      19px !important;
+  }
+}
+
+
+/* =========================================================
+   24. VERY SMALL PHONES
+========================================================= */
+
+@media (max-width: 390px) {
+
+  .farmer-book-page .booking-container {
+    width:
+      calc(100% - 10px) !important;
+  }
+
+  .farmer-book-page .booking-panel {
+    padding:
+      17px !important;
+  }
+
+  .farmer-book-page .booking-info-bar > div {
+    grid-template-columns:
+      43px minmax(0,1fr) !important;
+
+    padding:
+      12px !important;
+  }
+
+  .farmer-book-page .booking-info-icon {
+    width:
+      43px !important;
+
+    height:
+      43px !important;
+  }
+
+  .farmer-book-page .booking-live-pill {
+    min-height:
+      29px !important;
+  }
+
+  .farmer-book-page .booking-panel-heading h2 {
+    font-size:
+      20px !important;
+  }
+
+  .farmer-book-page .slot-card-time strong {
+    font-size:
+      18px !important;
+  }
+}
+
+
+/* =========================================================
+   25. HARD MOBILE SAFETY
+========================================================= */
+
+@media (max-width: 720px) {
+
+  .farmer-book-page,
+  .farmer-book-page main,
+  .farmer-book-page .booking-container,
+  .farmer-book-page .booking-layout,
+  .farmer-book-page .booking-form-column,
+  .farmer-book-page .booking-panel {
+    max-width:
+      100% !important;
+
+    overflow-x:
+      clip !important;
+  }
+
+  .farmer-book-page input,
+  .farmer-book-page button,
+  .farmer-book-page select,
+  .farmer-book-page a {
+    max-width:
+      100% !important;
+  }
+}
+
+
+/* =========================================================
+   26. LIGHT PREMIUM MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: no-preference) {
+
+  .farmer-book-page .booking-panel,
+  .farmer-book-page .booking-info-bar > div,
+  .farmer-book-page .booking-confirm-section,
+  .farmer-book-page .booking-bottom-card {
+    animation:
+      farmerBookRise
+      .28s
+      ease-out
+      both;
+  }
+
+  .farmer-book-page .booking-info-bar > div:nth-child(2) {
+    animation-delay:
+      .035s;
+  }
+
+  .farmer-book-page .booking-info-bar > div:nth-child(3) {
+    animation-delay:
+      .07s;
+  }
+
+  @keyframes farmerBookRise {
+
+    from {
+      opacity:
+        0;
+
+      transform:
+        translateY(7px);
+    }
+
+    to {
+      opacity:
+        1;
+
+      transform:
+        translateY(0);
+    }
+  }
+}
+
+
+/* =========================================================
+   27. ACCESSIBILITY
+========================================================= */
+
+.farmer-book-page button:focus-visible,
+.farmer-book-page input:focus-visible,
+.farmer-book-page a:focus-visible {
+  outline:
+    3px solid
+    rgba(23,141,99,.18) !important;
+
+  outline-offset:
+    3px !important;
+}
+
+/* =========================================================
+   KRISHISETU — GLOBAL UI LAYERING / DROPDOWN SYSTEM
+   =========================================================
+   PURPOSE:
+   - Header menus always stay above page content
+   - Language menu never hides behind hero/background
+   - Select dropdowns never get covered by later sections
+   - Dropdown backgrounds are fully opaque
+   - Open menus get predictable z-index layers
+   - Prevents future page-specific CSS from breaking menus
+   - Mobile safe
+========================================================= */
+
+
+/* =========================================================
+   1. GLOBAL STACKING FOUNDATION
+========================================================= */
+
+html,
+body,
+#root {
+  position: relative !important;
+  width: 100% !important;
+  min-height: 100% !important;
+}
+
+
+/*
+   Main application content stays below global menus.
+*/
+#root {
+  isolation: isolate !important;
+}
+
+
+/* =========================================================
+   2. GLOBAL Z-INDEX SCALE
+========================================================= */
+
+/*
+   NORMAL PAGE CONTENT
+*/
+.farmer-home-page,
+.farmer-book-page,
+.farmer-register-page {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+
+/*
+   PAGE CARDS / SECTIONS
+*/
+.farmer-home-page .home-feature-card,
+.farmer-home-page .next-booking-card,
+.farmer-book-page .booking-panel,
+.farmer-book-page .booking-confirm-section {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+
+/*
+   HEADER MUST ALWAYS SIT ABOVE PAGE CONTENT
+*/
+header,
+.site-header,
+.app-header,
+.farmer-header,
+.main-header,
+.header,
+.page-header,
+.top-header,
+.navbar {
+  position: relative !important;
+  z-index: 10000 !important;
+}
+
+
+/* =========================================================
+   3. HEADER DROPDOWN AREA
+========================================================= */
+
+header,
+.site-header,
+.app-header,
+.farmer-header,
+.main-header,
+.header,
+.page-header,
+.top-header,
+.navbar {
+  overflow: visible !important;
+
+  isolation: isolate !important;
+}
+
+
+/*
+   Header controls themselves.
+*/
+header button,
+.site-header button,
+.app-header button,
+.farmer-header button,
+.main-header button {
+  position: relative;
+  z-index: 10001;
+}
+
+
+/* =========================================================
+   4. LANGUAGE MENUS
+========================================================= */
+
+/*
+   Catch common naming patterns used by the Header component.
+*/
+.language-menu,
+.language-dropdown,
+.language-panel,
+.language-picker,
+.language-popover,
+.language-options,
+.language-selector-menu,
+.language-dropdown-menu,
+.language-modal-menu,
+.header-language-menu,
+.header-language-dropdown,
+.header-language-panel,
+.lang-menu,
+.lang-dropdown,
+.lang-panel {
+  position: absolute !important;
+
+  z-index: 100000 !important;
+
+  isolation: isolate !important;
+
+  background: #ffffff !important;
+
+  opacity: 1 !important;
+
+  visibility: visible !important;
+
+  pointer-events: auto !important;
+
+  box-shadow:
+    0 20px 55px
+    rgba(22, 56, 68, .18),
+    0 4px 16px
+    rgba(22, 56, 68, .08) !important;
+
+  border:
+    1px solid #cfdfe3 !important;
+
+  border-radius:
+    16px !important;
+
+  backdrop-filter:
+    none !important;
+
+  -webkit-backdrop-filter:
+    none !important;
+}
+
+
+/*
+   Any menu-like language popup identified by class name.
+*/
+[class*="language-menu"],
+[class*="language-dropdown"],
+[class*="language-panel"],
+[class*="lang-menu"],
+[class*="lang-dropdown"] {
+  z-index: 100000 !important;
+
+  background:
+    #ffffff !important;
+
+  opacity:
+    1 !important;
+}
+
+
+/* =========================================================
+   5. GENERIC DROPDOWN / POPOVER LAYER
+========================================================= */
+
+/*
+   Standard dropdowns, listboxes and menus.
+*/
+[role="menu"],
+[role="listbox"],
+[role="dialog"].dropdown,
+[role="tooltip"].dropdown,
+.dropdown-menu,
+.dropdown-panel,
+.popover,
+.popover-menu,
+.select-dropdown,
+.options-menu,
+.menu-panel {
+  position: absolute !important;
+
+  z-index: 90000 !important;
+
+  isolation: isolate !important;
+
+  background: #ffffff !important;
+
+  opacity: 1 !important;
+
+  visibility: visible !important;
+
+  pointer-events: auto !important;
+
+  box-shadow:
+    0 20px 50px
+    rgba(22, 58, 70, .17),
+    0 5px 15px
+    rgba(22, 58, 70, .07) !important;
+
+  border:
+    1px solid #d1e0e4 !important;
+
+  border-radius:
+    15px !important;
+}
+
+
+/* =========================================================
+   6. FARMER BOOK SELECT SYSTEM
+========================================================= */
+
+.farmer-book-page .custom-select {
+  position: relative !important;
+
+  z-index: 5000 !important;
+
+  isolation: isolate !important;
+}
+
+
+/*
+   Open crop / center dropdown.
+*/
+.farmer-book-page .select-menu {
+  position: absolute !important;
+
+  z-index: 100000 !important;
+
+  isolation: isolate !important;
+
+  background:
+    #ffffff !important;
+
+  opacity:
+    1 !important;
+
+  visibility:
+    visible !important;
+
+  pointer-events:
+    auto !important;
+
+  box-shadow:
+    0 24px 60px
+    rgba(21, 59, 71, .20),
+    0 6px 18px
+    rgba(21, 59, 71, .08) !important;
+
+  border:
+    1px solid #cedfe3 !important;
+
+  border-radius:
+    16px !important;
+
+  overflow-x:
+    hidden !important;
+
+  overflow-y:
+    auto !important;
+
+  overscroll-behavior:
+    contain !important;
+}
+
+
+/*
+   Specifically make center menu stronger than
+   date/time sections underneath it.
+*/
+.farmer-book-page .center-menu {
+  z-index:
+    120000 !important;
+
+  background:
+    #ffffff !important;
+}
+
+
+/*
+   All content inside center dropdown gets an opaque surface.
+*/
+.farmer-book-page .center-menu::before {
+  content:
+    "" !important;
+
+  position:
+    absolute !important;
+
+  inset:
+    0 !important;
+
+  z-index:
+    -1 !important;
+
+  border-radius:
+    inherit !important;
+
+  background:
+    #ffffff !important;
+
+  pointer-events:
+    none !important;
+}
+
+
+/* =========================================================
+   7. DATE / SLOT SECTIONS STAY BELOW DROPDOWNS
+========================================================= */
+
+.farmer-book-page .booking-date-field,
+.farmer-book-page .date-options,
+.farmer-book-page .slot-grid,
+.farmer-book-page .booking-confirm-section,
+.farmer-book-page .booking-bottom-information {
+  position: relative !important;
+
+  z-index: 1 !important;
+}
+
+
+/*
+   Explicitly prevent date cards from climbing above
+   an open center/crop dropdown.
+*/
+.farmer-book-page .date-option,
+.farmer-book-page .slot-card {
+  z-index: 1 !important;
+}
+
+
+/* =========================================================
+   8. SELECT DROPDOWN OPTIONS
+========================================================= */
+
+.farmer-book-page .center-option,
+.farmer-book-page .select-menu button {
+  position: relative !important;
+
+  z-index: 2 !important;
+
+  background:
+    #ffffff !important;
+}
+
+
+/*
+   Hover / selected option stays visually obvious.
+*/
+.farmer-book-page .center-option:hover {
+  background:
+    #eef8f4 !important;
+}
+
+.farmer-book-page .center-option.selected {
+  background:
+    #e7f7ee !important;
+
+  box-shadow:
+    inset 4px 0 0
+    #168c62 !important;
+}
+
+
+/* =========================================================
+   9. HEADER LANGUAGE OPTIONS
+========================================================= */
+
+.language-menu button,
+.language-dropdown button,
+.language-panel button,
+.language-options button,
+[class*="language-menu"] button,
+[class*="language-dropdown"] button,
+[class*="language-panel"] button {
+  position: relative !important;
+
+  z-index: 100001 !important;
+
+  min-height: 46px !important;
+
+  background:
+    #ffffff !important;
+
+  color:
+    #315466 !important;
+
+  opacity:
+    1 !important;
+}
+
+
+/*
+   Language option hover.
+*/
+.language-menu button:hover,
+.language-dropdown button:hover,
+.language-panel button:hover,
+.language-options button:hover,
+[class*="language-menu"] button:hover,
+[class*="language-dropdown"] button:hover,
+[class*="language-panel"] button:hover {
+  background:
+    #eef8f4 !important;
+
+  color:
+    #187957 !important;
+}
+
+
+/* =========================================================
+   10. HEADER DROPDOWN BACKDROP / PARENT SAFETY
+========================================================= */
+
+/*
+   Prevent header's internal stacking context from
+   trapping the language menu.
+*/
+header > *,
+.site-header > *,
+.app-header > *,
+.farmer-header > * {
+  overflow: visible !important;
+}
+
+
+/* Common header control wrappers */
+.header-actions,
+.header-actions-wrapper,
+.header-right,
+.header-controls,
+.language-selector,
+.language-select,
+.language-control {
+  position: relative !important;
+
+  z-index: 10000 !important;
+
+  overflow: visible !important;
+}
+
+
+/* =========================================================
+   11. NEVER DIM DROPDOWN CONTENT ITSELF
+========================================================= */
+
+.language-menu *,
+.language-dropdown *,
+.language-panel *,
+.select-menu *,
+.center-menu * {
+  opacity:
+    1 !important;
+}
+
+
+/* =========================================================
+   12. OPEN DROPDOWN SHOULD NOT CREATE TRANSPARENCY BUG
+========================================================= */
+
+.language-menu,
+.language-dropdown,
+.language-panel,
+.select-menu,
+.center-menu,
+[role="menu"],
+[role="listbox"] {
+  background-color:
+    #ffffff !important;
+
+  background-image:
+    none !important;
+}
+
+
+/* =========================================================
+   13. MODERN DEPTH
+========================================================= */
+
+.language-menu,
+.language-dropdown,
+.language-panel,
+.select-menu,
+.center-menu {
+  transform-origin:
+    top center !important;
+}
+
+
+/*
+   Cheap GPU-friendly entrance.
+*/
+@media (prefers-reduced-motion: no-preference) {
+
+  .language-menu,
+  .language-dropdown,
+  .language-panel,
+  .select-menu,
+  .center-menu {
+
+    animation:
+      krishiDropdownIn
+      .16s
+      ease-out
+      both !important;
+  }
+
+  @keyframes krishiDropdownIn {
+
+    from {
+      opacity: 0;
+
+      transform:
+        translateY(-4px)
+        scale(.985);
+    }
+
+    to {
+      opacity: 1;
+
+      transform:
+        translateY(0)
+        scale(1);
+    }
+
+  }
+}
+
+
+/* =========================================================
+   14. MOBILE DROPDOWN SAFETY
+========================================================= */
+
+@media (max-width: 720px) {
+
+  /*
+     Language menu must remain inside the viewport.
+  */
+  .language-menu,
+  .language-dropdown,
+  .language-panel,
+  [class*="language-menu"],
+  [class*="language-dropdown"],
+  [class*="language-panel"] {
+    max-width:
+      calc(100vw - 20px) !important;
+
+    max-height:
+      calc(100dvh - 80px) !important;
+
+    overflow-y:
+      auto !important;
+
+    overflow-x:
+      hidden !important;
+
+    overscroll-behavior:
+      contain !important;
+  }
+
+
+  /*
+     Farmer Book dropdowns.
+  */
+  .farmer-book-page .select-menu {
+    max-width:
+      calc(100vw - 28px) !important;
+
+    max-height:
+      min(52dvh, 360px) !important;
+
+    overflow-y:
+      auto !important;
+
+    overflow-x:
+      hidden !important;
+  }
+
+
+  .farmer-book-page .center-menu {
+    max-height:
+      min(55dvh, 390px) !important;
+  }
+}
+
+
+/* =========================================================
+   15. HARD HORIZONTAL-OVERFLOW PROTECTION
+========================================================= */
+
+@media (max-width: 900px) {
+
+  html,
+  body,
+  #root {
+    max-width:
+      100% !important;
+
+    overflow-x:
+      hidden !important;
+  }
+
+  .farmer-home-page,
+  .farmer-book-page {
+    max-width:
+      100% !important;
+
+    overflow-x:
+      clip !important;
+  }
+}
+
+
+/* =========================================================
+   16. FINAL GLOBAL LAYER PRIORITY
+========================================================= */
+
+/*
+   These are intentionally VERY high so future page CSS,
+   cards, images, hero sections, date selectors and animations
+   cannot accidentally cover a dropdown.
+*/
+
+header,
+.site-header,
+.app-header,
+.farmer-header,
+.main-header {
+  z-index:
+    10000 !important;
+}
+
+.language-menu,
+.language-dropdown,
+.language-panel,
+.language-picker,
+.language-popover,
+[class*="language-menu"],
+[class*="language-dropdown"],
+[class*="language-panel"] {
+  z-index:
+    1000000 !important;
+}
+
+.farmer-book-page .select-menu,
+.farmer-book-page .center-menu {
+  z-index:
+    1000000 !important;
+}
+
+
+/* =========================================================
+   END — GLOBAL UI LAYERING SYSTEM
+========================================================= */
+
+/* =========================================================
+   KRISHISETU — GLOBAL DROPDOWN / SELECT FINAL FIX
+   =========================================================
+   Fixes:
+   ✓ Dropdowns being clipped by cards/panels
+   ✓ Crop menu cut at bottom of section
+   ✓ Center menu cut by date section
+   ✓ Menus appearing behind later content
+   ✓ Future page CSS accidentally trapping dropdowns
+   ✓ Mobile viewport safety
+========================================================= */
+
+
+/* =========================================================
+   1. NEVER CLIP AN OPEN BOOKING DROPDOWN
+========================================================= */
+
+/*
+   When any select menu is open, every relevant parent must
+   allow the dropdown to escape its card.
+*/
+
+.farmer-book-page .booking-panel:has(.select-menu),
+.farmer-book-page .booking-form-field:has(.select-menu),
+.farmer-book-page .custom-select:has(.select-menu),
+.farmer-book-page .booking-layout:has(.select-menu),
+.farmer-book-page .booking-form-column:has(.select-menu) {
+
+  overflow:
+    visible !important;
+}
+
+
+/* =========================================================
+   2. GENERIC SELECT PARENTS
+========================================================= */
+
+.custom-select,
+.select-wrapper,
+.select-field,
+.dropdown-field,
+.form-select-wrapper {
+
+  position:
+    relative !important;
+
+  overflow:
+    visible !important;
+}
+
+
+/*
+   Generic parent safety for future pages.
+*/
+[class*="select-wrapper"],
+[class*="select-field"],
+[class*="dropdown-wrapper"],
+[class*="dropdown-field"] {
+
+  overflow:
+    visible !important;
+}
+
+
+/* =========================================================
+   3. THE ACTUAL DROPDOWN
+========================================================= */
+
+.select-menu,
+.dropdown-menu,
+.options-menu,
+.select-dropdown,
+.popover-menu {
+
+  position:
+    absolute !important;
+
+  z-index:
+    1000000 !important;
+
+  isolation:
+    isolate !important;
+
+  background:
+    #ffffff !important;
+
+  background-color:
+    #ffffff !important;
+
+  opacity:
+    1 !important;
+
+  visibility:
+    visible !important;
+
+  pointer-events:
+    auto !important;
+
+  border:
+    1px solid #cbdde1 !important;
+
+  border-radius:
+    16px !important;
+
+  box-shadow:
+    0 24px 60px
+    rgba(21, 57, 69, .18),
+    0 7px 20px
+    rgba(21, 57, 69, .08) !important;
+
+  overflow-x:
+    hidden !important;
+
+  overflow-y:
+    auto !important;
+
+  overscroll-behavior:
+    contain !important;
+}
+
+
+/* =========================================================
+   4. FARMER BOOK — CROP DROPDOWN
+========================================================= */
+
+.farmer-book-page .custom-select:has(.select-menu) {
+
+  z-index:
+    500000 !important;
+}
+
+
+.farmer-book-page .custom-select .select-menu {
+
+  top:
+    calc(100% + 8px) !important;
+
+  left:
+    0 !important;
+
+  right:
+    0 !important;
+
+  width:
+    100% !important;
+
+  max-height:
+    min(360px, 48dvh) !important;
+
+  min-height:
+    70px !important;
+
+  padding:
+    8px !important;
+
+  z-index:
+    1000000 !important;
+
+  background:
+    #ffffff !important;
+
+  transform:
+    translateZ(0) !important;
+
+  contain:
+    paint !important;
+}
+
+
+/* =========================================================
+   5. FARMER BOOK — CENTER DROPDOWN
+========================================================= */
+
+.farmer-book-page .custom-select:has(.center-menu) {
+
+  z-index:
+    600000 !important;
+}
+
+
+.farmer-book-page .custom-select .center-menu {
+
+  z-index:
+    1200000 !important;
+
+  max-height:
+    min(390px, 52dvh) !important;
+
+  background:
+    #ffffff !important;
+}
+
+
+/* =========================================================
+   6. OPTIONS MUST REMAIN FULLY OPAQUE
+========================================================= */
+
+.select-menu > *,
+.dropdown-menu > *,
+.options-menu > *,
+.select-dropdown > *,
+.center-menu > * {
+
+  opacity:
+    1 !important;
+
+  background-color:
+    #ffffff !important;
+}
+
+
+/*
+   Do not let page images/gradients shine through.
+*/
+.select-menu::before,
+.dropdown-menu::before,
+.options-menu::before,
+.select-dropdown::before,
+.center-menu::before {
+
+  content:
+    "" !important;
+
+  position:
+    absolute !important;
+
+  inset:
+    0 !important;
+
+  z-index:
+    -1 !important;
+
+  border-radius:
+    inherit !important;
+
+  background:
+    #ffffff !important;
+
+  pointer-events:
+    none !important;
+}
+
+
+/* =========================================================
+   7. DROPDOWN OPTIONS
+========================================================= */
+
+.select-menu button,
+.dropdown-menu button,
+.options-menu button,
+.select-dropdown button,
+.center-menu button {
+
+  position:
+    relative !important;
+
+  z-index:
+    2 !important;
+
+  width:
+    100% !important;
+
+  min-height:
+    54px !important;
+
+  background:
+    #ffffff !important;
+
+  color:
+    #345666 !important;
+
+  border:
+    0 !important;
+
+  border-radius:
+    11px !important;
+
+  text-align:
+    left !important;
+
+  cursor:
+    pointer !important;
+
+  opacity:
+    1 !important;
+}
+
+
+.select-menu button:hover,
+.dropdown-menu button:hover,
+.options-menu button:hover,
+.select-dropdown button:hover,
+.center-menu button:hover {
+
+  background:
+    #eef8f4 !important;
+
+  color:
+    #176e4e !important;
+}
+
+
+/*
+   Selected option.
+*/
+.select-menu button.selected,
+.select-menu button[aria-selected="true"],
+.center-menu button.selected,
+.center-menu button[aria-selected="true"] {
+
+  background:
+    #e8f7ee !important;
+
+  color:
+    #167a54 !important;
+}
+
+
+/* =========================================================
+   8. DATE + SLOT CONTENT MUST STAY UNDER MENU
+========================================================= */
+
+.farmer-book-page .date-options,
+.farmer-book-page .date-option,
+.farmer-book-page .slot-grid,
+.farmer-book-page .slot-card,
+.farmer-book-page .booking-confirm-section {
+
+  position:
+    relative !important;
+
+  z-index:
+    1 !important;
+}
+
+
+/* =========================================================
+   9. OTHER BOOKING PANELS
+========================================================= */
+
+.farmer-book-page .booking-panel {
+
+  /*
+     Allow absolutely positioned menus to escape.
+     Decorative effects are still controlled elsewhere.
+  */
+  overflow:
+    visible !important;
+}
+
+
+/*
+   Keep panel contents themselves clean.
+*/
+.farmer-book-page .booking-panel > * {
+
+  position:
+    relative !important;
+
+  z-index:
+    1 !important;
+}
+
+
+/* =========================================================
+   10. DO NOT ALLOW A LATER SECTION TO CREATE A HIGHER STACK
+========================================================= */
+
+.farmer-book-page .booking-layout,
+.farmer-book-page .booking-form-column,
+.farmer-book-page .booking-side-column {
+
+  position:
+    relative !important;
+}
+
+
+/*
+   Normal sections remain low priority.
+*/
+.farmer-book-page section {
+
+  position:
+    relative !important;
+
+  z-index:
+    1;
+}
+
+
+/*
+   Open-select ancestry wins over normal sections.
+*/
+.farmer-book-page section:has(.select-menu) {
+
+  z-index:
+    10000 !important;
+}
+
+
+/* =========================================================
+   11. HEADER / LANGUAGE MENUS
+========================================================= */
+
+header,
+.site-header,
+.app-header,
+.farmer-header,
+.main-header,
+.navbar {
+
+  position:
+    relative !important;
+
+  z-index:
+    100000 !important;
+
+  overflow:
+    visible !important;
+}
+
+
+.language-menu,
+.language-dropdown,
+.language-panel,
+.language-picker,
+.language-popover,
+[class*="language-menu"],
+[class*="language-dropdown"],
+[class*="language-panel"] {
+
+  position:
+    absolute !important;
+
+  z-index:
+    2000000 !important;
+
+  background:
+    #ffffff !important;
+
+  opacity:
+    1 !important;
+
+  overflow-y:
+    auto !important;
+
+  overflow-x:
+    hidden !important;
+}
+
+
+/* =========================================================
+   12. GENERIC POPOVERS
+========================================================= */
+
+[role="menu"],
+[role="listbox"],
+[role="dialog"].dropdown,
+.popover,
+.menu-panel,
+.dropdown-panel {
+
+  z-index:
+    1500000 !important;
+
+  background:
+    #ffffff !important;
+
+  opacity:
+    1 !important;
+}
+
+
+/* =========================================================
+   13. MOBILE
+========================================================= */
+
+@media (max-width: 720px) {
+
+  .farmer-book-page .custom-select .select-menu,
+  .farmer-book-page .custom-select .center-menu {
+
+    width:
+      100% !important;
+
+    max-width:
+      calc(100vw - 28px) !important;
+
+    max-height:
+      min(52dvh, 390px) !important;
+
+    overflow-y:
+      auto !important;
+
+    overflow-x:
+      hidden !important;
+  }
+
+
+  /*
+     Prevent a menu from leaving the visible viewport.
+  */
+  .select-menu,
+  .dropdown-menu,
+  .options-menu,
+  .select-dropdown {
+
+    max-width:
+      calc(100vw - 20px) !important;
+
+    max-height:
+      min(55dvh, 400px) !important;
+  }
+}
+
+
+/* =========================================================
+   14. GLOBAL HORIZONTAL SAFETY
+========================================================= */
+
+html,
+body,
+#root {
+
+  max-width:
+    100% !important;
+
+  overflow-x:
+    hidden !important;
+}
+
+
+/* =========================================================
+   15. LIGHT OPENING EFFECT
+========================================================= */
+
+@media (prefers-reduced-motion: no-preference) {
+
+  .select-menu,
+  .dropdown-menu,
+  .options-menu,
+  .select-dropdown,
+  .language-menu,
+  .language-dropdown,
+  .language-panel {
+
+    animation:
+      krishiSelectOpen
+      .14s
+      ease-out
+      both !important;
+  }
+
+
+  @keyframes krishiSelectOpen {
+
+    from {
+      opacity:
+        0;
+
+      transform:
+        translateY(-4px)
+        scale(.99);
+    }
+
+    to {
+      opacity:
+        1;
+
+      transform:
+        translateY(0)
+        scale(1);
+    }
+
+  }
+}
+
+
+/* =========================================================
+   16. ACCESSIBILITY
+========================================================= */
+
+.select-menu button:focus-visible,
+.dropdown-menu button:focus-visible,
+.center-menu button:focus-visible,
+.language-menu button:focus-visible,
+.language-dropdown button:focus-visible {
+
+  outline:
+    3px solid
+    rgba(25, 141, 100, .18) !important;
+
+  outline-offset:
+    2px !important;
+}
+
+
+/* =========================================================
+   END GLOBAL DROPDOWN FIX
+========================================================= */
+
+/* =========================================================
+   KRISHISETU — GLOBAL DROPDOWN SYSTEM v2
+   SAFE STACKING + CONTROLLED OVERFLOW
+   =========================================================
+   Fixes:
+   ✓ Dropdown hidden behind info banners
+   ✓ Dropdown hidden behind date cards
+   ✓ Dropdown clipped by unrelated sections
+   ✓ Dropdown becoming excessively tall
+   ✓ Dropdown transparency / background bleeding
+   ✓ Future page sections covering open menus
+   ✓ Mobile viewport overflow
+========================================================= */
+
+
+/* =========================================================
+   1. BASE STACKING
+========================================================= */
+
+.farmer-book-page {
+  position: relative !important;
+  isolation: isolate !important;
+}
+
+
+/*
+   Ordinary page sections stay at the lowest useful layer.
+*/
+.farmer-book-page section,
+.farmer-book-page .booking-panel,
+.farmer-book-page .booking-info-bar,
+.farmer-book-page .booking-bottom-information,
+.farmer-book-page .booking-confirm-section,
+.farmer-book-page .date-options,
+.farmer-book-page .slot-grid {
+  position: relative;
+  z-index: 1 !important;
+}
+
+
+/* =========================================================
+   2. SELECT FIELD
+   Only the field that owns an open menu gets promoted.
+========================================================= */
+
+.farmer-book-page .custom-select {
+  position: relative !important;
+
+  z-index: 100 !important;
+
+  isolation: isolate !important;
+
+  /*
+     IMPORTANT:
+     Do not globally change the overflow of the entire
+     booking card.
+  */
+}
+
+
+/*
+   When a dropdown is open, raise ONLY that select block.
+*/
+.farmer-book-page .custom-select:has(.select-menu) {
+  z-index: 5000 !important;
+}
+
+.farmer-book-page .custom-select:has(.center-menu) {
+  z-index: 6000 !important;
+}
+
+
+/* =========================================================
+   3. IMMEDIATE SELECT CONTAINERS
+   They must allow the menu to escape without making the
+   entire booking page overflow-visible.
+========================================================= */
+
+.farmer-book-page .custom-select:has(.select-menu),
+.farmer-book-page .custom-select:has(.center-menu) {
+  overflow: visible !important;
+}
+
+
+/*
+   Keep the rest of the booking panels normal.
+*/
+.farmer-book-page .booking-panel {
+  /*
+     Do NOT globally force overflow-visible here.
+     Existing panel clipping remains intact.
+  */
+}
+
+
+/* =========================================================
+   4. UNIVERSAL DROPDOWN SURFACE
+========================================================= */
+
+.farmer-book-page .select-menu,
+.farmer-book-page .center-menu {
+  position: absolute !important;
+
+  z-index: 1000000 !important;
+
+  isolation: isolate !important;
+
+  display: block !important;
+
+  box-sizing: border-box !important;
+
+  width: 100% !important;
+
+  max-width: 100% !important;
+
+  min-height: 60px !important;
+
+  max-height: min(340px, 42dvh) !important;
+
+  margin: 0 !important;
+
+  padding: 7px !important;
+
+  overflow-x: hidden !important;
+
+  overflow-y: auto !important;
+
+  overscroll-behavior: contain !important;
+
+  -webkit-overflow-scrolling: touch !important;
+
+  /*
+     Completely opaque surface.
+  */
+  background:
+    #ffffff !important;
+
+  background-color:
+    #ffffff !important;
+
+  background-image:
+    none !important;
+
+  opacity:
+    1 !important;
+
+  visibility:
+    visible !important;
+
+  pointer-events:
+    auto !important;
+
+  border:
+    1px solid #cbdde1 !important;
+
+  border-radius:
+    16px !important;
+
+  box-shadow:
+    0 22px 55px
+    rgba(21, 57, 69, .18),
+    0 5px 18px
+    rgba(21, 57, 69, .08) !important;
+
+  /*
+     Prevent visual blending with page content.
+  */
+  backdrop-filter:
+    none !important;
+
+  -webkit-backdrop-filter:
+    none !important;
+}
+
+
+/* =========================================================
+   5. CROPS DROPDOWN
+========================================================= */
+
+.farmer-book-page .custom-select .select-menu:not(.center-menu) {
+  top:
+    calc(100% + 8px) !important;
+
+  left:
+    0 !important;
+
+  right:
+    0 !important;
+
+  max-height:
+    min(310px, 40dvh) !important;
+}
+
+
+/* =========================================================
+   6. CENTER DROPDOWN
+========================================================= */
+
+.farmer-book-page .custom-select .center-menu {
+  top:
+    calc(100% + 8px) !important;
+
+  left:
+    0 !important;
+
+  right:
+    0 !important;
+
+  max-height:
+    min(350px, 44dvh) !important;
+}
+
+
+/* =========================================================
+   7. DROPDOWN BACKGROUND SHIELD
+========================================================= */
+
+.farmer-book-page .select-menu::before,
+.farmer-book-page .center-menu::before {
+  content:
+    "" !important;
+
+  position:
+    absolute !important;
+
+  inset:
+    0 !important;
+
+  z-index:
+    -1 !important;
+
+  background:
+    #ffffff !important;
+
+  border-radius:
+    inherit !important;
+
+  pointer-events:
+    none !important;
+}
+
+
+/* =========================================================
+   8. DROPDOWN ITEMS
+========================================================= */
+
+.farmer-book-page .select-menu > button,
+.farmer-book-page .center-menu > button,
+.farmer-book-page .select-menu .center-option,
+.farmer-book-page .center-menu .center-option {
+  position:
+    relative !important;
+
+  z-index:
+    2 !important;
+
+  width:
+    100% !important;
+
+  min-height:
+    58px !important;
+
+  box-sizing:
+    border-box !important;
+
+  margin:
+    0 !important;
+
+  padding:
+    9px 10px !important;
+
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    11px !important;
+
+  border:
+    0 !important;
+
+  border-radius:
+    11px !important;
+
+  background:
+    #ffffff !important;
+
+  color:
+    #345666 !important;
+
+  text-align:
+    left !important;
+
+  cursor:
+    pointer !important;
+
+  opacity:
+    1 !important;
+}
+
+
+/* Hover */
+.farmer-book-page .select-menu > button:hover,
+.farmer-book-page .center-menu > button:hover,
+.farmer-book-page .select-menu .center-option:hover,
+.farmer-book-page .center-menu .center-option:hover {
+  background:
+    #eef8f4 !important;
+
+  color:
+    #176e4f !important;
+}
+
+
+/* Selected */
+.farmer-book-page .select-menu > button.selected,
+.farmer-book-page .select-menu > button[aria-selected="true"],
+.farmer-book-page .center-menu > button.selected,
+.farmer-book-page .center-menu > button[aria-selected="true"],
+.farmer-book-page .center-option.selected {
+  background:
+    #e8f7ee !important;
+
+  color:
+    #187853 !important;
+
+  box-shadow:
+    inset 4px 0 0
+    #168c62 !important;
+}
+
+
+/* =========================================================
+   9. INFORMATION BANNER MUST NOT COVER DROPDOWN
+========================================================= */
+
+.farmer-book-page .booking-tip-card,
+.farmer-book-page .booking-info-banner,
+.farmer-book-page .info-banner,
+.farmer-book-page [class*="info-banner"],
+.farmer-book-page [class*="tip-card"] {
+  position:
+    relative !important;
+
+  z-index:
+    1 !important;
+}
+
+
+/*
+   Specifically prevent banners from creating a stronger
+   stacking context than an open select.
+*/
+.farmer-book-page
+.custom-select:has(.select-menu)
+~ .booking-tip-card,
+.farmer-book-page
+.custom-select:has(.select-menu)
+~ .booking-info-banner,
+.farmer-book-page
+.custom-select:has(.center-menu)
+~ .booking-tip-card,
+.farmer-book-page
+.custom-select:has(.center-menu)
+~ .booking-info-banner {
+  z-index:
+    1 !important;
+}
+
+
+/* =========================================================
+   10. DATE CARDS ALWAYS BELOW DROPDOWNS
+========================================================= */
+
+.farmer-book-page .date-options,
+.farmer-book-page .date-option,
+.farmer-book-page .slot-grid,
+.farmer-book-page .slot-card {
+  position:
+    relative !important;
+
+  z-index:
+    1 !important;
+}
+
+
+/* =========================================================
+   11. OTHER BOOKING CONTENT
+========================================================= */
+
+.farmer-book-page .booking-panel-heading,
+.farmer-book-page .booking-main-content,
+.farmer-book-page .booking-form-field > label,
+.farmer-book-page .field-heading-row {
+  position:
+    relative !important;
+
+  z-index:
+    1 !important;
+}
+
+
+/*
+   Open select automatically outranks surrounding form content.
+*/
+.farmer-book-page
+.custom-select:has(.select-menu) * {
+  /*
+     Don't set z-index on every child globally.
+     The menu itself controls its stack.
+  */
+}
+
+.farmer-book-page
+.custom-select:has(.select-menu)
+.select-menu,
+.farmer-book-page
+.custom-select:has(.center-menu)
+.center-menu {
+  z-index:
+    1000000 !important;
+}
+
+
+/* =========================================================
+   12. GENERIC DROPDOWN SAFETY
+========================================================= */
+
+[role="listbox"],
+[role="menu"] {
+  position:
+    absolute !important;
+
+  z-index:
+    1000000 !important;
+
+  background:
+    #ffffff !important;
+
+  opacity:
+    1 !important;
+
+  visibility:
+    visible !important;
+
+  overflow-y:
+    auto !important;
+
+  overscroll-behavior:
+    contain !important;
+}
+
+
+/* =========================================================
+   13. HEADER LANGUAGE DROPDOWN
+========================================================= */
+
+header,
+.site-header,
+.app-header,
+.farmer-header,
+.main-header,
+.navbar {
+  position:
+    relative !important;
+
+  z-index:
+    10000 !important;
+
+  overflow:
+    visible !important;
+
+  isolation:
+    isolate !important;
+}
+
+
+.language-menu,
+.language-dropdown,
+.language-panel,
+.language-popover,
+.language-picker,
+[class*="language-menu"],
+[class*="language-dropdown"],
+[class*="language-panel"] {
+  position:
+    absolute !important;
+
+  z-index:
+    2000000 !important;
+
+  background:
+    #ffffff !important;
+
+  background-color:
+    #ffffff !important;
+
+  background-image:
+    none !important;
+
+  opacity:
+    1 !important;
+
+  visibility:
+    visible !important;
+
+  overflow-y:
+    auto !important;
+
+  overflow-x:
+    hidden !important;
+
+  border:
+    1px solid #cbdde1 !important;
+
+  box-shadow:
+    0 22px 55px
+    rgba(21,57,69,.18) !important;
+
+  border-radius:
+    16px !important;
+}
+
+
+/* =========================================================
+   14. MOBILE
+========================================================= */
+
+@media (max-width: 720px) {
+
+  .farmer-book-page .select-menu,
+  .farmer-book-page .center-menu {
+    width:
+      100% !important;
+
+    max-width:
+      calc(100vw - 28px) !important;
+
+    max-height:
+      min(300px, 45dvh) !important;
+  }
+
+
+  .farmer-book-page .select-menu > button,
+  .farmer-book-page .center-menu > button,
+  .farmer-book-page .center-option {
+    min-height:
+      55px !important;
+  }
+}
+
+
+/* =========================================================
+   15. OPENING ANIMATION
+========================================================= */
+
+@media (prefers-reduced-motion: no-preference) {
+
+  .farmer-book-page
+  .custom-select:has(.select-menu)
+  .select-menu,
+
+  .farmer-book-page
+  .custom-select:has(.center-menu)
+  .center-menu,
+
+  .language-menu,
+  .language-dropdown,
+  .language-panel {
+
+    animation:
+      krishiMenuOpen
+      .13s
+      ease-out
+      both !important;
+  }
+
+
+  @keyframes krishiMenuOpen {
+
+    from {
+      opacity:
+        0;
+
+      transform:
+        translateY(-3px)
+        scale(.992);
+    }
+
+    to {
+      opacity:
+        1;
+
+      transform:
+        translateY(0)
+        scale(1);
+    }
+  }
+}
+
+
+/* =========================================================
+   16. ACCESSIBILITY
+========================================================= */
+
+.farmer-book-page
+.select-menu button:focus-visible,
+.farmer-book-page
+.center-menu button:focus-visible,
+.language-menu button:focus-visible,
+.language-dropdown button:focus-visible {
+
+  outline:
+    3px solid
+    rgba(23,141,99,.18) !important;
+
+  outline-offset:
+    2px !important;
+}
+
+
+/* =========================================================
+   END GLOBAL DROPDOWN SYSTEM v2
+========================================================= */
+
+/* =========================================================
+   KRISHISETU — PORTAL DROPDOWN
+   FINAL GLOBAL MENU SURFACE
+========================================================= */
+
+.krishi-portal-dropdown {
+  background:
+    #ffffff !important;
+
+  background-color:
+    #ffffff !important;
+
+  opacity:
+    1 !important;
+
+  visibility:
+    visible !important;
+
+  border:
+    1px solid #cbdde2 !important;
+
+  border-radius:
+    16px !important;
+
+  box-shadow:
+    0 24px 60px
+      rgba(20, 55, 67, .20),
+    0 7px 20px
+      rgba(20, 55, 67, .08) !important;
+
+  overscroll-behavior:
+    contain !important;
+
+  -webkit-overflow-scrolling:
+    touch !important;
+}
+
+.krishi-portal-dropdown::-webkit-scrollbar {
+  width:
+    6px !important;
+}
+
+.krishi-portal-dropdown::-webkit-scrollbar-track {
+  background:
+    transparent !important;
+}
+
+.krishi-portal-dropdown::-webkit-scrollbar-thumb {
+  background:
+    #c6d9dd !important;
+
+  border-radius:
+    999px !important;
+}
+
+.farmer-book-portal-menu-inner {
+  padding:
+    7px !important;
+}
+
+.farmer-book-portal-menu-inner > button {
+  position:
+    relative !important;
+
+  width:
+    100% !important;
+
+  min-height:
+    60px !important;
+
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    11px !important;
+
+  margin:
+    0 !important;
+
+  padding:
+    9px 10px !important;
+
+  border:
+    0 !important;
+
+  border-radius:
+    11px !important;
+
+  background:
+    #ffffff !important;
+
+  color:
+    #345767 !important;
+
+  text-align:
+    left !important;
+
+  cursor:
+    pointer !important;
+
+  transition:
+    background-color .14s ease,
+    transform .14s ease !important;
+}
+
+.farmer-book-portal-menu-inner > button:hover {
+  background:
+    #eef8f4 !important;
+}
+
+.farmer-book-portal-menu-inner > button.selected {
+  background:
+    #e7f7ee !important;
+
+  color:
+    #177551 !important;
+
+  box-shadow:
+    inset 4px 0 0
+      #168b61 !important;
+}
+
+.farmer-book-portal-menu-inner > button > div {
+  min-width:
+    0 !important;
+}
+
+.farmer-book-portal-menu-inner > button strong {
+  display:
+    block !important;
+
+  color:
+    inherit !important;
+
+  font-size:
+    14px !important;
+
+  line-height:
+    1.35 !important;
+
+  font-weight:
+    850 !important;
+}
+
+.farmer-book-portal-menu-inner > button span {
+  display:
+    block !important;
+
+  margin-top:
+    2px !important;
+
+  color:
+    #82979e !important;
+
+  font-size:
+    11px !important;
+
+  line-height:
+    1.4 !important;
+}
+
+.farmer-book-portal-menu-inner > button.selected span {
+  color:
+    #6d8c7d !important;
+}
+
+.farmer-book-portal-menu-inner
+.crop-visual {
+  width:
+    44px !important;
+
+  height:
+    44px !important;
+
+  min-width:
+    44px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    12px !important;
+
+  background:
+    #fff2d7 !important;
+
+  color:
+    #be7d13 !important;
+}
+
+.farmer-book-portal-menu-inner
+.center-option-icon {
+  width:
+    44px !important;
+
+  height:
+    44px !important;
+
+  min-width:
+    44px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    12px !important;
+
+  background:
+    #e8f6fb !important;
+
+  color:
+    #277f9b !important;
+}
+
+.farmer-book-portal-menu-inner
+> button
+> svg:last-child {
+  margin-left:
+    auto !important;
+
+  flex:
+    0 0 auto !important;
+
+  color:
+    #168b61 !important;
+}
+
+@media (max-width: 720px) {
+
+  .krishi-portal-dropdown {
+    max-width:
+      calc(100vw - 24px) !important;
+
+    border-radius:
+      14px !important;
+  }
+
+  .farmer-book-portal-menu-inner {
+    padding:
+      5px !important;
+  }
+
+  .farmer-book-portal-menu-inner > button {
+    min-height:
+      56px !important;
+  }
+}
+
+/* =========================================================
+   KRISHISETU — PORTALED DROPDOWN VISUAL FIX
+   IMPORTANT:
+   The dropdown now lives under document.body, so DO NOT
+   prefix these selectors with .farmer-book-page.
+========================================================= */
+
+
+/* =========================================================
+   1. MAIN PORTAL BOX
+========================================================= */
+
+.krishi-portal-dropdown {
+  position: fixed !important;
+
+  box-sizing: border-box !important;
+
+  display: block !important;
+
+  padding: 7px !important;
+
+  min-width: 240px !important;
+
+  max-width: calc(100vw - 24px) !important;
+
+  max-height: min(360px, calc(100dvh - 24px)) !important;
+
+  overflow-x: hidden !important;
+
+  overflow-y: auto !important;
+
+  overscroll-behavior: contain !important;
+
+  -webkit-overflow-scrolling: touch !important;
+
+  background:
+    #ffffff !important;
+
+  background-color:
+    #ffffff !important;
+
+  background-image:
+    none !important;
+
+  border:
+    1px solid #c9dce1 !important;
+
+  border-radius:
+    17px !important;
+
+  box-shadow:
+    0 28px 65px
+      rgba(22, 57, 70, .20),
+    0 8px 24px
+      rgba(22, 57, 70, .09),
+    inset 0 1px 0
+      rgba(255,255,255,.95) !important;
+
+  opacity:
+    1 !important;
+
+  visibility:
+    visible !important;
+
+  isolation:
+    isolate !important;
+
+  z-index:
+    9999999 !important;
+
+  transform:
+    translateZ(0) !important;
+}
+
+
+/* =========================================================
+   2. INNER CONTENT
+========================================================= */
+
+.krishi-portal-dropdown > * {
+  position: relative !important;
+
+  z-index: 1 !important;
+
+  opacity: 1 !important;
+
+  background: transparent !important;
+}
+
+
+/* =========================================================
+   3. FARMER BOOK PORTAL CONTENT
+========================================================= */
+
+.farmer-book-portal-menu-inner {
+  width:
+    100% !important;
+
+  padding:
+    2px !important;
+
+  box-sizing:
+    border-box !important;
+}
+
+
+/* =========================================================
+   4. EACH OPTION
+========================================================= */
+
+.farmer-book-portal-menu-inner > button {
+  position:
+    relative !important;
+
+  width:
+    100% !important;
+
+  min-height:
+    64px !important;
+
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    12px !important;
+
+  box-sizing:
+    border-box !important;
+
+  margin:
+    0 !important;
+
+  padding:
+    9px 11px !important;
+
+  border:
+    0 !important;
+
+  border-radius:
+    12px !important;
+
+  background:
+    #ffffff !important;
+
+  background-color:
+    #ffffff !important;
+
+  color:
+    #355868 !important;
+
+  text-align:
+    left !important;
+
+  cursor:
+    pointer !important;
+
+  opacity:
+    1 !important;
+
+  transition:
+    background-color .14s ease,
+    transform .14s ease,
+    box-shadow .14s ease !important;
+}
+
+
+/* =========================================================
+   5. OPTION HOVER
+========================================================= */
+
+.farmer-book-portal-menu-inner > button:hover {
+  background:
+    #eef8f4 !important;
+
+  color:
+    #176f50 !important;
+}
+
+
+/* =========================================================
+   6. SELECTED OPTION
+========================================================= */
+
+.farmer-book-portal-menu-inner > button.selected {
+  background:
+    #e5f7ed !important;
+
+  color:
+    #166f4d !important;
+
+  box-shadow:
+    inset 4px 0 0
+      #168d63 !important;
+}
+
+
+/* =========================================================
+   7. CROP ICON
+========================================================= */
+
+.farmer-book-portal-menu-inner
+.crop-visual {
+  width:
+    46px !important;
+
+  height:
+    46px !important;
+
+  min-width:
+    46px !important;
+
+  flex:
+    0 0 46px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    13px !important;
+
+  border:
+    1px solid #eedcae !important;
+
+  background:
+    #fff3d7 !important;
+
+  color:
+    #bd7b10 !important;
+}
+
+
+/* Selected crop */
+.farmer-book-portal-menu-inner
+> button.selected
+.crop-visual {
+  background:
+    #e8f7ee !important;
+
+  border-color:
+    #c9e7d6 !important;
+
+  color:
+    #18855d !important;
+}
+
+
+/* =========================================================
+   8. CENTER ICON
+========================================================= */
+
+.farmer-book-portal-menu-inner
+.center-option-icon {
+  width:
+    46px !important;
+
+  height:
+    46px !important;
+
+  min-width:
+    46px !important;
+
+  flex:
+    0 0 46px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    13px !important;
+
+  border:
+    1px solid #cbe4ec !important;
+
+  background:
+    #e8f6fb !important;
+
+  color:
+    #277f9b !important;
+}
+
+
+/* =========================================================
+   9. OPTION TEXT
+========================================================= */
+
+.farmer-book-portal-menu-inner
+> button > div:nth-child(2) {
+  min-width:
+    0 !important;
+
+  flex:
+    1 1 auto !important;
+}
+
+.farmer-book-portal-menu-inner
+> button strong {
+  display:
+    block !important;
+
+  overflow:
+    hidden !important;
+
+  text-overflow:
+    ellipsis !important;
+
+  white-space:
+    nowrap !important;
+
+  color:
+    inherit !important;
+
+  font-size:
+    15px !important;
+
+  line-height:
+    1.35 !important;
+
+  font-weight:
+    900 !important;
+}
+
+.farmer-book-portal-menu-inner
+> button span {
+  display:
+    block !important;
+
+  margin-top:
+    3px !important;
+
+  overflow:
+    hidden !important;
+
+  text-overflow:
+    ellipsis !important;
+
+  white-space:
+    nowrap !important;
+
+  color:
+    #82979e !important;
+
+  font-size:
+    11px !important;
+
+  line-height:
+    1.4 !important;
+
+  font-weight:
+    550 !important;
+}
+
+
+/* =========================================================
+   10. SELECTED CHECK
+========================================================= */
+
+.farmer-book-portal-menu-inner
+> button > svg:last-child {
+  flex:
+    0 0 auto !important;
+
+  margin-left:
+    auto !important;
+
+  color:
+    #168d63 !important;
+}
+
+
+/* =========================================================
+   11. EMPTY / LOADING STATE
+========================================================= */
+
+.krishi-portal-dropdown .booking-menu-empty {
+  min-height:
+    90px !important;
+
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  justify-content:
+    center !important;
+
+  padding:
+    18px !important;
+
+  border-radius:
+    12px !important;
+
+  background:
+    #f8fbfc !important;
+
+  color:
+    #789098 !important;
+
+  text-align:
+    center !important;
+
+  font-size:
+    13px !important;
+
+  line-height:
+    1.5 !important;
+
+  font-weight:
+    700 !important;
+}
+
+
+/* =========================================================
+   12. SCROLLBAR
+========================================================= */
+
+.krishi-portal-dropdown::-webkit-scrollbar {
+  width:
+    6px !important;
+}
+
+.krishi-portal-dropdown::-webkit-scrollbar-track {
+  background:
+    transparent !important;
+}
+
+.krishi-portal-dropdown::-webkit-scrollbar-thumb {
+  border-radius:
+    999px !important;
+
+  background:
+    #c7dade !important;
+}
+
+.krishi-portal-dropdown::-webkit-scrollbar-thumb:hover {
+  background:
+    #9fbfc4 !important;
+}
+
+
+/* Firefox */
+.krishi-portal-dropdown {
+  scrollbar-width:
+    thin !important;
+
+  scrollbar-color:
+    #c7dade transparent !important;
+}
+
+
+/* =========================================================
+   13. PORTAL DROPDOWN ANIMATION
+========================================================= */
+
+@media (prefers-reduced-motion: no-preference) {
+
+  .krishi-portal-dropdown {
+    animation:
+      krishiPortalDropdownIn
+      .16s
+      cubic-bezier(.2,.75,.25,1)
+      both !important;
+  }
+
+  @keyframes krishiPortalDropdownIn {
+
+    from {
+      opacity:
+        0;
+
+      transform:
+        translateY(-5px)
+        scale(.985);
+    }
+
+    to {
+      opacity:
+        1;
+
+      transform:
+        translateY(0)
+        scale(1);
+    }
+  }
+}
+
+
+/* =========================================================
+   14. MOBILE
+========================================================= */
+
+@media (max-width: 720px) {
+
+  .krishi-portal-dropdown {
+    min-width:
+      0 !important;
+
+    max-width:
+      calc(100vw - 20px) !important;
+
+    max-height:
+      min(340px, calc(100dvh - 24px)) !important;
+
+    padding:
+      6px !important;
+
+    border-radius:
+      15px !important;
+  }
+
+  .farmer-book-portal-menu-inner
+  > button {
+    min-height:
+      58px !important;
+
+    padding:
+      8px 9px !important;
+
+    gap:
+      10px !important;
+  }
+
+  .farmer-book-portal-menu-inner
+  .crop-visual,
+  .farmer-book-portal-menu-inner
+  .center-option-icon {
+    width:
+      42px !important;
+
+    height:
+      42px !important;
+
+    min-width:
+      42px !important;
+
+    flex-basis:
+      42px !important;
+  }
+
+  .farmer-book-portal-menu-inner
+  > button strong {
+    font-size:
+      14px !important;
+  }
+}
+
+
+/* =========================================================
+   15. SMALL PHONES
+========================================================= */
+
+@media (max-width: 390px) {
+
+  .krishi-portal-dropdown {
+    max-width:
+      calc(100vw - 14px) !important;
+
+    max-height:
+      calc(100dvh - 18px) !important;
+  }
+
+  .farmer-book-portal-menu-inner
+  > button span {
+    font-size:
+      10px !important;
+  }
+}
+
+/* =========================================================
+   KRISHISETU — FARMER BOOK PORTAL DROPDOWN
+   CORRECT CLASS TARGETS FOR THE CURRENT FarmerBook.jsx
+   =========================================================
+
+/* ---------------------------------------------------------
+   1. PORTAL ROOT
+--------------------------------------------------------- */
+
+.krishi-book-portal-dropdown {
+  position: fixed !important;
+
+  z-index: 2147483000 !important;
+
+  box-sizing: border-box !important;
+
+  /*
+     Never let the source field produce a giant dropdown.
+  */
+  width: min(620px, calc(100vw - 28px)) !important;
+
+  min-width: 280px !important;
+
+  max-width: calc(100vw - 28px) !important;
+
+  max-height: min(390px, calc(100dvh - 24px)) !important;
+
+  padding: 8px !important;
+
+  overflow-x: hidden !important;
+
+  overflow-y: auto !important;
+
+  overscroll-behavior: contain !important;
+
+  -webkit-overflow-scrolling: touch !important;
+
+  box-sizing: border-box !important;
+
+  /*
+     FORCE A REAL OPAQUE CARD
+  */
+  background: #ffffff !important;
+
+  background-color: #ffffff !important;
+
+  background-image: none !important;
+
+  border: 1px solid #bfd4da !important;
+
+  border-radius: 18px !important;
+
+  opacity: 1 !important;
+
+  visibility: visible !important;
+
+  isolation: isolate !important;
+
+  box-shadow:
+    0 30px 70px rgba(20, 57, 69, 0.22),
+    0 10px 28px rgba(20, 57, 69, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+
+  backdrop-filter: none !important;
+
+  -webkit-backdrop-filter: none !important;
+
+  transform: none !important;
+}
+
+
+/* ---------------------------------------------------------
+   2. FORCE THE WHOLE PORTAL SURFACE OPAQUE
+--------------------------------------------------------- */
+
+.krishi-book-portal-dropdown::before {
+  content: "" !important;
+
+  position: absolute !important;
+
+  inset: 0 !important;
+
+  z-index: -1 !important;
+
+  background: #ffffff !important;
+
+  border-radius: inherit !important;
+
+  pointer-events: none !important;
+}
+
+.krishi-book-portal-dropdown > * {
+  position: relative !important;
+
+  z-index: 2 !important;
+
+  opacity: 1 !important;
+}
+
+
+/* ---------------------------------------------------------
+   3. CROP MENU
+--------------------------------------------------------- */
+
+.krishi-book-portal-dropdown.farmer-book-crop-menu {
+  width: min(430px, calc(100vw - 28px)) !important;
+
+  max-width: min(430px, calc(100vw - 28px)) !important;
+
+  max-height: min(330px, calc(100dvh - 24px)) !important;
+}
+
+
+/* ---------------------------------------------------------
+   4. CENTER MENU
+--------------------------------------------------------- */
+
+.krishi-book-portal-dropdown.farmer-book-center-menu {
+  width: min(620px, calc(100vw - 28px)) !important;
+
+  max-width: min(620px, calc(100vw - 28px)) !important;
+
+  max-height: min(390px, calc(100dvh - 24px)) !important;
+}
+
+
+/* ---------------------------------------------------------
+   5. OPTION BUTTONS
+--------------------------------------------------------- */
+
+.krishi-book-portal-dropdown .select-option,
+.krishi-book-portal-dropdown .center-option {
+  position: relative !important;
+
+  width: 100% !important;
+
+  min-height: 70px !important;
+
+  display: flex !important;
+
+  align-items: center !important;
+
+  gap: 13px !important;
+
+  margin: 0 !important;
+
+  padding: 10px 12px !important;
+
+  box-sizing: border-box !important;
+
+  border: 0 !important;
+
+  border-radius: 13px !important;
+
+  background: #ffffff !important;
+
+  background-color: #ffffff !important;
+
+  color: #294d5e !important;
+
+  opacity: 1 !important;
+
+  text-align: left !important;
+
+  cursor: pointer !important;
+
+  transition:
+    background-color .14s ease,
+    transform .14s ease,
+    box-shadow .14s ease !important;
+}
+
+
+/* Hover */
+.krishi-book-portal-dropdown .select-option:hover,
+.krishi-book-portal-dropdown .center-option:hover {
+  background: #eef8f4 !important;
+
+  background-color: #eef8f4 !important;
+
+  color: #176f50 !important;
+}
+
+
+/* Selected */
+.krishi-book-portal-dropdown .select-option.selected,
+.krishi-book-portal-dropdown .center-option.selected {
+  background:
+    linear-gradient(
+      135deg,
+      #e5f7ed 0%,
+      #f1fbf5 100%
+    ) !important;
+
+  background-color: #e8f7ee !important;
+
+  color: #166f4d !important;
+
+  box-shadow:
+    inset 4px 0 0 #178d62 !important;
+}
+
+
+/* ---------------------------------------------------------
+   6. REAL CROP PHOTOS
+   Hide the old illustration/SVG and show actual crop images.
+--------------------------------------------------------- */
+
+.krishi-book-portal-dropdown .crop-visual {
+  position: relative !important;
+
+  width: 52px !important;
+
+  height: 52px !important;
+
+  min-width: 52px !important;
+
+  flex: 0 0 52px !important;
+
+  display: grid !important;
+
+  place-items: center !important;
+
+  overflow: hidden !important;
+
+  border-radius: 14px !important;
+
+  border: 1px solid rgba(255,255,255,.80) !important;
+
+  background-position: center !important;
+
+  background-size: cover !important;
+
+  background-repeat: no-repeat !important;
+
+  box-shadow:
+    0 5px 13px rgba(27, 65, 68, .09) !important;
+}
+
+
+/*
+   Hide illustration.
+*/
+.krishi-book-portal-dropdown .crop-visual svg {
+  display: none !important;
+}
+
+
+/* Soft readability overlay on crop photographs */
+.krishi-book-portal-dropdown .crop-visual::after {
+  content: "" !important;
+
+  position: absolute !important;
+
+  inset: 0 !important;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.05),
+      rgba(255,255,255,.18)
+    ) !important;
+
+  pointer-events: none !important;
+}
+
+
+/* WHEAT */
+.krishi-book-portal-dropdown .crop-wheat {
+  background-image:
+    url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=240&q=82") !important;
+}
+
+
+/* PADDY */
+.krishi-book-portal-dropdown .crop-paddy {
+  background-image:
+    url("https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=240&q=82") !important;
+}
+
+
+/* MAIZE */
+.krishi-book-portal-dropdown .crop-maize {
+  background-image:
+    url("https://images.unsplash.com/photo-1551754655-cd27e38d2076?auto=format&fit=crop&w=240&q=82") !important;
+}
+
+
+/* COTTON */
+.krishi-book-portal-dropdown .crop-cotton {
+  background-image:
+    url("https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=240&q=82") !important;
+}
+
+
+/* ---------------------------------------------------------
+   7. CENTER PHOTO
+--------------------------------------------------------- */
+
+.krishi-book-portal-dropdown .center-option-icon {
+  position: relative !important;
+
+  width: 52px !important;
+
+  height: 52px !important;
+
+  min-width: 52px !important;
+
+  flex: 0 0 52px !important;
+
+  display: grid !important;
+
+  place-items: center !important;
+
+  overflow: hidden !important;
+
+  border-radius: 14px !important;
+
+  border: 1px solid #d7e5e7 !important;
+
+  background:
+    url("https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=260&q=82")
+    center / cover no-repeat !important;
+
+  box-shadow:
+    0 5px 13px rgba(27,65,68,.09) !important;
+
+  color:
+    #ffffff !important;
+}
+
+
+/*
+   No location-pin illustration inside the photo.
+*/
+.krishi-book-portal-dropdown
+.center-option-icon svg {
+  display: none !important;
+}
+
+
+/* Dark translucent layer for readability */
+.krishi-book-portal-dropdown
+.center-option-icon::after {
+  content: "" !important;
+
+  position: absolute !important;
+
+  inset: 0 !important;
+
+  background:
+    rgba(18, 74, 78, .17) !important;
+
+  pointer-events: none !important;
+}
+
+
+/* ---------------------------------------------------------
+   8. TEXT
+--------------------------------------------------------- */
+
+.krishi-book-portal-dropdown .select-option > div:nth-child(2),
+.krishi-book-portal-dropdown .center-option > div:nth-child(2) {
+  min-width: 0 !important;
+
+  flex: 1 1 auto !important;
+}
+
+.krishi-book-portal-dropdown .select-option strong,
+.krishi-book-portal-dropdown .center-option strong {
+  display: block !important;
+
+  overflow: hidden !important;
+
+  text-overflow: ellipsis !important;
+
+  white-space: nowrap !important;
+
+  color: inherit !important;
+
+  font-size: 15px !important;
+
+  line-height: 1.35 !important;
+
+  font-weight: 900 !important;
+}
+
+.krishi-book-portal-dropdown .select-option span,
+.krishi-book-portal-dropdown .center-option span {
+  display: block !important;
+
+  margin-top: 4px !important;
+
+  overflow: hidden !important;
+
+  text-overflow: ellipsis !important;
+
+  white-space: nowrap !important;
+
+  color: #82979e !important;
+
+  font-size: 11px !important;
+
+  line-height: 1.4 !important;
+
+  font-weight: 550 !important;
+}
+
+.krishi-book-portal-dropdown .center-option small {
+  display: block !important;
+
+  margin-top: 3px !important;
+
+  color: #91a2a7 !important;
+
+  font-size: 10px !important;
+
+  line-height: 1.35 !important;
+}
+
+
+/* ---------------------------------------------------------
+   9. SELECTED CHECK
+--------------------------------------------------------- */
+
+.krishi-book-portal-dropdown .select-option > svg:last-child,
+.krishi-book-portal-dropdown .center-option > svg:last-child {
+  flex: 0 0 auto !important;
+
+  margin-left: auto !important;
+
+  color: #178d62 !important;
+}
+
+
+/* ---------------------------------------------------------
+   10. LOADING / EMPTY
+--------------------------------------------------------- */
+
+.krishi-book-portal-dropdown .booking-menu-empty {
+  min-height: 100px !important;
+
+  display: flex !important;
+
+  align-items: center !important;
+
+  justify-content: center !important;
+
+  padding: 20px !important;
+
+  border-radius: 12px !important;
+
+  background: #f6fafb !important;
+
+  color: #728b93 !important;
+
+  font-size: 13px !important;
+
+  line-height: 1.5 !important;
+
+  font-weight: 750 !important;
+
+  text-align: center !important;
+}
+
+
+/* ---------------------------------------------------------
+   11. SCROLLBAR
+--------------------------------------------------------- */
+
+.krishi-book-portal-dropdown::-webkit-scrollbar {
+  width: 6px !important;
+}
+
+.krishi-book-portal-dropdown::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.krishi-book-portal-dropdown::-webkit-scrollbar-thumb {
+  background: #c4d8dc !important;
+
+  border-radius: 999px !important;
+}
+
+.krishi-book-portal-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #9fbfc4 !important;
+}
+
+.krishi-book-portal-dropdown {
+  scrollbar-width: thin !important;
+
+  scrollbar-color:
+    #c4d8dc
+    transparent !important;
+}
+
+
+/* ---------------------------------------------------------
+   12. OPENING EFFECT
+--------------------------------------------------------- */
+
+@media (prefers-reduced-motion: no-preference) {
+
+  .krishi-book-portal-dropdown {
+    animation:
+      krishiBookPortalOpen
+      .16s
+      cubic-bezier(.2,.75,.25,1)
+      both !important;
+  }
+
+  @keyframes krishiBookPortalOpen {
+
+    from {
+      opacity: 0;
+
+      transform:
+        translateY(-5px)
+        scale(.985);
+    }
+
+    to {
+      opacity: 1;
+
+      transform:
+        translateY(0)
+        scale(1);
+    }
+  }
+}
+
+
+/* ---------------------------------------------------------
+   13. MOBILE
+--------------------------------------------------------- */
+
+@media (max-width: 720px) {
+
+  .krishi-book-portal-dropdown {
+    width:
+      calc(100vw - 20px) !important;
+
+    min-width:
+      0 !important;
+
+    max-width:
+      calc(100vw - 20px) !important;
+
+    max-height:
+      min(340px, calc(100dvh - 18px)) !important;
+
+    padding:
+      6px !important;
+
+    border-radius:
+      15px !important;
+  }
+
+
+  .krishi-book-portal-dropdown.farmer-book-crop-menu {
+    width:
+      calc(100vw - 20px) !important;
+
+    max-width:
+      calc(100vw - 20px) !important;
+  }
+
+
+  .krishi-book-portal-dropdown.farmer-book-center-menu {
+    width:
+      calc(100vw - 20px) !important;
+
+    max-width:
+      calc(100vw - 20px) !important;
+  }
+
+
+  .krishi-book-portal-dropdown
+  .select-option,
+  .krishi-book-portal-dropdown
+  .center-option {
+    min-height:
+      62px !important;
+
+    padding:
+      8px 9px !important;
+
+    gap:
+      10px !important;
+  }
+
+
+  .krishi-book-portal-dropdown
+  .crop-visual,
+  .krishi-book-portal-dropdown
+  .center-option-icon {
+    width:
+      45px !important;
+
+    height:
+      45px !important;
+
+    min-width:
+      45px !important;
+
+    flex-basis:
+      45px !important;
+
+    border-radius:
+      12px !important;
+  }
+
+
+  .krishi-book-portal-dropdown
+  .select-option strong,
+  .krishi-book-portal-dropdown
+  .center-option strong {
+    font-size:
+      14px !important;
+  }
+}
+
+
+/* ---------------------------------------------------------
+   14. VERY SMALL PHONES
+--------------------------------------------------------- */
+
+@media (max-width: 390px) {
+
+  .krishi-book-portal-dropdown {
+    width:
+      calc(100vw - 14px) !important;
+
+    max-width:
+      calc(100vw - 14px) !important;
+  }
+
+  .krishi-book-portal-dropdown
+  .select-option span,
+  .krishi-book-portal-dropdown
+  .center-option span {
+    font-size:
+      10px !important;
+  }
+}
+
+/* =========================================================
+   KRISHISETU — REAL CROP IMAGE COMPONENT
+========================================================= */
+
+.krishi-real-crop-image {
+  display:
+    block !important;
+
+  width:
+    100% !important;
+
+  height:
+    100% !important;
+
+  min-width:
+    0 !important;
+
+  min-height:
+    0 !important;
+
+  object-fit:
+    cover !important;
+
+  object-position:
+    center !important;
+
+  border-radius:
+    inherit !important;
+
+  user-select:
+    none !important;
+
+  pointer-events:
+    none !important;
+}
+
+
+/*
+   Existing crop containers become photographic tiles.
+*/
+.crop-visual {
+  overflow:
+    hidden !important;
+
+  padding:
+    0 !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  background:
+    #eef6f1 !important;
+}
+
+
+/*
+   Remove the old SVG illustration completely.
+*/
+.crop-visual > svg {
+  display:
+    none !important;
+}

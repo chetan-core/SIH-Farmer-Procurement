@@ -1,9 +1,14 @@
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+
+import {
+  createPortal,
+} from "react-dom";
 
 import {
   ArrowLeft,
@@ -56,6 +61,388 @@ import {
 import {
   getBookingState,
 } from "../../assistant/assistantController";
+
+
+function PortalDropdown({
+  open,
+  anchorRef,
+  children,
+  onClose,
+  className = "",
+  maxHeight = 360,
+}) {
+
+  const menuRef =
+    useRef(null);
+
+  const [position, setPosition] =
+    useState({
+      top: 0,
+      left: 0,
+      width: 0,
+      maxHeight: 240,
+      placement: "bottom",
+      visible: false,
+    });
+
+
+  const calculatePosition =
+    () => {
+
+      const anchor =
+        anchorRef?.current;
+
+      if (!anchor) {
+        return null;
+      }
+
+      const rect =
+        anchor.getBoundingClientRect();
+
+      const gap =
+        8;
+
+      const padding =
+        12;
+
+      const viewportHeight =
+        window.innerHeight;
+
+      const viewportWidth =
+        window.innerWidth;
+
+      const width =
+        Math.min(
+          rect.width,
+          viewportWidth -
+            padding * 2
+        );
+
+      const left =
+        Math.max(
+          padding,
+          Math.min(
+            rect.left,
+            viewportWidth -
+              width -
+              padding
+          )
+        );
+
+      const spaceBelow =
+        viewportHeight -
+        rect.bottom -
+        gap -
+        padding;
+
+      const spaceAbove =
+        rect.top -
+        gap -
+        padding;
+
+      const requestedHeight =
+        Math.min(
+          Number(maxHeight) || 360,
+          viewportHeight -
+            padding * 2
+        );
+
+      const minimumUsefulHeight =
+        Math.min(
+          180,
+          requestedHeight
+        );
+
+      const openAbove =
+        spaceBelow <
+          minimumUsefulHeight &&
+        spaceAbove >
+          spaceBelow;
+
+      const availableSpace =
+        Math.max(
+          140,
+          openAbove
+            ? spaceAbove
+            : spaceBelow
+        );
+
+      const finalHeight =
+        Math.min(
+          requestedHeight,
+          availableSpace
+        );
+
+      const top =
+        openAbove
+          ? Math.max(
+              padding,
+              rect.top -
+                gap -
+                finalHeight
+            )
+          : Math.min(
+              rect.bottom +
+                gap,
+              viewportHeight -
+                padding -
+                finalHeight
+            );
+
+      return {
+        top,
+        left,
+        width,
+        maxHeight:
+          finalHeight,
+        placement:
+          openAbove
+            ? "top"
+            : "bottom",
+      };
+    };
+
+
+  const updatePosition =
+    () => {
+
+      const next =
+        calculatePosition();
+
+      if (!next) {
+        return;
+      }
+
+      setPosition({
+        ...next,
+        visible: true,
+      });
+    };
+
+
+  useLayoutEffect(() => {
+
+    if (!open) {
+      return;
+    }
+
+    updatePosition();
+
+  }, [
+    open,
+    maxHeight,
+  ]);
+
+
+  useEffect(() => {
+
+    if (!open) {
+      return;
+    }
+
+    let frame = null;
+
+    const schedulePosition =
+      () => {
+
+        if (frame !== null) {
+          cancelAnimationFrame(
+            frame
+          );
+        }
+
+        frame =
+          requestAnimationFrame(
+            updatePosition
+          );
+      };
+
+
+    const handleOutsidePointer =
+      event => {
+
+        const target =
+          event.target;
+
+        if (
+          menuRef.current?.contains(
+            target
+          )
+        ) {
+          return;
+        }
+
+        if (
+          anchorRef?.current?.contains(
+            target
+          )
+        ) {
+          return;
+        }
+
+        onClose?.();
+      };
+
+
+    const handleEscape =
+      event => {
+
+        if (
+          event.key ===
+          "Escape"
+        ) {
+          onClose?.();
+        }
+
+      };
+
+
+    window.addEventListener(
+      "resize",
+      schedulePosition,
+      {
+        passive: true,
+      }
+    );
+
+    window.addEventListener(
+      "scroll",
+      schedulePosition,
+      {
+        capture: true,
+        passive: true,
+      }
+    );
+
+    document.addEventListener(
+      "pointerdown",
+      handleOutsidePointer,
+      true
+    );
+
+    document.addEventListener(
+      "keydown",
+      handleEscape
+    );
+
+
+    return () => {
+
+      if (frame !== null) {
+        cancelAnimationFrame(
+          frame
+        );
+      }
+
+      window.removeEventListener(
+        "resize",
+        schedulePosition
+      );
+
+      window.removeEventListener(
+        "scroll",
+        schedulePosition,
+        true
+      );
+
+      document.removeEventListener(
+        "pointerdown",
+        handleOutsidePointer,
+        true
+      );
+
+      document.removeEventListener(
+        "keydown",
+        handleEscape
+      );
+
+    };
+
+  }, [
+    open,
+    anchorRef,
+    onClose,
+  ]);
+
+
+  if (
+    !open ||
+    typeof document ===
+      "undefined"
+  ) {
+    return null;
+  }
+
+
+  return createPortal(
+
+    <div
+      ref={
+        menuRef
+      }
+      className={
+        `krishi-book-portal-dropdown ${
+          className
+        }`
+      }
+      data-placement={
+        position.placement
+      }
+      style={{
+        position:
+          "fixed",
+
+        top:
+          position.top,
+
+        left:
+          position.left,
+
+        width:
+          position.width,
+
+        maxHeight:
+          position.maxHeight,
+
+        zIndex:
+          2147483000,
+
+        visibility:
+          position.visible
+            ? "visible"
+            : "hidden",
+
+        overflowY:
+          "auto",
+
+        overflowX:
+          "hidden",
+
+        boxSizing:
+          "border-box",
+
+        overscrollBehavior:
+          "contain",
+
+        WebkitOverflowScrolling:
+          "touch",
+      }}
+      onWheel={
+        event => {
+          event.stopPropagation();
+        }
+      }
+    >
+
+      {children}
+
+    </div>,
+
+    document.body
+  );
+}
+
+
 
 const API_URL =
   import.meta.env.VITE_API_URL;
@@ -935,6 +1322,13 @@ function FarmerBook() {
     setOpenMenu,
   ] =
   useState(null);
+
+
+  const cropSelectRef =
+    useRef(null);
+
+  const centerSelectRef =
+    useRef(null);
 
 
   const [
@@ -5142,7 +5536,12 @@ function FarmerBook() {
                   </label>
 
 
-                  <div className="custom-select">
+                  <div
+                    className="custom-select"
+                    ref={
+                      cropSelectRef
+                    }
+                  >
 
                     <button
                       type="button"
@@ -5209,101 +5608,105 @@ function FarmerBook() {
                     </button>
 
 
-                    {
-                      openMenu ===
-                      "crop" && (
+                    <PortalDropdown
+                      open={
+                        openMenu ===
+                        "crop"
+                      }
+                      anchorRef={
+                        cropSelectRef
+                      }
+                      onClose={() =>
+                        setOpenMenu(
+                          null
+                        )
+                      }
+                      className="farmer-book-crop-menu"
+                      maxHeight={330}
+                    >
 
-                        <div className="select-menu">
+                      {
+                        crops.map(
+                          item => (
+                            <button
+                              key={
+                                item.id
+                              }
+                              type="button"
+                              className={
+                                String(
+                                  crop
+                                ) ===
+                                String(
+                                  item.id
+                                )
+                                  ? "select-option selected"
+                                  : "select-option"
+                              }
+                              onClick={() =>
+                                handleCropSelect(
+                                  item.id
+                                )
+                              }
+                            >
 
-                          {
-                            crops.map(
-                              item => (
+                              <div
+                                className={
+                                  `crop-visual crop-${
+                                    item.id
+                                  } crop-visual-small`
+                                }
+                              >
 
-                                <button
-                                  key={
+                                <CropIcon
+                                  crop={
                                     item.id
                                   }
-                                  type="button"
-                                  className={
-                                    String(
-                                      crop
-                                    ) ===
-                                    String(
-                                      item.id
-                                    )
-                                      ? "select-option selected"
-                                      : "select-option"
-                                  }
-                                  onClick={() =>
-                                    handleCropSelect(
-                                      item.id
-                                    )
-                                  }
-                                >
+                                  size={20}
+                                />
 
-                                  <div
-                                    className={
-                                      `crop-visual crop-${
-                                        item.id
-                                      } crop-visual-small`
-                                    }
-                                  >
-
-                                    <CropIcon
-                                      crop={
-                                        item.id
-                                      }
-                                      size={20}
-                                    />
-
-                                  </div>
+                              </div>
 
 
-                                  <div>
+                              <div>
 
-                                    <strong>
-                                      {
-                                        cropLabel(
-                                          item.id
-                                        )
-                                      }
-                                    </strong>
-
-
-                                    <span>
-                                      {
-                                        copy.agriculturalProduce
-                                      }
-                                    </span>
-
-                                  </div>
-
-
+                                <strong>
                                   {
-                                    String(
-                                      crop
-                                    ) ===
-                                    String(
+                                    cropLabel(
                                       item.id
-                                    ) && (
-
-                                      <Check
-                                        size={16}
-                                      />
-
                                     )
                                   }
+                                </strong>
 
-                                </button>
 
-                              )
-                            )
-                          }
+                                <span>
+                                  {
+                                    copy.agriculturalProduce
+                                  }
+                                </span>
 
-                        </div>
+                              </div>
 
-                      )
-                    }
+
+                              {
+                                String(
+                                  crop
+                                ) ===
+                                String(
+                                  item.id
+                                ) && (
+                                  <Check
+                                    size={16}
+                                  />
+                                )
+                              }
+
+                            </button>
+                          )
+                        )
+                      }
+
+                    </PortalDropdown>
 
                   </div>
 
@@ -5451,7 +5854,12 @@ function FarmerBook() {
                 </label>
 
 
-                <div className="custom-select">
+                <div
+                  className="custom-select"
+                  ref={
+                    centerSelectRef
+                  }
+                >
 
                   <button
                     type="button"
@@ -5515,150 +5923,148 @@ function FarmerBook() {
                   </button>
 
 
-                  {
-                    openMenu ===
-                    "center" && (
+                  <PortalDropdown
+                    open={
+                      openMenu ===
+                      "center"
+                    }
+                    anchorRef={
+                      centerSelectRef
+                    }
+                    onClose={() =>
+                      setOpenMenu(
+                        null
+                      )
+                    }
+                    className="farmer-book-center-menu"
+                    maxHeight={360}
+                  >
 
-                      <div className="select-menu center-menu">
+                    {
+                      centersLoading ? (
 
-                        {
-                          centersLoading ? (
-
-                            <div className="booking-menu-empty">
-
-                              {
-                                tr(
-                                  "location.loadingCenters",
-                                  "Loading procurement centers..."
-                                )
-                              }
-
-                            </div>
-
-                          ) : availableCenters.length ===
-                            0 ? (
-
-                            <div className="booking-menu-empty">
-
-                              {
-                                tr(
-                                  "location.noCenter",
-                                  "No active procurement center available."
-                                )
-                              }
-
-                            </div>
-
-                          ) : (
-
-                            availableCenters.map(
-                              center => (
-
-                                <button
-                                  key={
-                                    center.id
-                                  }
-                                  type="button"
-                                  className={
-                                    String(
-                                      centerId
-                                    ) ===
-                                    String(
-                                      center.id
-                                    )
-                                      ? "center-option selected"
-                                      : "center-option"
-                                  }
-                                  onClick={() =>
-                                    handleCenterSelect(
-                                      center.id
-                                    )
-                                  }
-                                >
-
-                                  <div className="center-option-icon">
-
-                                    <MapPin
-                                      size={17}
-                                    />
-
-                                  </div>
-
-
-                                  <div>
-
-                                    <strong>
-                                      {
-                                        center.name
-                                      }
-                                    </strong>
-
-
-                                    <span>
-                                      {
-                                        center.address ||
-                                        [
-                                          center.village,
-                                          center.mandal_id,
-                                          center.district_id,
-                                          center.state_id,
-                                        ]
-                                          .filter(Boolean)
-                                          .join(", ")
-                                      }
-                                    </span>
-
-
-                                    {
-                                      center.landmark && (
-
-                                        <small>
-
-                                          {
-                                            copy.near
-                                          }
-
-                                          {" "}
-
-                                          {
-                                            center.landmark
-                                          }
-
-                                        </small>
-
-                                      )
-                                    }
-
-                                  </div>
-
-
-                                  {
-                                    String(
-                                      centerId
-                                    ) ===
-                                    String(
-                                      center.id
-                                    ) && (
-
-                                      <Check
-                                        size={16}
-                                      />
-
-                                    )
-                                  }
-
-                                </button>
-
-                              )
+                        <div className="booking-menu-empty">
+                          {
+                            tr(
+                              "location.loadingCenters",
+                              "Loading procurement centers..."
                             )
+                          }
+                        </div>
 
+                      ) : availableCenters.length ===
+                        0 ? (
+
+                        <div className="booking-menu-empty">
+                          {
+                            tr(
+                              "location.noCenter",
+                              "No active procurement center available."
+                            )
+                          }
+                        </div>
+
+                      ) : (
+
+                        availableCenters.map(
+                          center => (
+                            <button
+                              key={
+                                center.id
+                              }
+                              type="button"
+                              className={
+                                String(
+                                  centerId
+                                ) ===
+                                String(
+                                  center.id
+                                )
+                                  ? "center-option selected"
+                                  : "center-option"
+                              }
+                              onClick={() =>
+                                handleCenterSelect(
+                                  center.id
+                                )
+                              }
+                            >
+
+                              <div className="center-option-icon">
+
+                                <MapPin
+                                  size={17}
+                                />
+
+                              </div>
+
+
+                              <div>
+
+                                <strong>
+                                  {
+                                    center.name
+                                  }
+                                </strong>
+
+
+                                <span>
+                                  {
+                                    center.address ||
+                                    [
+                                      center.village,
+                                      center.mandal_id,
+                                      center.district_id,
+                                      center.state_id,
+                                    ]
+                                      .filter(Boolean)
+                                      .join(", ")
+                                  }
+                                </span>
+
+
+                                {
+                                  center.landmark && (
+                                    <small>
+
+                                      {
+                                        copy.near
+                                      }
+
+                                      {" "}
+
+                                      {
+                                        center.landmark
+                                      }
+
+                                    </small>
+                                  )
+                                }
+
+                              </div>
+
+
+                              {
+                                String(
+                                  centerId
+                                ) ===
+                                String(
+                                  center.id
+                                ) && (
+                                  <Check
+                                    size={16}
+                                  />
+                                )
+                              }
+
+                            </button>
                           )
-                        }
+                        )
 
-                      </div>
+                      )
+                    }
 
-                    )
-                  }
+                  </PortalDropdown>
 
                 </div>
 
