@@ -701,10 +701,129 @@ function ksUnlockDocument() {
    FORCE OVERLAYS TO VIEWPORT
 --------------------------------------------------------- */
 
+/*
+   Ancestors such as PageTransition can create a containing block
+   for `position: fixed` descendants through transform / will-change.
+   That makes a modal look clipped or stuck to the page.
+
+   We temporarily neutralize ONLY those containing-block properties
+   while an overlay is open, then restore the exact original inline
+   style when the overlay closes.
+*/
+const ksOverlayAncestorStyleSnapshots = new Map();
+
+function ksNeutralizeOverlayAncestors(overlay) {
+  if (
+    !(overlay instanceof HTMLElement)
+  ) {
+    return;
+  }
+
+  let ancestor =
+    overlay.parentElement;
+
+  while (
+    ancestor &&
+    ancestor !== document.body &&
+    ancestor !== document.documentElement
+  ) {
+    const computed =
+      window.getComputedStyle(
+        ancestor
+      );
+
+    const createsContainingBlock =
+      computed.transform !== "none" ||
+      computed.perspective !== "none" ||
+      computed.filter !== "none" ||
+      computed.backdropFilter !== "none" ||
+      computed.webkitBackdropFilter !== "none" ||
+      computed.contain !== "none" ||
+      computed.contentVisibility === "auto" ||
+      computed.willChange
+        .split(",")
+        .some((value) =>
+          /transform|filter|perspective|contain/i.test(
+            value
+          )
+        );
+
+    if (createsContainingBlock) {
+      if (
+        !ksOverlayAncestorStyleSnapshots.has(
+          ancestor
+        )
+      ) {
+        ksOverlayAncestorStyleSnapshots.set(
+          ancestor,
+          ancestor.getAttribute("style")
+        );
+      }
+
+      [
+        ["transform", "none"],
+        ["filter", "none"],
+        ["backdrop-filter", "none"],
+        ["-webkit-backdrop-filter", "none"],
+        ["perspective", "none"],
+        ["will-change", "auto"],
+        ["contain", "none"],
+        ["content-visibility", "visible"],
+      ].forEach(
+        ([property, value]) => {
+          ancestor.style.setProperty(
+            property,
+            value,
+            "important"
+          );
+        }
+      );
+    }
+
+    ancestor =
+      ancestor.parentElement;
+  }
+}
+
+function ksRestoreOverlayAncestors() {
+  ksOverlayAncestorStyleSnapshots.forEach(
+    (originalStyle, element) => {
+      if (
+        !(element instanceof HTMLElement)
+      ) {
+        return;
+      }
+
+      if (
+        originalStyle === null
+      ) {
+        element.removeAttribute("style");
+      } else {
+        element.setAttribute(
+          "style",
+          originalStyle
+        );
+      }
+    }
+  );
+
+  ksOverlayAncestorStyleSnapshots.clear();
+}
+
+
+/* ---------------------------------------------------------
+   FORCE OVERLAYS TO VIEWPORT
+--------------------------------------------------------- */
+
 function ksNormaliseOverlayViewport() {
   const openOverlays =
     ksGetOpenOverlays();
 
+  /*
+     If an overlay is open, remove containing-block behaviour
+     from its route/page-transition ancestors before applying
+     viewport geometry.
+  */
   openOverlays.forEach(
     (overlay) => {
       if (
@@ -713,6 +832,10 @@ function ksNormaliseOverlayViewport() {
       ) {
         return;
       }
+
+      ksNeutralizeOverlayAncestors(
+        overlay
+      );
 
       const classNames =
         typeof overlay.className ===
@@ -735,9 +858,21 @@ function ksNormaliseOverlayViewport() {
             )
         );
 
+      /*
+         IMPORTANT:
+         Do not force modal overlays to `align-items:flex-start`.
+         That was causing tall dialogs to open against the top edge
+         and appear clipped when their content exceeded the viewport.
+
+         Regular dialogs are centered in the available viewport.
+         Their own panel is responsible for scrolling.
+      */
       const important = {
         position: "fixed",
-        inset: "0",
+        top: "0",
+        right: "0",
+        bottom: "0",
+        left: "0",
         width: "100vw",
         height: "100dvh",
         "max-height": "100dvh",
@@ -780,9 +915,11 @@ function ksNormaliseOverlayViewport() {
       );
 
       /*
-         Regular modal boxes open close
-         to the top of the viewport rather
-         than tracking page scroll.
+         Regular modal overlays:
+         - full viewport
+         - center the panel
+         - leave safe space around it
+         - never let the background page scroll
       */
       if (
         !isDrawer &&
@@ -792,7 +929,7 @@ function ksNormaliseOverlayViewport() {
           ["display", "flex"],
           [
             "align-items",
-            "flex-start",
+            "center",
           ],
           [
             "justify-content",
@@ -827,12 +964,8 @@ function ksNormaliseOverlayViewport() {
       /*
          Find the actual modal/drawer panel.
 
-         IMPORTANT:
-         Admin booking/farmer/center drawers are rendered as
-         siblings of their backdrop, not children of it. The old
-         overlay.querySelectorAll(...) therefore missed the drawer
-         completely. It also forced generic panels to `position:
-         relative`, which is wrong for a viewport-fixed drawer.
+         Drawers may be siblings of their backdrop, so never rely
+         only on overlay.querySelector(...).
       */
       const panelCandidates = [];
 
@@ -872,67 +1005,58 @@ function ksNormaliseOverlayViewport() {
                     "position",
                     "fixed",
                   ],
-
                   [
                     "top",
                     "0",
                   ],
-
                   [
                     "right",
                     "0",
                   ],
-
                   [
                     "bottom",
                     "0",
                   ],
-
                   [
                     "left",
                     "auto",
                   ],
-
                   [
                     "height",
                     "100dvh",
                   ],
-
                   [
                     "max-height",
                     "100dvh",
                   ],
-
                   [
                     "margin-left",
                     "0",
                   ],
-
                   [
                     "margin-right",
                     "0",
                   ],
-
                   [
                     "overflow-x",
                     "hidden",
                   ],
-
                   [
                     "overflow-y",
                     "auto",
                   ],
-
                   [
                     "overscroll-behavior",
                     "contain",
                   ],
-
                   [
                     "-webkit-overflow-scrolling",
                     "touch",
                   ],
-
+                  [
+                    "touch-action",
+                    "pan-y",
+                  ],
                   [
                     "z-index",
                     "50001",
@@ -943,40 +1067,41 @@ function ksNormaliseOverlayViewport() {
                     "position",
                     "relative",
                   ],
-
                   [
                     "margin-left",
                     "auto",
                   ],
-
                   [
                     "margin-right",
                     "auto",
                   ],
-
                   [
                     "max-height",
                     "calc(100dvh - 48px)",
                   ],
-
+                  [
+                    "min-height",
+                    "0",
+                  ],
                   [
                     "overflow-y",
                     "auto",
                   ],
-
                   [
                     "overflow-x",
                     "hidden",
                   ],
-
                   [
                     "overscroll-behavior",
                     "contain",
                   ],
-
                   [
                     "-webkit-overflow-scrolling",
                     "touch",
+                  ],
+                  [
+                    "touch-action",
+                    "pan-y",
                   ],
                 ];
 
@@ -993,6 +1118,17 @@ function ksNormaliseOverlayViewport() {
       );
     }
   );
+
+  /*
+     If React removed the overlay during this sync, restore any
+     containing-block styles we temporarily changed.
+  */
+  if (
+    openOverlays.length === 0 &&
+    ksOverlayAncestorStyleSnapshots.size > 0
+  ) {
+    ksRestoreOverlayAncestors();
+  }
 }
 
 
@@ -1439,6 +1575,8 @@ function useKrishiSetuGlobalInteractionPolicy() {
         handleKeyDown,
         true
       );
+
+      ksRestoreOverlayAncestors();
 
       if (locked) {
         ksUnlockDocument();
