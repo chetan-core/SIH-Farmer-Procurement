@@ -825,28 +825,120 @@ function ksNormaliseOverlayViewport() {
       }
 
       /*
-         Find the actual modal panel inside
-         the overlay and make that the
-         independent scroll container.
+         Find the actual modal/drawer panel.
+
+         IMPORTANT:
+         Admin booking/farmer/center drawers are rendered as
+         siblings of their backdrop, not children of it. The old
+         overlay.querySelectorAll(...) therefore missed the drawer
+         completely. It also forced generic panels to `position:
+         relative`, which is wrong for a viewport-fixed drawer.
       */
+      const panelCandidates = [];
+
       KS_PANEL_SELECTORS.forEach(
         (selector) => {
-          overlay
+          document
             .querySelectorAll(
               selector
             )
             .forEach(
               (panel) => {
                 if (
-                  !(
-                    panel instanceof
-                    HTMLElement
-                  )
+                  panel instanceof
+                    HTMLElement &&
+                  ksIsVisible(panel)
                 ) {
-                  return;
+                  panelCandidates.push(
+                    panel
+                  );
                 }
+              }
+            );
+        }
+      );
 
-                [
+      panelCandidates.forEach(
+        (panel) => {
+          const isDrawerPanel =
+            panel.matches(
+              ".admin-booking-drawer, .admin-farmer-drawer, .admin-center-drawer"
+            );
+
+          const panelStyles =
+            isDrawerPanel
+              ? [
+                  [
+                    "position",
+                    "fixed",
+                  ],
+
+                  [
+                    "top",
+                    "0",
+                  ],
+
+                  [
+                    "right",
+                    "0",
+                  ],
+
+                  [
+                    "bottom",
+                    "0",
+                  ],
+
+                  [
+                    "left",
+                    "auto",
+                  ],
+
+                  [
+                    "height",
+                    "100dvh",
+                  ],
+
+                  [
+                    "max-height",
+                    "100dvh",
+                  ],
+
+                  [
+                    "margin-left",
+                    "0",
+                  ],
+
+                  [
+                    "margin-right",
+                    "0",
+                  ],
+
+                  [
+                    "overflow-x",
+                    "hidden",
+                  ],
+
+                  [
+                    "overflow-y",
+                    "auto",
+                  ],
+
+                  [
+                    "overscroll-behavior",
+                    "contain",
+                  ],
+
+                  [
+                    "-webkit-overflow-scrolling",
+                    "touch",
+                  ],
+
+                  [
+                    "z-index",
+                    "50001",
+                  ],
+                ]
+              : [
                   [
                     "position",
                     "relative",
@@ -886,17 +978,17 @@ function ksNormaliseOverlayViewport() {
                     "-webkit-overflow-scrolling",
                     "touch",
                   ],
-                ].forEach(
-                  ([property, value]) => {
-                    panel.style.setProperty(
-                      property,
-                      value,
-                      "important"
-                    );
-                  }
-                );
-              }
-            );
+                ];
+
+          panelStyles.forEach(
+            ([property, value]) => {
+              panel.style.setProperty(
+                property,
+                value,
+                "important"
+              );
+            }
+          );
         }
       );
     }
@@ -1150,6 +1242,60 @@ function useKrishiSetuGlobalInteractionPolicy() {
           return;
         }
 
+        /*
+           IMPORTANT:
+           Booking drawers are siblings of the backdrop.
+           Therefore checking only `overlay.contains(target)`
+           incorrectly treated wheel events inside the drawer
+           as background events and called preventDefault().
+
+           First resolve an actual visible panel under the pointer.
+        */
+        const panel =
+          KS_PANEL_SELECTORS
+            .map((selector) =>
+              Array.from(
+                document.querySelectorAll(
+                  selector
+                )
+              )
+            )
+            .flat()
+            .find(
+              (candidate) =>
+                candidate instanceof
+                  HTMLElement &&
+                ksIsVisible(candidate) &&
+                candidate.contains(target)
+            );
+
+        if (panel instanceof HTMLElement) {
+          const scroller =
+            ksFindScrollableElement(
+              target,
+              panel
+            ) || panel;
+
+          event.preventDefault();
+          event.stopPropagation();
+
+          if (scroller instanceof HTMLElement) {
+            scroller.scrollTop +=
+              event.deltaY;
+
+            if (
+              event.deltaX !== 0 &&
+              scroller.scrollWidth >
+                scroller.clientWidth
+            ) {
+              scroller.scrollLeft +=
+                event.deltaX;
+            }
+          }
+
+          return;
+        }
+
         const overlay =
           overlays.find(
             (candidate) =>
@@ -1160,8 +1306,8 @@ function useKrishiSetuGlobalInteractionPolicy() {
 
         if (!overlay) {
           /*
-             Overlay exists:
-             background page is locked.
+             Overlay exists and the pointer is not inside a
+             scrollable modal/drawer. Keep the background locked.
           */
           event.preventDefault();
           event.stopPropagation();
@@ -1169,34 +1315,12 @@ function useKrishiSetuGlobalInteractionPolicy() {
           return;
         }
 
-        const scroller =
-          ksFindScrollableElement(
-            target,
-            overlay
-          );
-
         /*
-           Always consume the wheel event
-           so it cannot reach the background.
+           Wheel movement on the backdrop itself must never
+           reach the page behind the overlay.
         */
         event.preventDefault();
         event.stopPropagation();
-
-        if (
-          scroller
-        ) {
-          scroller.scrollTop +=
-            event.deltaY;
-
-          if (
-            event.deltaX !== 0 &&
-            scroller.scrollWidth >
-              scroller.clientWidth
-          ) {
-            scroller.scrollLeft +=
-              event.deltaX;
-          }
-        }
       };
 
 

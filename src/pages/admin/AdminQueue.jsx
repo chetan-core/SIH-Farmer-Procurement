@@ -6,6 +6,10 @@ import {
 } from "react";
 
 import {
+  createPortal,
+} from "react-dom";
+
+import {
   AlertTriangle,
   ArrowRight,
   CalendarDays,
@@ -2150,19 +2154,63 @@ function BookingDrawer({
     );
 
 
-  return (
+  // Render directly under <body> so no AdminLayout/PageTransition stacking
+  // context can place the drawer behind its own backdrop.
+  if (typeof document === "undefined") {
+    return null;
+  }
 
-    <>
+  return createPortal(
+    <div
+      className="admin-booking-drawer-layer"
+      style={{
+        position: "fixed",
+        inset: 0,
+        width: "100vw",
+        height: "100dvh",
+        zIndex: 2147483000,
+        pointerEvents: "auto",
+      }}
+    >
 
       <div
         className="admin-booking-drawer-overlay"
         onClick={
           onClose
         }
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          zIndex: 0,
+        }}
       />
 
 
-      <aside className="admin-booking-drawer">
+      <aside
+        className="admin-booking-drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-label={text.bookingDetails}
+        onClick={(event) => event.stopPropagation()}
+        style={{
+          position: "absolute",
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: "min(480px, 94vw)",
+          height: "100dvh",
+          maxHeight: "100dvh",
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          boxSizing: "border-box",
+          zIndex: 1,
+          background: "#ffffff",
+        }}
+      >
 
 
         <div className="admin-drawer-header">
@@ -2265,7 +2313,21 @@ function BookingDrawer({
 
 
 
-        <div className="admin-drawer-body">
+        <div
+          className="admin-drawer-body"
+          style={{
+            flex: "1 1 auto",
+            minHeight: 0,
+            height: "auto",
+            overflowY: "auto",
+            overflowX: "hidden",
+            WebkitOverflowScrolling: "touch",
+            overscrollBehavior: "contain",
+            touchAction: "pan-y",
+          }}
+          onWheel={(event) => event.stopPropagation()}
+          onTouchMove={(event) => event.stopPropagation()}
+        >
 
 
           <DrawerSection
@@ -2721,8 +2783,8 @@ function BookingDrawer({
 
       </aside>
 
-    </>
-
+    </div>,
+    document.body
   );
 }
 
