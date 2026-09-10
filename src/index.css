@@ -321500,3 +321500,3458 @@ header button:focus-visible,
 /* =========================================================
    END GLOBAL HEADER PHOTO SYSTEM
 ========================================================= */
+
+/* =========================================================
+   KRISHISETU — FARMER TOKEN PREMIUM VISUAL SYSTEM
+   Clear hierarchy • Real photography • Large readable text
+   Soft agricultural palette • Mobile safe • Lightweight
+========================================================= */
+
+
+/* =========================================================
+   1. TOKEN PAGE BACKGROUND
+========================================================= */
+
+.farmer-token-page {
+  position: relative !important;
+
+  min-height: 100dvh !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(244, 249, 246, .84) 0%,
+      rgba(239, 247, 243, .94) 42%,
+      rgba(247, 249, 244, .98) 100%
+    ),
+    url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=2200&q=82")
+    center top / cover fixed no-repeat !important;
+
+  background-attachment:
+    fixed !important;
+}
+
+
+/*
+   Soft reading layer over the photograph.
+*/
+.farmer-token-page::before {
+  content: "" !important;
+
+  position: fixed !important;
+
+  inset: 0 !important;
+
+  z-index: 0 !important;
+
+  pointer-events: none !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,.74),
+      rgba(242,249,245,.88)
+    ) !important;
+}
+
+
+/*
+   Keep actual content above the image.
+*/
+.farmer-token-page > * {
+  position: relative !important;
+
+  z-index: 1 !important;
+}
+
+
+/* =========================================================
+   2. MAIN CONTAINER
+========================================================= */
+
+.farmer-token-page .token-container {
+  width:
+    min(1440px, calc(100% - 44px)) !important;
+
+  margin:
+    0 auto !important;
+
+  padding:
+    34px 0 70px !important;
+}
+
+
+/* =========================================================
+   3. TOP HEADER
+========================================================= */
+
+.farmer-token-page .token-top-row {
+  display:
+    grid !important;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto !important;
+
+  gap:
+    28px !important;
+
+  align-items:
+    end !important;
+
+  margin-bottom:
+    28px !important;
+}
+
+
+.farmer-token-page .token-top-row h1 {
+  margin:
+    12px 0 7px !important;
+
+  color:
+    #183f4d !important;
+
+  font-size:
+    clamp(34px, 4vw, 58px) !important;
+
+  line-height:
+    1.04 !important;
+
+  letter-spacing:
+    -.035em !important;
+
+  font-weight:
+    950 !important;
+}
+
+
+.farmer-token-page .token-top-row p {
+  max-width:
+    760px !important;
+
+  margin:
+    0 !important;
+
+  color:
+    #718992 !important;
+
+  font-size:
+    clamp(16px, 1.5vw, 20px) !important;
+
+  line-height:
+    1.55 !important;
+
+  font-weight:
+    560 !important;
+}
+
+
+/* =========================================================
+   4. LIVE PILL
+========================================================= */
+
+.farmer-token-page .token-live-pill {
+  display:
+    inline-flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    8px !important;
+
+  padding:
+    8px 14px !important;
+
+  border:
+    1px solid #b9e3ce !important;
+
+  border-radius:
+    999px !important;
+
+  color:
+    #14754f !important;
+
+  background:
+    #eaf8f0 !important;
+
+  box-shadow:
+    0 5px 16px rgba(26, 111, 77, .08) !important;
+
+  font-weight:
+    850 !important;
+}
+
+
+.farmer-token-page .token-live-pill span {
+  width:
+    9px !important;
+
+  height:
+    9px !important;
+
+  border-radius:
+    50% !important;
+
+  background:
+    #1d9d68 !important;
+
+  box-shadow:
+    0 0 0 5px rgba(29,157,104,.10) !important;
+}
+
+
+/* =========================================================
+   5. DATABASE CARD
+========================================================= */
+
+.farmer-token-page .token-database-card {
+  min-width:
+    235px !important;
+
+  padding:
+    16px 18px !important;
+
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    12px !important;
+
+  border:
+    1px solid #cce3d6 !important;
+
+  border-radius:
+    18px !important;
+
+  background:
+    rgba(255,255,255,.94) !important;
+
+  box-shadow:
+    0 12px 35px rgba(28,72,57,.09) !important;
+}
+
+
+.farmer-token-page .token-database-icon {
+  width:
+    46px !important;
+
+  height:
+    46px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    14px !important;
+
+  color:
+    #15815a !important;
+
+  background:
+    #e8f7ef !important;
+}
+
+
+/* =========================================================
+   6. MAIN TWO-COLUMN LAYOUT
+========================================================= */
+
+.farmer-token-page .token-main-layout {
+  display:
+    grid !important;
+
+  grid-template-columns:
+    minmax(0, 1.65fr)
+    minmax(330px, .72fr) !important;
+
+  gap:
+    28px !important;
+
+  align-items:
+    start !important;
+}
+
+
+.farmer-token-page .token-main-column {
+  min-width:
+    0 !important;
+}
+
+
+.farmer-token-page .token-side-column {
+  min-width:
+    0 !important;
+
+  position:
+    sticky !important;
+
+  top:
+    24px !important;
+
+  align-self:
+    start !important;
+}
+
+
+/* =========================================================
+   7. HERO TOKEN CARD — MOST IMPORTANT
+========================================================= */
+
+.farmer-token-page .token-hero-card {
+  position:
+    relative !important;
+
+  overflow:
+    hidden !important;
+
+  min-height:
+    340px !important;
+
+  padding:
+    34px !important;
+
+  border:
+    1px solid rgba(181,211,217,.95) !important;
+
+  border-radius:
+    28px !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(18,77,73,.94),
+      rgba(18,102,77,.90)
+    ),
+    url("https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=1800&q=82")
+    center / cover no-repeat !important;
+
+  box-shadow:
+    0 24px 65px rgba(17,68,72,.18) !important;
+
+  color:
+    #ffffff !important;
+}
+
+
+/*
+   Real photo layer.
+*/
+.farmer-token-page .token-hero-card::before {
+  content:
+    "" !important;
+
+  position:
+    absolute !important;
+
+  inset:
+    0 !important;
+
+  pointer-events:
+    none !important;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(12,62,61,.94) 0%,
+      rgba(15,89,69,.82) 52%,
+      rgba(9,65,57,.55) 100%
+    ) !important;
+}
+
+
+.farmer-token-page .token-hero-card > * {
+  position:
+    relative !important;
+
+  z-index:
+    1 !important;
+}
+
+
+.farmer-token-page .token-card-label {
+  color:
+    rgba(255,255,255,.72) !important;
+
+  font-size:
+    12px !important;
+
+  font-weight:
+    900 !important;
+
+  letter-spacing:
+    .14em !important;
+}
+
+
+.farmer-token-page .token-number {
+  margin-top:
+    7px !important;
+
+  color:
+    #ffffff !important;
+
+  font-size:
+    clamp(54px, 7vw, 88px) !important;
+
+  line-height:
+    .95 !important;
+
+  letter-spacing:
+    -.05em !important;
+
+  font-weight:
+    950 !important;
+}
+
+
+/* =========================================================
+   8. TOKEN STATUS
+========================================================= */
+
+.farmer-token-page .token-status-row {
+  margin-top:
+    20px !important;
+
+  display:
+    flex !important;
+
+  flex-wrap:
+    wrap !important;
+
+  gap:
+    10px !important;
+}
+
+
+.farmer-token-page .token-status-row > * {
+  border-radius:
+    999px !important;
+
+  background:
+    rgba(255,255,255,.15) !important;
+
+  border:
+    1px solid rgba(255,255,255,.22) !important;
+
+  color:
+    #ffffff !important;
+
+  backdrop-filter:
+    blur(8px) !important;
+
+  -webkit-backdrop-filter:
+    blur(8px) !important;
+}
+
+
+/* =========================================================
+   9. ACTION BUTTONS
+========================================================= */
+
+.farmer-token-page .token-action-row {
+  display:
+    flex !important;
+
+  flex-wrap:
+    wrap !important;
+
+  gap:
+    10px !important;
+
+  margin-top:
+    24px !important;
+}
+
+
+.farmer-token-page .token-inline-action {
+  min-height:
+    48px !important;
+
+  padding:
+    10px 16px !important;
+
+  border:
+    1px solid rgba(255,255,255,.24) !important;
+
+  border-radius:
+    13px !important;
+
+  background:
+    rgba(255,255,255,.13) !important;
+
+  color:
+    #ffffff !important;
+
+  font-size:
+    14px !important;
+
+  font-weight:
+    850 !important;
+
+  cursor:
+    pointer !important;
+
+  transition:
+    transform .16s ease,
+    background-color .16s ease,
+    box-shadow .16s ease !important;
+}
+
+
+.farmer-token-page .token-inline-action:hover {
+  transform:
+    translateY(-2px) !important;
+
+  background:
+    rgba(255,255,255,.21) !important;
+
+  box-shadow:
+    0 10px 22px rgba(0,0,0,.10) !important;
+}
+
+
+/* =========================================================
+   10. CURRENT JOURNEY CARD
+========================================================= */
+
+.farmer-token-page .token-arrival-card {
+  position:
+    relative !important;
+
+  overflow:
+    hidden !important;
+
+  margin-top:
+    24px !important;
+
+  border-radius:
+    24px !important;
+
+  border:
+    1px solid #c9dfe3 !important;
+
+  background:
+    #ffffff !important;
+
+  box-shadow:
+    0 16px 42px rgba(31,68,77,.08) !important;
+}
+
+
+.farmer-token-page .token-arrival-card::after {
+  content:
+    "" !important;
+
+  position:
+    absolute !important;
+
+  right:
+    -70px !important;
+
+  bottom:
+    -90px !important;
+
+  width:
+    250px !important;
+
+  height:
+    250px !important;
+
+  border-radius:
+    50% !important;
+
+  background:
+    url("https://images.unsplash.com/photo-1523742816568-bc9c4c0a6a95?auto=format&fit=crop&w=700&q=82")
+    center / cover no-repeat !important;
+
+  opacity:
+    .16 !important;
+
+  pointer-events:
+    none !important;
+}
+
+
+/* =========================================================
+   11. STATUS TIMELINE
+========================================================= */
+
+.farmer-token-page .token-status-card {
+  margin-top:
+    24px !important;
+
+  padding:
+    28px !important;
+
+  border:
+    1px solid #cfdee2 !important;
+
+  border-radius:
+    24px !important;
+
+  background:
+    rgba(255,255,255,.96) !important;
+
+  box-shadow:
+    0 17px 42px rgba(31,68,77,.08) !important;
+}
+
+
+.farmer-token-page .token-section-heading h2 {
+  margin:
+    4px 0 5px !important;
+
+  color:
+    #234e5d !important;
+
+  font-size:
+    clamp(22px, 2vw, 29px) !important;
+
+  line-height:
+    1.15 !important;
+
+  font-weight:
+    920 !important;
+}
+
+
+.farmer-token-page .token-section-heading p {
+  margin:
+    0 !important;
+
+  color:
+    #789099 !important;
+
+  font-size:
+    14px !important;
+
+  line-height:
+    1.55 !important;
+}
+
+
+/* Progress bar */
+.farmer-token-page .token-progress-bar {
+  height:
+    10px !important;
+
+  margin:
+    20px 0 24px !important;
+
+  border-radius:
+    999px !important;
+
+  background:
+    #e5eef0 !important;
+
+  overflow:
+    hidden !important;
+}
+
+
+.farmer-token-page .token-progress-bar > div {
+  height:
+    100% !important;
+
+  border-radius:
+    inherit !important;
+
+  background:
+    linear-gradient(
+      90deg,
+      #188b61,
+      #1caa75
+    ) !important;
+
+  box-shadow:
+    0 0 16px rgba(28,170,117,.24) !important;
+}
+
+
+/* =========================================================
+   12. TIMELINE ITEMS
+========================================================= */
+
+.farmer-token-page .token-timeline-content {
+  padding:
+    13px 14px !important;
+
+  border-radius:
+    14px !important;
+
+  background:
+    #f7fafb !important;
+
+  border:
+    1px solid #e5edef !important;
+}
+
+
+.farmer-token-page
+.token-timeline-item.current
+.token-timeline-content {
+  background:
+    #e9f7ef !important;
+
+  border-color:
+    #b9e1c9 !important;
+
+  box-shadow:
+    inset 4px 0 0 #198a61 !important;
+}
+
+
+.farmer-token-page .token-timeline-title-row strong {
+  color:
+    #264e5d !important;
+
+  font-size:
+    15px !important;
+
+  font-weight:
+    900 !important;
+}
+
+
+.farmer-token-page .token-timeline-content p {
+  color:
+    #789099 !important;
+
+  font-size:
+    12px !important;
+
+  line-height:
+    1.5 !important;
+}
+
+
+/* =========================================================
+   13. PAYMENT CARD — STRONG VISUAL IDENTITY
+========================================================= */
+
+.farmer-token-page .token-payment-card {
+  position:
+    relative !important;
+
+  overflow:
+    hidden !important;
+
+  margin-top:
+    24px !important;
+
+  padding:
+    28px !important;
+
+  border:
+    1px solid #e7d9ad !important;
+
+  border-radius:
+    24px !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,251,236,.98),
+      rgba(255,255,255,.96)
+    ) !important;
+
+  box-shadow:
+    0 17px 42px rgba(123,91,24,.08) !important;
+}
+
+
+.farmer-token-page .token-payment-card::after {
+  content:
+    "" !important;
+
+  position:
+    absolute !important;
+
+  right:
+    -55px !important;
+
+  top:
+    -55px !important;
+
+  width:
+    210px !important;
+
+  height:
+    210px !important;
+
+  border-radius:
+    50% !important;
+
+  background:
+    url("https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=600&q=80")
+    center / cover no-repeat !important;
+
+  opacity:
+    .08 !important;
+
+  pointer-events:
+    none !important;
+}
+
+
+/* =========================================================
+   14. PAYMENT SUMMARY ITEMS
+========================================================= */
+
+.farmer-token-page .token-payment-grid {
+  display:
+    grid !important;
+
+  grid-template-columns:
+    repeat(3, minmax(0,1fr)) !important;
+
+  gap:
+    12px !important;
+
+  margin-top:
+    18px !important;
+}
+
+
+.farmer-token-page .token-payment-item {
+  padding:
+    17px !important;
+
+  border-radius:
+    15px !important;
+
+  border:
+    1px solid #dae7e7 !important;
+
+  background:
+    #ffffff !important;
+}
+
+
+.farmer-token-page .token-payment-item strong {
+  display:
+    block !important;
+
+  margin-top:
+    5px !important;
+
+  color:
+    #1b5963 !important;
+
+  font-size:
+    18px !important;
+
+  font-weight:
+    920 !important;
+}
+
+
+/* =========================================================
+   15. DETAILS CARD
+========================================================= */
+
+.farmer-token-page .token-details-card,
+.farmer-token-page .token-history-card,
+.farmer-token-page .token-month-card {
+  margin-top:
+    24px !important;
+
+  padding:
+    28px !important;
+
+  border:
+    1px solid #d4e2e4 !important;
+
+  border-radius:
+    24px !important;
+
+  background:
+    rgba(255,255,255,.97) !important;
+
+  box-shadow:
+    0 17px 42px rgba(31,68,77,.07) !important;
+}
+
+
+/* =========================================================
+   16. BOOKING DETAILS GRID
+========================================================= */
+
+.farmer-token-page .token-details-grid {
+  display:
+    grid !important;
+
+  grid-template-columns:
+    repeat(2, minmax(0,1fr)) !important;
+
+  gap:
+    12px !important;
+
+  margin-top:
+    18px !important;
+}
+
+
+.farmer-token-page .token-details-grid > div {
+  min-width:
+    0 !important;
+
+  padding:
+    17px !important;
+
+  border:
+    1px solid #e1eaec !important;
+
+  border-radius:
+    15px !important;
+
+  background:
+    #f8fbfc !important;
+}
+
+
+.farmer-token-page .token-details-grid span,
+.farmer-token-page .token-side-list span {
+  display:
+    block !important;
+
+  margin-bottom:
+    5px !important;
+
+  color:
+    #86989f !important;
+
+  font-size:
+    11px !important;
+
+  font-weight:
+    800 !important;
+}
+
+
+.farmer-token-page .token-details-grid strong,
+.farmer-token-page .token-side-list strong {
+  color:
+    #295565 !important;
+
+  font-size:
+    15px !important;
+
+  line-height:
+    1.4 !important;
+
+  font-weight:
+    900 !important;
+
+  overflow-wrap:
+    anywhere !important;
+}
+
+
+/* =========================================================
+   17. PAYMENT HISTORY — SPOTTABLE
+========================================================= */
+
+.farmer-token-page .token-history-count {
+  min-width:
+    44px !important;
+
+  min-height:
+    44px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    13px !important;
+
+  color:
+    #136f51 !important;
+
+  background:
+    #e6f7ee !important;
+
+  font-size:
+    16px !important;
+
+  font-weight:
+    950 !important;
+}
+
+
+.farmer-token-page .token-payment-history-row {
+  display:
+    grid !important;
+
+  grid-template-columns:
+    auto minmax(0,1fr) auto auto !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    16px !important;
+
+  padding:
+    15px !important;
+
+  border:
+    1px solid #e2eaec !important;
+
+  border-radius:
+    15px !important;
+
+  background:
+    #fbfcfc !important;
+
+  transition:
+    transform .15s ease,
+    box-shadow .15s ease,
+    border-color .15s ease !important;
+}
+
+
+.farmer-token-page .token-payment-history-row:hover {
+  transform:
+    translateY(-2px) !important;
+
+  border-color:
+    #bedbd0 !important;
+
+  box-shadow:
+    0 10px 24px rgba(29,86,67,.08) !important;
+}
+
+
+.farmer-token-page .token-history-amount {
+  color:
+    #147551 !important;
+
+  font-size:
+    18px !important;
+
+  font-weight:
+    950 !important;
+}
+
+
+/* =========================================================
+   18. MONTHLY SUMMARY
+========================================================= */
+
+.farmer-token-page .token-month-summary {
+  display:
+    grid !important;
+
+  grid-template-columns:
+    repeat(3, minmax(0,1fr)) !important;
+
+  gap:
+    12px !important;
+
+  margin-top:
+    18px !important;
+}
+
+
+.farmer-token-page .token-month-summary > * {
+  min-height:
+    100px !important;
+
+  padding:
+    18px !important;
+
+  border:
+    1px solid #dce8e8 !important;
+
+  border-radius:
+    16px !important;
+
+  background:
+    #f8fbfb !important;
+}
+
+
+/* =========================================================
+   19. CROP BREAKDOWN — PHOTO TILE
+========================================================= */
+
+.farmer-token-page .token-crop-row {
+  position:
+    relative !important;
+
+  display:
+    grid !important;
+
+  grid-template-columns:
+    auto minmax(0,1fr) auto !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    14px !important;
+
+  padding:
+    12px !important;
+
+  border:
+    1px solid #e1eaeb !important;
+
+  border-radius:
+    15px !important;
+
+  background:
+    #ffffff !important;
+}
+
+
+.farmer-token-page .token-crop-icon {
+  width:
+    58px !important;
+
+  height:
+    58px !important;
+
+  min-width:
+    58px !important;
+
+  overflow:
+    hidden !important;
+
+  border-radius:
+    14px !important;
+
+  background:
+    #eaf4ee !important;
+
+  position:
+    relative !important;
+}
+
+
+/*
+   Remove the illustration and use photographs.
+*/
+.farmer-token-page .token-crop-icon svg {
+  display:
+    none !important;
+}
+
+
+/*
+   Wheat
+*/
+.farmer-token-page .token-crop-row:has(.crop-wheat)
+.token-crop-icon {
+  background:
+    url("https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=400&q=82")
+    center / cover no-repeat !important;
+}
+
+
+/*
+   Paddy
+*/
+.farmer-token-page .token-crop-row:has(.crop-paddy)
+.token-crop-icon {
+  background:
+    url("https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=400&q=82")
+    center / cover no-repeat !important;
+}
+
+
+/*
+   Maize
+*/
+.farmer-token-page .token-crop-row:has(.crop-maize)
+.token-crop-icon {
+  background:
+    url("https://images.unsplash.com/photo-1551754655-cd27e38d2076?auto=format&fit=crop&w=400&q=82")
+    center / cover no-repeat !important;
+}
+
+
+/*
+   Cotton
+*/
+.farmer-token-page .token-crop-row:has(.crop-cotton)
+.token-crop-icon {
+  background:
+    url("https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=400&q=82")
+    center / cover no-repeat !important;
+}
+
+
+/* =========================================================
+   20. RIGHT-SIDE VISUAL CARD
+========================================================= */
+
+.farmer-token-page .token-visual-card {
+  position:
+    relative !important;
+
+  overflow:
+    hidden !important;
+
+  padding:
+    26px !important;
+
+  border:
+    1px solid #c9dee2 !important;
+
+  border-radius:
+    24px !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.93),
+      rgba(243,249,247,.96)
+    ),
+    url("https://images.unsplash.com/photo-1499529112087-3cb3b73cec95?auto=format&fit=crop&w=1200&q=82")
+    center / cover no-repeat !important;
+
+  box-shadow:
+    0 18px 46px rgba(31,68,77,.10) !important;
+}
+
+
+/*
+   Photo overlay.
+*/
+.farmer-token-page .token-visual-card::before {
+  content:
+    "" !important;
+
+  position:
+    absolute !important;
+
+  inset:
+    0 !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.84),
+      rgba(246,251,248,.95)
+    ) !important;
+
+  pointer-events:
+    none !important;
+}
+
+
+.farmer-token-page .token-visual-card > * {
+  position:
+    relative !important;
+
+  z-index:
+    1 !important;
+}
+
+
+/* =========================================================
+   21. LARGE QR AREA
+========================================================= */
+
+.farmer-token-page .token-quick-qr {
+  margin-top:
+    20px !important;
+
+  padding:
+    18px !important;
+
+  border:
+    1px solid #d4e2e4 !important;
+
+  border-radius:
+    18px !important;
+
+  background:
+    #ffffff !important;
+
+  box-shadow:
+    0 9px 25px rgba(30,72,81,.07) !important;
+}
+
+
+.farmer-token-page .token-quick-qr-frame {
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  justify-content:
+    center !important;
+
+  padding:
+    16px !important;
+
+  border-radius:
+    16px !important;
+
+  background:
+    #f8fbfb !important;
+}
+
+
+.farmer-token-page .token-quick-qr-frame img {
+  display:
+    block !important;
+
+  width:
+    min(100%, 230px) !important;
+
+  height:
+    auto !important;
+
+  aspect-ratio:
+    1 !important;
+
+  object-fit:
+    contain !important;
+
+  image-rendering:
+    auto !important;
+}
+
+
+/* =========================================================
+   22. FARMER SUMMARY SIDE CARD
+========================================================= */
+
+.farmer-token-page .token-side-card {
+  margin-top:
+    16px !important;
+
+  padding:
+    20px !important;
+
+  border:
+    1px solid #d6e4e5 !important;
+
+  border-radius:
+    19px !important;
+
+  background:
+    rgba(255,255,255,.95) !important;
+
+  box-shadow:
+    0 12px 30px rgba(31,68,77,.07) !important;
+}
+
+
+/* =========================================================
+   23. HELP CARD — BRIGHTLY IDENTIFIABLE
+========================================================= */
+
+.farmer-token-page .token-help-card {
+  border:
+    1px solid #f0d79b !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fff8e8,
+      #fffdf7
+    ) !important;
+
+  box-shadow:
+    0 14px 34px rgba(145,104,26,.08) !important;
+}
+
+
+.farmer-token-page .token-help-link {
+  display:
+    inline-flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    7px !important;
+
+  min-height:
+    44px !important;
+
+  padding:
+    9px 14px !important;
+
+  border-radius:
+    11px !important;
+
+  color:
+    #9a6810 !important;
+
+  background:
+    #fff0c8 !important;
+
+  font-weight:
+    900 !important;
+
+  transition:
+    transform .14s ease,
+    box-shadow .14s ease !important;
+}
+
+
+.farmer-token-page .token-help-link:hover {
+  transform:
+    translateY(-2px) !important;
+
+  box-shadow:
+    0 8px 18px rgba(145,104,26,.12) !important;
+}
+
+
+/* =========================================================
+   24. SMS STATUS — EASY TO SPOT
+========================================================= */
+
+.farmer-token-page .token-sms-card {
+  border-radius:
+    19px !important;
+}
+
+
+.farmer-token-page .token-sms-card.sms-sent {
+  border-color:
+    #b9e1c9 !important;
+
+  background:
+    #eef9f2 !important;
+}
+
+
+.farmer-token-page .token-sms-card.sms-failed {
+  border-color:
+    #efc1bc !important;
+
+  background:
+    #fff4f2 !important;
+}
+
+
+.farmer-token-page .token-sms-card.sms-pending {
+  border-color:
+    #e8d49d !important;
+
+  background:
+    #fff9eb !important;
+}
+
+
+/* =========================================================
+   25. MOBILE
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .farmer-token-page .token-main-layout {
+    grid-template-columns:
+      1fr !important;
+  }
+
+  .farmer-token-page .token-side-column {
+    position:
+      relative !important;
+
+    top:
+      auto !important;
+  }
+
+  .farmer-token-page .token-top-row {
+    grid-template-columns:
+      1fr !important;
+  }
+
+  .farmer-token-page .token-database-card {
+    width:
+      100% !important;
+  }
+
+  .farmer-token-page .token-payment-grid {
+    grid-template-columns:
+      1fr !important;
+  }
+
+  .farmer-token-page .token-month-summary {
+    grid-template-columns:
+      1fr !important;
+  }
+}
+
+
+@media (max-width: 640px) {
+
+  .farmer-token-page {
+    background-attachment:
+      scroll !important;
+  }
+
+  .farmer-token-page .token-container {
+    width:
+      min(100% - 22px, 720px) !important;
+
+    padding:
+      18px 0 42px !important;
+  }
+
+  .farmer-token-page .token-top-row h1 {
+    font-size:
+      35px !important;
+  }
+
+  .farmer-token-page .token-hero-card {
+    min-height:
+      300px !important;
+
+    padding:
+      23px !important;
+
+    border-radius:
+      21px !important;
+  }
+
+  .farmer-token-page .token-number {
+    font-size:
+      58px !important;
+  }
+
+  .farmer-token-page .token-action-row {
+    display:
+      grid !important;
+
+    grid-template-columns:
+      1fr !important;
+  }
+
+  .farmer-token-page .token-inline-action {
+    width:
+      100% !important;
+  }
+
+  .farmer-token-page .token-status-card,
+  .farmer-token-page .token-payment-card,
+  .farmer-token-page .token-details-card,
+  .farmer-token-page .token-history-card,
+  .farmer-token-page .token-month-card {
+    padding:
+      19px !important;
+
+    border-radius:
+      19px !important;
+  }
+
+  .farmer-token-page .token-details-grid {
+    grid-template-columns:
+      1fr !important;
+  }
+
+  .farmer-token-page .token-payment-history-row {
+    grid-template-columns:
+      auto minmax(0,1fr) !important;
+  }
+
+  .farmer-token-page .token-history-amount,
+  .farmer-token-page .token-history-check {
+    grid-column:
+      2 !important;
+  }
+
+  .farmer-token-page .token-crop-row {
+    grid-template-columns:
+      auto minmax(0,1fr) !important;
+  }
+
+  .farmer-token-page .token-crop-quantity {
+    grid-column:
+      2 !important;
+  }
+
+  .farmer-token-page .token-crop-icon {
+    width:
+      50px !important;
+
+    height:
+      50px !important;
+
+    min-width:
+      50px !important;
+  }
+}
+
+
+/* =========================================================
+   26. SMALL PHONE
+========================================================= */
+
+@media (max-width: 390px) {
+
+  .farmer-token-page .token-container {
+    width:
+      calc(100% - 14px) !important;
+  }
+
+  .farmer-token-page .token-top-row h1 {
+    font-size:
+      31px !important;
+  }
+
+  .farmer-token-page .token-number {
+    font-size:
+      50px !important;
+  }
+}
+
+
+/* =========================================================
+   27. LIGHTWEIGHT MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: no-preference) {
+
+  .farmer-token-page .token-hero-card,
+  .farmer-token-page .token-status-card,
+  .farmer-token-page .token-payment-card,
+  .farmer-token-page .token-details-card,
+  .farmer-token-page .token-history-card,
+  .farmer-token-page .token-visual-card,
+  .farmer-token-page .token-side-card {
+    transition:
+      transform .18s ease,
+      box-shadow .18s ease !important;
+  }
+
+  .farmer-token-page .token-visual-card:hover,
+  .farmer-token-page .token-side-card:hover {
+    transform:
+      translateY(-2px) !important;
+
+    box-shadow:
+      0 20px 45px rgba(31,68,77,.11) !important;
+  }
+}
+
+
+/* =========================================================
+   28. ACCESSIBILITY
+========================================================= */
+
+.farmer-token-page button:focus-visible,
+.farmer-token-page a:focus-visible {
+  outline:
+    3px solid rgba(22,137,96,.25) !important;
+
+  outline-offset:
+    3px !important;
+}
+
+
+/* =========================================================
+   END FARMER TOKEN PREMIUM SYSTEM
+========================================================= */
+
+/* =========================================================
+   KRISHISETU — FARMER TOKEN + SHARED CROP VISUAL SYSTEM
+   FINAL VISUAL CORRECTION
+   =========================================================
+   Fixes:
+   ✓ White text disappearing on white cards
+   ✓ QR/token side card too pale
+   ✓ Hero lacks photographic depth
+   ✓ Crop images inconsistent across pages
+   ✓ Generic crop illustrations replaced visually
+   ✓ Better contrast for older users
+   ✓ Real photographic agriculture imagery
+   ✓ Mobile-safe
+========================================================= */
+
+
+/* =========================================================
+   1. FARMER TOKEN PAGE BACKGROUND
+========================================================= */
+
+.farmer-token-page {
+  position: relative !important;
+
+  min-height: 100vh !important;
+
+  color: #234b5d !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      #edf7f4 0%,
+      #f5faf8 48%,
+      #eef6f3 100%
+    ) !important;
+}
+
+
+/* Soft photographic agricultural atmosphere */
+.farmer-token-page::before {
+  content: "" !important;
+
+  position: fixed !important;
+
+  inset: 0 !important;
+
+  z-index: 0 !important;
+
+  pointer-events: none !important;
+
+  opacity: .15 !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(238,249,244,.35),
+      rgba(239,247,243,.78)
+    ),
+    url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1800&q=78")
+    center / cover no-repeat !important;
+}
+
+
+/*
+   Keep all actual page content above atmosphere.
+*/
+.farmer-token-page > * {
+  position: relative !important;
+
+  z-index: 1 !important;
+}
+
+
+/* =========================================================
+   2. MAIN TOKEN HERO
+========================================================= */
+
+.farmer-token-page .token-hero-card {
+  position: relative !important;
+
+  overflow: hidden !important;
+
+  color: #ffffff !important;
+
+  border:
+    1px solid
+    rgba(255,255,255,.16) !important;
+
+  background:
+    linear-gradient(
+      125deg,
+      rgba(5,77,63,.97) 0%,
+      rgba(7,101,77,.95) 48%,
+      rgba(22,122,87,.91) 100%
+    ),
+    url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1400&q=82")
+    center / cover no-repeat !important;
+
+  box-shadow:
+    0 28px 70px
+    rgba(21,73,61,.24) !important;
+}
+
+
+/*
+   Dark photographic overlay.
+*/
+.farmer-token-page .token-hero-card::before {
+  content: "" !important;
+
+  position: absolute !important;
+
+  inset: 0 !important;
+
+  background:
+    linear-gradient(
+      105deg,
+      rgba(3,54,46,.84),
+      rgba(8,98,75,.62),
+      rgba(12,107,79,.72)
+    ) !important;
+
+  pointer-events: none !important;
+}
+
+
+/*
+   Content above image.
+*/
+.farmer-token-page .token-hero-card > * {
+  position: relative !important;
+
+  z-index: 2 !important;
+}
+
+
+/* =========================================================
+   3. TOKEN NUMBER / STATUS CONTRAST
+========================================================= */
+
+.farmer-token-page .token-card-label,
+.farmer-token-page .token-number,
+.farmer-token-page .token-status-row,
+.farmer-token-page .token-status-row strong,
+.farmer-token-page .token-status-row > span {
+  color: #ffffff !important;
+}
+
+
+.farmer-token-page .token-card-label {
+  opacity: .82 !important;
+}
+
+
+.farmer-token-page .token-number {
+  text-shadow:
+    0 3px 18px
+    rgba(0,0,0,.17) !important;
+}
+
+
+.farmer-token-page .token-status-row > span:last-child {
+  opacity: .88 !important;
+}
+
+
+/* =========================================================
+   4. TOKEN ACTION BUTTONS
+========================================================= */
+
+.farmer-token-page .token-inline-action {
+  min-height:
+    46px !important;
+
+  padding:
+    9px 15px !important;
+
+  border:
+    1px solid
+    rgba(255,255,255,.28) !important;
+
+  border-radius:
+    12px !important;
+
+  background:
+    rgba(255,255,255,.12) !important;
+
+  color:
+    #ffffff !important;
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255,255,255,.13),
+    0 5px 14px
+    rgba(0,0,0,.08) !important;
+
+  backdrop-filter:
+    blur(8px) !important;
+
+  -webkit-backdrop-filter:
+    blur(8px) !important;
+
+  transition:
+    transform .16s ease,
+    background-color .16s ease,
+    box-shadow .16s ease !important;
+}
+
+
+.farmer-token-page .token-inline-action:hover {
+  transform:
+    translateY(-2px) !important;
+
+  background:
+    rgba(255,255,255,.20) !important;
+
+  box-shadow:
+    0 10px 22px
+    rgba(0,0,0,.13) !important;
+}
+
+
+/*
+   Cancel keeps its warning identity.
+*/
+.farmer-token-page
+.token-inline-action[style*="b42318"] {
+  color:
+    #fff8f6 !important;
+
+  border-color:
+    rgba(255,177,164,.55) !important;
+
+  background:
+    rgba(170,46,31,.22) !important;
+}
+
+
+/* =========================================================
+   5. CRITICAL FIX:
+      CROP TRANSPORT / NEXT ACTION CARD
+========================================================= */
+
+.farmer-token-page .token-next-action-card {
+  position:
+    relative !important;
+
+  overflow:
+    hidden !important;
+
+  color:
+    #315b67 !important;
+
+  border:
+    1px solid
+    #cfe3df !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(247,253,250,.98),
+      rgba(255,255,255,.98)
+    ) !important;
+
+  box-shadow:
+    0 18px 40px
+    rgba(25,83,68,.10) !important;
+}
+
+
+/*
+   Prevent inherited white heading.
+*/
+.farmer-token-page
+.token-next-action-card
+strong,
+.farmer-token-page
+.token-next-action-card
+p,
+.farmer-token-page
+.token-next-action-card
+span {
+  color:
+    #315b67 !important;
+}
+
+
+.farmer-token-page
+.token-next-action-card
+> div {
+  position:
+    relative !important;
+
+  z-index:
+    2 !important;
+}
+
+
+/*
+   Green transport accent.
+*/
+.farmer-token-page
+.token-next-action-card::before {
+  content:
+    "" !important;
+
+  position:
+    absolute !important;
+
+  inset:
+    0 auto 0 0 !important;
+
+  width:
+    5px !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      #15916a,
+      #2aa67e
+    ) !important;
+}
+
+
+/* =========================================================
+   6. TOKEN SIDE QR CARD
+========================================================= */
+
+.farmer-token-page .token-visual-card {
+  position:
+    relative !important;
+
+  overflow:
+    hidden !important;
+
+  color:
+    #ffffff !important;
+
+  border:
+    1px solid
+    rgba(255,255,255,.35) !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(8,78,62,.96),
+      rgba(14,109,81,.92)
+    ),
+    url("https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=1200&q=82")
+    center / cover no-repeat !important;
+
+  box-shadow:
+    0 25px 60px
+    rgba(17,76,61,.18) !important;
+}
+
+
+/*
+   Readable image overlay.
+*/
+.farmer-token-page
+.token-visual-card::before {
+  content:
+    "" !important;
+
+  position:
+    absolute !important;
+
+  inset:
+    0 !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(3,59,49,.84),
+      rgba(11,116,84,.68)
+    ) !important;
+
+  pointer-events:
+    none !important;
+}
+
+
+/*
+   Keep contents above overlay.
+*/
+.farmer-token-page
+.token-visual-card > * {
+  position:
+    relative !important;
+
+  z-index:
+    2 !important;
+}
+
+
+/* =========================================================
+   7. QR TEXT — FORCE VISIBILITY
+========================================================= */
+
+.farmer-token-page
+.token-visual-top,
+.farmer-token-page
+.token-visual-number,
+.farmer-token-page
+.token-visual-label,
+.farmer-token-page
+.token-visual-card p,
+.farmer-token-page
+.token-quick-qr strong,
+.farmer-token-page
+.token-quick-qr span {
+  color:
+    #ffffff !important;
+
+  opacity:
+    1 !important;
+}
+
+
+.farmer-token-page
+.token-visual-number {
+  font-weight:
+    900 !important;
+
+  text-shadow:
+    0 3px 18px
+    rgba(0,0,0,.24) !important;
+}
+
+
+/* =========================================================
+   8. QR FRAME
+========================================================= */
+
+.farmer-token-page
+.token-quick-qr {
+  position:
+    relative !important;
+
+  overflow:
+    hidden !important;
+
+  border-radius:
+    18px !important;
+
+  padding:
+    18px !important;
+
+  background:
+    rgba(255,255,255,.96) !important;
+
+  box-shadow:
+    0 18px 36px
+    rgba(0,0,0,.15) !important;
+
+  color:
+    #315767 !important;
+}
+
+
+.farmer-token-page
+.token-quick-qr strong {
+  display:
+    block !important;
+
+  margin-top:
+    10px !important;
+
+  color:
+    #2c5665 !important;
+}
+
+
+.farmer-token-page
+.token-quick-qr span {
+  display:
+    block !important;
+
+  margin-top:
+    4px !important;
+
+  color:
+    #718990 !important;
+
+  line-height:
+    1.5 !important;
+}
+
+
+.farmer-token-page
+.token-quick-qr-frame {
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  padding:
+    12px !important;
+
+  border-radius:
+    15px !important;
+
+  background:
+    #ffffff !important;
+
+  box-shadow:
+    0 10px 24px
+    rgba(34,67,76,.10) !important;
+}
+
+
+.farmer-token-page
+.token-quick-qr-frame img {
+  display:
+    block !important;
+
+  width:
+    min(100%, 240px) !important;
+
+  height:
+    auto !important;
+
+  aspect-ratio:
+    1 / 1 !important;
+
+  object-fit:
+    contain !important;
+}
+
+
+/* =========================================================
+   9. OFFLINE PASS BUTTON
+========================================================= */
+
+.farmer-token-page
+.token-download-pass-button {
+  min-height:
+    50px !important;
+
+  border-radius:
+    13px !important;
+
+  border:
+    1px solid
+    #16865c !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #198c61,
+      #27a575
+    ) !important;
+
+  color:
+    #ffffff !important;
+
+  font-size:
+    14px !important;
+
+  font-weight:
+    900 !important;
+
+  box-shadow:
+    0 12px 26px
+    rgba(21,137,95,.20) !important;
+
+  transition:
+    transform .16s ease,
+    box-shadow .16s ease !important;
+}
+
+
+.farmer-token-page
+.token-download-pass-button:hover {
+  transform:
+    translateY(-2px) !important;
+
+  box-shadow:
+    0 17px 30px
+    rgba(21,137,95,.27) !important;
+}
+
+
+/* =========================================================
+   10. SIDE INFORMATION CARD
+========================================================= */
+
+.farmer-token-page .token-side-card {
+  background:
+    rgba(255,255,255,.97) !important;
+
+  border:
+    1px solid
+    #d3e3e2 !important;
+
+  color:
+    #315766 !important;
+
+  box-shadow:
+    0 15px 36px
+    rgba(24,72,79,.08) !important;
+
+  backdrop-filter:
+    blur(8px) !important;
+
+  -webkit-backdrop-filter:
+    blur(8px) !important;
+}
+
+
+.farmer-token-page
+.token-side-heading strong,
+.farmer-token-page
+.token-side-list strong {
+  color:
+    #2f5665 !important;
+}
+
+
+.farmer-token-page
+.token-side-heading span,
+.farmer-token-page
+.token-side-list span,
+.farmer-token-page
+.token-side-label {
+  color:
+    #7e969d !important;
+}
+
+
+/* =========================================================
+   11. SHARED REAL CROP IMAGE SYSTEM
+   This updates crop visuals wherever these classes exist.
+========================================================= */
+
+.crop-visual {
+  position:
+    relative !important;
+
+  overflow:
+    hidden !important;
+
+  background-position:
+    center !important;
+
+  background-size:
+    cover !important;
+
+  background-repeat:
+    no-repeat !important;
+}
+
+
+/*
+   Remove old illustrated CropIcon visually.
+*/
+.crop-visual svg {
+  display:
+    none !important;
+}
+
+
+/*
+   Wheat — wheat grain / field.
+*/
+.crop-wheat {
+  background:
+    url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=500&q=82")
+    center / cover no-repeat !important;
+}
+
+
+/*
+   Paddy — rice field.
+*/
+.crop-paddy {
+  background:
+    url("https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&w=500&q=82")
+    center / cover no-repeat !important;
+}
+
+
+/*
+   Maize — corn crop.
+*/
+.crop-maize {
+  background:
+    url("https://images.unsplash.com/photo-1551754655-cd27e38d2076?auto=format&fit=crop&w=500&q=82")
+    center / cover no-repeat !important;
+}
+
+
+/*
+   Cotton — cotton crop/bolls.
+*/
+.crop-cotton {
+  background:
+    url("https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=500&q=82")
+    center / cover no-repeat !important;
+}
+
+
+/* =========================================================
+   12. CROP IMAGE READABILITY
+========================================================= */
+
+.crop-wheat::after,
+.crop-paddy::after,
+.crop-maize::after,
+.crop-cotton::after {
+  content:
+    "" !important;
+
+  position:
+    absolute !important;
+
+  inset:
+    0 !important;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.03),
+      rgba(0,0,0,.12)
+    ) !important;
+
+  pointer-events:
+    none !important;
+}
+
+
+/* =========================================================
+   13. SMALL CROP VISUALS
+========================================================= */
+
+.crop-visual-small {
+  width:
+    48px !important;
+
+  height:
+    48px !important;
+
+  min-width:
+    48px !important;
+
+  flex:
+    0 0 48px !important;
+
+  border-radius:
+    13px !important;
+
+  box-shadow:
+    0 5px 14px
+    rgba(31,70,73,.13) !important;
+}
+
+
+/* =========================================================
+   14. LARGE CROP VISUALS
+========================================================= */
+
+.crop-visual-large {
+  width:
+    74px !important;
+
+  height:
+    74px !important;
+
+  min-width:
+    74px !important;
+
+  border-radius:
+    17px !important;
+
+  box-shadow:
+    0 9px 20px
+    rgba(31,70,73,.15) !important;
+}
+
+
+/* =========================================================
+   15. MOBILE TOKEN PAGE
+========================================================= */
+
+@media (max-width: 720px) {
+
+  .farmer-token-page {
+    overflow-x:
+      hidden !important;
+  }
+
+
+  .farmer-token-page
+  .token-number {
+    font-size:
+      clamp(54px, 16vw, 88px) !important;
+  }
+
+
+  .farmer-token-page
+  .token-inline-action {
+    min-height:
+      48px !important;
+
+    padding:
+      9px 12px !important;
+  }
+
+
+  .farmer-token-page
+  .token-visual-card {
+    border-radius:
+      19px !important;
+  }
+
+
+  .farmer-token-page
+  .token-quick-qr {
+    padding:
+      14px !important;
+  }
+
+
+  .farmer-token-page
+  .token-quick-qr-frame img {
+    width:
+      min(100%, 210px) !important;
+  }
+
+
+  .crop-visual-small {
+    width:
+      44px !important;
+
+    height:
+      44px !important;
+
+    min-width:
+      44px !important;
+
+    flex-basis:
+      44px !important;
+  }
+
+
+  .crop-visual-large {
+    width:
+      64px !important;
+
+    height:
+      64px !important;
+
+    min-width:
+      64px !important;
+  }
+}
+
+
+/* =========================================================
+   16. ACCESSIBILITY / REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .farmer-token-page
+  .token-inline-action,
+  .farmer-token-page
+  .token-download-pass-button {
+    transition:
+      none !important;
+  }
+}
+
+/* =========================================================
+   KRISHISETU — FARMER TOKEN / PAYMENT PAGE
+   PREMIUM + COMPACT + AGRICULTURAL BACKGROUND
+   ========================================================= */
+
+
+/* =========================================================
+   1. PAGE BEDROCK
+========================================================= */
+
+.farmer-token-page {
+  position: relative !important;
+
+  min-height: 100vh !important;
+
+  overflow-x: hidden !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(242, 250, 246, .72) 0%,
+      rgba(248, 251, 247, .88) 38%,
+      rgba(241, 248, 244, .94) 100%
+    ),
+    url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=2200&q=88")
+    center center / cover fixed no-repeat !important;
+}
+
+
+/*
+   Soft agricultural atmosphere without washing out text.
+*/
+.farmer-token-page::before {
+  content: "" !important;
+
+  position: fixed !important;
+
+  inset: 0 !important;
+
+  z-index: 0 !important;
+
+  pointer-events: none !important;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255,255,255,.80) 0%,
+      rgba(255,255,255,.58) 45%,
+      rgba(255,255,255,.76) 100%
+    ) !important;
+}
+
+
+/*
+   Keep all actual content above the background.
+*/
+.farmer-token-page > * {
+  position: relative !important;
+
+  z-index: 1 !important;
+}
+
+
+/* =========================================================
+   2. MAIN CONTENT WIDTH
+========================================================= */
+
+.farmer-token-page .token-container {
+  width:
+    min(1180px, calc(100% - 40px)) !important;
+
+  max-width:
+    1180px !important;
+
+  margin:
+    0 auto !important;
+
+  padding:
+    28px 0 55px !important;
+}
+
+
+/* =========================================================
+   3. ALL MAJOR CARDS — LESS EMPTY SPACE
+========================================================= */
+
+.farmer-token-page .token-history-card,
+.farmer-token-page .token-month-card,
+.farmer-token-page .token-details-card {
+  position:
+    relative !important;
+
+  margin:
+    0 0 26px !important;
+
+  padding:
+    34px 40px !important;
+
+  border:
+    1px solid rgba(195,216,218,.95) !important;
+
+  border-radius:
+    28px !important;
+
+  background:
+    rgba(255,255,255,.94) !important;
+
+  box-shadow:
+    0 18px 45px
+      rgba(24, 65, 72, .08),
+    0 3px 12px
+      rgba(24, 65, 72, .04) !important;
+
+  backdrop-filter:
+    blur(5px) !important;
+
+  -webkit-backdrop-filter:
+    blur(5px) !important;
+}
+
+
+/*
+   Elegant top edge.
+*/
+.farmer-token-page .token-history-card::before,
+.farmer-token-page .token-month-card::before,
+.farmer-token-page .token-details-card::before {
+  content: "" !important;
+
+  position: absolute !important;
+
+  top: 0 !important;
+
+  left: 34px !important;
+
+  right: 34px !important;
+
+  height: 4px !important;
+
+  border-radius:
+    0 0 99px 99px !important;
+
+  background:
+    linear-gradient(
+      90deg,
+      #179261,
+      #35a77a,
+      #d3b545
+    ) !important;
+}
+
+
+/* =========================================================
+   4. SECTION HEADINGS
+========================================================= */
+
+.farmer-token-page .token-section-heading {
+  display:
+    flex !important;
+
+  align-items:
+    flex-start !important;
+
+  justify-content:
+    space-between !important;
+
+  gap:
+    24px !important;
+
+  margin:
+    0 0 22px !important;
+}
+
+
+.farmer-token-page .token-section-heading h2 {
+  margin:
+    4px 0 5px !important;
+
+  color:
+    #214b5d !important;
+
+  font-size:
+    clamp(30px, 3vw, 43px) !important;
+
+  line-height:
+    1.08 !important;
+
+  letter-spacing:
+    -.035em !important;
+
+  font-weight:
+    900 !important;
+}
+
+
+.farmer-token-page .token-section-heading p {
+  max-width:
+    680px !important;
+
+  margin:
+    0 !important;
+
+  color:
+    #78929c !important;
+
+  font-size:
+    16px !important;
+
+  line-height:
+    1.55 !important;
+}
+
+
+/* =========================================================
+   5. EYEBROW
+========================================================= */
+
+.farmer-token-page .page-eyebrow {
+  color:
+    #667e83 !important;
+
+  font-size:
+    12px !important;
+
+  line-height:
+    1.3 !important;
+
+  font-weight:
+    900 !important;
+
+  letter-spacing:
+    .17em !important;
+}
+
+
+/* =========================================================
+   6. PAYMENT COUNT
+========================================================= */
+
+.farmer-token-page .token-history-count {
+  flex:
+    0 0 auto !important;
+
+  min-width:
+    142px !important;
+
+  padding:
+    15px 20px !important;
+
+  border:
+    1px solid #c9e8d9 !important;
+
+  border-radius:
+    17px !important;
+
+  background:
+    #e9f8f0 !important;
+
+  color:
+    #157a55 !important;
+
+  font-size:
+    20px !important;
+
+  font-weight:
+    900 !important;
+
+  text-align:
+    center !important;
+
+  box-shadow:
+    0 7px 20px
+      rgba(22, 130, 88, .08) !important;
+}
+
+
+/* =========================================================
+   7. EMPTY PAYMENT STATE
+========================================================= */
+
+.farmer-token-page .token-history-empty {
+  min-height:
+    210px !important;
+
+  display:
+    flex !important;
+
+  flex-direction:
+    column !important;
+
+  align-items:
+    center !important;
+
+  justify-content:
+    center !important;
+
+  gap:
+    9px !important;
+
+  margin:
+    0 !important;
+
+  padding:
+    26px !important;
+
+  border:
+    1px dashed #cddfe1 !important;
+
+  border-radius:
+    20px !important;
+
+  background:
+    linear-gradient(
+      145deg,
+      #f9fcfb,
+      #f3f9f6
+    ) !important;
+
+  text-align:
+    center !important;
+}
+
+
+.farmer-token-page .token-history-empty svg {
+  width:
+    34px !important;
+
+  height:
+    34px !important;
+
+  padding:
+    9px !important;
+
+  box-sizing:
+    content-box !important;
+
+  border-radius:
+    14px !important;
+
+  color:
+    #15845b !important;
+
+  background:
+    #def3e8 !important;
+}
+
+
+.farmer-token-page .token-history-empty strong {
+  color:
+    #355a66 !important;
+
+  font-size:
+    18px !important;
+
+  font-weight:
+    900 !important;
+}
+
+
+.farmer-token-page .token-history-empty span {
+  color:
+    #82969c !important;
+
+  font-size:
+    14px !important;
+}
+
+
+/* =========================================================
+   8. PAYMENT ROWS — COMPACT
+========================================================= */
+
+.farmer-token-page .token-payment-history-list {
+  display:
+    grid !important;
+
+  gap:
+    10px !important;
+}
+
+
+.farmer-token-page .token-payment-history-row {
+  min-height:
+    76px !important;
+
+  display:
+    grid !important;
+
+  grid-template-columns:
+    125px minmax(180px, 1fr) 150px 28px !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    18px !important;
+
+  padding:
+    12px 16px !important;
+
+  border:
+    1px solid #dbe8ea !important;
+
+  border-radius:
+    15px !important;
+
+  background:
+    #fbfdfc !important;
+
+  transition:
+    transform .16s ease,
+    background-color .16s ease,
+    box-shadow .16s ease !important;
+}
+
+
+.farmer-token-page .token-payment-history-row:hover {
+  transform:
+    translateY(-2px) !important;
+
+  background:
+    #f4faf7 !important;
+
+  box-shadow:
+    0 10px 25px
+      rgba(27, 79, 70, .07) !important;
+}
+
+
+/* =========================================================
+   9. PAYMENT DATE
+========================================================= */
+
+.farmer-token-page .token-history-date strong {
+  display:
+    block !important;
+
+  color:
+    #31596a !important;
+
+  font-size:
+    14px !important;
+
+  font-weight:
+    900 !important;
+}
+
+
+.farmer-token-page .token-history-date span {
+  display:
+    block !important;
+
+  margin-top:
+    3px !important;
+
+  color:
+    #9aaeb3 !important;
+
+  font-size:
+    11px !important;
+}
+
+
+/* =========================================================
+   10. CROP IN PAYMENT HISTORY
+========================================================= */
+
+.farmer-token-page .token-history-crop {
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    11px !important;
+}
+
+
+.farmer-token-page .token-history-crop > svg {
+  width:
+    38px !important;
+
+  height:
+    38px !important;
+
+  padding:
+    9px !important;
+
+  box-sizing:
+    content-box !important;
+
+  border-radius:
+    11px !important;
+
+  color:
+    #177b56 !important;
+
+  background:
+    #e6f6ed !important;
+}
+
+
+.farmer-token-page .token-history-crop strong {
+  display:
+    block !important;
+
+  color:
+    #31586a !important;
+
+  font-size:
+    14px !important;
+
+  font-weight:
+    900 !important;
+}
+
+
+.farmer-token-page .token-history-crop span {
+  display:
+    block !important;
+
+  margin-top:
+    2px !important;
+
+  color:
+    #8399a0 !important;
+
+  font-size:
+    11px !important;
+}
+
+
+/* =========================================================
+   11. PAYMENT AMOUNT
+========================================================= */
+
+.farmer-token-page .token-history-amount {
+  text-align:
+    right !important;
+}
+
+
+.farmer-token-page .token-history-amount strong {
+  display:
+    block !important;
+
+  color:
+    #177651 !important;
+
+  font-size:
+    17px !important;
+
+  font-weight:
+    900 !important;
+}
+
+
+.farmer-token-page .token-history-amount span {
+  display:
+    block !important;
+
+  margin-top:
+    2px !important;
+
+  color:
+    #879ba0 !important;
+
+  font-size:
+    10px !important;
+}
+
+
+/* =========================================================
+   12. PAYMENT CHECK
+========================================================= */
+
+.farmer-token-page .token-history-check {
+  color:
+    #18905f !important;
+}
+
+
+/* =========================================================
+   13. MONTH SUMMARY — REDUCED HEIGHT
+========================================================= */
+
+.farmer-token-page .token-month-card {
+  padding-bottom:
+    30px !important;
+}
+
+
+.farmer-token-page .token-month-card
+.token-section-heading {
+  margin-bottom:
+    22px !important;
+}
+
+
+/* =========================================================
+   14. BOOKING DETAILS GRID
+========================================================= */
+
+.farmer-token-page .token-details-grid {
+  display:
+    grid !important;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr)) !important;
+
+  gap:
+    14px !important;
+}
+
+
+.farmer-token-page .token-detail {
+  min-height:
+    105px !important;
+
+  box-sizing:
+    border-box !important;
+
+  padding:
+    18px 20px !important;
+
+  border:
+    1px solid #d6e5e8 !important;
+
+  border-radius:
+    17px !important;
+
+  background:
+    #f9fcfc !important;
+
+  transition:
+    transform .16s ease,
+    box-shadow .16s ease,
+    background-color .16s ease !important;
+}
+
+
+.farmer-token-page .token-detail:hover {
+  transform:
+    translateY(-2px) !important;
+
+  background:
+    #f4faf7 !important;
+
+  box-shadow:
+    0 10px 24px
+      rgba(27, 79, 70, .06) !important;
+}
+
+
+/* =========================================================
+   15. DETAIL ICONS
+========================================================= */
+
+.farmer-token-page .token-detail-icon {
+  width:
+    42px !important;
+
+  height:
+    42px !important;
+
+  min-width:
+    42px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    12px !important;
+
+  background:
+    #e8f5f7 !important;
+
+  color:
+    #277f99 !important;
+}
+
+
+/* =========================================================
+   16. DETAIL TEXT
+========================================================= */
+
+.farmer-token-page .token-detail-label {
+  color:
+    #82999f !important;
+
+  font-size:
+    11px !important;
+
+  font-weight:
+    800 !important;
+
+  letter-spacing:
+    .08em !important;
+}
+
+
+.farmer-token-page .token-detail-value {
+  margin-top:
+    4px !important;
+
+  color:
+    #2b5365 !important;
+
+  font-size:
+    18px !important;
+
+  line-height:
+    1.3 !important;
+
+  font-weight:
+    900 !important;
+
+  overflow-wrap:
+    anywhere !important;
+}
+
+
+/* =========================================================
+   17. DETAILS SECTION
+========================================================= */
+
+.farmer-token-page .token-details-card {
+  padding-top:
+    34px !important;
+
+  padding-bottom:
+    34px !important;
+}
+
+
+/* =========================================================
+   18. GLOBAL SPACING REDUCTION
+========================================================= */
+
+.farmer-token-page
+.token-history-card + .token-month-card,
+.farmer-token-page
+.token-month-card + .token-details-card {
+  margin-top:
+    0 !important;
+}
+
+
+/*
+   Prevent accidental giant bottom margins from existing CSS.
+*/
+.farmer-token-page .token-container > section {
+  margin-bottom:
+    26px !important;
+}
+
+
+/* =========================================================
+   19. MOBILE
+========================================================= */
+
+@media (max-width: 760px) {
+
+  .farmer-token-page {
+    background-attachment:
+      scroll !important;
+  }
+
+
+  .farmer-token-page .token-container {
+    width:
+      calc(100% - 22px) !important;
+
+    padding:
+      18px 0 35px !important;
+  }
+
+
+  .farmer-token-page .token-history-card,
+  .farmer-token-page .token-month-card,
+  .farmer-token-page .token-details-card {
+    padding:
+      26px 18px !important;
+
+    margin-bottom:
+      18px !important;
+
+    border-radius:
+      22px !important;
+  }
+
+
+  .farmer-token-page
+  .token-history-card::before,
+  .farmer-token-page
+  .token-month-card::before,
+  .farmer-token-page
+  .token-details-card::before {
+    left:
+      20px !important;
+
+    right:
+      20px !important;
+  }
+
+
+  .farmer-token-page .token-section-heading {
+    flex-direction:
+      column !important;
+
+    gap:
+      14px !important;
+  }
+
+
+  .farmer-token-page .token-section-heading h2 {
+    font-size:
+      29px !important;
+  }
+
+
+  .farmer-token-page .token-section-heading p {
+    font-size:
+      14px !important;
+  }
+
+
+  .farmer-token-page .token-history-count {
+    align-self:
+      flex-start !important;
+
+    min-width:
+      0 !important;
+
+    padding:
+      11px 16px !important;
+
+    font-size:
+      16px !important;
+  }
+
+
+  .farmer-token-page .token-payment-history-row {
+    grid-template-columns:
+      1fr !important;
+
+    gap:
+      8px !important;
+
+    padding:
+      14px !important;
+  }
+
+
+  .farmer-token-page
+  .token-history-amount {
+    text-align:
+      left !important;
+  }
+
+
+  .farmer-token-page .token-details-grid {
+    grid-template-columns:
+      1fr !important;
+
+    gap:
+      11px !important;
+  }
+
+
+  .farmer-token-page .token-detail {
+    min-height:
+      92px !important;
+
+    padding:
+      15px !important;
+  }
+}
+
+
+/* =========================================================
+   20. SMALL MOBILE
+========================================================= */
+
+@media (max-width: 420px) {
+
+  .farmer-token-page .token-container {
+    width:
+      calc(100% - 14px) !important;
+  }
+
+
+  .farmer-token-page .token-history-card,
+  .farmer-token-page .token-month-card,
+  .farmer-token-page .token-details-card {
+    padding:
+      22px 14px !important;
+
+    border-radius:
+      19px !important;
+  }
+
+
+  .farmer-token-page .token-section-heading h2 {
+    font-size:
+      26px !important;
+  }
+}
+
+
+/* =========================================================
+   END FARMER TOKEN PREMIUM SYSTEM
+========================================================= */
