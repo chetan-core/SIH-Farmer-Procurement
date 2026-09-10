@@ -399,6 +399,80 @@ async function requestJson(path, options = {}) {
   return data || {};
 }
 
+
+/* -------------------------------------------------------------------------
+   LOCATION MASTER HELPERS
+   The backend exposes the verified hierarchy:
+   state -> district -> mandal/block -> village.
+   We load each level only after its parent is selected.
+   Manual entry always remains available when a level is not present.
+   ------------------------------------------------------------------------- */
+function locationRoot() {
+  return API_URL
+    ? String(API_URL).replace(/\/+$/, "").replace(/\/api$/i, "")
+    : "http://localhost:5000";
+}
+
+async function locationRequest(path) {
+  const response = await fetch(`${locationRoot()}${path}`, {
+    headers: { Accept: "application/json" },
+  });
+
+  let data = null;
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data?.message || `Location request failed (${response.status})`
+    );
+  }
+
+  return data || {};
+}
+
+function mapStateOption(item) {
+  return {
+    stateId: String(item?.id ?? item?.stateId ?? item?.code ?? ""),
+    stateName: String(item?.name ?? item?.stateName ?? "").trim(),
+    code: String(item?.code ?? "").trim(),
+  };
+}
+
+function mapDistrictOption(item) {
+  return {
+    districtId: String(item?.id ?? item?.districtId ?? item?.code ?? ""),
+    districtName: String(item?.name ?? item?.districtName ?? "").trim(),
+    stateId: String(item?.state_id ?? item?.stateId ?? ""),
+    code: String(item?.code ?? "").trim(),
+  };
+}
+
+function mapMandalOption(item) {
+  return {
+    mandalId: String(item?.id ?? item?.mandalId ?? item?.code ?? ""),
+    mandalName: String(item?.name ?? item?.mandalName ?? "").trim(),
+    districtId: String(item?.district_id ?? item?.districtId ?? ""),
+    stateId: String(item?.state_id ?? item?.stateId ?? ""),
+    code: String(item?.code ?? "").trim(),
+  };
+}
+
+function mapVillageOption(item) {
+  return {
+    villageId: String(item?.id ?? item?.villageId ?? item?.code ?? ""),
+    villageName: String(item?.name ?? item?.villageName ?? "").trim(),
+    pincode: String(item?.pincode ?? "").trim(),
+    mandalId: String(item?.mandal_id ?? item?.mandalId ?? ""),
+    districtId: String(item?.district_id ?? item?.districtId ?? ""),
+    stateId: String(item?.state_id ?? item?.stateId ?? ""),
+    code: String(item?.code ?? "").trim(),
+  };
+}
+
 function Field({
   label,
   required = false,
@@ -612,7 +686,6 @@ export default function TransporterRegister() {
   const [locationStatus, setLocationStatus] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const autoGpsRequestedRef = useRef(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [geoDetails, setGeoDetails] = useState(null);
 
@@ -629,9 +702,135 @@ export default function TransporterRegister() {
   const lang = form.language || contextLanguage || "en";
   const copy = key => text(lang, key);
 
-  const masterDistricts = useMemo(() => getMasterDistricts(form.stateId, form.stateName), [form.stateId, form.stateName]);
-  const masterMandals = useMemo(() => getMasterMandals(form.stateId, form.stateName, form.districtId, form.districtName), [form.stateId, form.stateName, form.districtId, form.districtName]);
-  const masterVillages = useMemo(() => getMasterVillages(form.stateId, form.stateName, form.districtId, form.districtName, form.mandalId, form.mandalName), [form.stateId, form.stateName, form.districtId, form.districtName, form.mandalId, form.mandalName]);
+  const [locationStates, setLocationStates] = useState([]);
+  const [locationDistricts, setLocationDistricts] = useState([]);
+  const [locationMandals, setLocationMandals] = useState([]);
+  const [locationVillages, setLocationVillages] = useState([]);
+  const [locationMasterLoading, setLocationMasterLoading] = useState(false);
+
+  const manualStates = useMemo(
+    () => INDIA_STATES.map(item => ({
+      stateId: item.id,
+      stateName: item.name,
+      code: item.id,
+    })),
+    []
+  );
+
+  const availableStates = locationStates.length ? locationStates : manualStates;
+
+  /* Load all official states once. The local list remains as a safe fallback. */
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const data = await locationRequest("/api/locations/states");
+        const rows = Array.isArray(data?.states)
+          ? data.states.map(mapStateOption).filter(item => item.stateName)
+          : [];
+        if (!cancelled && rows.length) setLocationStates(rows);
+      } catch (locationError) {
+        console.warn("Location master states unavailable:", locationError);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, []);
+
+  /* Load districts whenever the state changes. */
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!form.stateId) {
+      setLocationDistricts([]);
+      return undefined;
+    }
+
+    (async () => {
+      setLocationMasterLoading(true);
+      try {
+        const data = await locationRequest(
+          `/api/locations/districts?stateId=${encodeURIComponent(form.stateId)}`
+        );
+        const rows = Array.isArray(data?.districts)
+          ? data.districts.map(mapDistrictOption).filter(item => item.districtName)
+          : [];
+        if (!cancelled) setLocationDistricts(rows);
+      } catch (locationError) {
+        console.warn("Location master districts unavailable:", locationError);
+        if (!cancelled) setLocationDistricts([]);
+      } finally {
+        if (!cancelled) setLocationMasterLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [form.stateId]);
+
+  /* Load mandals / blocks only after a district is chosen. */
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!form.districtId) {
+      setLocationMandals([]);
+      return undefined;
+    }
+
+    (async () => {
+      setLocationMasterLoading(true);
+      try {
+        const data = await locationRequest(
+          `/api/locations/mandals?districtId=${encodeURIComponent(form.districtId)}`
+        );
+        const rows = Array.isArray(data?.mandals)
+          ? data.mandals.map(mapMandalOption).filter(item => item.mandalName)
+          : [];
+        if (!cancelled) setLocationMandals(rows);
+      } catch (locationError) {
+        console.warn("Location master mandals unavailable:", locationError);
+        if (!cancelled) setLocationMandals([]);
+      } finally {
+        if (!cancelled) setLocationMasterLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [form.districtId]);
+
+  /* Load villages only after a mandal / block is chosen. */
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!form.mandalId) {
+      setLocationVillages([]);
+      return undefined;
+    }
+
+    (async () => {
+      setLocationMasterLoading(true);
+      try {
+        const data = await locationRequest(
+          `/api/locations/villages?mandalId=${encodeURIComponent(form.mandalId)}`
+        );
+        const rows = Array.isArray(data?.villages)
+          ? data.villages.map(mapVillageOption).filter(item => item.villageName)
+          : [];
+        if (!cancelled) setLocationVillages(rows);
+      } catch (locationError) {
+        console.warn("Location master villages unavailable:", locationError);
+        if (!cancelled) setLocationVillages([]);
+      } finally {
+        if (!cancelled) setLocationMasterLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [form.mandalId]);
+
+  const masterDistricts = locationDistricts;
+  const masterMandals = locationMandals;
+  const masterVillages = locationVillages;
 
   const selectedVehicle = useMemo(
     () =>
@@ -753,114 +952,78 @@ export default function TransporterRegister() {
           : null;
 
         try {
-          const data = await reverseGeocode(lat, lng);
+          let resolved = null;
+
+          /* Prefer the application's verified location master. */
+          try {
+            const master = await locationRequest(
+              `/api/locations/resolve?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}&radiusKm=25`
+            );
+            if (master?.success && master?.location) {
+              resolved = master.location;
+            }
+          } catch (masterError) {
+            console.warn("Location master GPS resolve failed:", masterError);
+          }
+
+          /* Reverse geocoding remains a fallback for readable address data. */
+          let data = null;
+          if (!resolved) {
+            data = await reverseGeocode(lat, lng);
+          }
+
           const address = data?.address || {};
-
           const detectedState = normalizeStateName(
-            address.state ||
-              address.state_district ||
-              ""
+            resolved?.state || address.state || address.state_district || ""
           );
-
           const detectedDistrict = String(
-            address.state_district ||
+            resolved?.district ||
+              address.state_district ||
               address.county ||
               address.district ||
               address.region ||
               ""
           ).trim();
-
           const detectedMandal = String(
-            address.municipality ||
+            resolved?.mandal ||
+              address.municipality ||
               address.city_district ||
               address.block ||
               address.township ||
               address.suburb ||
               ""
           ).trim();
-
           const detectedVillage = String(
-            address.village ||
+            resolved?.village ||
+              address.village ||
               address.town ||
               address.city ||
               address.hamlet ||
               address.neighbourhood ||
               ""
           ).trim();
-
           const detectedPincode = String(
-            address.postcode || ""
+            resolved?.pincode || address.postcode || ""
           ).trim();
-
-          const masterState =
-            getMasterState(detectedState) ||
-            getMasterState(findStateByName(detectedState)?.id);
-
-          const nextLocation = {
-            stateId:
-              masterState?.stateId ||
-              "",
-            stateName:
-              masterState?.stateName ||
-              detectedState ||
-              "",
-            districtId: "",
-            districtName: detectedDistrict || "",
-            mandalId: "",
-            mandalName: detectedMandal || "",
-            village: detectedVillage || "",
-          };
-
-          const derived = deriveLocationFromMaster(
-            nextLocation
-          );
 
           setForm(current => ({
             ...current,
             pickupLat: String(lat),
             pickupLng: String(lng),
             locationAccuracyM: accuracy,
-            locationSource: "gps+reverse-geocode",
+            locationSource: resolved ? "gps+location-master" : "gps+reverse-geocode",
 
-            stateId:
-              derived.stateId ||
-              current.stateId ||
-              "",
-            stateName:
-              derived.stateName ||
-              current.stateName ||
-              detectedState ||
-              "",
+            stateId: String(resolved?.stateId || current.stateId || ""),
+            stateName: detectedState || current.stateName || "",
 
-            districtId:
-              derived.districtId ||
-              current.districtId ||
-              "",
-            districtName:
-              derived.districtName ||
-              current.districtName ||
-              detectedDistrict ||
-              "",
+            districtId: String(resolved?.districtId || current.districtId || ""),
+            districtName: detectedDistrict || current.districtName || "",
 
-            mandalId:
-              derived.mandalId ||
-              current.mandalId ||
-              "",
-            mandalName:
-              derived.mandalName ||
-              current.mandalName ||
-              detectedMandal ||
-              "",
+            mandalId: String(resolved?.mandalId || current.mandalId || ""),
+            mandalName: detectedMandal || current.mandalName || "",
 
-            village:
-              detectedVillage ||
-              current.village ||
-              "",
-
-            pincode:
-              detectedPincode ||
-              current.pincode ||
-              "",
+            village: detectedVillage || current.village || "",
+            pincode: detectedPincode || current.pincode || "",
 
             pickupAddress:
               data?.display_name ||
@@ -869,7 +1032,11 @@ export default function TransporterRegister() {
           }));
 
           setGeoDetails({
-            displayName: data?.display_name || "",
+            displayName:
+              data?.display_name ||
+              [detectedVillage, detectedMandal, detectedDistrict, detectedState]
+                .filter(Boolean)
+                .join(", "),
             detectedState,
             detectedDistrict,
             detectedMandal,
@@ -879,22 +1046,14 @@ export default function TransporterRegister() {
 
           setLocationStatus(
             `${copy("locationFound")}${
-              accuracy
-                ? ` · ±${accuracy} m`
-                : ""
+              accuracy ? ` · ±${accuracy} m` : ""
             }`
           );
-        } catch (reverseError) {
-          console.warn(
-            "Reverse geocoding failed:",
-            reverseError
-          );
+        } catch (locationError) {
+          console.warn("GPS location resolution failed:", locationError);
 
-          /*
-           * GPS coordinates are still useful, but location registration
-           * needs readable locality values. Do not silently pretend that
-           * the coordinates identify the wrong village.
-           */
+          /* GPS itself is still valid. Keep coordinates and let the user
+             manually choose state/district/mandal/village. */
           setForm(current => ({
             ...current,
             pickupLat: String(lat),
@@ -904,29 +1063,28 @@ export default function TransporterRegister() {
           }));
 
           setLocationStatus(
-            `GPS captured (${lat}, ${lng}) but the area name could not be resolved. Tap "Use my current location" again to retry.`
+            `GPS captured (${lat}, ${lng}). Select or enter your service area manually.`
           );
         } finally {
           setLocationLoading(false);
         }
       },
       errorValue => {
-        let message =
-          "Unable to read your current GPS location.";
+        let message = "Unable to read your current GPS location.";
 
         if (errorValue?.code === 1) {
           message =
-            "Location permission was denied. Allow browser location access and try again.";
+            "Location permission was denied. You can continue by selecting your service area manually.";
         }
 
         if (errorValue?.code === 2) {
           message =
-            "Your current location could not be determined. Please try again.";
+            "Your current location could not be determined. You can continue manually or try GPS again.";
         }
 
         if (errorValue?.code === 3) {
           message =
-            "GPS location timed out. Please try again in an open area.";
+            "GPS location timed out. You can continue manually or try again.";
         }
 
         setLocationStatus(message);
@@ -938,31 +1096,7 @@ export default function TransporterRegister() {
         maximumAge: 10000,
       }
     );
-  }, [copy, setForm]);
-
-  /*
-   * GPS-first registration:
-   * entering the location step automatically asks for the current
-   * position once. The user does not need to search for or type an area.
-   */
-  useEffect(() => {
-    if (
-      step !== 3 ||
-      autoGpsRequestedRef.current ||
-      form.pickupLat ||
-      form.pickupLng
-    ) {
-      return;
-    }
-
-    autoGpsRequestedRef.current = true;
-    detectLocation();
-  }, [
-    step,
-    form.pickupLat,
-    form.pickupLng,
-    detectLocation,
-  ]);
+  }, [copy]);
 
   const validateStep = currentStep => {
     setError("");
@@ -1612,111 +1746,244 @@ export default function TransporterRegister() {
                 </div>
               ) : null}
 
+              <div className="transporter-register-location-mode">
+                <div>
+                  <strong>Choose how you want to set your service area</strong>
+                  <span>GPS is optional. You can select every location manually.</span>
+                </div>
+                <button
+                  type="button"
+                  className="transporter-register-manual-location-button"
+                  onClick={() => {
+                    setForm(current => ({
+                      ...current,
+                      locationSource: "manual",
+                    }));
+                    setLocationStatus("Manual location selection enabled.");
+                  }}
+                >
+                  Select manually
+                </button>
+              </div>
+
+              <div className="transporter-register-location-loading">
+                {locationMasterLoading ? "Loading verified location options…" : ""}
+              </div>
+
               <div className="transporter-register-grid">
-                <Field label={copy("state")} required hint="Full India state/UT list is available. Choose the same state used by farmer profiles.">
+                <Field
+                  label={copy("state")}
+                  required
+                  hint="Select your state / UT. Changing the state refreshes the district list."
+                >
                   <div className="transporter-register-select-wrap">
                     <select
-                      value={form.stateId || findStateByName(form.stateName)?.id || ""}
-                      disabled={form.locationSource.startsWith("gps")}
+                      value={
+                        form.stateId ||
+                        availableStates.find(
+                          item => item.stateName.toLowerCase() === String(form.stateName || "").toLowerCase()
+                        )?.stateId ||
+                        ""
+                      }
                       onChange={event => {
-                        const selected = INDIA_STATES.find(item => item.id === event.target.value);
-                        update("stateId", selected?.id || "");
-                        update("stateName", selected?.name || "");
+                        const selected = availableStates.find(
+                          item => item.stateId === event.target.value
+                        );
+
+                        update("stateId", selected?.stateId || "");
+                        update("stateName", selected?.stateName || "");
                         update("districtId", "");
                         update("districtName", "");
                         update("mandalId", "");
                         update("mandalName", "");
                         update("village", "");
+                        update("pincode", "");
+                        update("locationSource", "manual");
                       }}
                     >
                       <option value="">Select state / UT</option>
-                      {INDIA_STATES.map(state => (
-                        <option key={state.id} value={state.id}>{state.name}</option>
+                      {availableStates.map(state => (
+                        <option key={state.stateId} value={state.stateId}>
+                          {state.stateName}
+                        </option>
                       ))}
                     </select>
                     <ChevronDown size={17} />
                   </div>
                 </Field>
 
-                <Field label={copy("district")} required hint={masterDistricts.length ? "Select from the available master locations." : "No district master was bundled for this state; type the district or use GPS autofill."}>
+                <Field
+                  label={copy("district")}
+                  required
+                  hint={
+                    masterDistricts.length
+                      ? "Select a district from the verified list."
+                      : "No verified district list is available for this state. Enter the district manually."
+                  }
+                >
                   {masterDistricts.length ? (
                     <div className="transporter-register-select-wrap">
                       <select
-                        value={form.districtId || ""}
-                        disabled={form.locationSource.startsWith("gps")}
+                        value={masterDistricts.some(item => item.districtId === form.districtId) ? form.districtId : ""}
                         onChange={event => {
-                          const item = masterDistricts.find(d => d.districtId === event.target.value);
+                          const item = masterDistricts.find(
+                            district => district.districtId === event.target.value
+                          );
                           update("districtId", item?.districtId || "");
                           update("districtName", item?.districtName || "");
                           update("mandalId", "");
                           update("mandalName", "");
                           update("village", "");
+                          update("pincode", "");
+                          update("locationSource", "manual");
                         }}
                       >
-                        <option value="">Select district</option>
-                        {masterDistricts.map(item => <option key={item.districtId} value={item.districtId}>{item.districtName}</option>)}
+                        <option value="">
+                          {form.stateId ? "Select district" : "Select state first"}
+                        </option>
+                        {masterDistricts.map(item => (
+                          <option key={item.districtId} value={item.districtId}>
+                            {item.districtName}
+                          </option>
+                        ))}
                       </select>
                       <ChevronDown size={17} />
                     </div>
                   ) : (
-                    <input className="transporter-register-input" value={form.districtName} readOnly={form.locationSource.startsWith("gps")} onChange={event => update("districtName", event.target.value)} placeholder="Detected from GPS" />
+                    <input
+                      className="transporter-register-input"
+                      value={form.districtName}
+                      onChange={event => {
+                        update("districtId", "");
+                        update("districtName", event.target.value);
+                        update("mandalId", "");
+                        update("mandalName", "");
+                        update("village", "");
+                        update("pincode", "");
+                        update("locationSource", "manual");
+                      }}
+                      placeholder={form.stateId ? "Enter district" : "Select state first"}
+                    />
                   )}
                 </Field>
 
-                <Field label={copy("mandal")} required hint={masterMandals.length ? "Select the mandal / block from the master list." : "Type the mandal / block when a master list is not available."}>
+                <Field
+                  label={copy("mandal")}
+                  required
+                  hint={
+                    masterMandals.length
+                      ? "Select the mandal / block after choosing a district."
+                      : "Enter the mandal / block manually when a master list is unavailable."
+                  }
+                >
                   {masterMandals.length ? (
                     <div className="transporter-register-select-wrap">
                       <select
-                        value={form.mandalId || ""}
-                        disabled={form.locationSource.startsWith("gps")}
+                        value={masterMandals.some(item => item.mandalId === form.mandalId) ? form.mandalId : ""}
                         onChange={event => {
-                          const item = masterMandals.find(d => d.mandalId === event.target.value);
+                          const item = masterMandals.find(
+                            mandal => mandal.mandalId === event.target.value
+                          );
                           update("mandalId", item?.mandalId || "");
                           update("mandalName", item?.mandalName || "");
                           update("village", "");
+                          update("pincode", "");
+                          update("locationSource", "manual");
                         }}
                       >
-                        <option value="">Select mandal / block</option>
-                        {masterMandals.map(item => <option key={item.mandalId} value={item.mandalId}>{item.mandalName}</option>)}
+                        <option value="">
+                          {form.districtId ? "Select mandal / block" : "Select district first"}
+                        </option>
+                        {masterMandals.map(item => (
+                          <option key={item.mandalId} value={item.mandalId}>
+                            {item.mandalName}
+                          </option>
+                        ))}
                       </select>
                       <ChevronDown size={17} />
                     </div>
                   ) : (
-                    <input className="transporter-register-input" value={form.mandalName} readOnly={form.locationSource.startsWith("gps")} onChange={event => update("mandalName", event.target.value)} placeholder="Detected from GPS" />
+                    <input
+                      className="transporter-register-input"
+                      value={form.mandalName}
+                      onChange={event => {
+                        update("mandalId", "");
+                        update("mandalName", event.target.value);
+                        update("village", "");
+                        update("pincode", "");
+                        update("locationSource", "manual");
+                      }}
+                      placeholder={form.districtName ? "Enter mandal / block" : "Select district first"}
+                    />
                   )}
                 </Field>
 
-                <Field label={copy("village")} required hint={masterVillages.length ? "Choose your primary village from the master list." : "Type the village name. GPS can populate it automatically."}>
+                <Field
+                  label={copy("village")}
+                  required
+                  hint={
+                    masterVillages.length
+                      ? "Select your primary village from the verified village list."
+                      : "Enter the village manually when the selected mandal has no village master rows."
+                  }
+                >
                   {masterVillages.length ? (
                     <div className="transporter-register-select-wrap">
                       <select
-                        value={form.village}
-                        disabled={form.locationSource.startsWith("gps")}
-                        onChange={event => update("village", event.target.value)}
+                        value={masterVillages.some(item => item.villageName === form.village) ? form.village : ""}
+                        onChange={event => {
+                          const item = masterVillages.find(
+                            village => village.villageName === event.target.value
+                          );
+                          update("village", item?.villageName || "");
+                          update("pincode", item?.pincode || form.pincode || "");
+                          update("locationSource", "manual");
+                        }}
                       >
-                        <option value="">Select village</option>
-                        {masterVillages.map(village => <option key={village} value={village}>{village}</option>)}
+                        <option value="">
+                          {form.mandalId ? "Select village" : "Select mandal / block first"}
+                        </option>
+                        {masterVillages.map(item => (
+                          <option key={item.villageId || item.villageName} value={item.villageName}>
+                            {item.villageName}{item.pincode ? ` · ${item.pincode}` : ""}
+                          </option>
+                        ))}
                       </select>
                       <ChevronDown size={17} />
                     </div>
                   ) : (
-                    <input className="transporter-register-input" value={form.village} readOnly={form.locationSource.startsWith("gps")} onChange={event => update("village", event.target.value)} placeholder="Detected from GPS" />
+                    <input
+                      className="transporter-register-input"
+                      value={form.village}
+                      onChange={event => {
+                        update("village", event.target.value);
+                        update("locationSource", "manual");
+                      }}
+                      placeholder={form.mandalName ? "Enter village" : "Select mandal / block first"}
+                    />
                   )}
                 </Field>
 
-                <Field label={copy("pincode")} hint="Six-digit postal PIN. GPS may fill this automatically.">
+                <Field
+                  label={copy("pincode")}
+                  hint="Optional. You can edit the PIN even after using GPS."
+                >
                   <input
                     className="transporter-register-input"
                     value={form.pincode}
-                    readOnly={form.locationSource.startsWith("gps")}
                     onChange={event => update("pincode", event.target.value.replace(/\D/g, "").slice(0, 6))}
-                    placeholder="Detected from GPS"
+                    placeholder="6-digit PIN code"
                     inputMode="numeric"
                   />
                 </Field>
 
-                <Field label={copy("address")} hint="Optional. This is stored as a human-readable starting point.">
-                  <input className="transporter-register-input" value={form.pickupAddress} onChange={event => update("pickupAddress", event.target.value)} placeholder="Village road, market, landmark..." />
+                <Field label={copy("address")} hint="Optional starting address or landmark.">
+                  <input
+                    className="transporter-register-input"
+                    value={form.pickupAddress}
+                    onChange={event => update("pickupAddress", event.target.value)}
+                    placeholder="Village road, market, landmark..."
+                  />
                 </Field>
               </div>
 
