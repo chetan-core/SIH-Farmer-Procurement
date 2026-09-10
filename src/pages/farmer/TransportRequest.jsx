@@ -95,7 +95,7 @@ const COPY = {
     rating: "rating",
     waiting: "Waiting for transporter",
     smart: "Smart matching",
-    smartText: "Matching uses your service region, crop quantity and available vehicles.",
+    smartText: "Nearby matching uses your current GPS, transporter service radius, crop quantity and online status. Your registered area is used as a fallback.",
   },
   hi: {
     eyebrow: "KRISHISETU • किसान",
@@ -392,6 +392,9 @@ function sameRegion(transporter, location) {
 
 function filterNearbyTransporters(list, location, quantityKg) {
   const quantity = Number(quantityKg) || 0;
+  const hasPickupGps =
+    num(location?.lat) !== null &&
+    num(location?.lng) !== null;
 
   return list
     .map(item => {
@@ -402,27 +405,58 @@ function filterNearbyTransporters(list, location, quantityKg) {
       const serviceRadius = Number(
         first(item?.service_radius_km, item?.serviceRadiusKm, 0)
       ) || 0;
+
+      const transporterHasGps =
+        num(item?.current_lat) !== null &&
+        num(item?.current_lng) !== null;
+
+      const gpsEligible =
+        hasPickupGps &&
+        transporterHasGps &&
+        serviceRadius > 0 &&
+        distance !== null &&
+        distance <= serviceRadius;
+
+      const regionEligible = sameRegion(item, location);
+
       return {
         ...item,
         _capacity: capacity,
         _distance: distance,
         _radius: serviceRadius,
+        _gpsEligible: gpsEligible,
+        _regionEligible: regionEligible,
       };
     })
     .filter(item => {
       if (item.is_online === false) return false;
       if (item._capacity < quantity) return false;
-      if (!sameRegion(item, location)) return false;
-      if (item._distance !== null && item._radius > 0) {
-        return item._distance <= item._radius;
+
+      /*
+       * GPS is the primary matching rule.
+       * Registered region is only the fallback when GPS cannot
+       * establish a distance match.
+       */
+      if (hasPickupGps) {
+        return item._gpsEligible || (!item._distance && item._regionEligible);
       }
-      return true;
+
+      return item._regionEligible;
     })
     .sort((a, b) => {
+      const aGps = a._gpsEligible ? 0 : 1;
+      const bGps = b._gpsEligible ? 0 : 1;
+      if (aGps !== bGps) return aGps - bGps;
+
       const ad = a._distance ?? Number.POSITIVE_INFINITY;
       const bd = b._distance ?? Number.POSITIVE_INFINITY;
       if (ad !== bd) return ad - bd;
-      return Number(b.rating || 0) - Number(a.rating || 0);
+
+      const ar = Number(a.rating || 0);
+      const br = Number(b.rating || 0);
+      if (ar !== br) return br - ar;
+
+      return Number(b.total_trips || 0) - Number(a.total_trips || 0);
     });
 }
 
@@ -910,7 +944,7 @@ export default function TransportRequest() {
               <div className="ks-location-copy">
                 <small>{t.location}</small>
                 <strong>{pickupText}</strong>
-                <span>{location.lat && location.lng ? `${t.gpsSaved} • ${Number(location.lat).toFixed(5)}, ${Number(location.lng).toFixed(5)}` : t.noGps}</span>
+                <span>{location.lat && location.lng ? `Current GPS • ${Number(location.lat).toFixed(5)}, ${Number(location.lng).toFixed(5)}${location.village ? ` · Registered area: ${location.village}` : ""}` : `Registered area: ${location.village || "Farmer profile"} • ${t.noGps}`}</span>
               </div>
               <button
                 type="button"

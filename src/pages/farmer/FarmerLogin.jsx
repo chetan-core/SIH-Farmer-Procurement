@@ -1,8 +1,8 @@
-
 import {
   ArrowLeft,
   ArrowRight,
   Check,
+  LockKeyhole,
   Phone,
   ShieldCheck,
   UserRound,
@@ -30,7 +30,13 @@ import {
 
 
 const API_URL =
-  import.meta.env.VITE_API_URL;
+  String(
+    import.meta.env.VITE_API_URL ||
+    "http://localhost:5000/api"
+  ).replace(
+    /\/+$/,
+    ""
+  );
 
 
 function FarmerLogin() {
@@ -50,6 +56,20 @@ function FarmerLogin() {
     setPhone,
   ] =
     useState("");
+
+
+  const [
+    password,
+    setPassword,
+  ] =
+    useState("");
+
+
+  const [
+    showPassword,
+    setShowPassword,
+  ] =
+    useState(false);
 
 
   const [
@@ -94,6 +114,22 @@ function FarmerLogin() {
   }
 
 
+  function handlePasswordChange(
+    event
+  ) {
+
+    setPassword(
+      event.target.value
+    );
+
+
+    setError(
+      ""
+    );
+
+  }
+
+
   async function handleSubmit(
     event
   ) {
@@ -117,6 +153,20 @@ function FarmerLogin() {
     }
 
 
+    if (
+      password.length <
+      6
+    ) {
+
+      setError(
+        "Please enter your password."
+      );
+
+      return;
+
+    }
+
+
     setLoading(
       true
     );
@@ -131,9 +181,22 @@ function FarmerLogin() {
 
       const response =
         await fetch(
-          `${API_URL}/farmers/by-phone/${encodeURIComponent(
-            phone
-          )}`
+          `${API_URL}/farmers/login`,
+          {
+            method:
+              "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                phone,
+                password,
+              }),
+          }
         );
 
 
@@ -155,12 +218,13 @@ function FarmerLogin() {
 
 
       if (
-        !response.ok
+        !response.ok ||
+        data?.success === false
       ) {
 
         throw new Error(
           data?.message ||
-          "Unable to find your farmer account."
+          "Invalid mobile number or password."
         );
 
       }
@@ -182,13 +246,9 @@ function FarmerLogin() {
 
 
       /*
-        IMPORTANT:
-
         Store the actual farmer returned
-        by the database.
-
-        This prevents the frontend from
-        generating/storing a different ID.
+        by the backend, including the
+        production GPS/location fields.
       */
       setCurrentFarmer(
         farmer
@@ -446,9 +506,7 @@ function FarmerLogin() {
 
                 <p>
 
-                  {t(
-                    "auth.enterRegisteredNumber"
-                  )}
+                  Use your registered mobile number and password.
 
                 </p>
 
@@ -529,9 +587,81 @@ function FarmerLogin() {
               </div>
 
 
+              <div className="login-field">
+
+                <label
+                  htmlFor="farmer-password"
+                >
+
+                  Password
+
+                </label>
+
+
+                <div
+                  className="login-phone-input"
+                >
+
+                  <span className="login-country">
+
+                    <LockKeyhole
+                      size={17}
+                    />
+
+                  </span>
+
+
+                  <input
+                    id="farmer-password"
+                    type={
+                      showPassword
+                        ? "text"
+                        : "password"
+                    }
+                    value={
+                      password
+                    }
+                    onChange={
+                      handlePasswordChange
+                    }
+                    placeholder="Enter your password"
+                    autoComplete="current-password"
+                  />
+
+
+                  <button
+                    type="button"
+                    className="login-password-toggle"
+                    onClick={() =>
+                      setShowPassword(
+                        value =>
+                          !value
+                      )
+                    }
+                    aria-label={
+                      showPassword
+                        ? "Hide password"
+                        : "Show password"
+                    }
+                  >
+
+                    {showPassword
+                      ? "Hide"
+                      : "Show"}
+
+                  </button>
+
+                </div>
+
+              </div>
+
+
               {error && (
 
-                <div className="login-error">
+                <div
+                  className="login-error"
+                  role="alert"
+                >
 
                   {error}
 
@@ -549,9 +679,7 @@ function FarmerLogin() {
               >
 
                 {loading
-                  ? t(
-                      "auth.checkingAccount"
-                    )
+                  ? "Signing in..."
                   : t(
                       "common.continue"
                     )}

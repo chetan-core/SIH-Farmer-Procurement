@@ -551,6 +551,42 @@ function normaliseStatus(status) {
     .replace(/\s+/g, "_");
 }
 
+function dashboardDistanceKm(lat1, lng1, lat2, lng2) {
+  const values = [lat1, lng1, lat2, lng2].map(Number);
+  if (!values.every(Number.isFinite)) return null;
+
+  const [aLat, aLng, bLat, bLng] = values;
+  const radians = value => (value * Math.PI) / 180;
+  const dLat = radians(bLat - aLat);
+  const dLng = radians(bLng - aLng);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(radians(aLat)) *
+      Math.cos(radians(bLat)) *
+      Math.sin(dLng / 2) ** 2;
+
+  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function dashboardRequestTime(request) {
+  const date = String(request?.requested_date || "").trim();
+  const start = String(request?.requested_slot_start || "").trim();
+
+  if (date) {
+    const raw = start ? `${date}T${start}` : `${date}T00:00`;
+    const parsed = new Date(raw);
+    if (!Number.isNaN(parsed.getTime())) return parsed.getTime();
+  }
+
+  const created = new Date(
+    request?.created_at || request?.updated_at || 0
+  );
+  return Number.isNaN(created.getTime())
+    ? Number.MAX_SAFE_INTEGER
+    : created.getTime();
+}
+
 function getStatusLabel(
   status,
   language
@@ -691,6 +727,34 @@ function formatRelative(
   }
 
   return `${hours}h ago`;
+}
+
+function isSameCalendarDay(value) {
+  if (!value) return false;
+  const d = new Date(value);
+  const now = new Date();
+  return (
+    !Number.isNaN(d.getTime()) &&
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  );
+}
+
+function formatLocationStatus(location, language) {
+  if (!location?.capturedAt) {
+    return language === "hi"
+      ? "लोकेशन अभी साझा नहीं की गई"
+      : language === "te"
+      ? "లొకేషన్ ఇంకా షేర్ కాలేదు"
+      : "Location not shared yet";
+  }
+
+  return `${formatRelative(location.capturedAt, language)}${
+    location.accuracy
+      ? ` · ±${Math.round(location.accuracy)} m`
+      : ""
+  }`;
 }
 
 function mapsUrl(
@@ -1074,6 +1138,12 @@ function JobCard({
               request.request_farmer_name ||
               "Farmer"}
           </h3>
+
+          <span style={styles.jobBookingRef}>
+            {request.booking_id || request.token
+              ? `Booking ${request.booking_id || request.token}`
+              : `Request ${request.id}`}
+          </span>
         </div>
 
         <StatusPill
@@ -1128,6 +1198,18 @@ function JobCard({
             {formatMoney(
               request.estimated_fare
             )}
+          </strong>
+        </div>
+
+        <div>
+          <span style={styles.jobMetaLabel}>
+            Distance
+          </span>
+
+          <strong style={styles.jobMetaValue}>
+            {request._dashboardDistance == null
+              ? "—"
+              : `${Number(request._dashboardDistance).toFixed(1)} ${copy.kilometers}`}
           </strong>
         </div>
       </div>
@@ -1666,6 +1748,12 @@ export default function TransporterDashboard() {
   const [statusRequestId, setStatusRequestId] =
     useState("");
 
+  const [jobView, setJobView] =
+    useState("priority");
+
+  const [jobSearch, setJobSearch] =
+    useState("");
+
   const [trackingLocation, setTrackingLocation] =
     useState(null);
 
@@ -1768,7 +1856,7 @@ export default function TransporterDashboard() {
             await requestJson(
               `/api/transport/requests?transporterId=${encodeURIComponent(
                 transporterId
-              )}&activeOnly=true`
+              )}`
             );
 
           if (!mountedRef.current) {
@@ -1911,21 +1999,69 @@ export default function TransporterDashboard() {
         isActiveTrip(request)
     ) || null;
 
-  const availableJobs =
-    requests.filter(
-      (request) =>
-        normaliseStatus(
-          request.status
-        ) === "REQUESTED"
-    );
+  const availableJobs = useMemo(() => {
+    const query = String(jobSearch || "").trim().toLowerCase();
+
+    const base = requests
+      .filter(
+        request =>
+          normaliseStatus(request.status) === "REQUESTED"
+      )
+      .map(request => ({
+        ...request,
+        _dashboardDistance: dashboardDistanceKm(
+          request.pickup_lat,
+          request.pickup_lng,
+          trackingLocation?.lat,
+          trackingLocation?.lng
+        ),
+      }))
+      .filter(request => {
+        if (!query) return true;
+        return [
+          request.booking_id,
+          request.token,
+          request.farmer_name,
+          request.crop,
+          request.pickup_address,
+          request.center_name,
+          request.center_address,
+        ]
+          .filter(Boolean)
+          .some(value =>
+            String(value).toLowerCase().includes(query)
+          );
+      });
+
+    return [...base].sort((a, b) => {
+      if (jobView === "nearest") {
+        const ad = a._dashboardDistance ?? Number.POSITIVE_INFINITY;
+        const bd = b._dashboardDistance ?? Number.POSITIVE_INFINITY;
+        if (ad !== bd) return ad - bd;
+      }
+
+      if (jobView === "latest") {
+        const at = new Date(a.created_at || 0).getTime();
+        const bt = new Date(b.created_at || 0).getTime();
+        if (at !== bt) return bt - at;
+      }
+
+      if (jobView === "priority") {
+        const at = dashboardRequestTime(a);
+        const bt = dashboardRequestTime(b);
+        if (at !== bt) return at - bt;
+      }
+
+      return new Date(b.created_at || 0).getTime()
+        - new Date(a.created_at || 0).getTime();
+    });
+  }, [jobSearch, jobView, requests, trackingLocation]);
 
   const historyTrips =
     requests.filter(
-      (request) =>
+      request =>
         !isActiveTrip(request) &&
-        normaliseStatus(
-          request.status
-        ) !== "REQUESTED"
+        normaliseStatus(request.status) !== "REQUESTED"
     );
 
   const online =
@@ -1958,6 +2094,28 @@ export default function TransporterDashboard() {
     Number(
       transporter?.rating || 0
     );
+
+  const completedToday = requests.filter(
+    request =>
+      normaliseStatus(request.status) === "COMPLETED" &&
+      isSameCalendarDay(request.updated_at || request.created_at)
+  );
+
+  const todayEarnings = completedToday.reduce(
+    (sum, request) =>
+      sum +
+      Number(
+        request.final_fare ??
+          request.estimated_fare ??
+          0
+      ),
+    0
+  );
+
+  const pendingRequestsCount = requests.filter(
+    request =>
+      normaliseStatus(request.status) === "REQUESTED"
+  ).length;
 
   const toggleAvailability =
     async () => {
@@ -2090,6 +2248,17 @@ export default function TransporterDashboard() {
             location.capturedAt
           );
 
+          /*
+           * Location affects job eligibility. Refresh the job queue
+           * immediately after the backend stores the new coordinates.
+           * Without this, the dashboard can remain empty until the
+           * user manually refreshes even though a nearby farmer request
+           * is now eligible.
+           */
+          await loadRequests({
+            silent: true,
+          });
+
           if (showMessage) {
             setSuccess(
               copy.locationSent
@@ -2115,6 +2284,7 @@ export default function TransporterDashboard() {
       [
         copy.locationSent,
         copy.networkError,
+        loadRequests,
         transporterId,
       ]
     );
@@ -2213,12 +2383,18 @@ export default function TransporterDashboard() {
 
       navigator.geolocation.getCurrentPosition(
         async (position) => {
-          await sendLocation(
+          const updated = await sendLocation(
             position,
             {
               showMessage: true,
             }
           );
+
+          if (updated) {
+            await loadRequests({
+              silent: true,
+            });
+          }
 
           setLocationBusy(false);
         },
@@ -2547,6 +2723,105 @@ export default function TransporterDashboard() {
           </div>
         </section>
 
+        <section
+          style={styles.commandQuickBar}
+          className="transporter-dashboard-command-quickbar"
+        >
+          <div style={styles.quickBarIdentity}>
+            <div style={styles.quickBarIcon}>
+              <Truck size={18} />
+            </div>
+            <div>
+              <span style={styles.quickBarEyebrow}>
+                YOUR WORKSPACE
+              </span>
+              <strong>
+                {online
+                  ? "Ready to receive farmer requests"
+                  : "You're currently offline"}
+              </strong>
+              <small>
+                {transporter?.vehicle_number ||
+                  transporter?.vehicleNumber ||
+                  "Vehicle details"}{" "}
+                ·{" "}
+                {formatNumber(
+                  capacity
+                )}{" "}
+                {copy.kg}
+              </small>
+            </div>
+          </div>
+
+          <div style={styles.quickBarActions} className="transporter-dashboard-quickbar-actions">
+            <button
+              type="button"
+              onClick={() => {
+                document
+                  .getElementById("transporter-dashboard-jobs")
+                  ?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+              }}
+              style={styles.quickActionPrimary}
+            >
+              <Bell size={15} />
+              {pendingRequestsCount > 0
+                ? `${pendingRequestsCount} New ${
+                    pendingRequestsCount === 1
+                      ? "Request"
+                      : "Requests"
+                  }`
+                : "View Requests"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                document
+                  .getElementById("transporter-dashboard-trip")
+                  ?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  })
+              }
+              style={styles.quickActionSecondary}
+            >
+              <Navigation size={15} />
+              {activeTrip
+                ? "Active Trip"
+                : "Trip Center"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                navigate(
+                  "/transporter/earnings"
+                )
+              }
+              style={styles.quickActionSecondary}
+            >
+              <Activity size={15} />
+              Earnings
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                navigate(
+                  "/transporter/profile"
+                )
+              }
+              style={styles.quickActionSecondary}
+            >
+              <UserRound size={15} />
+              Profile
+            </button>
+          </div>
+        </section>
+
         {error ? (
           <div
             style={
@@ -2830,266 +3105,379 @@ export default function TransporterDashboard() {
           </div>
         </section>
 
-        <div
-          style={
-            styles.dashboardToolbar
-          }
+        <section
+          style={styles.todayStrip}
+          className="transporter-dashboard-today-strip"
         >
-          <div>
-            <span
-              style={
-                styles.sectionEyebrow
-              }
-            >
-              {copy.dashboard}
-            </span>
-
-            <h2
-              style={
-                styles.pageSectionTitle
-              }
-            >
-              {copy.nearbyJobs}
-            </h2>
-          </div>
-
-          <div
-            style={
-              styles.toolbarActions
-            }
-          >
-            <button
-              type="button"
-              onClick={
-                useCurrentLocation
-              }
-              disabled={
-                locationBusy
-              }
-              style={
-                styles.secondaryButton
-              }
-            >
-              {locationBusy ? (
-                <span
-                  style={
-                    styles.miniSpinner
-                  }
-                />
-              ) : (
-                <LocateFixed
-                  size={15}
-                />
-              )}
-
-              {locationBusy
-                ? copy.locationUpdating
-                : copy.currentLocation}
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                refreshAll()
-              }
-              disabled={
-                refreshing
-              }
-              style={
-                styles.refreshButton
-              }
-            >
-              <RefreshCw
-                size={15}
-                className={
-                  refreshing
-                    ? "krishisetu-spin"
-                    : undefined
-                }
-              />
-              {refreshing
-                ? copy.refreshing
-                : copy.refresh}
-            </button>
-          </div>
-        </div>
-
-        {locationStatus ===
-        "denied" ? (
-          <div
-            style={
-              styles.locationNotice
-            }
-          >
-            <MapPin
-              size={17}
-            />
-            <span>
-              {copy.locationDisabled}
-            </span>
-          </div>
-        ) : null}
-
-        {trackingLocation ? (
-          <div
-            style={
-              styles.gpsStrip
-            }
-          >
-            <div
-              style={
-                styles.gpsStripIcon
-              }
-            >
-              <Navigation
-                size={17}
-              />
-            </div>
-
-            <div>
-              <strong>
-                {copy.currentLocation}
-              </strong>
-
-              <span>
-                {trackingLocation.lat.toFixed(
-                  5
-                )}
-                ,{" "}
-                {trackingLocation.lng.toFixed(
-                  5
-                )}
-                {trackingLocation.accuracy
-                  ? ` · ${copy.accurateTo} ±${Math.round(
-                      trackingLocation.accuracy
-                    )} m`
-                  : ""}
-              </span>
-            </div>
-          </div>
-        ) : null}
-
-        {loadingRequests ? (
-          <div
-            style={
-              styles.loadingGrid
-            }
-          >
-            {[
-              1,
-              2,
-              3,
-            ].map(
-              (item) => (
-                <div
-                  key={item}
-                  style={
-                    styles.skeletonCard
-                  }
-                >
-                  <div
-                    style={
-                      styles.skeletonLineShort
-                    }
-                  />
-                  <div
-                    style={
-                      styles.skeletonLineLong
-                    }
-                  />
-                  <div
-                    style={
-                      styles.skeletonLine
-                    }
-                  />
-                  <div
-                    style={
-                      styles.skeletonLine
-                    }
-                  />
-                </div>
-              )
+          <StatCard
+            icon={Bell}
+            label="New requests"
+            value={formatNumber(
+              pendingRequestsCount
             )}
-          </div>
-        ) : (
-          <>
-            {availableJobs.length ? (
-              <div
-                style={
-                  styles.jobsGrid
-                }
-              >
-                {availableJobs.map(
-                  (
-                    request
-                  ) => (
-                    <JobCard
-                      key={
-                        request.id
-                      }
-                      request={
-                        request
-                      }
-                      language={
-                        language
-                      }
-                      copy={
-                        copy
-                      }
-                      canAccept={
-                        online &&
-                        !activeTrip
-                      }
-                      busyRequestId={
-                        actionRequestId
-                      }
-                      onAccept={
-                        acceptJob
-                      }
-                      onDecline={
-                        declineJob
-                      }
-                    />
-                  )
-                )}
-              </div>
-            ) : (
-              <div
-                style={
-                  styles.emptyJobs
-                }
-              >
-                <div
-                  style={
-                    styles.emptyIconLarge
-                  }
-                >
-                  <Zap
-                    size={26}
-                  />
-                </div>
-
-                <h3
-                  style={
-                    styles.emptyTitle
-                  }
-                >
-                  {copy.noJobs}
-                </h3>
-
-                <p
-                  style={
-                    styles.emptyText
-                  }
-                >
-                  {copy.noJobsHint}
-                </p>
-              </div>
+            subtext="Waiting for acceptance"
+          />
+          <StatCard
+            icon={CheckCircle2}
+            label="Trips completed today"
+            value={formatNumber(
+              completedToday.length
             )}
-          </>
-        )}
+            subtext="Completed jobs"
+          />
+          <StatCard
+            icon={Activity}
+            label="Today's earnings"
+            value={formatMoney(
+              todayEarnings
+            )}
+            subtext="From completed trips"
+          />
+          <StatCard
+            icon={LocateFixed}
+            label="GPS status"
+            value={
+              trackingLocation
+                ? "Live"
+                : "Not shared"
+            }
+            subtext={formatLocationStatus(
+              trackingLocation,
+              language
+            )}
+          />
+        </section>
 
         <section
+          id="transporter-dashboard-jobs"
+          style={styles.commandCenter}
+          className="transporter-dashboard-command-center"
+        >
+          <div style={styles.commandHeader}>
+            <div>
+              <span style={styles.sectionEyebrow}>
+                TODAY'S WORK
+              </span>
+              <h2 style={styles.pageSectionTitle}>
+                {copy.nearbyJobs}
+              </h2>
+              <p style={styles.commandSubtext}>
+                {online
+                  ? `${availableJobs.length} request${availableJobs.length === 1 ? "" : "s"} ready for your attention.`
+                  : "Go online to receive new farmer transport jobs."}
+              </p>
+            </div>
+
+            <div style={styles.commandHeaderActions}>
+              <button
+                type="button"
+                onClick={useCurrentLocation}
+                disabled={locationBusy}
+                style={styles.secondaryButton}
+              >
+                {locationBusy ? (
+                  <span style={styles.miniSpinner} />
+                ) : (
+                  <LocateFixed size={15} />
+                )}
+                {locationBusy
+                  ? copy.locationUpdating
+                  : copy.currentLocation}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => refreshAll()}
+                disabled={refreshing}
+                style={styles.refreshButton}
+              >
+                <RefreshCw
+                  size={15}
+                  className={refreshing ? "krishisetu-spin" : ""}
+                />
+                {copy.refresh}
+              </button>
+            </div>
+          </div>
+
+          <div
+            style={styles.priorityStrip}
+            className="transporter-dashboard-priority-strip"
+          >
+            <div style={styles.priorityMetric}>
+              <div style={styles.priorityMetricIcon}>
+                <Zap size={18} />
+              </div>
+              <div>
+                <span style={styles.priorityMetricLabel}>
+                  NEW REQUESTS
+                </span>
+                <strong>{availableJobs.length}</strong>
+              </div>
+            </div>
+
+            <div style={styles.priorityMetric}>
+              <div style={styles.priorityMetricIcon}>
+                <Truck size={18} />
+              </div>
+              <div>
+                <span style={styles.priorityMetricLabel}>
+                  ACTIVE TRIP
+                </span>
+                <strong>
+                  {activeTrip
+                    ? getStatusLabel(activeTrip.status, language)
+                    : "None"}
+                </strong>
+              </div>
+            </div>
+
+            <div style={styles.priorityMetric}>
+              <div style={styles.priorityMetricIcon}>
+                <LocateFixed size={18} />
+              </div>
+              <div>
+                <span style={styles.priorityMetricLabel}>
+                  YOUR GPS
+                </span>
+                <strong>
+                  {trackingLocation
+                    ? `${Number(trackingLocation.lat).toFixed(4)}, ${Number(trackingLocation.lng).toFixed(4)}`
+                    : "Not shared"}
+                </strong>
+              </div>
+            </div>
+
+            <div style={styles.priorityMetric}>
+              <div style={styles.priorityMetricIcon}>
+                <Wifi size={18} />
+              </div>
+              <div>
+                <span style={styles.priorityMetricLabel}>
+                  AVAILABILITY
+                </span>
+                <strong>{online ? "Online" : "Offline"}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div style={styles.locationServiceGrid} className="transporter-dashboard-location-service-grid">
+            <div style={styles.locationServiceCard}>
+              <div style={styles.locationServiceIcon}>
+                <LocateFixed size={17} />
+              </div>
+              <div>
+                <span style={styles.locationServiceLabel}>
+                  LIVE LOCATION
+                </span>
+                <strong>
+                  {trackingLocation
+                    ? `${Number(trackingLocation.lat).toFixed(5)}, ${Number(trackingLocation.lng).toFixed(5)}`
+                    : "Not shared"}
+                </strong>
+                <small>
+                  {formatLocationStatus(
+                    trackingLocation,
+                    language
+                  )}
+                </small>
+              </div>
+              <button
+                type="button"
+                onClick={useCurrentLocation}
+                disabled={locationBusy}
+                style={styles.locationRefreshButton}
+              >
+                <LocateFixed size={13} />
+                {locationBusy
+                  ? "Updating…"
+                  : "Update"}
+              </button>
+            </div>
+
+            <div style={styles.locationServiceCard}>
+              <div style={styles.locationServiceIcon}>
+                <MapPin size={17} />
+              </div>
+              <div>
+                <span style={styles.locationServiceLabel}>
+                  SERVICE AREA
+                </span>
+                <strong>
+                  {transporter?.village ||
+                    copy.primaryVillage}
+                </strong>
+                <small>
+                  {[
+                    transporter?.mandal,
+                    transporter?.district,
+                    transporter?.state,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") ||
+                    "Registered transport area"}{" "}
+                  ·{" "}
+                  {formatNumber(
+                    transporter?.service_radius_km ??
+                      transporter?.serviceRadiusKm ??
+                      0
+                  )}{" "}
+                  {copy.kilometers}
+                </small>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    "/transporter/profile"
+                  )
+                }
+                style={styles.locationRefreshButton}
+              >
+                Profile
+              </button>
+            </div>
+          </div>
+
+          <div
+            style={styles.jobToolbar}
+            className="transporter-dashboard-job-toolbar"
+          >
+            <div style={styles.jobFilterGroup}>
+              <button
+                type="button"
+                onClick={() => setJobView("priority")}
+                style={{
+                  ...styles.filterButton,
+                  ...(jobView === "priority"
+                    ? styles.filterButtonActive
+                    : {}),
+                }}
+              >
+                Upcoming first
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setJobView("nearest")}
+                style={{
+                  ...styles.filterButton,
+                  ...(jobView === "nearest"
+                    ? styles.filterButtonActive
+                    : {}),
+                }}
+              >
+                Nearest first
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setJobView("latest")}
+                style={{
+                  ...styles.filterButton,
+                  ...(jobView === "latest"
+                    ? styles.filterButtonActive
+                    : {}),
+                }}
+              >
+                Latest
+              </button>
+            </div>
+
+            <input
+              type="search"
+              value={jobSearch}
+              onChange={event => setJobSearch(event.target.value)}
+              placeholder="Search farmer, crop, booking…"
+              style={styles.jobSearch}
+            />
+          </div>
+
+          {!online ? (
+            <div style={styles.offlineBanner}>
+              <WifiOff size={18} />
+              <div>
+                <strong>You're offline</strong>
+                <span>
+                  Turn availability on so eligible farmer requests can reach this dashboard.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={toggleAvailability}
+                style={styles.primaryButton}
+              >
+                {copy.goOnline}
+              </button>
+            </div>
+          ) : null}
+
+          {loadingRequests ? (
+            <div style={styles.loadingGrid}>
+              {[1, 2, 3, 4].map(index => (
+                <div
+                  key={index}
+                  style={styles.skeletonCard}
+                  className="transporter-dashboard-skeleton"
+                >
+                  <div style={styles.skeletonLineShort} />
+                  <div style={styles.skeletonLineLong} />
+                  <div style={styles.skeletonLine} />
+                  <div style={styles.skeletonLine} />
+                </div>
+              ))}
+            </div>
+          ) : availableJobs.length ? (
+            <div style={styles.jobsGrid}>
+              {availableJobs.slice(0, 12).map(request => (
+                <JobCard
+                  key={request.id}
+                  request={request}
+                  language={language}
+                  copy={copy}
+                  canAccept={online && !activeTrip}
+                  busyRequestId={actionRequestId}
+                  onAccept={acceptJob}
+                  onDecline={declineJob}
+                />
+              ))}
+            </div>
+          ) : (
+            <div style={styles.emptyJobs}>
+              <div style={styles.emptyIconLarge}>
+                <Zap size={26} />
+              </div>
+              <h3 style={styles.emptyTitle}>
+                {jobSearch
+                  ? "No matching requests"
+                  : copy.noJobs}
+              </h3>
+              <p style={styles.emptyText}>
+                {jobSearch
+                  ? "Try a different farmer, crop, booking or center search."
+                  : online
+                    ? copy.noJobsHint
+                    : "Go online and share your current GPS location. New eligible requests will appear here."}
+              </p>
+            </div>
+          )}
+
+          {availableJobs.length > 12 ? (
+            <div style={styles.moreJobsNote}>
+              Showing the first 12 priority requests. Open Jobs for the complete queue.
+              <button
+                type="button"
+                onClick={() => navigate("/transporter/jobs")}
+                style={styles.textLinkButton}
+              >
+                Open Jobs →
+              </button>
+            </div>
+          ) : null}
+        </section>
+
+        <section
+          id="transporter-dashboard-trip"
           style={
             styles.tripSection
           }
@@ -3288,6 +3676,95 @@ export default function TransporterDashboard() {
           )}
         </section>
 
+        <section style={styles.navigationPanel}>
+          <div>
+            <span style={styles.sectionEyebrow}>
+              QUICK ACCESS
+            </span>
+            <h2 style={styles.pageSectionTitle}>
+              Manage your transport work
+            </h2>
+          </div>
+
+          <div style={styles.navigationGrid} className="transporter-dashboard-navigation-grid">
+            <button
+              type="button"
+              onClick={() =>
+                navigate(
+                  "/transporter/jobs"
+                )
+              }
+              style={styles.navigationCard}
+            >
+              <Bell size={18} />
+              <span>
+                <strong>All Jobs</strong>
+                <small>
+                  Browse every eligible farmer request
+                </small>
+              </span>
+              <ChevronRight size={16} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                navigate(
+                  "/transporter/trip"
+                )
+              }
+              style={styles.navigationCard}
+            >
+              <Navigation size={18} />
+              <span>
+                <strong>Trip Center</strong>
+                <small>
+                  Continue or review an active trip
+                </small>
+              </span>
+              <ChevronRight size={16} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                navigate(
+                  "/transporter/earnings"
+                )
+              }
+              style={styles.navigationCard}
+            >
+              <Activity size={18} />
+              <span>
+                <strong>Earnings</strong>
+                <small>
+                  View fares and completed trips
+                </small>
+              </span>
+              <ChevronRight size={16} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                navigate(
+                  "/transporter/profile"
+                )
+              }
+              style={styles.navigationCard}
+            >
+              <UserRound size={18} />
+              <span>
+                <strong>Profile & vehicle</strong>
+                <small>
+                  Update service area and vehicle details
+                </small>
+              </span>
+              <ChevronRight size={16} />
+            </button>
+          </div>
+        </section>
+
         <footer
           style={
             styles.footer
@@ -3331,6 +3808,31 @@ export default function TransporterDashboard() {
           }
 
           @media (max-width: 1050px) {
+            .transporter-dashboard-today-strip {
+              grid-template-columns: repeat(2, 1fr) !important;
+            }
+
+            .transporter-dashboard-command-quickbar {
+              flex-direction: column !important;
+              align-items: stretch !important;
+            }
+
+            .transporter-dashboard-quickbar-actions {
+              justify-content: flex-start !important;
+            }
+
+            .transporter-dashboard-navigation-grid {
+              grid-template-columns: repeat(2, 1fr) !important;
+            }
+
+            .transporter-dashboard-location-service-grid {
+              grid-template-columns: 1fr !important;
+            }
+
+            .transporter-dashboard-priority-strip {
+              grid-template-columns: repeat(2, 1fr) !important;
+            }
+
             .transporter-dashboard-top-grid {
               grid-template-columns: 1fr 1fr !important;
             }
@@ -3347,6 +3849,35 @@ export default function TransporterDashboard() {
           }
 
           @media (max-width: 760px) {
+            .transporter-dashboard-today-strip {
+              grid-template-columns: 1fr !important;
+            }
+
+            .transporter-dashboard-navigation-grid {
+              grid-template-columns: 1fr !important;
+            }
+
+            .transporter-dashboard-location-service-grid {
+              grid-template-columns: 1fr !important;
+            }
+
+            .transporter-dashboard-command-center {
+              padding: 16px !important;
+            }
+
+            .transporter-dashboard-priority-strip {
+              grid-template-columns: 1fr !important;
+            }
+
+            .transporter-dashboard-job-toolbar {
+              flex-direction: column !important;
+              align-items: stretch !important;
+            }
+
+            .transporter-dashboard-job-toolbar input {
+              width: 100% !important;
+            }
+
             .transporter-dashboard-shell {
               padding: 18px 14px 42px !important;
             }
@@ -3398,12 +3929,371 @@ export default function TransporterDashboard() {
 }
 
 const styles = {
-  page: {
-    minHeight: "100vh",
-    background:
-      "linear-gradient(180deg, #f7faf8 0%, #ffffff 32%, #f7faf8 100%)",
-    color: "#1d2a22",
+  commandQuickBar: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "15px",
+    marginTop: "16px",
+    padding: "13px 15px",
+    borderRadius: "16px",
+    background: "#ffffff",
+    border: "1px solid #e0e9e3",
+    boxShadow: "0 10px 25px rgba(25,65,42,.04)",
   },
+
+  quickBarIdentity: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    minWidth: 0,
+  },
+
+  quickBarIcon: {
+    width: "39px",
+    height: "39px",
+    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "11px",
+    background: "#eaf6ee",
+    color: "#2a7547",
+  },
+
+  quickBarEyebrow: {
+    display: "block",
+    color: "#8a968e",
+    fontSize: "8px",
+    fontWeight: 900,
+    letterSpacing: "0.12em",
+  },
+
+  quickBarIdentity: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    minWidth: 0,
+  },
+
+  quickBarIdentity: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    minWidth: 0,
+  },
+
+  quickBarActions: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: "6px",
+    flexWrap: "wrap",
+  },
+
+  quickActionPrimary: {
+    minHeight: "35px",
+    padding: "0 11px",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "6px",
+    borderRadius: "9px",
+    border: "1px solid #236d40",
+    background: "#236f40",
+    color: "#ffffff",
+    fontSize: "10px",
+    fontWeight: 800,
+    cursor: "pointer",
+  },
+
+  quickActionSecondary: {
+    minHeight: "35px",
+    padding: "0 10px",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "6px",
+    borderRadius: "9px",
+    border: "1px solid #dce6e0",
+    background: "#ffffff",
+    color: "#52675b",
+    fontSize: "10px",
+    fontWeight: 800,
+    cursor: "pointer",
+  },
+
+  todayStrip: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+    gap: "10px",
+    marginTop: "13px",
+  },
+
+  locationServiceGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "10px",
+    marginTop: "11px",
+  },
+
+  locationServiceCard: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    padding: "11px 12px",
+    border: "1px solid #e2ebe5",
+    borderRadius: "13px",
+    background: "#fbfdfb",
+  },
+
+  locationServiceIcon: {
+    width: "34px",
+    height: "34px",
+    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "10px",
+    background: "#edf7f0",
+    color: "#2c7547",
+  },
+
+  locationServiceCard: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    padding: "11px 12px",
+    border: "1px solid #e2ebe5",
+    borderRadius: "13px",
+    background: "#fbfdfb",
+  },
+
+  locationServiceLabel: {
+    display: "block",
+    color: "#8a968e",
+    fontSize: "8px",
+    fontWeight: 900,
+    letterSpacing: "0.1em",
+  },
+
+  locationServiceCard: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    padding: "11px 12px",
+    border: "1px solid #e2ebe5",
+    borderRadius: "13px",
+    background: "#fbfdfb",
+  },
+
+  locationServiceCard: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    padding: "11px 12px",
+    border: "1px solid #e2ebe5",
+    borderRadius: "13px",
+    background: "#fbfdfb",
+  },
+
+  locationRefreshButton: {
+    marginLeft: "auto",
+    minHeight: "31px",
+    padding: "0 9px",
+    borderRadius: "8px",
+    border: "1px solid #d8e4dd",
+    background: "#ffffff",
+    color: "#416154",
+    fontSize: "9px",
+    fontWeight: 800,
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+  },
+
+  navigationPanel: {
+    marginTop: "29px",
+  },
+
+  navigationGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+    gap: "10px",
+    marginTop: "12px",
+  },
+
+  navigationCard: {
+    minWidth: 0,
+    display: "flex",
+    alignItems: "center",
+    gap: "9px",
+    padding: "13px",
+    borderRadius: "13px",
+    border: "1px solid #e2ebe5",
+    background: "#ffffff",
+    color: "#2c4438",
+    textAlign: "left",
+    cursor: "pointer",
+  },
+
+  navigationCard: {
+    minWidth: 0,
+    display: "flex",
+    alignItems: "center",
+    gap: "9px",
+    padding: "13px",
+    borderRadius: "13px",
+    border: "1px solid #e2ebe5",
+    background: "#ffffff",
+    color: "#2c4438",
+    textAlign: "left",
+    cursor: "pointer",
+  },
+
+  commandCenter: {
+    marginTop: "28px",
+    padding: "22px",
+    borderRadius: "22px",
+    background: "#ffffff",
+    border: "1px solid #e1e9e3",
+    boxShadow: "0 15px 36px rgba(28, 72, 46, 0.05)",
+  },
+
+  commandHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: "18px",
+  },
+
+  commandHeaderActions: {
+    display: "flex",
+    gap: "8px",
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
+  },
+
+  commandSubtext: {
+    margin: "5px 0 0",
+    color: "#718078",
+    fontSize: "11px",
+  },
+
+  priorityStrip: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+    gap: "9px",
+    marginTop: "18px",
+    padding: "10px",
+    borderRadius: "15px",
+    background: "#f7faf8",
+    border: "1px solid #e3ebe5",
+  },
+
+  priorityMetric: {
+    display: "flex",
+    alignItems: "center",
+    gap: "9px",
+    minWidth: 0,
+    padding: "10px 11px",
+    borderRadius: "11px",
+    background: "#ffffff",
+    border: "1px solid #e8eee9",
+  },
+
+  priorityMetricIcon: {
+    width: "35px",
+    height: "35px",
+    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "10px",
+    background: "#eaf5ed",
+    color: "#277447",
+  },
+
+  priorityMetricLabel: {
+    display: "block",
+    color: "#8a978f",
+    fontSize: "8px",
+    fontWeight: 900,
+    letterSpacing: "0.09em",
+  },
+
+  jobToolbar: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "14px",
+    marginTop: "17px",
+    marginBottom: "13px",
+  },
+
+  jobFilterGroup: {
+    display: "flex",
+    gap: "6px",
+    flexWrap: "wrap",
+  },
+
+  filterButton: {
+    minHeight: "34px",
+    padding: "0 10px",
+    borderRadius: "9px",
+    border: "1px solid #dce6e0",
+    background: "#ffffff",
+    color: "#66776e",
+    fontSize: "10px",
+    fontWeight: 800,
+    cursor: "pointer",
+  },
+
+  filterButtonActive: {
+    borderColor: "#abd1b7",
+    background: "#edf7f0",
+    color: "#246b40",
+  },
+
+  jobSearch: {
+    width: "250px",
+    height: "36px",
+    padding: "0 11px",
+    borderRadius: "9px",
+    border: "1px solid #dce6e0",
+    outline: "none",
+    color: "#354b40",
+    background: "#ffffff",
+    fontSize: "11px",
+  },
+
+  offlineBanner: {
+    display: "flex",
+    alignItems: "center",
+    gap: "11px",
+    marginBottom: "13px",
+    padding: "12px 13px",
+    borderRadius: "12px",
+    background: "#fff8ec",
+    border: "1px solid #efdcb7",
+    color: "#7b5a22",
+  },
+
+  textLinkButton: {
+    marginLeft: "8px",
+    border: 0,
+    padding: 0,
+    background: "transparent",
+    color: "#267144",
+    fontWeight: 800,
+    cursor: "pointer",
+  },
+
+  moreJobsNote: {
+    marginTop: "13px",
+    textAlign: "center",
+    color: "#7a8880",
+    fontSize: "10px",
+  },
+
+
 
   shell: {
     width: "min(1240px, calc(100% - 32px))",
@@ -3991,6 +4881,14 @@ const styles = {
     fontSize: "18px",
   },
 
+  jobBookingRef: {
+    display: "block",
+    marginTop: "4px",
+    color: "#8a968f",
+    fontSize: "9px",
+    fontWeight: 700,
+  },
+
   statusPill: {
     display: "inline-flex",
     alignItems: "center",
@@ -4037,7 +4935,7 @@ const styles = {
   jobMain: {
     display: "grid",
     gridTemplateColumns:
-      "1.3fr 0.8fr 0.9fr",
+      "1.2fr 0.75fr 0.8fr 0.75fr",
     gap: "13px",
     marginTop: "20px",
     padding: "13px",

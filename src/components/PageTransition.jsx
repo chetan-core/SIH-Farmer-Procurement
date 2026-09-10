@@ -1,4 +1,3 @@
-
 import {
   useEffect,
   useRef,
@@ -61,9 +60,23 @@ function PageTransition({
 
 
     /*
-     * Login pages keep the premium cinematic
-     * transition exactly as before.
+     * IMPORTANT
+     * =====================================================
+     * Never apply transform / filter / scale / translate
+     * to .page-transition-page.
+     *
+     * That element contains page-level modals and drawers.
+     * A transformed/filter ancestor can change the containing
+     * block of position: fixed children and cause exactly
+     * the "modal opens down the page" problem.
+     *
+     * Page transitions therefore use opacity only.
+     *
+     * The curtain + glow provide the visual transition
+     * without transforming the page container.
+     * =====================================================
      */
+
 
     const isLoginPage =
       location.pathname ===
@@ -73,9 +86,25 @@ function PageTransition({
 
 
     /*
-     * Internal pages use a very short
-     * transition so navigation feels instant.
+     * Kill any previous animation
      */
+    gsap.killTweensOf(
+      page
+    );
+
+    gsap.killTweensOf(
+      curtain
+    );
+
+    gsap.killTweensOf(
+      glow
+    );
+
+
+    /* =====================================================
+       INTERNAL PAGES
+       Fast, clean fade.
+    ===================================================== */
 
     if (!isLoginPage) {
 
@@ -85,36 +114,61 @@ function PageTransition({
 
         {
           opacity: 0,
-          y: 6,
         },
 
         {
           opacity: 1,
-          y: 0,
 
-          duration: 0.16,
+          duration:
+            0.16,
 
           ease:
             "power2.out",
+
+          clearProps:
+            "opacity",
         }
 
       );
 
-      return;
+
+      return () => {
+
+        gsap.killTweensOf(
+          page
+        );
+
+        /*
+         * Explicitly remove any accidental
+         * transform/filter left by another
+         * transition implementation.
+         */
+        gsap.set(
+          page,
+          {
+            clearProps:
+              "transform,filter,scale,x,y",
+          }
+        );
+
+      };
 
     }
 
 
-    /*
-     * =====================================================
-     * PREMIUM LOGIN TRANSITION
-     * =====================================================
-     */
+    /* =====================================================
+       LOGIN PAGES
+       Premium cinematic transition WITHOUT transforming
+       the page container.
+    ===================================================== */
 
     const timeline =
       gsap.timeline();
 
 
+    /*
+     * Curtain starts outside the viewport.
+     */
     timeline.set(
       curtain,
       {
@@ -124,6 +178,9 @@ function PageTransition({
     );
 
 
+    /*
+     * Glow starts outside the viewport.
+     */
     timeline.set(
       glow,
       {
@@ -136,24 +193,29 @@ function PageTransition({
     );
 
 
+    /*
+     * Page starts transparent only.
+     *
+     * NO:
+     * y
+     * scale
+     * filter
+     * transform
+     *
+     * This is the critical fix.
+     */
     timeline.set(
       page,
       {
         opacity:
           0,
-
-        y:
-          35,
-
-        scale:
-          0.985,
-
-        filter:
-          "blur(7px)",
       }
     );
 
 
+    /*
+     * Curtain enters.
+     */
     timeline.to(
       curtain,
       {
@@ -169,6 +231,9 @@ function PageTransition({
     );
 
 
+    /*
+     * Glow follows curtain.
+     */
     timeline.to(
       glow,
       {
@@ -188,23 +253,17 @@ function PageTransition({
     );
 
 
+    /*
+     * Reveal page using opacity only.
+     */
     timeline.to(
       page,
       {
         opacity:
           1,
 
-        y:
-          0,
-
-        scale:
-          1,
-
-        filter:
-          "blur(0px)",
-
         duration:
-          0.58,
+          0.45,
 
         ease:
           "power3.out",
@@ -213,6 +272,9 @@ function PageTransition({
     );
 
 
+    /*
+     * Glow exits.
+     */
     timeline.to(
       glow,
       {
@@ -231,6 +293,9 @@ function PageTransition({
     );
 
 
+    /*
+     * Curtain exits.
+     */
     timeline.to(
       curtain,
       {
@@ -255,6 +320,27 @@ function PageTransition({
         page
       );
 
+      gsap.killTweensOf(
+        curtain
+      );
+
+      gsap.killTweensOf(
+        glow
+      );
+
+
+      /*
+       * Absolutely guarantee that no transform/filter
+       * remains on the page wrapper.
+       */
+      gsap.set(
+        page,
+        {
+          clearProps:
+            "transform,filter,scale,x,y",
+        }
+      );
+
     };
 
   }, [
@@ -271,11 +357,22 @@ function PageTransition({
       className="page-transition"
     >
 
-      <div className="page-transition-curtain" />
+      <div
+        className=
+          "page-transition-curtain"
+        aria-hidden="true"
+      />
 
-      <div className="page-transition-glow" />
+      <div
+        className=
+          "page-transition-glow"
+        aria-hidden="true"
+      />
 
-      <div className="page-transition-page">
+      <div
+        className=
+          "page-transition-page"
+      >
 
         {children}
 

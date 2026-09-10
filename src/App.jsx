@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+
 import {
   Routes,
   Route,
@@ -45,6 +47,1287 @@ import PageTransition from "./components/PageTransition";
 import VoiceAssistant from "./components/VoiceAssistant";
 
 
+/* =========================================================
+   GLOBAL UI INTERACTION POLICY
+   =========================================================
+   This is intentionally centralized in App.jsx because every
+   Farmer / Transporter / Admin route passes through this root.
+
+   Responsibilities:
+   1. Lock document scrolling when a modal/drawer is open.
+   2. Keep wheel scrolling inside the active modal/drawer.
+   3. Keep sidebar wheel scrolling inside sidebar navigation.
+   4. Prevent wheel-scroll leakage into the background.
+   5. Close modal/drawer when backdrop is clicked.
+   6. Close modal/drawer with Escape.
+   7. Force overlays to be viewport anchored.
+   8. Keep modal opening near the top of the viewport.
+   9. Apply full-screen backdrop blur.
+========================================================= */
+
+
+/* ---------------------------------------------------------
+   OVERLAY DISCOVERY
+--------------------------------------------------------- */
+
+const KS_OVERLAY_SELECTORS = [
+  ".sms-modal-backdrop",
+  ".admin-sidebar-overlay",
+  ".admin-booking-drawer-overlay",
+  ".admin-farmer-drawer-overlay",
+  ".admin-center-drawer-overlay",
+  ".admin-center-form-overlay",
+  ".admin-payment-form-overlay",
+  ".token-payment-modal-backdrop",
+  ".ft-modal-bg",
+  ".at-modal-backdrop",
+  ".modal-backdrop",
+  ".modal-overlay",
+  ".drawer-overlay",
+];
+
+const KS_NON_CLOSING_OVERLAYS = new Set([
+  "booking-confirmed-overlay",
+]);
+
+const KS_IGNORE_OVERLAYS = new Set([
+  "farmer-notification-overlay",
+  "page-transition-overlay",
+]);
+
+
+/* ---------------------------------------------------------
+   PANEL TYPES
+--------------------------------------------------------- */
+
+const KS_PANEL_SELECTORS = [
+  ".admin-center-form-modal",
+  ".admin-payment-form-modal",
+  ".admin-booking-drawer",
+  ".admin-farmer-drawer",
+  ".admin-center-drawer",
+  ".token-payment-modal",
+  ".ft-modal",
+  ".at-modal",
+  ".sms-modal",
+  ".modal",
+  ".dialog",
+];
+
+
+/* ---------------------------------------------------------
+   VISIBILITY
+--------------------------------------------------------- */
+
+function ksIsVisible(element) {
+  if (!element) {
+    return false;
+  }
+
+  const style =
+    window.getComputedStyle(
+      element
+    );
+
+  return (
+    style.display !== "none" &&
+    style.visibility !== "hidden" &&
+    Number(
+      style.opacity || 1
+    ) > 0 &&
+    element.getBoundingClientRect()
+      .width > 0 &&
+    element.getBoundingClientRect()
+      .height > 0
+  );
+}
+
+
+/* ---------------------------------------------------------
+   FIND ALL ACTIVE OVERLAYS
+--------------------------------------------------------- */
+
+function ksGetOpenOverlays() {
+  const candidateSet =
+    new Set();
+
+  KS_OVERLAY_SELECTORS.forEach(
+    (selector) => {
+      document
+        .querySelectorAll(
+          selector
+        )
+        .forEach(
+          (element) =>
+            candidateSet.add(
+              element
+            )
+        );
+    }
+  );
+
+  /*
+     Also detect future modal/overlay
+     implementations without requiring
+     another App.jsx change.
+  */
+  document
+    .querySelectorAll(
+      "[class*='overlay'],[class*='backdrop'],[class*='modal-bg']"
+    )
+    .forEach(
+      (element) =>
+        candidateSet.add(
+          element
+        )
+    );
+
+  return Array.from(
+    candidateSet
+  ).filter(
+    (element) => {
+      if (
+        !ksIsVisible(
+          element
+        )
+      ) {
+        return false;
+      }
+
+      const classes =
+        typeof element.className ===
+        "string"
+          ? element.className.split(
+              /\s+/
+            )
+          : [];
+
+      if (
+        classes.some(
+          (name) =>
+            KS_IGNORE_OVERLAYS.has(
+              name
+            )
+        )
+      ) {
+        return false;
+      }
+
+      const style =
+        window.getComputedStyle(
+          element
+        );
+
+      return (
+        style.position ===
+          "fixed" ||
+        (
+          style.position ===
+            "absolute" &&
+          classes.some(
+            (name) =>
+              /overlay|backdrop|modal-bg/i.test(
+                name
+              )
+          )
+        )
+      );
+    }
+  );
+}
+
+
+/* ---------------------------------------------------------
+   DETERMINE WHETHER BACKGROUND MUST BE LOCKED
+--------------------------------------------------------- */
+
+function ksHasClosingOverlay() {
+  return ksGetOpenOverlays()
+    .some(
+      (overlay) => {
+        const classes =
+          typeof overlay.className ===
+          "string"
+            ? overlay.className.split(
+                /\s+/
+              )
+            : [];
+
+        return !classes.some(
+          (name) =>
+            KS_NON_CLOSING_OVERLAYS.has(
+              name
+            )
+        );
+      }
+    );
+}
+
+
+/* ---------------------------------------------------------
+   FIND NEAREST INNER SCROLLER
+--------------------------------------------------------- */
+
+function ksFindScrollableElement(
+  startNode,
+  boundary
+) {
+  let node =
+    startNode instanceof Element
+      ? startNode
+      : startNode?.parentElement ||
+        null;
+
+  while (
+    node &&
+    node !== boundary
+  ) {
+    const style =
+      window.getComputedStyle(
+        node
+      );
+
+    const canScrollY =
+      /(auto|scroll|overlay)/.test(
+        style.overflowY
+      ) &&
+      node.scrollHeight >
+        node.clientHeight + 1;
+
+    const canScrollX =
+      /(auto|scroll|overlay)/.test(
+        style.overflowX
+      ) &&
+      node.scrollWidth >
+        node.clientWidth + 1;
+
+    if (
+      canScrollY ||
+      canScrollX
+    ) {
+      return node;
+    }
+
+    node =
+      node.parentElement;
+  }
+
+  if (
+    boundary instanceof HTMLElement
+  ) {
+    const style =
+      window.getComputedStyle(
+        boundary
+      );
+
+    if (
+      /(auto|scroll|overlay)/.test(
+        style.overflowY
+      ) &&
+      boundary.scrollHeight >
+        boundary.clientHeight + 1
+    ) {
+      return boundary;
+    }
+  }
+
+  return null;
+}
+
+
+/* ---------------------------------------------------------
+   FIND CLOSE / CANCEL BUTTON
+--------------------------------------------------------- */
+
+function ksFindCloseButton(
+  overlay
+) {
+  if (!overlay) {
+    return null;
+  }
+
+  const selectors = [
+    "[data-modal-close]",
+    "[aria-label*='close' i]",
+    "[aria-label*='cancel' i]",
+    "button[class*='close']",
+    "button[class*='cancel']",
+    "button[class*='dismiss']",
+  ];
+
+  for (
+    const selector of selectors
+  ) {
+    const button =
+      overlay.querySelector(
+        selector
+      );
+
+    if (
+      button instanceof
+        HTMLButtonElement &&
+      !button.disabled
+    ) {
+      return button;
+    }
+  }
+
+  const buttons =
+    Array.from(
+      overlay.querySelectorAll(
+        "button"
+      )
+    );
+
+  return (
+    buttons.find(
+      (button) =>
+        /cancel|close|keep unchanged|keep request|dismiss/i.test(
+          button.textContent ||
+            ""
+        )
+    ) || null
+  );
+}
+
+
+/* ---------------------------------------------------------
+   IDENTIFY BACKDROP ROOT
+--------------------------------------------------------- */
+
+function ksGetBackdropRoot(
+  target
+) {
+  if (
+    !(target instanceof Element)
+  ) {
+    return null;
+  }
+
+  const overlays =
+    ksGetOpenOverlays();
+
+  for (
+    const overlay of overlays
+  ) {
+    if (
+      target === overlay ||
+      overlay.contains(target)
+    ) {
+      const insidePanel =
+        target.closest(
+          KS_PANEL_SELECTORS.join(
+            ","
+          )
+        );
+
+      /*
+         If the click is outside the
+         panel but inside the overlay,
+         this is a backdrop click.
+      */
+      if (
+        !insidePanel ||
+        insidePanel === overlay
+      ) {
+        return overlay;
+      }
+    }
+  }
+
+  return null;
+}
+
+
+/* ---------------------------------------------------------
+   BODY SCROLL STATE
+--------------------------------------------------------- */
+
+let ksSavedBodyStyles =
+  null;
+
+
+/* ---------------------------------------------------------
+   LOCK DOCUMENT
+--------------------------------------------------------- */
+
+function ksLockDocument() {
+  const body =
+    document.body;
+
+  const html =
+    document.documentElement;
+
+  if (
+    !body ||
+    !html
+  ) {
+    return;
+  }
+
+  if (
+    body.dataset
+      .ksScrollLocked ===
+    "true"
+  ) {
+    return;
+  }
+
+  const scrollY =
+    window.scrollY ||
+    window.pageYOffset ||
+    0;
+
+  const scrollX =
+    window.scrollX ||
+    window.pageXOffset ||
+    0;
+
+  const scrollbarWidth =
+    window.innerWidth -
+    html.clientWidth;
+
+  ksSavedBodyStyles = {
+    position:
+      body.style.position,
+
+    top:
+      body.style.top,
+
+    left:
+      body.style.left,
+
+    right:
+      body.style.right,
+
+    width:
+      body.style.width,
+
+    overflow:
+      body.style.overflow,
+
+    paddingRight:
+      body.style.paddingRight,
+  };
+
+  body.dataset.ksScrollLocked =
+    "true";
+
+  body.dataset.ksScrollY =
+    String(scrollY);
+
+  body.dataset.ksScrollX =
+    String(scrollX);
+
+  body.style.setProperty(
+    "padding-right",
+    scrollbarWidth > 0
+      ? `${scrollbarWidth}px`
+      : "",
+    "important"
+  );
+
+  body.style.setProperty(
+    "position",
+    "fixed",
+    "important"
+  );
+
+  body.style.setProperty(
+    "top",
+    `-${scrollY}px`,
+    "important"
+  );
+
+  body.style.setProperty(
+    "left",
+    `-${scrollX}px`,
+    "important"
+  );
+
+  body.style.setProperty(
+    "right",
+    "0",
+    "important"
+  );
+
+  body.style.setProperty(
+    "width",
+    "100%",
+    "important"
+  );
+
+  body.style.setProperty(
+    "overflow",
+    "hidden",
+    "important"
+  );
+
+  html.style.setProperty(
+    "overflow",
+    "hidden",
+    "important"
+  );
+
+  html.style.setProperty(
+    "height",
+    "100%",
+    "important"
+  );
+}
+
+
+/* ---------------------------------------------------------
+   UNLOCK DOCUMENT
+--------------------------------------------------------- */
+
+function ksUnlockDocument() {
+  const body =
+    document.body;
+
+  const html =
+    document.documentElement;
+
+  if (
+    !body ||
+    !html
+  ) {
+    return;
+  }
+
+  if (
+    body.dataset
+      .ksScrollLocked !==
+    "true"
+  ) {
+    return;
+  }
+
+  const scrollY =
+    Number(
+      body.dataset.ksScrollY ||
+        0
+    );
+
+  const scrollX =
+    Number(
+      body.dataset.ksScrollX ||
+        0
+    );
+
+  const previous =
+    ksSavedBodyStyles ||
+    {};
+
+  [
+    [
+      "position",
+      previous.position ||
+        "",
+    ],
+
+    [
+      "top",
+      previous.top ||
+        "",
+    ],
+
+    [
+      "left",
+      previous.left ||
+        "",
+    ],
+
+    [
+      "right",
+      previous.right ||
+        "",
+    ],
+
+    [
+      "width",
+      previous.width ||
+        "",
+    ],
+
+    [
+      "overflow",
+      previous.overflow ||
+        "",
+    ],
+
+    [
+      "padding-right",
+      previous.paddingRight ||
+        "",
+    ],
+  ].forEach(
+    ([property, value]) => {
+      body.style.setProperty(
+        property,
+        value
+      );
+    }
+  );
+
+  html.style.removeProperty(
+    "overflow"
+  );
+
+  html.style.removeProperty(
+    "height"
+  );
+
+  delete body.dataset
+    .ksScrollLocked;
+
+  delete body.dataset
+    .ksScrollY;
+
+  delete body.dataset
+    .ksScrollX;
+
+  ksSavedBodyStyles =
+    null;
+
+  window.scrollTo(
+    scrollX,
+    scrollY
+  );
+}
+
+
+/* ---------------------------------------------------------
+   FORCE OVERLAYS TO VIEWPORT
+--------------------------------------------------------- */
+
+function ksNormaliseOverlayViewport() {
+  const openOverlays =
+    ksGetOpenOverlays();
+
+  openOverlays.forEach(
+    (overlay) => {
+      if (
+        !(overlay instanceof
+          HTMLElement)
+      ) {
+        return;
+      }
+
+      const classNames =
+        typeof overlay.className ===
+        "string"
+          ? overlay.className.split(
+              /\s+/
+            )
+          : [];
+
+      const isSidebarOverlay =
+        classNames.includes(
+          "admin-sidebar-overlay"
+        );
+
+      const isDrawer =
+        classNames.some(
+          (name) =>
+            /drawer/i.test(
+              name
+            )
+        );
+
+      const important = {
+        position: "fixed",
+        inset: "0",
+        width: "100vw",
+        height: "100dvh",
+        "max-height": "100dvh",
+        margin: "0",
+        "box-sizing": "border-box",
+        overflow: "hidden",
+        "overscroll-behavior":
+          "none",
+        "pointer-events":
+          "auto",
+        "z-index":
+          isSidebarOverlay
+            ? "900"
+            : "50000",
+        background:
+          isSidebarOverlay
+            ? "rgba(18, 38, 46, 0.28)"
+            : "rgba(18, 38, 46, 0.42)",
+        "backdrop-filter":
+          isSidebarOverlay
+            ? "blur(3px)"
+            : "blur(9px)",
+        "-webkit-backdrop-filter":
+          isSidebarOverlay
+            ? "blur(3px)"
+            : "blur(9px)",
+        isolation: "isolate",
+      };
+
+      Object.entries(
+        important
+      ).forEach(
+        ([property, value]) => {
+          overlay.style.setProperty(
+            property,
+            value,
+            "important"
+          );
+        }
+      );
+
+      /*
+         Regular modal boxes open close
+         to the top of the viewport rather
+         than tracking page scroll.
+      */
+      if (
+        !isDrawer &&
+        !isSidebarOverlay
+      ) {
+        [
+          ["display", "flex"],
+          [
+            "align-items",
+            "flex-start",
+          ],
+          [
+            "justify-content",
+            "center",
+          ],
+          [
+            "padding",
+            "24px",
+          ],
+        ].forEach(
+          ([property, value]) => {
+            overlay.style.setProperty(
+              property,
+              value,
+              "important"
+            );
+          }
+        );
+      }
+
+      /*
+         Drawer overlays remain drawer-style.
+      */
+      if (isDrawer) {
+        overlay.style.setProperty(
+          "display",
+          "block",
+          "important"
+        );
+      }
+
+      /*
+         Find the actual modal panel inside
+         the overlay and make that the
+         independent scroll container.
+      */
+      KS_PANEL_SELECTORS.forEach(
+        (selector) => {
+          overlay
+            .querySelectorAll(
+              selector
+            )
+            .forEach(
+              (panel) => {
+                if (
+                  !(
+                    panel instanceof
+                    HTMLElement
+                  )
+                ) {
+                  return;
+                }
+
+                [
+                  [
+                    "position",
+                    "relative",
+                  ],
+
+                  [
+                    "margin-left",
+                    "auto",
+                  ],
+
+                  [
+                    "margin-right",
+                    "auto",
+                  ],
+
+                  [
+                    "max-height",
+                    "calc(100dvh - 48px)",
+                  ],
+
+                  [
+                    "overflow-y",
+                    "auto",
+                  ],
+
+                  [
+                    "overflow-x",
+                    "hidden",
+                  ],
+
+                  [
+                    "overscroll-behavior",
+                    "contain",
+                  ],
+
+                  [
+                    "-webkit-overflow-scrolling",
+                    "touch",
+                  ],
+                ].forEach(
+                  ([property, value]) => {
+                    panel.style.setProperty(
+                      property,
+                      value,
+                      "important"
+                    );
+                  }
+                );
+              }
+            );
+        }
+      );
+    }
+  );
+}
+
+
+/* ---------------------------------------------------------
+   CLOSE FROM BACKDROP
+--------------------------------------------------------- */
+
+function ksCloseFromBackdrop(
+  overlay
+) {
+  if (!overlay) {
+    return false;
+  }
+
+  const closeButton =
+    ksFindCloseButton(
+      overlay
+    );
+
+  if (closeButton) {
+    closeButton.click();
+    return true;
+  }
+
+  /*
+     Many components already attach
+     their own click handler directly
+     to the backdrop.
+  */
+  overlay.dispatchEvent(
+    new MouseEvent(
+      "click",
+      {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+      }
+    )
+  );
+
+  return true;
+}
+
+
+/* =========================================================
+   GLOBAL POLICY HOOK
+========================================================= */
+
+function useKrishiSetuGlobalInteractionPolicy() {
+  useEffect(() => {
+    let locked = false;
+
+    const sync = () => {
+      ksNormaliseOverlayViewport();
+
+      const shouldLock =
+        ksHasClosingOverlay();
+
+      if (
+        shouldLock &&
+        !locked
+      ) {
+        ksLockDocument();
+        locked = true;
+      }
+
+      if (
+        !shouldLock &&
+        locked
+      ) {
+        ksUnlockDocument();
+        locked = false;
+      }
+    };
+
+
+    /* -----------------------------------------------------
+       WATCH REACT DOM CHANGES
+    ----------------------------------------------------- */
+
+    const observer =
+      new MutationObserver(
+        () => {
+          window.requestAnimationFrame(
+            sync
+          );
+        }
+      );
+
+    observer.observe(
+      document.body,
+      {
+        subtree: true,
+        childList: true,
+        attributes: true,
+        attributeFilter: [
+          "class",
+          "style",
+          "aria-hidden",
+          "open",
+        ],
+      }
+    );
+
+
+    /* -----------------------------------------------------
+       BACKDROP CLICK
+    ----------------------------------------------------- */
+
+    const handlePointerDown =
+      (event) => {
+        const target =
+          event.target;
+
+        if (
+          !(
+            target instanceof
+            Element
+          )
+        ) {
+          return;
+        }
+
+        const overlay =
+          ksGetBackdropRoot(
+            target
+          );
+
+        if (!overlay) {
+          return;
+        }
+
+        const classes =
+          typeof overlay.className ===
+          "string"
+            ? overlay.className.split(
+                /\s+/
+              )
+            : [];
+
+        if (
+          classes.some(
+            (name) =>
+              KS_NON_CLOSING_OVERLAYS.has(
+                name
+              )
+          )
+        ) {
+          return;
+        }
+
+        /*
+           Only a true backdrop click
+           closes the component.
+
+           Clicking inside the actual
+           modal content does nothing.
+        */
+        if (
+          target === overlay
+        ) {
+          event.preventDefault();
+          event.stopPropagation();
+
+          ksCloseFromBackdrop(
+            overlay
+          );
+        }
+      };
+
+
+    /* -----------------------------------------------------
+       WHEEL CONTROL
+    ----------------------------------------------------- */
+
+    const handleWheel =
+      (event) => {
+        const target =
+          event.target;
+
+        if (
+          !(
+            target instanceof
+            Element
+          )
+        ) {
+          return;
+        }
+
+
+        /* ================================================
+           SIDEBAR
+        ================================================ */
+
+        const sidebar =
+          target.closest(
+            ".admin-sidebar"
+          );
+
+        if (sidebar) {
+          const nav =
+            sidebar.querySelector(
+              ".admin-sidebar-nav"
+            );
+
+          /*
+             The page NEVER receives the
+             sidebar wheel event.
+          */
+          event.preventDefault();
+          event.stopPropagation();
+
+          if (
+            nav instanceof
+              HTMLElement &&
+            nav.scrollHeight >
+              nav.clientHeight +
+                1
+          ) {
+            nav.scrollTop +=
+              event.deltaY;
+
+            if (
+              event.deltaX !== 0 &&
+              nav.scrollWidth >
+                nav.clientWidth
+            ) {
+              nav.scrollLeft +=
+                event.deltaX;
+            }
+          }
+
+          return;
+        }
+
+
+        /* ================================================
+           MODALS / DRAWERS
+        ================================================ */
+
+        const overlays =
+          ksGetOpenOverlays();
+
+        if (
+          !overlays.length
+        ) {
+          return;
+        }
+
+        const overlay =
+          overlays.find(
+            (candidate) =>
+              candidate.contains(
+                target
+              )
+          );
+
+        if (!overlay) {
+          /*
+             Overlay exists:
+             background page is locked.
+          */
+          event.preventDefault();
+          event.stopPropagation();
+
+          return;
+        }
+
+        const scroller =
+          ksFindScrollableElement(
+            target,
+            overlay
+          );
+
+        /*
+           Always consume the wheel event
+           so it cannot reach the background.
+        */
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (
+          scroller
+        ) {
+          scroller.scrollTop +=
+            event.deltaY;
+
+          if (
+            event.deltaX !== 0 &&
+            scroller.scrollWidth >
+              scroller.clientWidth
+          ) {
+            scroller.scrollLeft +=
+              event.deltaX;
+          }
+        }
+      };
+
+
+    /* -----------------------------------------------------
+       ESCAPE = CLOSE TOPMOST MODAL
+    ----------------------------------------------------- */
+
+    const handleKeyDown =
+      (event) => {
+        if (
+          event.key !==
+          "Escape"
+        ) {
+          return;
+        }
+
+        const overlays =
+          ksGetOpenOverlays();
+
+        for (
+          let i =
+            overlays.length -
+            1;
+          i >= 0;
+          i -= 1
+        ) {
+          const overlay =
+            overlays[i];
+
+          const classes =
+            typeof overlay.className ===
+            "string"
+              ? overlay.className.split(
+                  /\s+/
+                )
+              : [];
+
+          if (
+            classes.some(
+              (name) =>
+                KS_NON_CLOSING_OVERLAYS.has(
+                  name
+                )
+            )
+          ) {
+            continue;
+          }
+
+          if (
+            ksCloseFromBackdrop(
+              overlay
+            )
+          ) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            return;
+          }
+        }
+      };
+
+
+    /* -----------------------------------------------------
+       CAPTURE PHASE
+       This is important: wheel is intercepted BEFORE it
+       can continue up to the document scroll container.
+    ----------------------------------------------------- */
+
+    document.addEventListener(
+      "wheel",
+      handleWheel,
+      {
+        capture: true,
+        passive: false,
+      }
+    );
+
+    document.addEventListener(
+      "pointerdown",
+      handlePointerDown,
+      true
+    );
+
+    document.addEventListener(
+      "keydown",
+      handleKeyDown,
+      true
+    );
+
+
+    /* Initial state */
+    sync();
+
+
+    /* -----------------------------------------------------
+       CLEANUP
+    ----------------------------------------------------- */
+
+    return () => {
+      observer.disconnect();
+
+      document.removeEventListener(
+        "wheel",
+        handleWheel,
+        true
+      );
+
+      document.removeEventListener(
+        "pointerdown",
+        handlePointerDown,
+        true
+      );
+
+      document.removeEventListener(
+        "keydown",
+        handleKeyDown,
+        true
+      );
+
+      if (locked) {
+        ksUnlockDocument();
+      }
+    };
+  }, []);
+}
+
+
+/* =========================================================
+   PORTAL WRAPPERS
+========================================================= */
+
 function FarmerPortalPage({
   children,
 }) {
@@ -86,7 +1369,13 @@ function AdminPortalPage({
 }
 
 
+/* =========================================================
+   APP
+========================================================= */
+
 function App() {
+  useKrishiSetuGlobalInteractionPolicy();
+
   return (
     <Routes>
 
@@ -151,7 +1440,6 @@ function App() {
         }
       />
 
-      {/* Existing farmer transport page */}
       <Route
         path="/farmer/transport"
         element={
@@ -161,7 +1449,6 @@ function App() {
         }
       />
 
-      {/* New Phase 2 farmer logistics hub */}
       <Route
         path="/farmer/logistics"
         element={
@@ -171,7 +1458,6 @@ function App() {
         }
       />
 
-      {/* New Phase 2 transport request */}
       <Route
         path="/farmer/transport/request"
         element={
@@ -181,7 +1467,6 @@ function App() {
         }
       />
 
-      {/* New Phase 2 farmer tracking */}
       <Route
         path="/farmer/transport/tracking/:id"
         element={
@@ -191,7 +1476,6 @@ function App() {
         }
       />
 
-      {/* Optional convenience route to logistics hub */}
       <Route
         path="/farmer/transport/tracking"
         element={
@@ -364,7 +1648,6 @@ function App() {
         }
       />
 
-      {/* New Phase 2 admin transport monitor */}
       <Route
         path="/admin/transport"
         element={
@@ -447,14 +1730,29 @@ function App() {
         element={
           <div
             style={{
-              minHeight: "100vh",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexDirection: "column",
-              gap: "10px",
-              padding: "40px",
-              textAlign: "center",
+              minHeight:
+                "100vh",
+
+              display:
+                "flex",
+
+              alignItems:
+                "center",
+
+              justifyContent:
+                "center",
+
+              flexDirection:
+                "column",
+
+              gap:
+                "10px",
+
+              padding:
+                "40px",
+
+              textAlign:
+                "center",
             }}
           >
             <h1>
@@ -462,7 +1760,8 @@ function App() {
             </h1>
 
             <p>
-              The page you are looking for does not exist.
+              The page you are looking
+              for does not exist.
             </p>
           </div>
         }

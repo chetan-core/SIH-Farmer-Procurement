@@ -235,6 +235,11 @@ const DEFAULT_SETTINGS = {
   transportEnabled:
     true,
 
+  /* Transport lifecycle notifications may also be sent by SMS when
+     global SMS is enabled and the farmer has a phone number. */
+  transportSmsEnabled:
+    true,
+
 };
 
 
@@ -405,6 +410,9 @@ async function ensureTransportTables() {
   const transporterColumns = [
     ['password_hash', 'TEXT'],
     ['password_salt', 'TEXT'],
+    ['accepts_emergency', 'BOOLEAN NOT NULL DEFAULT TRUE'],
+    ['accepts_scheduled', 'BOOLEAN NOT NULL DEFAULT TRUE'],
+    ['accepts_small_loads', 'BOOLEAN NOT NULL DEFAULT TRUE'],
     ['village', 'TEXT'],
     ['village_id', 'TEXT'],
     ['mandal', 'TEXT'],
@@ -555,6 +563,11 @@ async function ensureTransportTables() {
   `);
 
   await query(`
+    CREATE INDEX IF NOT EXISTS idx_transporters_location
+    ON transporters (is_online, current_lat, current_lng, service_radius_km)
+  `);
+
+  await query(`
     CREATE INDEX IF NOT EXISTS idx_transport_requests_status
     ON transport_requests (status, created_at DESC)
   `);
@@ -672,6 +685,1109 @@ function generateFarmerId() {
   );
 }
 
+
+
+/* =========================================================
+   FARMER ACCOUNT + LOCATION COLUMNS
+   Additive migration for existing farmer records.
+========================================================= */
+
+async function ensureFarmerProfileColumns() {
+  const columns = [
+    ["password_hash", "TEXT"],
+    ["password_salt", "TEXT"],
+    ["alternate_phone", "TEXT"],
+    ["state", "TEXT"],
+    ["district", "TEXT"],
+    ["mandal", "TEXT"],
+    ["village_id", "TEXT"],
+    ["pincode", "TEXT"],
+    ["farm_address", "TEXT"],
+    ["landmark", "TEXT"],
+    ["farm_size_acres", "NUMERIC"],
+    ["irrigation_type", "TEXT"],
+    ["current_lat", "DOUBLE PRECISION"],
+    ["current_lng", "DOUBLE PRECISION"],
+    ["location_accuracy_m", "DOUBLE PRECISION"],
+    ["location_source", "TEXT NOT NULL DEFAULT 'REGISTERED'"],
+    ["location_updated_at", "TIMESTAMPTZ"],
+    ["last_login_at", "TIMESTAMPTZ"],
+  ];
+
+  for (const [column, definition] of columns) {
+    await query(
+      `ALTER TABLE farmers ADD COLUMN IF NOT EXISTS ${column} ${definition}`
+    );
+  }
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_farmers_location
+    ON farmers (current_lat, current_lng, location_updated_at)
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_farmers_region
+    ON farmers (
+      LOWER(COALESCE(state_id, '')),
+      LOWER(COALESCE(district_id, '')),
+      LOWER(COALESCE(mandal_id, '')),
+      LOWER(COALESCE(village, ''))
+    )
+  `);
+}
+
+/* =========================================================
+   PRODUCTION LOCATION MASTER (NO DEMO DATA)
+========================================================= */
+
+async function ensureLocationMasterTables() {
+  await query(`
+    CREATE TABLE IF NOT EXISTS location_states (
+      id TEXT PRIMARY KEY,
+      code TEXT,
+      name TEXT NOT NULL,
+      state_type TEXT,
+      latitude DOUBLE PRECISION,
+      longitude DOUBLE PRECISION,
+      active BOOLEAN NOT NULL DEFAULT TRUE,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS location_districts (
+      id TEXT PRIMARY KEY,
+      state_id TEXT NOT NULL REFERENCES location_states(id) ON UPDATE CASCADE,
+      code TEXT,
+      name TEXT NOT NULL,
+      latitude DOUBLE PRECISION,
+      longitude DOUBLE PRECISION,
+      active BOOLEAN NOT NULL DEFAULT TRUE,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS location_mandals (
+      id TEXT PRIMARY KEY,
+      state_id TEXT NOT NULL REFERENCES location_states(id) ON UPDATE CASCADE,
+      district_id TEXT NOT NULL REFERENCES location_districts(id) ON UPDATE CASCADE,
+      code TEXT,
+      name TEXT NOT NULL,
+      latitude DOUBLE PRECISION,
+      longitude DOUBLE PRECISION,
+      active BOOLEAN NOT NULL DEFAULT TRUE,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS location_villages (
+      id TEXT PRIMARY KEY,
+      state_id TEXT NOT NULL REFERENCES location_states(id) ON UPDATE CASCADE,
+      district_id TEXT NOT NULL REFERENCES location_districts(id) ON UPDATE CASCADE,
+      mandal_id TEXT NOT NULL REFERENCES location_mandals(id) ON UPDATE CASCADE,
+      code TEXT,
+      name TEXT NOT NULL,
+      pincode TEXT,
+      latitude DOUBLE PRECISION,
+      longitude DOUBLE PRECISION,
+      active BOOLEAN NOT NULL DEFAULT TRUE,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_location_districts_state
+    ON location_districts (state_id, active, LOWER(name))
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_location_mandals_district
+    ON location_mandals (district_id, active, LOWER(name))
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_location_villages_mandal
+    ON location_villages (mandal_id, active, LOWER(name))
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_location_villages_geo
+    ON location_villages (latitude, longitude)
+  `);
+}
+
+function normalizeLocationText(value) {
+  return String(value || "").trim().replace(/\s+/g, " ");
+}
+
+function normalizeLocationId(value) {
+  return normalizeLocationText(value);
+}
+
+/*
+ * Current India State / Union Territory master.
+ * This is not demo farmer data; it is the administrative list used only
+ * as a guaranteed fallback for the State selector. GPS reverse-geocoding
+ * remains the primary way to select the farmer's actual location.
+ */
+const OFFICIAL_INDIA_REGIONS = [
+  ["IN-AP", "Andhra Pradesh", "STATE"],
+  ["IN-AR", "Arunachal Pradesh", "STATE"],
+  ["IN-AS", "Assam", "STATE"],
+  ["IN-BR", "Bihar", "STATE"],
+  ["IN-CT", "Chhattisgarh", "STATE"],
+  ["IN-GA", "Goa", "STATE"],
+  ["IN-GJ", "Gujarat", "STATE"],
+  ["IN-HR", "Haryana", "STATE"],
+  ["IN-HP", "Himachal Pradesh", "STATE"],
+  ["IN-JH", "Jharkhand", "STATE"],
+  ["IN-KA", "Karnataka", "STATE"],
+  ["IN-KL", "Kerala", "STATE"],
+  ["IN-MP", "Madhya Pradesh", "STATE"],
+  ["IN-MH", "Maharashtra", "STATE"],
+  ["IN-MN", "Manipur", "STATE"],
+  ["IN-ML", "Meghalaya", "STATE"],
+  ["IN-MZ", "Mizoram", "STATE"],
+  ["IN-NL", "Nagaland", "STATE"],
+  ["IN-OD", "Odisha", "STATE"],
+  ["IN-PB", "Punjab", "STATE"],
+  ["IN-RJ", "Rajasthan", "STATE"],
+  ["IN-SK", "Sikkim", "STATE"],
+  ["IN-TN", "Tamil Nadu", "STATE"],
+  ["IN-TG", "Telangana", "STATE"],
+  ["IN-TR", "Tripura", "STATE"],
+  ["IN-UP", "Uttar Pradesh", "STATE"],
+  ["IN-UK", "Uttarakhand", "STATE"],
+  ["IN-WB", "West Bengal", "STATE"],
+  ["IN-AN", "Andaman and Nicobar Islands", "UNION_TERRITORY"],
+  ["IN-CH", "Chandigarh", "UNION_TERRITORY"],
+  ["IN-DH", "Dadra and Nagar Haveli and Daman and Diu", "UNION_TERRITORY"],
+  ["IN-DL", "Delhi", "UNION_TERRITORY"],
+  ["IN-JK", "Jammu and Kashmir", "UNION_TERRITORY"],
+  ["IN-LA", "Ladakh", "UNION_TERRITORY"],
+  ["IN-LD", "Lakshadweep", "UNION_TERRITORY"],
+  ["IN-PY", "Puducherry", "UNION_TERRITORY"],
+].map(([id, name, stateType]) => ({ id, code: id, name, stateType }));
+
+function locationSlug(value) {
+  return normalizeLocationText(value)
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 120);
+}
+
+function findOfficialRegionByName(name) {
+  const normalized = normalizeLocationText(name).toLowerCase();
+  if (!normalized) return null;
+
+  return (
+    OFFICIAL_INDIA_REGIONS.find(
+      region => region.name.toLowerCase() === normalized
+    ) ||
+    OFFICIAL_INDIA_REGIONS.find(
+      region =>
+        region.name.toLowerCase().includes(normalized) ||
+        normalized.includes(region.name.toLowerCase())
+    ) ||
+    null
+  );
+}
+
+async function reverseGeocodeGps(lat, lng) {
+  const latitude = Number(lat);
+  const longitude = Number(lng);
+
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return null;
+  }
+
+  const userAgent =
+    process.env.GEOCODER_USER_AGENT ||
+    "KrishiSetu/1.0 (farmer-location-service)";
+
+  /*
+   * Provider 1: Nominatim/OpenStreetMap.
+   * The server, not the browser, calls the provider so the client only
+   * exposes the farmer's coordinates to our backend.
+   */
+  try {
+    const nominatimUrl =
+      "https://nominatim.openstreetmap.org/reverse" +
+      `?format=jsonv2&lat=${encodeURIComponent(latitude)}` +
+      `&lon=${encodeURIComponent(longitude)}` +
+      "&zoom=18&addressdetails=1&accept-language=en";
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+
+    const response = await fetch(nominatimUrl, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "User-Agent": userAgent,
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (response.ok) {
+      const data = await response.json();
+      const address = data?.address || {};
+
+      const state =
+        normalizeLocationText(address.state) ||
+        normalizeLocationText(address.region) ||
+        normalizeLocationText(address.state_district);
+
+      const district =
+        normalizeLocationText(address.state_district) ||
+        normalizeLocationText(address.district) ||
+        normalizeLocationText(address.county) ||
+        normalizeLocationText(address.city_district);
+
+      const mandal =
+        normalizeLocationText(address.subdistrict) ||
+        normalizeLocationText(address.tehsil) ||
+        normalizeLocationText(address.taluk) ||
+        normalizeLocationText(address.block) ||
+        normalizeLocationText(address.mandal) ||
+        normalizeLocationText(address.municipality);
+
+      const village =
+        normalizeLocationText(address.village) ||
+        normalizeLocationText(address.hamlet) ||
+        normalizeLocationText(address.locality) ||
+        normalizeLocationText(address.suburb) ||
+        normalizeLocationText(address.town) ||
+        normalizeLocationText(address.city);
+
+      const pincode = normalizeLocationText(address.postcode);
+
+      if (state || district || mandal || village) {
+        return {
+          provider: "NOMINATIM",
+          displayName: normalizeLocationText(data?.display_name),
+          state,
+          district,
+          mandal,
+          village,
+          pincode,
+          raw: data,
+        };
+      }
+    }
+  } catch (error) {
+    console.warn("Nominatim reverse geocoding failed:", error?.message || error);
+  }
+
+  /*
+   * Provider 2: BigDataCloud. This fallback is useful when Nominatim is
+   * temporarily unavailable.
+   */
+  try {
+    const bdcUrl =
+      "https://api.bigdatacloud.net/data/reverse-geocode-client" +
+      `?latitude=${encodeURIComponent(latitude)}` +
+      `&longitude=${encodeURIComponent(longitude)}` +
+      "&localityLanguage=en";
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+
+    const response = await fetch(bdcUrl, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        "User-Agent": userAgent,
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+
+    if (response.ok) {
+      const data = await response.json();
+      const administrative = Array.isArray(
+        data?.localityInfo?.administrative
+      )
+        ? data.localityInfo.administrative
+        : [];
+
+      const names = administrative
+        .map(item => normalizeLocationText(item?.name))
+        .filter(Boolean);
+
+      const state =
+        normalizeLocationText(data?.principalSubdivision) ||
+        names.find(name => Boolean(findOfficialRegionByName(name))) ||
+        "";
+
+      const district =
+        normalizeLocationText(data?.cityDistrict) ||
+        normalizeLocationText(data?.district) ||
+        normalizeLocationText(data?.localityInfo?.administrativeArea) ||
+        names.find(
+          name =>
+            name &&
+            name.toLowerCase() !== state.toLowerCase() &&
+            /district/i.test(name)
+        ) ||
+        "";
+
+      const mandal =
+        normalizeLocationText(data?.locality) ||
+        normalizeLocationText(data?.city) ||
+        normalizeLocationText(data?.town) ||
+        "";
+
+      const village =
+        normalizeLocationText(data?.village) ||
+        normalizeLocationText(data?.locality) ||
+        normalizeLocationText(data?.city) ||
+        "";
+
+      const pincode =
+        normalizeLocationText(data?.postcode) ||
+        normalizeLocationText(data?.postCode);
+
+      if (state || district || mandal || village) {
+        return {
+          provider: "BIGDATACLOUD",
+          displayName:
+            normalizeLocationText(data?.locality) ||
+            normalizeLocationText(data?.city) ||
+            "",
+          state,
+          district,
+          mandal,
+          village,
+          pincode,
+          raw: data,
+        };
+      }
+    }
+  } catch (error) {
+    console.warn(
+      "BigDataCloud reverse geocoding failed:",
+      error?.message || error
+    );
+  }
+
+  return null;
+}
+
+async function upsertGpsResolvedLocation(resolved, lat, lng) {
+  const stateName = normalizeLocationText(resolved?.state);
+  const districtName = normalizeLocationText(resolved?.district);
+  const mandalName = normalizeLocationText(resolved?.mandal);
+  const villageName = normalizeLocationText(resolved?.village);
+  const pincode = normalizeLocationText(resolved?.pincode);
+
+  if (!stateName) return null;
+
+  const officialRegion = findOfficialRegionByName(stateName);
+  const stateId =
+    officialRegion?.id ||
+    `LIVE-STATE-${locationSlug(stateName).toUpperCase()}`;
+  const stateCode = officialRegion?.code || stateId;
+
+  /*
+   * Reuse an already imported official state where possible; otherwise
+   * persist the GPS-resolved state as a real location record.
+   */
+  const existingState = await get(
+    `
+      SELECT id, code, name, state_type
+      FROM location_states
+      WHERE active = TRUE
+        AND (
+          id = $1
+          OR LOWER(name) = LOWER($2)
+        )
+      ORDER BY
+        CASE WHEN id = $1 THEN 0 ELSE 1 END
+      LIMIT 1
+    `,
+    [stateId, stateName]
+  );
+
+  const actualStateId = existingState?.id || stateId;
+
+  await query(
+    `
+      INSERT INTO location_states (
+        id, code, name, state_type, latitude, longitude, active, updated_at
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,TRUE,CURRENT_TIMESTAMP)
+      ON CONFLICT (id) DO UPDATE SET
+        code = COALESCE(EXCLUDED.code, location_states.code),
+        name = EXCLUDED.name,
+        state_type = COALESCE(EXCLUDED.state_type, location_states.state_type),
+        latitude = COALESCE(EXCLUDED.latitude, location_states.latitude),
+        longitude = COALESCE(EXCLUDED.longitude, location_states.longitude),
+        active = TRUE,
+        updated_at = CURRENT_TIMESTAMP
+    `,
+    [
+      actualStateId,
+      stateCode,
+      stateName,
+      officialRegion?.stateType || "STATE",
+      Number.isFinite(Number(lat)) ? Number(lat) : null,
+      Number.isFinite(Number(lng)) ? Number(lng) : null,
+    ]
+  );
+
+  let district = null;
+  if (districtName) {
+    district =
+      (await get(
+        `
+          SELECT *
+          FROM location_districts
+          WHERE active = TRUE
+            AND state_id = $1
+            AND LOWER(name) = LOWER($2)
+          LIMIT 1
+        `,
+        [actualStateId, districtName]
+      )) || null;
+
+    const districtId =
+      district?.id ||
+      `LIVE-DIST-${locationSlug(actualStateId)}-${locationSlug(
+        districtName
+      )}`;
+
+    await query(
+      `
+        INSERT INTO location_districts (
+          id, state_id, code, name, latitude, longitude, active, updated_at
+        )
+        VALUES ($1,$2,$3,$4,$5,$6,TRUE,CURRENT_TIMESTAMP)
+        ON CONFLICT (id) DO UPDATE SET
+          state_id = EXCLUDED.state_id,
+          name = EXCLUDED.name,
+          latitude = COALESCE(EXCLUDED.latitude, location_districts.latitude),
+          longitude = COALESCE(EXCLUDED.longitude, location_districts.longitude),
+          active = TRUE,
+          updated_at = CURRENT_TIMESTAMP
+      `,
+      [
+        districtId,
+        actualStateId,
+        null,
+        districtName,
+        null,
+        null,
+      ]
+    );
+
+    district = await get(
+      `SELECT * FROM location_districts WHERE id = $1 LIMIT 1`,
+      [districtId]
+    );
+  }
+
+  let mandal = null;
+  if (mandalName && district?.id) {
+    mandal =
+      (await get(
+        `
+          SELECT *
+          FROM location_mandals
+          WHERE active = TRUE
+            AND district_id = $1
+            AND LOWER(name) = LOWER($2)
+          LIMIT 1
+        `,
+        [district.id, mandalName]
+      )) || null;
+
+    const mandalId =
+      mandal?.id ||
+      `LIVE-MANDAL-${locationSlug(district.id)}-${locationSlug(
+        mandalName
+      )}`;
+
+    await query(
+      `
+        INSERT INTO location_mandals (
+          id, state_id, district_id, code, name, latitude, longitude, active, updated_at
+        )
+        VALUES ($1,$2,$3,$4,$5,$6,$7,TRUE,CURRENT_TIMESTAMP)
+        ON CONFLICT (id) DO UPDATE SET
+          state_id = EXCLUDED.state_id,
+          district_id = EXCLUDED.district_id,
+          name = EXCLUDED.name,
+          latitude = COALESCE(EXCLUDED.latitude, location_mandals.latitude),
+          longitude = COALESCE(EXCLUDED.longitude, location_mandals.longitude),
+          active = TRUE,
+          updated_at = CURRENT_TIMESTAMP
+      `,
+      [
+        mandalId,
+        actualStateId,
+        district.id,
+        null,
+        mandalName,
+        null,
+        null,
+      ]
+    );
+
+    mandal = await get(
+      `SELECT * FROM location_mandals WHERE id = $1 LIMIT 1`,
+      [mandalId]
+    );
+  }
+
+  let village = null;
+  if (villageName && mandal?.id && district?.id) {
+    village =
+      (await get(
+        `
+          SELECT *
+          FROM location_villages
+          WHERE active = TRUE
+            AND mandal_id = $1
+            AND LOWER(name) = LOWER($2)
+          LIMIT 1
+        `,
+        [mandal.id, villageName]
+      )) || null;
+
+    const villageId =
+      village?.id ||
+      `LIVE-VILLAGE-${locationSlug(mandal.id)}-${locationSlug(
+        villageName
+      )}`;
+
+    await query(
+      `
+        INSERT INTO location_villages (
+          id, state_id, district_id, mandal_id, code, name, pincode,
+          latitude, longitude, active, updated_at
+        )
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,TRUE,CURRENT_TIMESTAMP)
+        ON CONFLICT (id) DO UPDATE SET
+          state_id = EXCLUDED.state_id,
+          district_id = EXCLUDED.district_id,
+          mandal_id = EXCLUDED.mandal_id,
+          name = EXCLUDED.name,
+          pincode = COALESCE(EXCLUDED.pincode, location_villages.pincode),
+          latitude = COALESCE(EXCLUDED.latitude, location_villages.latitude),
+          longitude = COALESCE(EXCLUDED.longitude, location_villages.longitude),
+          active = TRUE,
+          updated_at = CURRENT_TIMESTAMP
+      `,
+      [
+        villageId,
+        actualStateId,
+        district.id,
+        mandal.id,
+        null,
+        villageName,
+        pincode || null,
+        Number(lat),
+        Number(lng),
+      ]
+    );
+
+    village = await get(
+      `SELECT * FROM location_villages WHERE id = $1 LIMIT 1`,
+      [villageId]
+    );
+  }
+
+  return {
+    stateId: actualStateId,
+    state: stateName,
+    stateCode,
+    districtId: district?.id || null,
+    district: district?.name || districtName || "",
+    districtCode: district?.code || "",
+    mandalId: mandal?.id || null,
+    mandal: mandal?.name || mandalName || "",
+    mandalCode: mandal?.code || "",
+    villageId: village?.id || null,
+    village: village?.name || villageName || "",
+    villageCode: village?.code || "",
+    pincode: village?.pincode || pincode || "",
+  };
+}
+
+async function countLocationMasterRows() {
+  const row = await get(`
+    SELECT
+      (SELECT COUNT(*) FROM location_states WHERE active = TRUE) AS states,
+      (SELECT COUNT(*) FROM location_districts WHERE active = TRUE) AS districts,
+      (SELECT COUNT(*) FROM location_mandals WHERE active = TRUE) AS mandals,
+      (SELECT COUNT(*) FROM location_villages WHERE active = TRUE) AS villages
+  `);
+
+  return {
+    states: Number(row?.states || 0),
+    districts: Number(row?.districts || 0),
+    mandals: Number(row?.mandals || 0),
+    villages: Number(row?.villages || 0),
+  };
+}
+
+app.get("/api/locations/states", async (req, res) => {
+  try {
+    const search = normalizeLocationText(req.query?.q).toLowerCase();
+
+    const dbStates = await all(`
+      SELECT id, code, name, state_type, latitude, longitude
+      FROM location_states
+      WHERE active = TRUE
+        AND (
+          $1 = ''
+          OR name ILIKE '%' || $1 || '%'
+          OR code ILIKE '%' || $1 || '%'
+        )
+      ORDER BY name ASC
+    `, [search]);
+
+    const merged = new Map();
+
+    OFFICIAL_INDIA_REGIONS
+      .filter(region =>
+        !search ||
+        region.name.toLowerCase().includes(search) ||
+        region.code.toLowerCase().includes(search)
+      )
+      .forEach(region => merged.set(region.id, region));
+
+    dbStates.forEach(state => {
+      merged.set(
+        state.id,
+        {
+          ...state,
+          stateType: state.state_type || state.stateType || "STATE",
+        }
+      );
+    });
+
+    const states = [...merged.values()].sort((a, b) =>
+      String(a.name).localeCompare(String(b.name))
+    );
+
+    res.json({
+      success: true,
+      states,
+      count: states.length,
+      source: dbStates.length ? "LOCATION_MASTER+OFFICIAL" : "OFFICIAL_STATE_MASTER",
+    });
+  } catch (error) {
+    console.error("Location states error:", error);
+    res.status(500).json({ success: false, message: "Failed to load states." });
+  }
+});
+
+app.get("/api/locations/districts", async (req, res) => {
+  try {
+    const stateId = normalizeLocationId(req.query?.stateId ?? req.query?.state_id);
+    const search = normalizeLocationText(req.query?.q);
+
+    if (!stateId) {
+      return res.status(400).json({ success: false, message: "stateId is required." });
+    }
+
+    const districts = await all(`
+      SELECT id, state_id, code, name, latitude, longitude
+      FROM location_districts
+      WHERE active = TRUE
+        AND state_id = $1
+        AND (
+          $2 = ''
+          OR name ILIKE '%' || $2 || '%'
+          OR code ILIKE '%' || $2 || '%'
+        )
+      ORDER BY name ASC
+    `, [stateId, search]);
+
+    res.json({ success: true, districts, count: districts.length, source: "LOCATION_MASTER" });
+  } catch (error) {
+    console.error("Location districts error:", error);
+    res.status(500).json({ success: false, message: "Failed to load districts." });
+  }
+});
+
+app.get("/api/locations/mandals", async (req, res) => {
+  try {
+    const districtId = normalizeLocationId(req.query?.districtId ?? req.query?.district_id);
+    const search = normalizeLocationText(req.query?.q);
+
+    if (!districtId) {
+      return res.status(400).json({ success: false, message: "districtId is required." });
+    }
+
+    const mandals = await all(`
+      SELECT id, state_id, district_id, code, name, latitude, longitude
+      FROM location_mandals
+      WHERE active = TRUE
+        AND district_id = $1
+        AND (
+          $2 = ''
+          OR name ILIKE '%' || $2 || '%'
+          OR code ILIKE '%' || $2 || '%'
+        )
+      ORDER BY name ASC
+    `, [districtId, search]);
+
+    res.json({ success: true, mandals, count: mandals.length, source: "LOCATION_MASTER" });
+  } catch (error) {
+    console.error("Location mandals error:", error);
+    res.status(500).json({ success: false, message: "Failed to load mandals." });
+  }
+});
+
+app.get("/api/locations/villages", async (req, res) => {
+  try {
+    const mandalId = normalizeLocationId(req.query?.mandalId ?? req.query?.mandal_id);
+    const search = normalizeLocationText(req.query?.q);
+
+    if (!mandalId) {
+      return res.status(400).json({ success: false, message: "mandalId is required." });
+    }
+
+    const villages = await all(`
+      SELECT id, state_id, district_id, mandal_id, code, name, pincode, latitude, longitude
+      FROM location_villages
+      WHERE active = TRUE
+        AND mandal_id = $1
+        AND (
+          $2 = ''
+          OR name ILIKE '%' || $2 || '%'
+          OR code ILIKE '%' || $2 || '%'
+          OR pincode ILIKE '%' || $2 || '%'
+        )
+      ORDER BY name ASC
+    `, [mandalId, search]);
+
+    res.json({ success: true, villages, count: villages.length, source: "LOCATION_MASTER" });
+  } catch (error) {
+    console.error("Location villages error:", error);
+    res.status(500).json({ success: false, message: "Failed to load villages." });
+  }
+});
+
+app.get("/api/locations/resolve", async (req, res) => {
+  try {
+    const lat = parseCoordinate(
+      req.query?.lat ?? req.query?.latitude,
+      -90,
+      90
+    );
+    const lng = parseCoordinate(
+      req.query?.lng ?? req.query?.longitude,
+      -180,
+      180
+    );
+    const radiusKm = Math.min(
+      Math.max(Number(req.query?.radiusKm || 25), 1),
+      100
+    );
+
+    if (lat === null || lng === null) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid latitude and longitude are required.",
+      });
+    }
+
+    /*
+     * First use the official location master when it has village
+     * coordinates. This is the highest-confidence path.
+     */
+    const latDelta = radiusKm / 111.32;
+    const lngDelta =
+      radiusKm /
+      Math.max(
+        111.32 * Math.cos((Number(lat) * Math.PI) / 180),
+        0.01
+      );
+
+    const nearest = await get(`
+      SELECT
+        v.id AS village_id,
+        v.name AS village_name,
+        v.code AS village_code,
+        v.pincode,
+        m.id AS mandal_id,
+        m.name AS mandal_name,
+        m.code AS mandal_code,
+        d.id AS district_id,
+        d.name AS district_name,
+        d.code AS district_code,
+        s.id AS state_id,
+        s.name AS state_name,
+        s.code AS state_code,
+        (
+          6371 * 2 * ASIN(
+            SQRT(
+              POWER(SIN(RADIANS(v.latitude - $1) / 2), 2) +
+              COS(RADIANS($1)) *
+              COS(RADIANS(v.latitude)) *
+              POWER(SIN(RADIANS(v.longitude - $2) / 2), 2)
+            )
+          )
+        ) AS distance_km
+      FROM location_villages v
+      INNER JOIN location_mandals m ON m.id = v.mandal_id
+      INNER JOIN location_districts d ON d.id = v.district_id
+      INNER JOIN location_states s ON s.id = v.state_id
+      WHERE
+        v.active = TRUE
+        AND m.active = TRUE
+        AND d.active = TRUE
+        AND s.active = TRUE
+        AND v.latitude IS NOT NULL
+        AND v.longitude IS NOT NULL
+        AND v.latitude BETWEEN $3 AND $4
+        AND v.longitude BETWEEN $5 AND $6
+      ORDER BY distance_km ASC
+      LIMIT 1
+    `, [
+      Number(lat),
+      Number(lng),
+      Number(lat) - latDelta,
+      Number(lat) + latDelta,
+      Number(lng) - lngDelta,
+      Number(lng) + lngDelta,
+    ]);
+
+    if (nearest) {
+      const distanceKm = Number(nearest.distance_km);
+
+      if (
+        Number.isFinite(distanceKm) &&
+        distanceKm <= radiusKm
+      ) {
+        return res.json({
+          success: true,
+          source: "LOCATION_MASTER",
+          confidence:
+            distanceKm <= 2
+              ? "HIGH"
+              : distanceKm <= 8
+                ? "MEDIUM"
+                : "LOW",
+          distanceKm: Number(distanceKm.toFixed(3)),
+          coordinates: {
+            lat: Number(lat),
+            lng: Number(lng),
+          },
+          location: {
+            stateId: nearest.state_id,
+            state: nearest.state_name,
+            stateCode: nearest.state_code,
+            districtId: nearest.district_id,
+            district: nearest.district_name,
+            districtCode: nearest.district_code,
+            mandalId: nearest.mandal_id,
+            mandal: nearest.mandal_name,
+            mandalCode: nearest.mandal_code,
+            villageId: nearest.village_id,
+            village: nearest.village_name,
+            villageCode: nearest.village_code,
+            pincode: nearest.pincode || "",
+          },
+        });
+      }
+    }
+
+    /*
+     * No location-master row yet? Resolve the actual current coordinates
+     * against a reverse-geocoding provider, persist the resolved hierarchy,
+     * and return it. This makes first-use GPS work without demo data.
+     */
+    const reverse = await reverseGeocodeGps(lat, lng);
+
+    if (!reverse) {
+      return res.status(404).json({
+        success: false,
+        code: "GPS_GEOCODING_UNAVAILABLE",
+        message:
+          "Your GPS was received, but the location service could not identify the administrative location. Please try again with location services enabled.",
+      });
+    }
+
+    const resolvedLocation = await upsertGpsResolvedLocation(
+      reverse,
+      lat,
+      lng
+    );
+
+    if (!resolvedLocation?.state) {
+      return res.status(404).json({
+        success: false,
+        code: "STATE_NOT_RESOLVED",
+        message:
+          "Your GPS was received, but the state could not be identified. Please try again.",
+      });
+    }
+
+    return res.json({
+      success: true,
+      source: reverse.provider,
+      confidence: "GPS_REVERSE_GEOCODED",
+      distanceKm: null,
+      coordinates: {
+        lat: Number(lat),
+        lng: Number(lng),
+      },
+      displayName: reverse.displayName || "",
+      location: resolvedLocation,
+    });
+  } catch (error) {
+    console.error("Location resolve error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to resolve GPS location.",
+    });
+  }
+});
+
+
+/*
+ * One protected import endpoint lets the deployment load the complete
+ * authoritative location dataset without embedding millions of rows
+ * in this source file.
+ */
+app.post("/api/admin/locations/import", async (req, res) => {
+  try {
+    const configuredKey = String(process.env.LOCATION_IMPORT_KEY || "").trim();
+    const providedKey = String(req.headers["x-location-import-key"] || "").trim();
+
+    if (!configuredKey || !providedKey || configuredKey !== providedKey) {
+      return res.status(401).json({ success: false, message: "Location import is not authorised." });
+    }
+
+    const body = req.body || {};
+    const states = Array.isArray(body.states) ? body.states : [];
+    const districts = Array.isArray(body.districts) ? body.districts : [];
+    const mandals = Array.isArray(body.mandals) ? body.mandals : [];
+    const villages = Array.isArray(body.villages) ? body.villages : [];
+
+    if (!states.length && !districts.length && !mandals.length && !villages.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Provide states, districts, mandals and villages.",
+      });
+    }
+
+    await transaction(async (client) => {
+      for (const row of states) {
+        const id = normalizeLocationId(row.id ?? row.stateId);
+        const name = normalizeLocationText(row.name ?? row.stateName);
+        if (!id || !name) continue;
+
+        await client.query(`
+          INSERT INTO location_states (id, code, name, state_type, latitude, longitude, active, updated_at)
+          VALUES ($1,$2,$3,$4,$5,$6,TRUE,CURRENT_TIMESTAMP)
+          ON CONFLICT (id) DO UPDATE SET
+            code = EXCLUDED.code, name = EXCLUDED.name, state_type = EXCLUDED.state_type,
+            latitude = EXCLUDED.latitude, longitude = EXCLUDED.longitude,
+            active = TRUE, updated_at = CURRENT_TIMESTAMP
+        `, [
+          id,
+          normalizeLocationText(row.code) || null,
+          name,
+          normalizeLocationText(row.stateType ?? row.type) || null,
+          parseCoordinate(row.latitude, -90, 90),
+          parseCoordinate(row.longitude, -180, 180),
+        ]);
+      }
+
+      for (const row of districts) {
+        const id = normalizeLocationId(row.id ?? row.districtId);
+        const stateId = normalizeLocationId(row.stateId ?? row.state_id);
+        const name = normalizeLocationText(row.name ?? row.districtName);
+        if (!id || !stateId || !name) continue;
+
+        await client.query(`
+          INSERT INTO location_districts (id, state_id, code, name, latitude, longitude, active, updated_at)
+          VALUES ($1,$2,$3,$4,$5,$6,TRUE,CURRENT_TIMESTAMP)
+          ON CONFLICT (id) DO UPDATE SET
+            state_id = EXCLUDED.state_id, code = EXCLUDED.code, name = EXCLUDED.name,
+            latitude = EXCLUDED.latitude, longitude = EXCLUDED.longitude,
+            active = TRUE, updated_at = CURRENT_TIMESTAMP
+        `, [
+          id, stateId, normalizeLocationText(row.code) || null, name,
+          parseCoordinate(row.latitude, -90, 90),
+          parseCoordinate(row.longitude, -180, 180),
+        ]);
+      }
+
+      for (const row of mandals) {
+        const id = normalizeLocationId(row.id ?? row.mandalId ?? row.subDistrictId);
+        const districtId = normalizeLocationId(row.districtId ?? row.district_id);
+        const stateId = normalizeLocationId(row.stateId ?? row.state_id);
+        const name = normalizeLocationText(row.name ?? row.mandalName ?? row.subDistrictName);
+        if (!id || !districtId || !stateId || !name) continue;
+
+        await client.query(`
+          INSERT INTO location_mandals (id, state_id, district_id, code, name, latitude, longitude, active, updated_at)
+          VALUES ($1,$2,$3,$4,$5,$6,$7,TRUE,CURRENT_TIMESTAMP)
+          ON CONFLICT (id) DO UPDATE SET
+            state_id = EXCLUDED.state_id, district_id = EXCLUDED.district_id,
+            code = EXCLUDED.code, name = EXCLUDED.name,
+            latitude = EXCLUDED.latitude, longitude = EXCLUDED.longitude,
+            active = TRUE, updated_at = CURRENT_TIMESTAMP
+        `, [
+          id, stateId, districtId, normalizeLocationText(row.code) || null, name,
+          parseCoordinate(row.latitude, -90, 90),
+          parseCoordinate(row.longitude, -180, 180),
+        ]);
+      }
+
+      for (const row of villages) {
+        const id = normalizeLocationId(row.id ?? row.villageId);
+        const stateId = normalizeLocationId(row.stateId ?? row.state_id);
+        const districtId = normalizeLocationId(row.districtId ?? row.district_id);
+        const mandalId = normalizeLocationId(row.mandalId ?? row.mandal_id ?? row.subDistrictId);
+        const name = normalizeLocationText(row.name ?? row.villageName);
+        if (!id || !stateId || !districtId || !mandalId || !name) continue;
+
+        await client.query(`
+          INSERT INTO location_villages (
+            id, state_id, district_id, mandal_id, code, name, pincode,
+            latitude, longitude, active, updated_at
+          )
+          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,TRUE,CURRENT_TIMESTAMP)
+          ON CONFLICT (id) DO UPDATE SET
+            state_id = EXCLUDED.state_id, district_id = EXCLUDED.district_id,
+            mandal_id = EXCLUDED.mandal_id, code = EXCLUDED.code, name = EXCLUDED.name,
+            pincode = EXCLUDED.pincode, latitude = EXCLUDED.latitude,
+            longitude = EXCLUDED.longitude, active = TRUE, updated_at = CURRENT_TIMESTAMP
+        `, [
+          id, stateId, districtId, mandalId,
+          normalizeLocationText(row.code) || null, name,
+          normalizeLocationText(row.pincode ?? row.pinCode) || null,
+          parseCoordinate(row.latitude, -90, 90),
+          parseCoordinate(row.longitude, -180, 180),
+        ]);
+      }
+    });
+
+    res.json({
+      success: true,
+      message: "Location master imported successfully.",
+      counts: await countLocationMasterRows(),
+    });
+  } catch (error) {
+    console.error("Location import error:", error);
+    res.status(500).json({ success: false, message: error?.message || "Failed to import location master." });
+  }
+});
 
 /* =========================================================
    FARMER LOOKUP HELPERS
@@ -1365,7 +2481,13 @@ function sameTransportRegion(transporter, request) {
   const stateIdA = normaliseRegion(transporter?.state_id);
   const stateIdB = normaliseRegion(request?.farmer_state_id);
 
-  if (villageIdA && villageIdB && villageIdA === villageIdB && districtIdA === districtIdB && stateIdA === stateIdB) {
+  if (
+    villageIdA &&
+    villageIdB &&
+    villageIdA === villageIdB &&
+    districtIdA === districtIdB &&
+    stateIdA === stateIdB
+  ) {
     return true;
   }
 
@@ -1376,7 +2498,17 @@ function sameTransportRegion(transporter, request) {
   const rd = normaliseRegion(request?.farmer_district || request?.district);
   const rs = normaliseRegion(request?.farmer_state || request?.state);
 
-  return Boolean(tv && td && ts && rv && rd && rs && tv === rv && td === rd && ts === rs);
+  return Boolean(
+    tv &&
+      td &&
+      ts &&
+      rv &&
+      rd &&
+      rs &&
+      tv === rv &&
+      td === rd &&
+      ts === rs
+  );
 }
 
 async function getTransportRegionForFarmer(farmerId) {
@@ -1384,6 +2516,7 @@ async function getTransportRegionForFarmer(farmerId) {
   if (!farmer) return null;
   return {
     village: String(farmer.village || '').trim(),
+    villageId: String(farmer.village_id || '').trim(),
     mandal: String(farmer.mandal_id || '').trim(),
     district: String(farmer.district_id || '').trim(),
     state: String(farmer.state_id || '').trim(),
@@ -1393,7 +2526,11 @@ async function getTransportRegionForFarmer(farmerId) {
 
 async function getTransportRejectionIds(transporterId, requestIds = []) {
   if (!transporterId || !requestIds.length) return new Set();
-  const placeholders = requestIds.map((_, index) => `$${index + 2}`).join(', ');
+
+  const placeholders = requestIds
+    .map((_, index) => `$${index + 2}`)
+    .join(', ');
+
   const rows = await all(
     `
       SELECT request_id
@@ -1403,29 +2540,125 @@ async function getTransportRejectionIds(transporterId, requestIds = []) {
     `,
     [transporterId, ...requestIds]
   );
+
   return new Set(rows.map(row => String(row.request_id)));
 }
 
-async function assertTransportRegionMatch(transporter, request) {
-  const transporterRegion = {
-    village: transporter?.village,
-    village_id: transporter?.village_id,
-    district: transporter?.district,
-    district_id: transporter?.district_id,
-    state: transporter?.state,
-    state_id: transporter?.state_id,
-  };
-  const requestRegion = {
-    farmer_village: request?.farmer_village || request?.village,
-    farmer_village_id: request?.farmer_village_id,
-    farmer_district: request?.farmer_district || request?.district,
-    farmer_district_id: request?.farmer_district_id,
-    farmer_state: request?.farmer_state || request?.state,
-    farmer_state_id: request?.farmer_state_id,
-  };
+/*
+ * Single source of truth for transporter eligibility.
+ *
+ * Primary rule:
+ *   online + enough capacity + both GPS locations + within the
+ *   transporter's configured service radius.
+ *
+ * Fallback:
+ *   if GPS cannot be compared, use registered service-region matching.
+ *
+ * This keeps farmer matching, transporter job lists and job acceptance
+ * consistent.
+ */
+function isTransporterEligible(transporter, request) {
+  if (!transporter || !request) return false;
 
-  if (!sameTransportRegion(transporterRegion, requestRegion)) {
-    const error = new Error('Transporter and farmer are outside the allowed service village/region.');
+  if (transporter.is_online !== true) return false;
+
+  const capacity = Number(transporter.capacity_kg);
+  const quantity = Number(request.quantity_kg);
+
+  if (
+    !Number.isFinite(capacity) ||
+    !Number.isFinite(quantity) ||
+    quantity <= 0 ||
+    capacity < quantity
+  ) {
+    return false;
+  }
+
+  const farmerLat = parseCoordinate(
+    request?.pickup_lat ?? request?.pickupLat,
+    -90,
+    90
+  );
+
+  const farmerLng = parseCoordinate(
+    request?.pickup_lng ?? request?.pickupLng,
+    -180,
+    180
+  );
+
+  const transporterLat = parseCoordinate(
+    transporter?.current_lat ?? transporter?.currentLat,
+    -90,
+    90
+  );
+
+  const transporterLng = parseCoordinate(
+    transporter?.current_lng ?? transporter?.currentLng,
+    -180,
+    180
+  );
+
+  const hasComparableGps =
+    farmerLat !== null &&
+    farmerLng !== null &&
+    transporterLat !== null &&
+    transporterLng !== null;
+
+  if (hasComparableGps) {
+    const distanceKm = calculateDistanceKm(
+      farmerLat,
+      farmerLng,
+      transporterLat,
+      transporterLng
+    );
+
+    const serviceRadiusKm = Number(
+      transporter.service_radius_km
+    );
+
+    /*
+     * When a positive service radius is configured, GPS distance is
+     * authoritative. Do not reject a nearby transporter because their
+     * registered village label is different.
+     */
+    if (
+      distanceKm !== null &&
+      Number.isFinite(serviceRadiusKm) &&
+      serviceRadiusKm > 0
+    ) {
+      return distanceKm <= serviceRadiusKm;
+    }
+  }
+
+  /*
+   * Old/incomplete records may not have current GPS or may have a zero
+   * service radius. Keep them usable through the registered region.
+   */
+  return sameTransportRegion(
+    {
+      village: transporter?.village,
+      village_id: transporter?.village_id,
+      district: transporter?.district,
+      district_id: transporter?.district_id,
+      state: transporter?.state,
+      state_id: transporter?.state_id,
+    },
+    {
+      farmer_village: request?.farmer_village || request?.village,
+      farmer_village_id: request?.farmer_village_id,
+      farmer_district: request?.farmer_district || request?.district,
+      farmer_district_id: request?.farmer_district_id,
+      farmer_state: request?.farmer_state || request?.state,
+      farmer_state_id: request?.farmer_state_id,
+    }
+  );
+}
+
+async function assertTransportRegionMatch(transporter, request) {
+  if (!isTransporterEligible(transporter, request)) {
+    const error = new Error(
+      'Transporter is outside the allowed pickup radius or service region, or cannot carry this load.'
+    );
     error.code = 'TRANSPORT_REGION_MISMATCH';
     throw error;
   }
@@ -1441,8 +2674,48 @@ async function hashTransporterPassword(password, salt = crypto.randomBytes(16).t
 function verifyTransporterPassword(password, salt, expectedHash) {
   if (!password || !salt || !expectedHash) return false;
   const actual = crypto.scryptSync(String(password), salt, 64).toString('hex');
-  return crypto.timingSafeEqual(Buffer.from(actual, 'hex'), Buffer.from(expectedHash, 'hex'));
+  return crypto.timingSafeEqual(
+    Buffer.from(actual, 'hex'),
+    Buffer.from(expectedHash, 'hex')
+  );
 }
+
+async function hashFarmerPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
+  const value = String(password || "");
+  if (value.length < 6) {
+    throw new Error("Password must contain at least 6 characters.");
+  }
+
+  const hash = crypto.scryptSync(value, salt, 64).toString("hex");
+  return { hash, salt };
+}
+
+function verifyFarmerPassword(password, salt, expectedHash) {
+  if (!password || !salt || !expectedHash) return false;
+
+  try {
+    const actual = crypto.scryptSync(
+      String(password),
+      salt,
+      64
+    ).toString("hex");
+
+    const actualBuffer = Buffer.from(actual, "hex");
+    const expectedBuffer = Buffer.from(expectedHash, "hex");
+
+    if (actualBuffer.length !== expectedBuffer.length) {
+      return false;
+    }
+
+    return crypto.timingSafeEqual(
+      actualBuffer,
+      expectedBuffer
+    );
+  } catch {
+    return false;
+  }
+}
+
 
 async function getTransportCandidates({
   pickupLat,
@@ -1461,9 +2734,13 @@ async function getTransportCandidates({
         vehicle_number,
         capacity_kg,
         village,
+        village_id,
         mandal,
+        mandal_id,
         district,
+        district_id,
         state,
+        state_id,
         pincode,
         service_radius_km,
         is_verified,
@@ -1480,58 +2757,59 @@ async function getTransportCandidates({
       WHERE is_online = TRUE
         AND capacity_kg >= $1
         AND (
-          (
-            NULLIF($2, '') IS NOT NULL
-            AND LOWER(COALESCE(village_id,'')) = LOWER($2)
-            AND LOWER(COALESCE(district_id,'')) = LOWER($3)
-            AND LOWER(COALESCE(state_id,'')) = LOWER($4)
-          )
-          OR
-          (
-            NULLIF($2, '') IS NULL
-            AND LOWER(COALESCE(village,'')) = LOWER($5)
-            AND LOWER(COALESCE(district,'')) = LOWER($6)
-            AND LOWER(COALESCE(state,'')) = LOWER($7)
-          )
-        )
-        AND (
-          $8::text IS NULL
-          OR id != $8
+          $2::text IS NULL
+          OR id != $2
         )
     `,
     [
       Number(quantityKg),
-      String(request?.farmer_village_id || '').trim(),
-      String(request?.farmer_district_id || '').trim(),
-      String(request?.farmer_state_id || '').trim(),
-      String(request?.farmer_village || '').trim(),
-      String(request?.farmer_district || '').trim(),
-      String(request?.farmer_state || '').trim(),
       excludeTransporterId ? String(excludeTransporterId) : null,
     ]
   );
 
   return rows
-    .map(transporter => ({
-      ...transporter,
-      distanceKm: calculateDistanceKm(
+    .map(transporter => {
+      const distanceKm = calculateDistanceKm(
         pickupLat,
         pickupLng,
         transporter.current_lat,
         transporter.current_lng
-      ),
-    }))
+      );
+
+      return {
+        ...transporter,
+        distanceKm,
+        matchType:
+          distanceKm !== null &&
+          Number.isFinite(Number(transporter.service_radius_km)) &&
+          Number(transporter.service_radius_km) > 0
+            ? 'GPS_RADIUS'
+            : 'SERVICE_REGION',
+      };
+    })
+    .filter(transporter =>
+      isTransporterEligible(
+        transporter,
+        request || {
+          quantity_kg: quantityKg,
+          pickup_lat: pickupLat,
+          pickup_lng: pickupLng,
+        }
+      )
+    )
     .sort((a, b) => {
       const ad = a.distanceKm ?? Number.POSITIVE_INFINITY;
       const bd = b.distanceKm ?? Number.POSITIVE_INFINITY;
+
       if (ad !== bd) return ad - bd;
+
       const ar = Number(a.rating || 0);
       const br = Number(b.rating || 0);
       if (ar !== br) return br - ar;
+
       return Number(b.total_trips || 0) - Number(a.total_trips || 0);
     });
 }
-
 
 /* =========================================================
    TWILIO SMS
@@ -1841,6 +3119,105 @@ async function sendSms(
 
 
 /* =========================================================
+   TRANSPORT NOTIFICATION HELPERS
+========================================================= */
+
+function shouldSendTransportSms(settings, phone) {
+  return (
+    settings?.transportSmsEnabled !== false &&
+    SMS_ENABLED === true &&
+    Boolean(normalisePhone(phone))
+  );
+}
+
+async function notifyTransporterCandidates({
+  candidates = [],
+  request = null,
+}) {
+  if (
+    !SMS_ENABLED ||
+    !Array.isArray(candidates) ||
+    !candidates.length
+  ) {
+    return [];
+  }
+
+  const settings = await getSettings();
+
+  if (settings?.transportSmsEnabled === false) {
+    return [];
+  }
+
+  const results = [];
+
+  for (const candidate of candidates.slice(0, 10)) {
+    const phone = candidate?.phone;
+
+    if (!phone) continue;
+
+    try {
+      const result = await sendSms(phone);
+
+      results.push({
+        transporterId:
+          candidate?.id || null,
+        status:
+          result?.status || "FAILED",
+      });
+    } catch (error) {
+      console.error(
+        "Transporter candidate SMS error:",
+        error
+      );
+    }
+  }
+
+  return results;
+}
+
+async function notifyTransportFarmer({
+  request,
+  type,
+  title,
+  message,
+  settings = null,
+  sms = null,
+  phone = null,
+}) {
+  const resolvedSettings =
+    settings || (await getSettings());
+
+  const recipient =
+    phone ||
+    request?.farmer_phone ||
+    null;
+
+  const shouldSend =
+    sms === null
+      ? shouldSendTransportSms(
+          resolvedSettings,
+          recipient
+        )
+      : Boolean(sms);
+
+  return createNotification({
+    farmerId:
+      request?.farmer_id ||
+      null,
+    bookingId:
+      request?.booking_id ||
+      null,
+    type,
+    title,
+    message,
+    sms:
+      shouldSend,
+    phone:
+      recipient,
+  });
+}
+
+/* =========================================================
    NOTIFICATIONS
 ========================================================= */
 
@@ -2090,79 +3467,224 @@ app.get(
 
 app.post(
   "/api/farmers",
-  async (
-    req,
-    res
-  ) => {
-
+  async (req, res) => {
     try {
+      const incoming = req.body || {};
 
-      const incoming =
-        req.body ||
-        {};
+      const requestedId = String(
+        incoming.id || ""
+      ).trim();
 
+      const name = String(
+        incoming.name || ""
+      ).trim();
 
-      const requestedId =
-        String(
-          incoming.id ||
-          ""
-        ).trim();
+      const phone = normalisePhone(
+        incoming.phone
+      );
 
+      const password = String(
+        incoming.password || ""
+      ).trim();
 
-      const name =
-        String(
-          incoming.name ||
-          ""
-        ).trim();
+      const alternatePhone = normalisePhone(
+        incoming.alternatePhone ??
+        incoming.alternate_phone ??
+        ""
+      );
 
+      const stateId =
+        incoming.stateId ??
+        incoming.state_id ??
+        null;
 
-      const phone =
-        normalisePhone(
-          incoming.phone
-        );
+      const districtId =
+        incoming.districtId ??
+        incoming.district_id ??
+        null;
 
+      const mandalId =
+        incoming.mandalId ??
+        incoming.mandal_id ??
+        null;
 
-      if (
-        !name ||
-        phone.length !==
-        10
-      ) {
+      const state = String(
+        incoming.state ??
+        incoming.stateName ??
+        ""
+      ).trim();
 
-        return res
-          .status(400)
-          .json({
+      const district = String(
+        incoming.district ??
+        incoming.districtName ??
+        ""
+      ).trim();
 
-            success:
-              false,
+      const mandal = String(
+        incoming.mandal ??
+        incoming.mandalName ??
+        ""
+      ).trim();
 
-            message:
-              "Farmer name and valid 10-digit phone are required.",
+      const village = String(
+        incoming.village || ""
+      ).trim();
 
-          });
+      const pincode = String(
+        incoming.pincode ??
+        incoming.pinCode ??
+        ""
+      ).trim();
 
+      const farmAddress = String(
+        incoming.farmAddress ??
+        incoming.farm_address ??
+        incoming.address ??
+        ""
+      ).trim();
+
+      const landmark = String(
+        incoming.landmark || ""
+      ).trim();
+
+      const farmSizeAcresRaw =
+        incoming.farmSizeAcres ??
+        incoming.farm_size_acres;
+
+      const farmSizeAcres =
+        farmSizeAcresRaw === "" ||
+        farmSizeAcresRaw === null ||
+        farmSizeAcresRaw === undefined
+          ? null
+          : Number(farmSizeAcresRaw);
+
+      const irrigationType = String(
+        incoming.irrigationType ??
+        incoming.irrigation_type ??
+        ""
+      ).trim();
+
+      const currentLat = parseCoordinate(
+        incoming.currentLat ??
+        incoming.current_lat,
+        -90,
+        90
+      );
+
+      const currentLng = parseCoordinate(
+        incoming.currentLng ??
+        incoming.current_lng,
+        -180,
+        180
+      );
+
+      const accuracyRaw =
+        incoming.locationAccuracyM ??
+        incoming.location_accuracy_m;
+
+      const locationAccuracyM =
+        accuracyRaw === "" ||
+        accuracyRaw === null ||
+        accuracyRaw === undefined
+          ? null
+          : Number(accuracyRaw);
+
+      const locationSource = String(
+        incoming.locationSource ??
+        incoming.location_source ??
+        (
+          currentLat !== null &&
+          currentLng !== null
+            ? "GPS"
+            : "REGISTERED"
+        )
+      ).trim().toUpperCase() || "REGISTERED";
+
+      const language = String(
+        incoming.language || "en"
+      ).trim();
+
+      const preferredCenterId =
+        incoming.preferredCenterId ??
+        incoming.preferred_center_id ??
+        null;
+
+      const primaryCrop = String(
+        incoming.primaryCrop ??
+        incoming.primary_crop ??
+        ""
+      ).trim();
+
+      const estimatedQuantity = Number(
+        incoming.estimatedQuantity ??
+        incoming.estimated_quantity ??
+        0
+      );
+
+      if (!name || phone.length !== 10) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Farmer name and valid 10-digit phone are required.",
+        });
       }
 
-
-      let farmer =
-        await resolveFarmer({
-
-          farmerId:
-            requestedId,
-
-          phone,
-
+      if (
+        !["en", "hi", "te"].includes(language)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid language.",
         });
-
-
-      const farmerId =
-        farmer?.id ||
-        requestedId ||
-        generateFarmerId();
-
+      }
 
       if (
-        farmer
+        farmSizeAcres !== null &&
+        (!Number.isFinite(farmSizeAcres) ||
+          farmSizeAcres < 0)
       ) {
+        return res.status(400).json({
+          success: false,
+          message: "Farm size cannot be negative.",
+        });
+      }
+
+      if (
+        !Number.isFinite(estimatedQuantity) ||
+        estimatedQuantity < 0
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Quantity cannot be negative.",
+        });
+      }
+
+      if (
+        locationAccuracyM !== null &&
+        (!Number.isFinite(locationAccuracyM) ||
+          locationAccuracyM < 0)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Location accuracy is invalid.",
+        });
+      }
+
+      const existing = await resolveFarmer({
+        farmerId: requestedId,
+        phone,
+      });
+
+      if (existing) {
+        let passwordHash = existing.password_hash || null;
+        let passwordSalt = existing.password_salt || null;
+
+        if (password) {
+          const hashed =
+            await hashFarmerPassword(password);
+          passwordHash = hashed.hash;
+          passwordSalt = hashed.salt;
+        }
 
         await query(
           `
@@ -2170,62 +3692,77 @@ app.post(
             SET
               name = $1,
               phone = $2,
-              state_id = $3,
-              district_id = $4,
-              mandal_id = $5,
-              village = $6,
-              language = $7,
-              preferred_center_id = $8,
-              primary_crop = $9,
-              estimated_quantity = $10
-            WHERE id = $11
+              password_hash = COALESCE($3, password_hash),
+              password_salt = COALESCE($4, password_salt),
+              alternate_phone = $5,
+              state_id = $6,
+              district_id = $7,
+              mandal_id = $8,
+              state = $9,
+              district = $10,
+              mandal = $11,
+              village = $12,
+              pincode = $13,
+              farm_address = $14,
+              landmark = $15,
+              farm_size_acres = $16,
+              irrigation_type = $17,
+              language = $18,
+              preferred_center_id = $19,
+              primary_crop = $20,
+              estimated_quantity = $21,
+              current_lat = COALESCE($22, current_lat),
+              current_lng = COALESCE($23, current_lng),
+              location_accuracy_m = COALESCE($24, location_accuracy_m),
+              location_source =
+                CASE
+                  WHEN $22::double precision IS NOT NULL
+                    OR $23::double precision IS NOT NULL
+                  THEN $25
+                  ELSE COALESCE(location_source, 'REGISTERED')
+                END,
+              location_updated_at =
+                CASE
+                  WHEN $22::double precision IS NOT NULL
+                    OR $23::double precision IS NOT NULL
+                  THEN CURRENT_TIMESTAMP
+                  ELSE location_updated_at
+                END
+            WHERE id = $26
           `,
           [
-
             name,
-
             phone,
-
-            incoming.stateId ??
-              farmer.state_id ??
-              null,
-
-            incoming.districtId ??
-              farmer.district_id ??
-              null,
-
-            incoming.mandalId ??
-              farmer.mandal_id ??
-              null,
-
-            incoming.village ??
-              farmer.village ??
-              null,
-
-            incoming.language ||
-              farmer.language ||
-              "en",
-
-            incoming.preferredCenterId ??
-              farmer.preferred_center_id ??
-              null,
-
-            incoming.primaryCrop ??
-              farmer.primary_crop ??
-              null,
-
-            Number(
-              incoming.estimatedQuantity ??
-              farmer.estimated_quantity ??
-              0
-            ),
-
-            farmer.id,
-
+            passwordHash,
+            passwordSalt,
+            alternatePhone || null,
+            stateId,
+            districtId,
+            mandalId,
+            state || null,
+            district || null,
+            mandal || null,
+            village || null,
+            pincode || null,
+            farmAddress || null,
+            landmark || null,
+            farmSizeAcres,
+            irrigationType || null,
+            language,
+            preferredCenterId,
+            primaryCrop || null,
+            estimatedQuantity,
+            currentLat,
+            currentLng,
+            locationAccuracyM,
+            locationSource,
+            existing.id,
           ]
         );
-
       } else {
+        const hashed = password
+          ? await hashFarmerPassword(password)
+          : null;
 
         await query(
           `
@@ -2233,149 +3770,108 @@ app.post(
               id,
               name,
               phone,
+              password_hash,
+              password_salt,
+              alternate_phone,
               state_id,
               district_id,
               mandal_id,
+              state,
+              district,
+              mandal,
               village,
+              pincode,
+              farm_address,
+              landmark,
+              farm_size_acres,
+              irrigation_type,
               language,
               preferred_center_id,
               primary_crop,
-              estimated_quantity
+              estimated_quantity,
+              current_lat,
+              current_lng,
+              location_accuracy_m,
+              location_source,
+              location_updated_at
             )
             VALUES (
-              $1,
-              $2,
-              $3,
-              $4,
-              $5,
-              $6,
-              $7,
-              $8,
-              $9,
-              $10,
-              $11
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,
+              $14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,
+              CASE
+                WHEN $23::double precision IS NOT NULL OR $24::double precision IS NOT NULL
+                THEN COALESCE(NULLIF($26::text, ''), 'GPS')
+                ELSE 'REGISTERED'
+              END,
+              CASE
+                WHEN $23::double precision IS NOT NULL OR $24::double precision IS NOT NULL
+                THEN CURRENT_TIMESTAMP
+                ELSE NULL
+              END
             )
           `,
           [
-
-            farmerId,
-
+            generateFarmerId(),
             name,
-
             phone,
-
-            incoming.stateId ??
-              null,
-
-            incoming.districtId ??
-              null,
-
-            incoming.mandalId ??
-              null,
-
-            incoming.village ??
-              null,
-
-            incoming.language ||
-              "en",
-
-            incoming.preferredCenterId ??
-              null,
-
-            incoming.primaryCrop ??
-              null,
-
-            Number(
-              incoming.estimatedQuantity ||
-              0
-            ),
-
+            hashed?.hash || null,
+            hashed?.salt || null,
+            alternatePhone || null,
+            stateId,
+            districtId,
+            mandalId,
+            state || null,
+            district || null,
+            mandal || null,
+            village || null,
+            pincode || null,
+            farmAddress || null,
+            landmark || null,
+            farmSizeAcres,
+            irrigationType || null,
+            language,
+            preferredCenterId,
+            primaryCrop || null,
+            estimatedQuantity,
+            currentLat,
+            currentLng,
+            locationAccuracyM,
+            locationSource,
           ]
         );
-
       }
 
-
-      const saved =
-        await findFarmerById(
-          farmerId
-        );
-
-
-      console.log(
-        "FARMER SAVED:",
-        {
-
-          id:
-            saved?.id,
-
-          phone:
-            saved?.phone,
-
-          name:
-            saved?.name,
-
-        }
-      );
-
+      const saved = await findFarmerByPhone(phone);
 
       return res.json({
-
-        success:
-          true,
-
+        success: true,
         message:
-          "Farmer saved.",
-
-        farmer:
-          saved,
-
+          existing
+            ? "Farmer profile updated."
+            : "Farmer account saved.",
+        farmer: saved,
       });
-
-    } catch (
-      error
-    ) {
-
+    } catch (error) {
       console.error(
         "Create/update farmer error:",
         error
       );
 
-
-      if (
-        error?.code ===
-        "23505"
-      ) {
-
-        return res
-          .status(409)
-          .json({
-
-            success:
-              false,
-
-            message:
-              "A farmer with this phone number already exists.",
-
-          });
-
+      if (error?.code === "23505") {
+        return res.status(409).json({
+          success: false,
+          message:
+            "A farmer with this mobile number already exists.",
+        });
       }
 
-
-      return res
-        .status(500)
-        .json({
-
-          success:
-            false,
-
-          message:
-            "Failed to save farmer.",
-
-        });
-
+      return res.status(500).json({
+        success: false,
+        message:
+          error?.message ||
+          "Failed to save farmer.",
+      });
     }
-
   }
 );
 
@@ -2537,6 +4033,745 @@ app.get(
    FARMER BY ID
 ========================================================= */
 
+
+/* =========================================================
+   FARMER ACCOUNT REGISTRATION
+========================================================= */
+
+app.post(
+  "/api/farmers/register",
+  async (req, res) => {
+    try {
+      const body = req.body || {};
+      const name = String(body.name || "").trim();
+      const phone = normalisePhone(body.phone);
+      const password = String(body.password || "");
+
+      if (!name) {
+        return res.status(400).json({
+          success: false,
+          message: "Farmer name is required.",
+        });
+      }
+
+      if (phone.length !== 10) {
+        return res.status(400).json({
+          success: false,
+          message: "A valid 10-digit mobile number is required.",
+        });
+      }
+
+      if (password.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Password must contain at least 6 characters.",
+        });
+      }
+
+      if (
+        await findFarmerByPhone(phone)
+      ) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "A farmer account already exists for this mobile number.",
+        });
+      }
+
+      const hashed =
+        await hashFarmerPassword(password);
+
+      const stateId =
+        body.stateId ??
+        body.state_id ??
+        null;
+
+      const districtId =
+        body.districtId ??
+        body.district_id ??
+        null;
+
+      const mandalId =
+        body.mandalId ??
+        body.mandal_id ??
+        null;
+
+      const state = String(
+        body.state ??
+        body.stateName ??
+        ""
+      ).trim();
+
+      const district = String(
+        body.district ??
+        body.districtName ??
+        ""
+      ).trim();
+
+      const mandal = String(
+        body.mandal ??
+        body.mandalName ??
+        ""
+      ).trim();
+
+      const villageId = normalizeLocationId(
+        body.villageId ??
+        body.village_id ??
+        ""
+      );
+
+      const village = String(
+        body.village ??
+        body.villageName ??
+        ""
+      ).trim();
+
+      const pincode = String(
+        body.pincode ??
+        body.pinCode ??
+        ""
+      ).trim();
+
+      const currentLat = parseCoordinate(
+        body.currentLat ??
+        body.current_lat,
+        -90,
+        90
+      );
+
+      const currentLng = parseCoordinate(
+        body.currentLng ??
+        body.current_lng,
+        -180,
+        180
+      );
+
+      const accuracyRaw =
+        body.locationAccuracyM ??
+        body.location_accuracy_m;
+
+      const locationAccuracyM =
+        accuracyRaw === "" ||
+        accuracyRaw === null ||
+        accuracyRaw === undefined
+          ? null
+          : Number(accuracyRaw);
+
+      const alternatePhone =
+        normalisePhone(
+          body.alternatePhone ??
+          body.alternate_phone ??
+          ""
+        );
+
+      const farmSizeAcresRaw =
+        body.farmSizeAcres ??
+        body.farm_size_acres;
+
+      const farmSizeAcres =
+        farmSizeAcresRaw === "" ||
+        farmSizeAcresRaw === null ||
+        farmSizeAcresRaw === undefined
+          ? null
+          : Number(farmSizeAcresRaw);
+
+      if (
+        farmSizeAcres !== null &&
+        (!Number.isFinite(farmSizeAcres) ||
+          farmSizeAcres < 0)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Farm size cannot be negative.",
+        });
+      }
+
+      const estimatedQuantity = Number(
+        body.estimatedQuantity ??
+        body.estimated_quantity ??
+        0
+      );
+
+      if (
+        !Number.isFinite(estimatedQuantity) ||
+        estimatedQuantity < 0
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Quantity cannot be negative.",
+        });
+      }
+
+      const farmerId =
+        generateFarmerId();
+
+      await query(
+        `
+          INSERT INTO farmers (
+            id,
+            name,
+            phone,
+            password_hash,
+            password_salt,
+            alternate_phone,
+            state_id,
+            district_id,
+            mandal_id,
+            state,
+            district,
+            mandal,
+            village,
+            village_id,
+            pincode,
+            farm_address,
+            landmark,
+            farm_size_acres,
+            irrigation_type,
+            language,
+            preferred_center_id,
+            primary_crop,
+            estimated_quantity,
+            current_lat,
+            current_lng,
+            location_accuracy_m,
+            location_source,
+            location_updated_at
+          )
+          VALUES (
+            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,
+            $14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,
+            $26,
+            CASE
+              WHEN $24::double precision IS NOT NULL OR $25::double precision IS NOT NULL
+              THEN 'GPS'
+              ELSE 'REGISTERED'
+            END,
+            CASE
+              WHEN $24::double precision IS NOT NULL OR $25::double precision IS NOT NULL
+              THEN CURRENT_TIMESTAMP
+              ELSE NULL
+            END
+          )
+        `,
+        [
+          farmerId,
+          name,
+          phone,
+          hashed.hash,
+          hashed.salt,
+          alternatePhone || null,
+          stateId,
+          districtId,
+          mandalId,
+          state || null,
+          district || null,
+          mandal || null,
+          village || null,
+          villageId || null,
+          pincode || null,
+          String(
+            body.farmAddress ??
+            body.farm_address ??
+            body.address ??
+            ""
+          ).trim() || null,
+          String(body.landmark || "").trim() || null,
+          farmSizeAcres,
+          String(
+            body.irrigationType ??
+            body.irrigation_type ??
+            ""
+          ).trim() || null,
+          ["en", "hi", "te"].includes(
+            String(body.language || "en").trim()
+          )
+            ? String(body.language || "en").trim()
+            : "en",
+          body.preferredCenterId ??
+            body.preferred_center_id ??
+            null,
+          String(
+            body.primaryCrop ??
+            body.primary_crop ??
+            ""
+          ).trim() || null,
+          estimatedQuantity,
+          currentLat,
+          currentLng,
+          Number.isFinite(locationAccuracyM) &&
+          locationAccuracyM >= 0
+            ? locationAccuracyM
+            : null,
+        ]
+      );
+
+      const farmer =
+        await findFarmerById(farmerId);
+
+      return res.status(201).json({
+        success: true,
+        message:
+          "Farmer account created successfully.",
+        farmer,
+      });
+    } catch (error) {
+      console.error(
+        "Farmer registration error:",
+        error
+      );
+
+      if (error?.code === "23505") {
+        return res.status(409).json({
+          success: false,
+          message:
+            "This mobile number is already registered.",
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to register farmer.",
+      });
+    }
+  }
+);
+
+
+/* =========================================================
+   FARMER LOGIN
+========================================================= */
+
+app.post(
+  "/api/farmers/login",
+  async (req, res) => {
+    try {
+      const phone =
+        normalisePhone(
+          req.body?.phone
+        );
+
+      const password = String(
+        req.body?.password || ""
+      );
+
+      if (phone.length !== 10) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "A valid 10-digit mobile number is required.",
+        });
+      }
+
+      if (!password) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Password is required.",
+        });
+      }
+
+      const farmer =
+        await findFarmerByPhone(phone);
+
+      if (!farmer) {
+        return res.status(401).json({
+          success: false,
+          message:
+            "Invalid mobile number or password.",
+        });
+      }
+
+      if (
+        !farmer.password_hash ||
+        !farmer.password_salt
+      ) {
+        return res.status(409).json({
+          success: false,
+          code: "PASSWORD_NOT_SET",
+          message:
+            "This farmer account needs a password before it can be used for password login.",
+        });
+      }
+
+      if (
+        !verifyFarmerPassword(
+          password,
+          farmer.password_salt,
+          farmer.password_hash
+        )
+      ) {
+        return res.status(401).json({
+          success: false,
+          message:
+            "Invalid mobile number or password.",
+        });
+      }
+
+      await query(
+        `
+          UPDATE farmers
+          SET last_login_at = CURRENT_TIMESTAMP
+          WHERE id = $1
+        `,
+        [farmer.id]
+      );
+
+      const refreshed =
+        await findFarmerById(
+          farmer.id
+        );
+
+      const {
+        password_hash,
+        password_salt,
+        ...safeFarmer
+      } = refreshed || {};
+
+      return res.json({
+        success: true,
+        message:
+          "Farmer login successful.",
+        farmer: safeFarmer,
+      });
+    } catch (error) {
+      console.error(
+        "Farmer login error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to login farmer.",
+      });
+    }
+  }
+);
+
+
+/* =========================================================
+   FARMER PASSWORD CHANGE
+========================================================= */
+
+app.post(
+  "/api/farmers/:id/change-password",
+  async (req, res) => {
+    try {
+      const farmer =
+        await findFarmerById(
+          req.params.id
+        );
+
+      if (!farmer) {
+        return res.status(404).json({
+          success: false,
+          message: "Farmer not found.",
+        });
+      }
+
+      const currentPassword =
+        String(
+          req.body?.currentPassword ??
+          req.body?.current_password ??
+          ""
+        );
+
+      const newPassword =
+        String(
+          req.body?.newPassword ??
+          req.body?.new_password ??
+          ""
+        );
+
+      if (
+        !verifyFarmerPassword(
+          currentPassword,
+          farmer.password_salt,
+          farmer.password_hash
+        )
+      ) {
+        return res.status(401).json({
+          success: false,
+          message:
+            "Current password is incorrect.",
+        });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "New password must contain at least 6 characters.",
+        });
+      }
+
+      if (
+        currentPassword ===
+        newPassword
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "New password must be different from your current password.",
+        });
+      }
+
+      const hashed =
+        await hashFarmerPassword(
+          newPassword
+        );
+
+      await query(
+        `
+          UPDATE farmers
+          SET
+            password_hash = $1,
+            password_salt = $2
+          WHERE id = $3
+        `,
+        [
+          hashed.hash,
+          hashed.salt,
+          farmer.id,
+        ]
+      );
+
+      return res.json({
+        success: true,
+        message:
+          "Farmer password changed successfully.",
+      });
+    } catch (error) {
+      console.error(
+        "Farmer change password error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to change farmer password.",
+      });
+    }
+  }
+);
+
+
+/* =========================================================
+   FARMER LIVE GPS / LOCATION
+========================================================= */
+
+app.patch(
+  "/api/farmers/:id/location",
+  async (req, res) => {
+    try {
+      const farmer =
+        await findFarmerById(
+          req.params.id
+        );
+
+      if (!farmer) {
+        return res.status(404).json({
+          success: false,
+          message: "Farmer not found.",
+        });
+      }
+
+      const lat = parseCoordinate(
+        req.body?.lat ??
+        req.body?.currentLat ??
+        req.body?.current_lat,
+        -90,
+        90
+      );
+
+      const lng = parseCoordinate(
+        req.body?.lng ??
+        req.body?.currentLng ??
+        req.body?.current_lng,
+        -180,
+        180
+      );
+
+      if (lat === null || lng === null) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Valid latitude and longitude are required.",
+        });
+      }
+
+      const accuracyRaw =
+        req.body?.accuracyM ??
+        req.body?.locationAccuracyM ??
+        req.body?.location_accuracy_m;
+
+      const accuracy =
+        accuracyRaw === null ||
+        accuracyRaw === undefined ||
+        String(accuracyRaw).trim() === ""
+          ? null
+          : Number(accuracyRaw);
+
+      const stateId =
+        req.body?.stateId ??
+        req.body?.state_id ??
+        farmer.state_id ??
+        null;
+
+      const districtId =
+        req.body?.districtId ??
+        req.body?.district_id ??
+        farmer.district_id ??
+        null;
+
+      const mandalId =
+        req.body?.mandalId ??
+        req.body?.mandal_id ??
+        farmer.mandal_id ??
+        null;
+
+      const state = String(
+        req.body?.state ??
+        req.body?.stateName ??
+        farmer.state ??
+        ""
+      ).trim();
+
+      const district = String(
+        req.body?.district ??
+        req.body?.districtName ??
+        farmer.district ??
+        ""
+      ).trim();
+
+      const mandal = String(
+        req.body?.mandal ??
+        req.body?.mandalName ??
+        farmer.mandal ??
+        ""
+      ).trim();
+
+      const villageId = normalizeLocationId(
+        req.body?.villageId ??
+        req.body?.village_id ??
+        farmer.village_id ??
+        ""
+      );
+
+      const village = String(
+        req.body?.village ??
+        req.body?.villageName ??
+        farmer.village ??
+        ""
+      ).trim();
+
+      const pincode = String(
+        req.body?.pincode ??
+        req.body?.pinCode ??
+        farmer.pincode ??
+        ""
+      ).trim();
+
+      const farmAddress = String(
+        req.body?.farmAddress ??
+        req.body?.farm_address ??
+        req.body?.address ??
+        farmer.farm_address ??
+        ""
+      ).trim();
+
+      const landmark = String(
+        req.body?.landmark ??
+        farmer.landmark ??
+        ""
+      ).trim();
+
+      await query(
+        `
+          UPDATE farmers
+          SET
+            current_lat = $1,
+            current_lng = $2,
+            location_accuracy_m = $3,
+            location_source = 'GPS',
+            location_updated_at = CURRENT_TIMESTAMP,
+            state_id = $4,
+            district_id = $5,
+            mandal_id = $6,
+            state = $7,
+            district = $8,
+            mandal = $9,
+            village = $10,
+            village_id = $11,
+            pincode = $12,
+            farm_address = $13,
+            landmark = $14
+          WHERE id = $15
+        `,
+        [
+          lat,
+          lng,
+          Number.isFinite(accuracy) &&
+          accuracy >= 0
+            ? accuracy
+            : null,
+          stateId,
+          districtId,
+          mandalId,
+          state || null,
+          district || null,
+          mandal || null,
+          village || null,
+          villageId || null,
+          pincode || null,
+          farmAddress || null,
+          landmark || null,
+          farmer.id,
+        ]
+      );
+
+      const updated =
+        await findFarmerById(
+          farmer.id
+        );
+
+      return res.json({
+        success: true,
+        message:
+          "Farmer current location updated.",
+        location: {
+          lat,
+          lng,
+          accuracyM:
+            Number.isFinite(accuracy) &&
+            accuracy >= 0
+              ? accuracy
+              : null,
+          updatedAt:
+            updated?.location_updated_at ||
+            new Date().toISOString(),
+        },
+        farmer: updated,
+      });
+    } catch (error) {
+      console.error(
+        "Farmer location update error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          "Failed to update farmer location.",
+      });
+    }
+  }
+);
+
+
 app.get(
   "/api/farmers/:id",
   async (
@@ -2610,223 +4845,258 @@ app.get(
 
 
 /* =========================================================
-   FARMER SETTINGS
+   FARMER SETTINGS / PROFILE UPDATE
 ========================================================= */
 
 app.patch(
   "/api/farmers/:id",
-  async (
-    req,
-    res
-  ) => {
-
+  async (req, res) => {
     try {
-
       const requestedId =
         String(
-          req.params.id ||
-          ""
+          req.params.id || ""
         ).trim();
-
 
       const existing =
         await resolveFarmer({
-
-          farmerId:
-            requestedId,
-
-          phone:
-            req.body?.phone ||
-            "",
-
+          farmerId: requestedId,
+          phone: req.body?.phone || "",
         });
 
-
-      if (
-        !existing
-      ) {
-
-        return res
-          .status(404)
-          .json({
-
-            success:
-              false,
-
-            message:
-              "Farmer not found.",
-
-          });
-
+      if (!existing) {
+        return res.status(404).json({
+          success: false,
+          message: "Farmer not found.",
+        });
       }
 
+      const name = String(
+        req.body?.name ??
+        existing.name ??
+        ""
+      ).trim();
 
-      const name =
-        String(
-          req.body?.name ??
-          existing.name ??
-          ""
-        ).trim();
+      const phone = normalisePhone(
+        req.body?.phone ??
+        existing.phone
+      );
 
-
-      const phone =
+      const alternatePhone =
         normalisePhone(
-          req.body?.phone ??
-          existing.phone
+          req.body?.alternatePhone ??
+          req.body?.alternate_phone ??
+          existing.alternate_phone ??
+          ""
         );
 
+      const stateId =
+        req.body?.stateId ??
+        req.body?.state_id ??
+        existing.state_id ??
+        null;
 
-      const village =
-        String(
-          req.body?.village ??
-          existing.village ??
-          ""
-        ).trim();
+      const districtId =
+        req.body?.districtId ??
+        req.body?.district_id ??
+        existing.district_id ??
+        null;
 
+      const mandalId =
+        req.body?.mandalId ??
+        req.body?.mandal_id ??
+        existing.mandal_id ??
+        null;
 
-      const language =
-        String(
-          req.body?.language ??
-          existing.language ??
-          "en"
-        ).trim();
+      const state = String(
+        req.body?.state ??
+        req.body?.stateName ??
+        existing.state ??
+        ""
+      ).trim();
 
+      const district = String(
+        req.body?.district ??
+        req.body?.districtName ??
+        existing.district ??
+        ""
+      ).trim();
+
+      const mandal = String(
+        req.body?.mandal ??
+        req.body?.mandalName ??
+        existing.mandal ??
+        ""
+      ).trim();
+
+      const villageId = normalizeLocationId(
+        req.body?.villageId ??
+        req.body?.village_id ??
+        existing.village_id ??
+        ""
+      );
+
+      const village = String(
+        req.body?.village ??
+        req.body?.villageName ??
+        existing.village ??
+        ""
+      ).trim();
+
+      const pincode = String(
+        req.body?.pincode ??
+        req.body?.pinCode ??
+        existing.pincode ??
+        ""
+      ).trim();
+
+      const farmAddress = String(
+        req.body?.farmAddress ??
+        req.body?.farm_address ??
+        req.body?.address ??
+        existing.farm_address ??
+        ""
+      ).trim();
+
+      const landmark = String(
+        req.body?.landmark ??
+        existing.landmark ??
+        ""
+      ).trim();
+
+      const language = String(
+        req.body?.language ??
+        existing.language ??
+        "en"
+      ).trim();
 
       const preferredCenterId =
         req.body?.preferredCenterId ??
+        req.body?.preferred_center_id ??
         existing.preferred_center_id ??
         null;
 
+      const primaryCrop = String(
+        req.body?.primaryCrop ??
+        req.body?.primary_crop ??
+        existing.primary_crop ??
+        ""
+      ).trim();
 
-      const primaryCrop =
-        String(
-          req.body?.primaryCrop ??
-          existing.primary_crop ??
-          ""
-        ).trim();
+      const estimatedQuantity = Number(
+        req.body?.estimatedQuantity ??
+        req.body?.estimated_quantity ??
+        existing.estimated_quantity ??
+        0
+      );
 
+      const farmSizeRaw =
+        req.body?.farmSizeAcres ??
+        req.body?.farm_size_acres ??
+        existing.farm_size_acres;
 
-      const estimatedQuantity =
-        Number(
-          req.body?.estimatedQuantity ??
-          existing.estimated_quantity ??
-          0
-        );
+      const farmSizeAcres =
+        farmSizeRaw === "" ||
+        farmSizeRaw === null ||
+        farmSizeRaw === undefined
+          ? null
+          : Number(farmSizeRaw);
 
+      const irrigationType = String(
+        req.body?.irrigationType ??
+        req.body?.irrigation_type ??
+        existing.irrigation_type ??
+        ""
+      ).trim();
 
-      if (
-        !name
-      ) {
+      const currentLat = parseCoordinate(
+        req.body?.currentLat ??
+        req.body?.current_lat,
+        -90,
+        90
+      );
 
-        return res
-          .status(400)
-          .json({
+      const currentLng = parseCoordinate(
+        req.body?.currentLng ??
+        req.body?.current_lng,
+        -180,
+        180
+      );
 
-            success:
-              false,
+      const accuracyRaw =
+        req.body?.locationAccuracyM ??
+        req.body?.location_accuracy_m;
 
-            message:
-              "Farmer name is required.",
+      const locationAccuracyM =
+        accuracyRaw === null ||
+        accuracyRaw === undefined ||
+        String(accuracyRaw).trim() === ""
+          ? null
+          : Number(accuracyRaw);
 
-          });
-
+      if (!name) {
+        return res.status(400).json({
+          success: false,
+          message: "Farmer name is required.",
+        });
       }
 
-
-      if (
-        phone.length !==
-        10
-      ) {
-
-        return res
-          .status(400)
-          .json({
-
-            success:
-              false,
-
-            message:
-              "A valid 10-digit phone number is required.",
-
-          });
-
+      if (phone.length !== 10) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "A valid 10-digit phone number is required.",
+        });
       }
 
-
       if (
-        ![
-          "en",
-          "hi",
-          "te",
-        ].includes(
+        !["en", "hi", "te"].includes(
           language
         )
       ) {
-
-        return res
-          .status(400)
-          .json({
-
-            success:
-              false,
-
-            message:
-              "Invalid language.",
-
-          });
-
+        return res.status(400).json({
+          success: false,
+          message: "Invalid language.",
+        });
       }
-
 
       if (
         !Number.isFinite(
           estimatedQuantity
         ) ||
-        estimatedQuantity <
-        0
+        estimatedQuantity < 0
       ) {
-
-        return res
-          .status(400)
-          .json({
-
-            success:
-              false,
-
-            message:
-              "Quantity cannot be negative.",
-
-          });
-
+        return res.status(400).json({
+          success: false,
+          message:
+            "Quantity cannot be negative.",
+        });
       }
 
+      if (
+        farmSizeAcres !== null &&
+        (!Number.isFinite(farmSizeAcres) ||
+          farmSizeAcres < 0)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Farm size cannot be negative.",
+        });
+      }
 
       const otherFarmer =
-        await findFarmerByPhone(
-          phone
-        );
-
+        await findFarmerByPhone(phone);
 
       if (
         otherFarmer &&
-        otherFarmer.id !==
-        existing.id
+        otherFarmer.id !== existing.id
       ) {
-
-        return res
-          .status(409)
-          .json({
-
-            success:
-              false,
-
-            message:
-              "This mobile number is already registered to another farmer.",
-
-          });
-
+        return res.status(409).json({
+          success: false,
+          message:
+            "This mobile number is already registered to another farmer.",
+        });
       }
-
 
       await query(
         `
@@ -2834,171 +5104,186 @@ app.patch(
           SET
             name = $1,
             phone = $2,
-            village = $3,
-            language = $4,
-            preferred_center_id = $5,
-            primary_crop = $6,
-            estimated_quantity = $7
-          WHERE id = $8
+            alternate_phone = $3,
+            state_id = $4,
+            district_id = $5,
+            mandal_id = $6,
+            state = $7,
+            district = $8,
+            mandal = $9,
+            village = $10,
+            village_id = $11,
+            pincode = $12,
+            farm_address = $13,
+            landmark = $14,
+            farm_size_acres = $15,
+            irrigation_type = $16,
+            language = $17,
+            preferred_center_id = $18,
+            primary_crop = $19,
+            estimated_quantity = $20,
+            current_lat = COALESCE($21, current_lat),
+            current_lng = COALESCE($22, current_lng),
+            location_accuracy_m = COALESCE($23, location_accuracy_m),
+            location_source =
+              CASE
+                WHEN $21 IS NOT NULL
+                  OR $22 IS NOT NULL
+                THEN 'GPS'
+                ELSE COALESCE(location_source, 'REGISTERED')
+              END,
+            location_updated_at =
+              CASE
+                WHEN $21 IS NOT NULL
+                  OR $22 IS NOT NULL
+                THEN CURRENT_TIMESTAMP
+                ELSE location_updated_at
+              END
+          WHERE id = $24
         `,
         [
-
           name,
-
           phone,
-
-          village ||
-            null,
-
+          alternatePhone || null,
+          stateId,
+          districtId,
+          mandalId,
+          state || null,
+          district || null,
+          mandal || null,
+          village || null,
+          villageId || null,
+          pincode || null,
+          farmAddress || null,
+          landmark || null,
+          farmSizeAcres,
+          irrigationType || null,
           language,
-
           preferredCenterId,
-
-          primaryCrop ||
-            null,
-
+          primaryCrop || null,
           estimatedQuantity,
-
+          currentLat,
+          currentLng,
+          Number.isFinite(locationAccuracyM) &&
+          locationAccuracyM >= 0
+            ? locationAccuracyM
+            : null,
           existing.id,
-
         ]
       );
-
 
       const updated =
         await findFarmerById(
           existing.id
         );
 
-
-      res.json({
-
-        success:
-          true,
-
+      return res.json({
+        success: true,
         message:
-          "Farmer settings updated.",
-
-        farmer:
-          updated,
-
+          "Farmer profile updated.",
+        farmer: updated,
       });
-
-    } catch (
-      error
-    ) {
-
+    } catch (error) {
       console.error(
-        "Update farmer settings error:",
+        "Update farmer profile error:",
         error
       );
 
+      if (error?.code === "23505") {
+        return res.status(409).json({
+          success: false,
+          message:
+            "This mobile number is already registered to another farmer.",
+        });
+      }
 
-      res.status(500).json({
-
-        success:
-          false,
-
+      return res.status(500).json({
+        success: false,
         message:
-          "Failed to update farmer settings.",
-
+          "Failed to update farmer profile.",
       });
-
     }
-
   }
 );
 
 
 /* =========================================================
    CENTERS
+   Source of truth for real/verified procurement centres.
 ========================================================= */
 
 app.get(
   "/api/centers",
-  async (
-    req,
-    res
-  ) => {
-
+  async (req, res) => {
     try {
-
-      const centers =
-        await all(
-          `
-            SELECT *
-            FROM centers
-            ORDER BY name ASC
-          `
-        );
-
-
-      res.json({
-
-        success:
-          true,
-
-        centers,
-
-      });
-
-    } catch (
-      error
-    ) {
-
-      console.error(
-        "Get centers error:",
-        error
+      const lat = parseCenterCoordinate(
+        req.query?.lat ?? req.query?.latitude,
+        -90,
+        90
+      );
+      const lng = parseCenterCoordinate(
+        req.query?.lng ?? req.query?.longitude,
+        -180,
+        180
+      );
+      const crop = String(req.query?.crop || '').trim();
+      const radiusKm = Math.min(
+        Math.max(Number(req.query?.radiusKm || 50), 1),
+        250
       );
 
+      if ((lat === null) !== (lng === null)) {
+        return res.status(400).json({
+          success: false,
+          message: "Both latitude and longitude are required for nearby centre recommendations.",
+        });
+      }
 
-      res.status(500).json({
-
-        success:
-          false,
-
-        message:
-          "Failed to load procurement centers.",
-
+      const centers = await getAvailableCenters({
+        lat,
+        lng,
+        radiusKm,
+        crop,
       });
 
+      return res.json({
+        success: true,
+        centers,
+        nearby: lat !== null && lng !== null,
+        origin: lat !== null
+          ? { latitude: lat, longitude: lng }
+          : null,
+        radiusKm: lat !== null ? radiusKm : null,
+      });
+    } catch (error) {
+      console.error("Get procurement centres error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to load procurement centres.",
+      });
     }
-
   }
 );
 
 
 /* =========================================================
    PHASE 2 READ-ONLY CENTER ALIAS
-   Existing /api/centers remains the source of truth.
 ========================================================= */
 
 app.get(
   "/api/procurement/centers",
   async (req, res) => {
     try {
-      const centers = await all(
-        `
-          SELECT *
-          FROM centers
-          WHERE active = 1
-          ORDER BY name ASC
-        `
-      );
-
+      const centers = await getAvailableCenters();
       return res.json({
         success: true,
         centers,
       });
     } catch (error) {
-      console.error(
-        "Phase 2 procurement centers alias error:",
-        error
-      );
-
+      console.error("Procurement centres alias error:", error);
       return res.status(500).json({
         success: false,
-        message: "Failed to load procurement centers.",
+        message: "Failed to load procurement centres.",
       });
     }
   }
@@ -3007,216 +5292,79 @@ app.get(
 
 /* =========================================================
    CREATE CENTER
+   Manual additions are explicitly marked as admin-entered.
 ========================================================= */
 
 app.post(
   "/api/centers",
-  async (
-    req,
-    res
-  ) => {
-
+  async (req, res) => {
     try {
+      const center = req.body || {};
 
-      const center =
-        req.body ||
-        {};
+      const id = String(center.id || '').trim();
+      const name = String(center.name || '').trim();
+      const stateId = String(center.stateId ?? center.state_id ?? '').trim();
+      const districtId = String(center.districtId ?? center.district_id ?? '').trim();
+      const mandalId = String(center.mandalId ?? center.mandal_id ?? '').trim();
+      const village = String(center.village || '').trim();
+      const address = String(center.address || '').trim();
+      const managerName = String(center.managerName ?? center.manager_name ?? '').trim();
+      const managerPhone = String(center.managerPhone ?? center.manager_phone ?? '').trim();
+      const stateName = String(center.state ?? center.stateName ?? '').trim();
+      const districtName = String(center.district ?? center.districtName ?? '').trim();
+      const mandalName = String(center.mandal ?? center.mandalName ?? '').trim();
+      const pincode = String(center.pincode ?? center.pinCode ?? '').trim();
 
-
-      const id =
-        String(
-          center.id ||
-          ""
-        ).trim();
-
-
-      const name =
-        String(
-          center.name ||
-          ""
-        ).trim();
-
-
-      const stateId =
-        String(
-          center.stateId ??
-          center.state_id ??
-          ""
-        ).trim();
-
-
-      const districtId =
-        String(
-          center.districtId ??
-          center.district_id ??
-          ""
-        ).trim();
-
-
-      const mandalId =
-        String(
-          center.mandalId ??
-          center.mandal_id ??
-          ""
-        ).trim();
-
-
-      const village =
-        String(
-          center.village ||
-          ""
-        ).trim();
-
-
-      const address =
-        String(
-          center.address ||
-          ""
-        ).trim();
-
-
-      const managerName =
-        String(
-          center.managerName ??
-          center.manager_name ??
-          ""
-        ).trim();
-
-
-      const managerPhone =
-        String(
-          center.managerPhone ??
-          center.manager_phone ??
-          ""
-        ).trim();
-
-
+      const capacityRaw = center.capacity;
       const capacity =
-        Number(
-          center.capacity
-        );
+        capacityRaw === null || capacityRaw === undefined || capacityRaw === ''
+          ? null
+          : Number(capacityRaw);
 
+      const openingTime = String(center.openingTime ?? center.opening_time ?? '09:00').trim();
+      const closingTime = String(center.closingTime ?? center.closing_time ?? '18:00').trim();
+      const active = center.active === false ? 0 : 1;
 
-      const openingTime =
-        String(
-          center.openingTime ??
-          center.opening_time ??
-          "09:00"
-        ).trim();
+      const latitude = parseCenterCoordinate(
+        center.latitude ?? center.lat,
+        -90,
+        90
+      );
+      const longitude = parseCenterCoordinate(
+        center.longitude ?? center.lng,
+        -180,
+        180
+      );
+      const locationAccuracyRaw = center.locationAccuracyM ?? center.location_accuracy_m;
+      const locationAccuracyM =
+        locationAccuracyRaw === null || locationAccuracyRaw === undefined || locationAccuracyRaw === ''
+          ? null
+          : Number(locationAccuracyRaw);
+      const cropTypes = String(center.cropTypes ?? center.crop_types ?? '').trim() || null;
 
-
-      const closingTime =
-        String(
-          center.closingTime ??
-          center.closing_time ??
-          "17:00"
-        ).trim();
-
-
-      const active =
-        center.active ===
-        false
-          ? 0
-          : Number(
-              center.active ??
-              1
-            ) === 1
-            ? 1
-            : 0;
-
-
-      if (
-        !id
-      ) {
-
-        return res
-          .status(400)
-          .json({
-
-            success:
-              false,
-
-            message:
-              "Center ID is required.",
-
-          });
-
+      if (!id) {
+        return res.status(400).json({ success: false, message: 'Center ID is required.' });
+      }
+      if (!name) {
+        return res.status(400).json({ success: false, message: 'Center name is required.' });
+      }
+      if (capacity !== null && (!Number.isFinite(capacity) || capacity <= 0)) {
+        return res.status(400).json({ success: false, message: 'Center capacity must be greater than zero.' });
+      }
+      if ((latitude === null) !== (longitude === null)) {
+        return res.status(400).json({ success: false, message: 'Both latitude and longitude are required when adding GPS location.' });
       }
 
-
-      if (
-        !name
-      ) {
-
-        return res
-          .status(400)
-          .json({
-
-            success:
-              false,
-
-            message:
-              "Center name is required.",
-
-          });
-
+      const existing = await get(
+        `SELECT id FROM centers WHERE id = $1`,
+        [id]
+      );
+      if (existing) {
+        return res.status(409).json({
+          success: false,
+          message: 'A center with this ID already exists.',
+        });
       }
-
-
-      if (
-        !Number.isFinite(
-          capacity
-        ) ||
-        capacity <=
-        0
-      ) {
-
-        return res
-          .status(400)
-          .json({
-
-            success:
-              false,
-
-            message:
-              "Center capacity must be greater than zero.",
-
-          });
-
-      }
-
-
-      const existing =
-        await get(
-          `
-            SELECT *
-            FROM centers
-            WHERE id = $1
-          `,
-          [
-            id,
-          ]
-        );
-
-
-      if (
-        existing
-      ) {
-
-        return res
-          .status(409)
-          .json({
-
-            success:
-              false,
-
-            message:
-              "A center with this ID already exists.",
-
-          });
-
-      }
-
 
       await query(
         `
@@ -3233,135 +5381,75 @@ app.post(
             capacity,
             opening_time,
             closing_time,
-            active
+            active,
+            latitude,
+            longitude,
+            location_accuracy_m,
+            location_source,
+            location_updated_at,
+            source_type,
+            verification_status,
+            source_name,
+            source_url,
+            source_note,
+            season,
+            crop_types,
+            state_name,
+            district_name,
+            mandal_name,
+            pincode
           )
           VALUES (
-            $1,
-            $2,
-            $3,
-            $4,
-            $5,
-            $6,
-            $7,
-            $8,
-            $9,
-            $10,
-            $11,
-            $12,
-            $13
+            $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,
+            $14,$15,$16,
+            CASE WHEN $14 IS NOT NULL THEN 'GPS' ELSE 'ADMIN_ENTERED' END,
+            CASE WHEN $14 IS NOT NULL THEN CURRENT_TIMESTAMP ELSE NULL END,
+            'ADMIN_ENTERED',
+            'ADMIN_ENTERED',
+            NULL,NULL,NULL,NULL,
+            $17,$18,$19,$20,$21
           )
         `,
         [
-
           id,
-
           name,
-
-          stateId ||
-            null,
-
-          districtId ||
-            null,
-
-          mandalId ||
-            null,
-
-          village ||
-            null,
-
-          address ||
-            null,
-
-          managerName ||
-            null,
-
-          managerPhone ||
-            null,
-
+          stateId || null,
+          districtId || null,
+          mandalId || null,
+          village || null,
+          address || null,
+          managerName || null,
+          managerPhone || null,
           capacity,
-
           openingTime,
-
           closingTime,
-
           active,
-
+          latitude,
+          longitude,
+          Number.isFinite(locationAccuracyM) && locationAccuracyM >= 0
+            ? locationAccuracyM
+            : null,
+          cropTypes,
+          stateName || null,
+          districtName || null,
+          mandalName || null,
+          pincode || null,
         ]
       );
 
-
-      const created =
-        await get(
-          `
-            SELECT *
-            FROM centers
-            WHERE id = $1
-          `,
-          [
-            id,
-          ]
-        );
-
-
-      return res
-        .status(201)
-        .json({
-
-          success:
-            true,
-
-          message:
-            "Center created successfully.",
-
-          center:
-            created,
-
-        });
-
-    } catch (
-      error
-    ) {
-
-      console.error(
-        "Create center error:",
-        error
-      );
-
-
-      if (
-        error?.code ===
-        "23505"
-      ) {
-
-        return res
-          .status(409)
-          .json({
-
-            success:
-              false,
-
-            message:
-              "A center with this ID already exists.",
-
-          });
-
-      }
-
-
-      return res
-        .status(500)
-        .json({
-
-          success:
-            false,
-
-          message:
-            "Failed to create procurement center.",
-
-        });
-
+      const created = await get(`SELECT * FROM centers WHERE id = $1`, [id]);
+      return res.status(201).json({
+        success: true,
+        message: 'Center created successfully.',
+        center: created,
+      });
+    } catch (error) {
+      console.error('Create centre error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to create procurement centre.',
+      });
     }
-
   }
 );
 
@@ -3372,201 +5460,70 @@ app.post(
 
 app.patch(
   "/api/centers/:id",
-  async (
-    req,
-    res
-  ) => {
-
+  async (req, res) => {
     try {
+      const centerId = String(req.params.id || '').trim();
+      const existing = await get(
+        `SELECT * FROM centers WHERE id = $1`,
+        [centerId]
+      );
 
-      const centerId =
-        String(
-          req.params.id ||
-          ""
-        ).trim();
-
-
-      const existing =
-        await get(
-          `
-            SELECT *
-            FROM centers
-            WHERE id = $1
-          `,
-          [
-            centerId,
-          ]
-        );
-
-
-      if (
-        !existing
-      ) {
-
-        return res
-          .status(404)
-          .json({
-
-            success:
-              false,
-
-            message:
-              "Procurement center not found.",
-
-          });
-
+      if (!existing) {
+        return res.status(404).json({
+          success: false,
+          message: 'Procurement centre not found.',
+        });
       }
 
+      const body = req.body || {};
+      const name = String(body.name ?? existing.name ?? '').trim();
+      const stateId = String(body.stateId ?? body.state_id ?? existing.state_id ?? '').trim();
+      const districtId = String(body.districtId ?? body.district_id ?? existing.district_id ?? '').trim();
+      const mandalId = String(body.mandalId ?? body.mandal_id ?? existing.mandal_id ?? '').trim();
+      const village = String(body.village ?? existing.village ?? '').trim();
+      const address = String(body.address ?? existing.address ?? '').trim();
+      const managerName = String(body.managerName ?? body.manager_name ?? existing.manager_name ?? '').trim();
+      const managerPhone = String(body.managerPhone ?? body.manager_phone ?? existing.manager_phone ?? '').trim();
+      const stateName = String(body.state ?? body.stateName ?? existing.state_name ?? '').trim();
+      const districtName = String(body.district ?? body.districtName ?? existing.district_name ?? '').trim();
+      const mandalName = String(body.mandal ?? body.mandalName ?? existing.mandal_name ?? '').trim();
+      const pincode = String(body.pincode ?? body.pinCode ?? existing.pincode ?? '').trim();
 
-      const name =
-        String(
-          req.body?.name ??
-          existing.name ??
-          ""
-        ).trim();
-
-
-      const stateId =
-        String(
-          req.body?.stateId ??
-          req.body?.state_id ??
-          existing.state_id ??
-          ""
-        ).trim();
-
-
-      const districtId =
-        String(
-          req.body?.districtId ??
-          req.body?.district_id ??
-          existing.district_id ??
-          ""
-        ).trim();
-
-
-      const mandalId =
-        String(
-          req.body?.mandalId ??
-          req.body?.mandal_id ??
-          existing.mandal_id ??
-          ""
-        ).trim();
-
-
-      const village =
-        String(
-          req.body?.village ??
-          existing.village ??
-          ""
-        ).trim();
-
-
-      const address =
-        String(
-          req.body?.address ??
-          existing.address ??
-          ""
-        ).trim();
-
-
-      const managerName =
-        String(
-          req.body?.managerName ??
-          req.body?.manager_name ??
-          existing.manager_name ??
-          ""
-        ).trim();
-
-
-      const managerPhone =
-        String(
-          req.body?.managerPhone ??
-          req.body?.manager_phone ??
-          existing.manager_phone ??
-          ""
-        ).trim();
-
-
+      const capacityRaw = body.capacity ?? existing.capacity;
       const capacity =
-        Number(
-          req.body?.capacity ??
-          existing.capacity ??
-          20
-        );
+        capacityRaw === null || capacityRaw === undefined || capacityRaw === ''
+          ? null
+          : Number(capacityRaw);
+      const openingTime = String(body.openingTime ?? body.opening_time ?? existing.opening_time ?? '09:00').trim();
+      const closingTime = String(body.closingTime ?? body.closing_time ?? existing.closing_time ?? '18:00').trim();
+      const active = body.active === false ? 0 : Number(body.active ?? existing.active ?? 1) === 1 ? 1 : 0;
 
+      const latitude = parseCenterCoordinate(
+        body.latitude ?? body.lat ?? existing.latitude,
+        -90,
+        90
+      );
+      const longitude = parseCenterCoordinate(
+        body.longitude ?? body.lng ?? existing.longitude,
+        -180,
+        180
+      );
+      const locationAccuracyRaw = body.locationAccuracyM ?? body.location_accuracy_m ?? existing.location_accuracy_m;
+      const locationAccuracyM =
+        locationAccuracyRaw === null || locationAccuracyRaw === undefined || locationAccuracyRaw === ''
+          ? null
+          : Number(locationAccuracyRaw);
+      const cropTypes = String(body.cropTypes ?? body.crop_types ?? existing.crop_types ?? '').trim() || null;
 
-      const openingTime =
-        String(
-          req.body?.openingTime ??
-          req.body?.opening_time ??
-          existing.opening_time ??
-          "09:00"
-        ).trim();
-
-
-      const closingTime =
-        String(
-          req.body?.closingTime ??
-          req.body?.closing_time ??
-          existing.closing_time ??
-          "17:00"
-        ).trim();
-
-
-      const active =
-        req.body?.active ===
-        false
-          ? 0
-          : Number(
-              req.body?.active ??
-              existing.active ??
-              1
-            ) === 1
-            ? 1
-            : 0;
-
-
-      if (
-        !name
-      ) {
-
-        return res
-          .status(400)
-          .json({
-
-            success:
-              false,
-
-            message:
-              "Center name is required.",
-
-          });
-
+      if (!name) {
+        return res.status(400).json({ success: false, message: 'Center name is required.' });
       }
-
-
-      if (
-        !Number.isFinite(
-          capacity
-        ) ||
-        capacity <=
-        0
-      ) {
-
-        return res
-          .status(400)
-          .json({
-
-            success:
-              false,
-
-            message:
-              "Center capacity must be greater than zero.",
-
-          });
-
+      if (capacity !== null && (!Number.isFinite(capacity) || capacity <= 0)) {
+        return res.status(400).json({ success: false, message: 'Center capacity must be greater than zero.' });
       }
-
+      if ((latitude === null) !== (longitude === null)) {
+        return res.status(400).json({ success: false, message: 'Both latitude and longitude are required when using GPS.' });
+      }
 
       await query(
         `
@@ -3584,101 +5541,65 @@ app.patch(
             opening_time = $10,
             closing_time = $11,
             active = $12,
+            latitude = $13,
+            longitude = $14,
+            location_accuracy_m = $15,
+            location_source = CASE WHEN $13 IS NOT NULL THEN 'GPS' ELSE COALESCE(location_source, 'ADMIN_ENTERED') END,
+            location_updated_at = CASE WHEN $13 IS NOT NULL THEN CURRENT_TIMESTAMP ELSE location_updated_at END,
+            source_type = COALESCE(NULLIF(source_type, ''), 'ADMIN_ENTERED'),
+            verification_status = CASE
+              WHEN verification_status IS NULL OR TRIM(verification_status) = '' OR verification_status = 'UNVERIFIED'
+              THEN 'ADMIN_ENTERED'
+              ELSE verification_status
+            END,
+            crop_types = $16,
+            state_name = $17,
+            district_name = $18,
+            mandal_name = $19,
+            pincode = $20,
             updated_at = CURRENT_TIMESTAMP
-          WHERE id = $13
+          WHERE id = $21
         `,
         [
-
           name,
-
-          stateId ||
-            null,
-
-          districtId ||
-            null,
-
-          mandalId ||
-            null,
-
-          village ||
-            null,
-
-          address ||
-            null,
-
-          managerName ||
-            null,
-
-          managerPhone ||
-            null,
-
+          stateId || null,
+          districtId || null,
+          mandalId || null,
+          village || null,
+          address || null,
+          managerName || null,
+          managerPhone || null,
           capacity,
-
           openingTime,
-
           closingTime,
-
           active,
-
+          latitude,
+          longitude,
+          Number.isFinite(locationAccuracyM) && locationAccuracyM >= 0 ? locationAccuracyM : null,
+          cropTypes,
+          stateName || null,
+          districtName || null,
+          mandalName || null,
+          pincode || null,
           centerId,
-
         ]
       );
 
-
-      const updated =
-        await get(
-          `
-            SELECT *
-            FROM centers
-            WHERE id = $1
-          `,
-          [
-            centerId,
-          ]
-        );
-
-
+      const updated = await get(`SELECT * FROM centers WHERE id = $1`, [centerId]);
       return res.json({
-
-        success:
-          true,
-
-        message:
-          "Center updated successfully.",
-
-        center:
-          updated,
-
+        success: true,
+        message: 'Center updated successfully.',
+        center: updated,
       });
-
-    } catch (
-      error
-    ) {
-
-      console.error(
-        "Update center error:",
-        error
-      );
-
-
-      return res
-        .status(500)
-        .json({
-
-          success:
-            false,
-
-          message:
-            "Failed to update procurement center.",
-
-        });
-
+    } catch (error) {
+      console.error('Update centre error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to update procurement centre.',
+      });
     }
-
   }
 );
-
 
 
 /* =========================================================
@@ -3752,6 +5673,22 @@ app.post(
       const pincode = String(body.pincode || body.pinCode || body.region?.pincode || '').trim();
       const serviceRadiusKm = Number(body.serviceRadiusKm ?? body.service_radius_km ?? 0);
       const password = String(body.password || '').trim();
+
+      const acceptsEmergency = normalizeTransporterBoolean(
+        body.acceptsEmergency ??
+          body.accepts_emergency,
+        true
+      );
+      const acceptsScheduled = normalizeTransporterBoolean(
+        body.acceptsScheduled ??
+          body.accepts_scheduled,
+        true
+      );
+      const acceptsSmallLoads = normalizeTransporterBoolean(
+        body.acceptsSmallLoads ??
+          body.accepts_small_loads,
+        true
+      );
 
       const currentLat =
         parseCoordinate(
@@ -3865,20 +5802,23 @@ app.post(
               state_id = $13,
               pincode = $14,
               service_radius_km = $15,
-              password_hash = COALESCE($16, password_hash),
-              password_salt = COALESCE($17, password_salt),
-              is_online = $18,
-              current_lat = COALESCE($19, current_lat),
-              current_lng = COALESCE($20, current_lng),
+              accepts_emergency = $16,
+              accepts_scheduled = $17,
+              accepts_small_loads = $18,
+              password_hash = COALESCE($19, password_hash),
+              password_salt = COALESCE($20, password_salt),
+              is_online = $21,
+              current_lat = COALESCE($22, current_lat),
+              current_lng = COALESCE($23, current_lng),
               location_updated_at =
                 CASE
-                  WHEN $19 IS NOT NULL
-                    OR $20 IS NOT NULL
+                  WHEN $22::double precision IS NOT NULL
+                    OR $23::double precision IS NOT NULL
                   THEN CURRENT_TIMESTAMP
                   ELSE location_updated_at
                 END,
               updated_at = CURRENT_TIMESTAMP
-            WHERE id = $21
+            WHERE id = $24
           `,
           [
             name,
@@ -3898,6 +5838,9 @@ app.post(
             stateId || null,
             pincode || null,
             serviceRadiusKm,
+            acceptsEmergency,
+            acceptsScheduled,
+            acceptsSmallLoads,
             passwordHash,
             passwordSalt,
             resolvedIsOnline,
@@ -3926,6 +5869,9 @@ app.post(
               state_id,
               pincode,
               service_radius_km,
+              accepts_emergency,
+              accepts_scheduled,
+              accepts_small_loads,
               password_hash,
               password_salt,
               is_online,
@@ -3952,9 +5898,12 @@ app.post(
               $16,
               $17,
               $18,
+              $19,
+              $20,
+              $21,
               CASE
-                WHEN $17 IS NOT NULL
-                  OR $18 IS NOT NULL
+                WHEN $20 IS NOT NULL
+                  OR $21 IS NOT NULL
                 THEN CURRENT_TIMESTAMP
                 ELSE NULL
               END
@@ -3979,6 +5928,9 @@ app.post(
             stateId || null,
             pincode || null,
             serviceRadiusKm,
+            acceptsEmergency,
+            acceptsScheduled,
+            acceptsSmallLoads,
             passwordHash,
             passwordSalt,
             isOnline,
@@ -4104,6 +6056,94 @@ app.post(
     } catch (error) {
       console.error("Transporter login error:", error);
       return res.status(500).json({ success: false, message: "Failed to login transporter." });
+    }
+  }
+);
+
+app.post(
+  "/api/transporters/:id/change-password",
+  async (req, res) => {
+    try {
+      const transporter = await findTransporterById(
+        req.params.id
+      );
+
+      if (!transporter) {
+        return res.status(404).json({
+          success: false,
+          message: "Transporter not found.",
+        });
+      }
+
+      const currentPassword = String(
+        req.body?.currentPassword ??
+        req.body?.current_password ??
+        ""
+      );
+
+      const newPassword = String(
+        req.body?.newPassword ??
+        req.body?.new_password ??
+        ""
+      );
+
+      if (!verifyTransporterPassword(
+        currentPassword,
+        transporter.password_salt,
+        transporter.password_hash
+      )) {
+        return res.status(401).json({
+          success: false,
+          message: "Current password is incorrect.",
+        });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: "New password must contain at least 6 characters.",
+        });
+      }
+
+      if (currentPassword === newPassword) {
+        return res.status(400).json({
+          success: false,
+          message: "New password must be different from your current password.",
+        });
+      }
+
+      const hashed = await hashTransporterPassword(newPassword);
+
+      await query(
+        `
+          UPDATE transporters
+          SET
+            password_hash = $1,
+            password_salt = $2,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = $3
+        `,
+        [
+          hashed.hash,
+          hashed.salt,
+          transporter.id,
+        ]
+      );
+
+      return res.json({
+        success: true,
+        message: "Password changed successfully.",
+      });
+    } catch (error) {
+      console.error(
+        "Transporter change password error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to change transporter password.",
+      });
     }
   }
 );
@@ -4657,7 +6697,9 @@ async function createTransportRequestHandler(
         String(
           body.pickupAddress ||
           body.pickup_address ||
-          ""
+          farmer.farm_address ||
+          farmer.village ||
+          "Current GPS location"
         ).trim();
 
       const requestedDate =
@@ -4699,7 +6741,7 @@ async function createTransportRequestHandler(
           ""
         ).trim();
 
-      const pickupLat =
+      const requestedPickupLat =
         parseCoordinate(
           body.pickupLat ??
           body.pickup_lat,
@@ -4707,10 +6749,32 @@ async function createTransportRequestHandler(
           90
         );
 
-      const pickupLng =
+      const requestedPickupLng =
         parseCoordinate(
           body.pickupLng ??
           body.pickup_lng,
+          -180,
+          180
+        );
+
+      /*
+       * GPS priority:
+       * 1. Explicit live pickup GPS from the transport request.
+       * 2. Farmer's latest saved current GPS.
+       * 3. No GPS -> registered-region fallback remains available.
+       */
+      const pickupLat =
+        requestedPickupLat ??
+        parseCoordinate(
+          farmer.current_lat,
+          -90,
+          90
+        );
+
+      const pickupLng =
+        requestedPickupLng ??
+        parseCoordinate(
+          farmer.current_lng,
           -180,
           180
         );
@@ -5009,20 +7073,28 @@ async function createTransportRequestHandler(
           request: created,
         });
 
-      await createNotification({
-        farmerId:
-          farmer.id,
-        bookingId:
-          bookingId ||
-          null,
+      /*
+       * Alert nearby eligible transporters as well as the farmer.
+       * The Twilio trial account may use a fixed template body.
+       */
+      await notifyTransporterCandidates({
+        candidates,
+        request: created,
+      });
+
+      await notifyTransportFarmer({
+        request: {
+          farmer_id: farmer.id,
+          booking_id: bookingId || null,
+          farmer_phone: farmer.phone,
+        },
         type:
           "TRANSPORT_REQUESTED",
         title:
           "Transport request created",
         message:
           `Your KrishiSetu transport request for ${quantityKg} kg of ${crop} is waiting for a transporter.`,
-        sms:
-          false,
+        settings,
       });
 
       return res
@@ -5152,30 +7224,18 @@ app.get(
       if (
         transporterId
       ) {
+        /*
+         * Job visibility uses the same eligibility function as farmer
+         * matching and job acceptance. The SQL deliberately avoids a
+         * second, conflicting region-only matching implementation.
+         */
         params.push(
           transporterId
         );
+
         conditions.push(
-          `(tr.transporter_id = $${params.length} OR (
-            tr.status = 'REQUESTED'
-            AND (
-              (
-                NULLIF((SELECT village_id FROM transporters WHERE id = $${params.length}), '') IS NOT NULL
-                AND LOWER(COALESCE(tr.farmer_village_id,'')) = LOWER((SELECT village_id FROM transporters WHERE id = $${params.length}))
-                AND LOWER(COALESCE(tr.farmer_district_id,'')) = LOWER((SELECT district_id FROM transporters WHERE id = $${params.length}))
-                AND LOWER(COALESCE(tr.farmer_state_id,'')) = LOWER((SELECT state_id FROM transporters WHERE id = $${params.length}))
-              )
-              OR
-              (
-                NULLIF((SELECT village_id FROM transporters WHERE id = $${params.length}), '') IS NULL
-                AND LOWER(COALESCE(tr.farmer_village,'')) = LOWER((SELECT village FROM transporters WHERE id = $${params.length}))
-                AND LOWER(COALESCE(tr.farmer_district,'')) = LOWER((SELECT district FROM transporters WHERE id = $${params.length}))
-                AND LOWER(COALESCE(tr.farmer_state,'')) = LOWER((SELECT state FROM transporters WHERE id = $${params.length}))
-              )
-            )
-          ))`
+          `(tr.transporter_id = $${params.length} OR tr.status = 'REQUESTED')`
         );
-        conditions.push(`NOT EXISTS (SELECT 1 FROM transport_request_rejections rr WHERE rr.request_id = tr.id AND rr.transporter_id = $${params.length})`);
       }
 
       if (
@@ -5225,7 +7285,7 @@ app.get(
             )}`
           : "";
 
-      const requests =
+      let requests =
         await all(
           `
             SELECT
@@ -5289,6 +7349,86 @@ app.get(
           `,
           params
         );
+
+      if (transporterId) {
+        const transporter = await findTransporterById(
+          transporterId
+        );
+
+        if (!transporter) {
+          return res.status(404).json({
+            success: false,
+            message: "Transporter account not found.",
+          });
+        }
+
+        const requestedIds = requests
+          .filter(
+            request =>
+              String(request.status || '').toUpperCase() ===
+              'REQUESTED'
+          )
+          .map(request => String(request.id));
+
+        const rejectedIds = await getTransportRejectionIds(
+          transporterId,
+          requestedIds
+        );
+
+        requests = requests.filter(request => {
+          const status = String(
+            request.status || ''
+          ).toUpperCase();
+
+          if (status === 'REQUESTED') {
+            if (
+              rejectedIds.has(
+                String(request.id)
+              )
+            ) {
+              return false;
+            }
+
+            return isTransporterEligible(
+              transporter,
+              request
+            );
+          }
+
+          return (
+            String(
+              request.transporter_id || ''
+            ) === String(transporterId)
+          );
+        });
+
+        requests = requests.map(request => ({
+          ...request,
+          matchDistanceKm:
+            request.status === "REQUESTED"
+              ? calculateDistanceKm(
+                  transporter.current_lat,
+                  transporter.current_lng,
+                  request.pickup_lat,
+                  request.pickup_lng
+                )
+              : null,
+          matchType:
+            request.status === "REQUESTED"
+              ? (
+                  calculateDistanceKm(
+                    transporter.current_lat,
+                    transporter.current_lng,
+                    request.pickup_lat,
+                    request.pickup_lng
+                  ) !== null &&
+                  Number(transporter.service_radius_km) > 0
+                    ? "GPS_RADIUS"
+                    : "SERVICE_REGION"
+                )
+              : "ASSIGNED"
+        }));
+      }
 
       return res.json({
         success: true,
@@ -5631,20 +7771,16 @@ app.patch(
           request.id
         );
 
-      await createNotification({
-        farmerId:
-          updated.farmer_id,
-        bookingId:
-          updated.booking_id ||
-          null,
+      await notifyTransportFarmer({
+        request: updated,
         type:
           "TRANSPORT_ASSIGNED",
         title:
           "Transporter assigned",
         message:
           `${updated.transporter_name || "A transporter"} accepted your transport request.`,
-        sms:
-          false,
+        settings:
+          await getSettings(),
       });
 
       return res.json({
@@ -5756,20 +7892,14 @@ app.patch(
         metadata: { event: "REJECTED" },
       });
 
-      await createNotification({
-        farmerId:
-          request.farmer_id,
-        bookingId:
-          request.booking_id ||
-          null,
+      await notifyTransportFarmer({
+        request,
         type:
           "TRANSPORT_REJECTED",
         title:
           "Transport request still searching",
         message:
           "A transporter declined your request. KrishiSetu is keeping it open for another transporter.",
-        sms:
-          false,
       });
 
       return res.json({
@@ -6057,12 +8187,9 @@ app.patch(
           request.id
         );
 
-      await createNotification({
-        farmerId:
-          hydrated.farmer_id,
-        bookingId:
-          hydrated.booking_id ||
-          null,
+      await notifyTransportFarmer({
+        request:
+          hydrated,
         type:
           `TRANSPORT_${nextStatus}`,
         title:
@@ -6075,8 +8202,6 @@ app.patch(
             hydrated.farmer_language ||
               "en"
           ),
-        sms:
-          false,
       });
 
       return res.json({
@@ -6243,6 +8368,17 @@ app.patch(
         await getTransportRequestById(
           request.id
         );
+
+      await notifyTransportFarmer({
+        request:
+          hydrated,
+        type:
+          "TRANSPORT_CANCELLED",
+        title:
+          "Transport request cancelled",
+        message:
+          `Your KrishiSetu transport request was cancelled. ${reason}`,
+      });
 
       return res.json({
         success: true,
@@ -14285,6 +16421,379 @@ app.get(
 
 
 /* =========================================================
+   PROCUREMENT CENTER LOCATION + VERIFICATION MIGRATION
+   Real/reference center data is seeded from government-backed
+   procurement records. Existing unverified/demo rows are kept
+   for audit history but deactivated from farmer recommendations.
+========================================================= */
+
+async function ensureCenterLocationColumns() {
+  const columns = [
+    ["latitude", "DOUBLE PRECISION"],
+    ["longitude", "DOUBLE PRECISION"],
+    ["location_accuracy_m", "DOUBLE PRECISION"],
+    ["location_source", "TEXT NOT NULL DEFAULT 'ADMIN_ENTERED'"],
+    ["location_updated_at", "TIMESTAMPTZ"],
+    ["source_type", "TEXT NOT NULL DEFAULT 'LEGACY_UNVERIFIED'"],
+    ["verification_status", "TEXT NOT NULL DEFAULT 'UNVERIFIED'"],
+    ["source_name", "TEXT"],
+    ["source_url", "TEXT"],
+    ["source_note", "TEXT"],
+    ["season", "TEXT"],
+    ["crop_types", "TEXT"],
+    ["state_name", "TEXT"],
+    ["district_name", "TEXT"],
+    ["mandal_name", "TEXT"],
+    ["pincode", "TEXT"],
+  ];
+
+  for (const [column, definition] of columns) {
+    await query(
+      `ALTER TABLE centers ADD COLUMN IF NOT EXISTS ${column} ${definition}`
+    );
+  }
+
+  await query(`
+    ALTER TABLE centers ALTER COLUMN source_type SET DEFAULT 'LEGACY_UNVERIFIED'
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_centers_active_location
+    ON centers (active, latitude, longitude)
+  `);
+
+  await query(`
+    CREATE INDEX IF NOT EXISTS idx_centers_verification
+    ON centers (active, verification_status, source_type)
+  `);
+}
+
+const REAL_GOV_CENTER_REFERENCES = [
+  {
+    id: "TS-GOV-PPC-SURYAPET-PHANIGIRI",
+    name: "Phanigiri Paddy Procurement Centre",
+    stateName: "Telangana",
+    districtName: "Suryapet",
+    mandalName: "Nagaram",
+    village: "Phanigiri",
+    address: "Phanigiri, Nagaram Mandal, Suryapet District, Telangana",
+    latitude: 17.1885,
+    longitude: 79.6305,
+    cropTypes: "paddy",
+    season: "2025-26 reference",
+    sourceType: "GOVERNMENT_REFERENCED",
+    verificationStatus: "VERIFIED_REFERENCE",
+    locationSource: "OPEN_GEOCODED_VILLAGE",
+    sourceName: "Suryapet District Civil Supplies / 2026 field inspection reference",
+    sourceUrl: "https://suryapet.telangana.gov.in/dm-civil-supplies/",
+    sourceNote: "Named procurement centre at Phanigiri in Nagaram mandal; district government records confirm paddy procurement-centre operations and totals.",
+  },
+  {
+    id: "TS-GOV-PPC-PEDDAPALLI-POOSALA",
+    name: "Poosala Paddy Procurement Centre",
+    stateName: "Telangana",
+    districtName: "Peddapalli",
+    mandalName: "Peddapalli",
+    village: "Poosala",
+    address: "Poosala, Peddapalli District, Telangana",
+    latitude: 18.53181,
+    longitude: 79.30552,
+    cropTypes: "paddy",
+    season: "2024-25 reference",
+    sourceType: "GOVERNMENT_REFERENCED",
+    verificationStatus: "VERIFIED_REFERENCE",
+    locationSource: "OPEN_GEOCODED_VILLAGE",
+    sourceName: "Peddapalli District Civil Supplies / procurement record reference",
+    sourceUrl: "https://peddapalli.telangana.gov.in/district-civil-supply-office/",
+    sourceNote: "Poosala village procurement centre is documented in Telangana procurement reporting; Peddapalli district government records confirm active paddy procurement-centre operations.",
+  },
+  {
+    id: "TS-GOV-PPC-MAHABUBABAD-MATEDU",
+    name: "Matedu Paddy Procurement Centre",
+    stateName: "Telangana",
+    districtName: "Mahabubabad",
+    mandalName: "Thorrur",
+    village: "Matedu",
+    address: "Matedu, Thorrur Mandal, Mahabubabad District, Telangana",
+    latitude: 17.54545,
+    longitude: 79.70407,
+    cropTypes: "paddy",
+    season: "reference",
+    sourceType: "GOVERNMENT_REFERENCED",
+    verificationStatus: "VERIFIED_REFERENCE",
+    locationSource: "OPEN_GEOCODED_VILLAGE",
+    sourceName: "Mahabubabad Civil Supplies procurement reference",
+    sourceUrl: "https://mahabubabad.telangana.gov.in/dm-civil-supplies-corporation/",
+    sourceNote: "Paddy procurement centre at Matedu is a documented Telangana procurement location; district Civil Supplies records confirm DCP paddy procurement operations.",
+  },
+  {
+    id: "TS-GOV-PPC-MAHABUBABAD-KUMMARIKUNTLA",
+    name: "Kummarikuntla Paddy Procurement Centre",
+    stateName: "Telangana",
+    districtName: "Mahabubabad",
+    mandalName: "Danthalapally",
+    village: "Kummarikuntla",
+    address: "Kummarikuntla, Danthalapally Mandal, Mahabubabad District, Telangana",
+    latitude: 17.4663889,
+    longitude: 79.7255556,
+    cropTypes: "paddy",
+    season: "reference",
+    sourceType: "GOVERNMENT_REFERENCED",
+    verificationStatus: "VERIFIED_REFERENCE",
+    locationSource: "OPEN_GEOCODED_VILLAGE",
+    sourceName: "Mahabubabad procurement-centre reference / PACS area data",
+    sourceUrl: "https://mahabubabad.telangana.gov.in/dm-civil-supplies-corporation/",
+    sourceNote: "Kummarikuntla is listed in Mahabubabad district PACS area records and has been reported as a local paddy procurement centre.",
+  },
+  {
+    id: "TS-GOV-PPC-GADWAL-KALKUNTLA",
+    name: "Kalkuntla Maize Procurement Centre",
+    stateName: "Telangana",
+    districtName: "Jogulamba Gadwal",
+    mandalName: "Manopad",
+    village: "Kalkuntla",
+    address: "Kalkuntla, Manopad Mandal, Jogulamba Gadwal District, Telangana",
+    latitude: 15.93287,
+    longitude: 77.90194,
+    cropTypes: "maize",
+    season: "2025-26 reference",
+    sourceType: "GOVERNMENT_REFERENCED",
+    verificationStatus: "VERIFIED_REFERENCE",
+    locationSource: "OPEN_GEOCODED_VILLAGE",
+    sourceName: "Jogulamba Gadwal district procurement reference",
+    sourceUrl: "https://gadwal.telangana.gov.in/cooperation-department/",
+    sourceNote: "A maize procurement centre was reported near Kalkuntla village in Manopad mandal; district government records confirm procurement centres for maize and other crops.",
+  },
+  {
+    id: "TS-GOV-PPC-SURYAPET-BOPPARAM",
+    name: "Bopparam Paddy Procurement Centre",
+    stateName: "Telangana",
+    districtName: "Suryapet",
+    mandalName: "Atmakur (S)",
+    village: "Bopparam",
+    address: "Bopparam, Atmakur (S) Mandal, Suryapet District, Telangana",
+    latitude: 17.284235,
+    longitude: 79.774954,
+    cropTypes: "paddy",
+    season: "reference",
+    sourceType: "GOVERNMENT_REFERENCED",
+    verificationStatus: "VERIFIED_REFERENCE",
+    locationSource: "OPEN_GEOCODED_VILLAGE",
+    sourceName: "Suryapet district paddy procurement reference",
+    sourceUrl: "https://suryapet.telangana.gov.in/dm-civil-supplies/",
+    sourceNote: "Stored as a real-world procurement-centre reference with village-level coordinates; district government page confirms large-scale PPC operations in Suryapet.",
+  },
+];
+
+async function ensureVerifiedCenterData() {
+  // Keep existing rows for audit/history, but remove unproven/demo rows
+  // from farmer-facing availability and recommendations.
+  await query(`
+    UPDATE centers
+    SET
+      active = 0,
+      verification_status = CASE
+        WHEN COALESCE(NULLIF(TRIM(verification_status), ''), 'UNVERIFIED')
+          IN ('VERIFIED_REFERENCE', 'ADMIN_ENTERED')
+        THEN verification_status
+        ELSE 'REPLACED_LEGACY'
+      END,
+      source_type = COALESCE(NULLIF(TRIM(source_type), ''), 'LEGACY_UNVERIFIED'),
+      updated_at = CURRENT_TIMESTAMP
+    WHERE COALESCE(TRIM(source_type), '') = ''
+       OR COALESCE(TRIM(source_type), '') = 'DEMO'
+       OR COALESCE(TRIM(source_type), '') = 'SEED'
+  `);
+
+  for (const center of REAL_GOV_CENTER_REFERENCES) {
+    await query(
+      `
+        INSERT INTO centers (
+          id,
+          name,
+          village,
+          address,
+          capacity,
+          opening_time,
+          closing_time,
+          active,
+          latitude,
+          longitude,
+          location_accuracy_m,
+          location_source,
+          location_updated_at,
+          source_type,
+          verification_status,
+          source_name,
+          source_url,
+          source_note,
+          season,
+          crop_types,
+          state_name,
+          district_name,
+          mandal_name,
+          pincode
+        )
+        VALUES (
+          $1,
+          $2,
+          $3,
+          $4,
+          NULL,
+          '09:00',
+          '18:00',
+          1,
+          $5,
+          $6,
+          NULL,
+          $7,
+          CURRENT_TIMESTAMP,
+          $8,
+          $9,
+          $10,
+          $11,
+          $12,
+          $13,
+          $14,
+          $15,
+          $16,
+          $17,
+          NULL
+        )
+        ON CONFLICT (id) DO UPDATE SET
+          name = EXCLUDED.name,
+          village = EXCLUDED.village,
+          address = EXCLUDED.address,
+          active = 1,
+          latitude = EXCLUDED.latitude,
+          longitude = EXCLUDED.longitude,
+          location_accuracy_m = EXCLUDED.location_accuracy_m,
+          location_source = EXCLUDED.location_source,
+          location_updated_at = CURRENT_TIMESTAMP,
+          source_type = EXCLUDED.source_type,
+          verification_status = EXCLUDED.verification_status,
+          source_name = EXCLUDED.source_name,
+          source_url = EXCLUDED.source_url,
+          source_note = EXCLUDED.source_note,
+          season = EXCLUDED.season,
+          crop_types = EXCLUDED.crop_types,
+          state_name = EXCLUDED.state_name,
+          district_name = EXCLUDED.district_name,
+          mandal_name = EXCLUDED.mandal_name,
+          updated_at = CURRENT_TIMESTAMP
+      `,
+      [
+        center.id,
+        center.name,
+        center.village,
+        center.address,
+        center.latitude,
+        center.longitude,
+        center.locationSource,
+        center.sourceType,
+        center.verificationStatus,
+        center.sourceName,
+        center.sourceUrl,
+        center.sourceNote,
+        center.season,
+        center.cropTypes,
+        center.stateName,
+        center.districtName,
+        center.mandalName,
+      ]
+    );
+  }
+}
+
+function parseCenterCoordinate(value, min, max) {
+  if (value === undefined || value === null || value === '') return null;
+  const n = Number(value);
+  return Number.isFinite(n) && n >= min && n <= max ? n : null;
+}
+
+function normalizeCenterCropText(value) {
+  return String(value || '')
+    .split(',')
+    .map(v => v.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+async function getAvailableCenters({ lat, lng, radiusKm = 100, crop = '' } = {}) {
+  const hasGps = lat !== null && lng !== null;
+  const radius = Math.min(Math.max(Number(radiusKm) || 50, 1), 250);
+
+  const params = [];
+  let where = `
+    COALESCE(c.active, 0) = 1
+    AND COALESCE(c.verification_status, '') IN ('VERIFIED_REFERENCE', 'ADMIN_ENTERED', 'ADMIN_VERIFIED')
+    AND c.latitude IS NOT NULL
+    AND c.longitude IS NOT NULL
+  `;
+
+  if (hasGps) {
+    params.push(Number(lat), Number(lng));
+    where += `
+      AND (
+        6371 * 2 * ASIN(
+          SQRT(
+            POWER(SIN(RADIANS(c.latitude - $1) / 2), 2) +
+            COS(RADIANS($1)) * COS(RADIANS(c.latitude)) *
+            POWER(SIN(RADIANS(c.longitude - $2) / 2), 2)
+          )
+        )
+      ) <= $3
+    `;
+    params.push(radius);
+  }
+
+  const rows = await all(
+    `
+      SELECT
+        c.*,
+        ${hasGps ? `
+          (6371 * 2 * ASIN(
+            SQRT(
+              POWER(SIN(RADIANS(c.latitude - $1) / 2), 2) +
+              COS(RADIANS($1)) * COS(RADIANS(c.latitude)) *
+              POWER(SIN(RADIANS(c.longitude - $2) / 2), 2)
+            )
+          )
+        ` : 'NULL'} AS distance_km
+      FROM centers c
+      WHERE ${where}
+      ORDER BY ${hasGps ? 'distance_km ASC,' : ''} c.name ASC
+    `,
+    params
+  );
+
+  const wantedCrop = String(crop || '').trim().toLowerCase();
+  const filtered = wantedCrop
+    ? rows.filter(row => {
+        const types = normalizeCenterCropText(row.crop_types);
+        return types.length === 0 || types.includes(wantedCrop);
+      })
+    : rows;
+
+  return filtered.map(row => ({
+    ...row,
+    latitude: row.latitude == null ? null : Number(row.latitude),
+    longitude: row.longitude == null ? null : Number(row.longitude),
+    distanceKm:
+      row.distance_km == null || !Number.isFinite(Number(row.distance_km))
+        ? null
+        : Number(Number(row.distance_km).toFixed(2)),
+    sourceType: row.source_type,
+    verificationStatus: row.verification_status,
+    sourceName: row.source_name,
+    sourceUrl: row.source_url,
+    cropTypes: row.crop_types,
+    state: row.state_name || row.state || null,
+    district: row.district_name || row.district || null,
+    mandal: row.mandal_name || row.mandal || null,
+  }));
+}
+
+/* =========================================================
    START SERVER
 ========================================================= */
 
@@ -14298,6 +16807,12 @@ async function startServer() {
     await ensureBookingChangesTable();
 
     await ensureTransportTables();
+
+    await ensureFarmerProfileColumns();
+
+    await ensureLocationMasterTables();
+    await ensureCenterLocationColumns();
+    await ensureVerifiedCenterData();
 
 
     await db.query(

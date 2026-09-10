@@ -4,6 +4,8 @@ import {
   useState,
 } from "react";
 
+
+
 import {
   ArrowLeft,
   ArrowRight,
@@ -607,6 +609,8 @@ export default function TransporterRegister() {
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationStatus, setLocationStatus] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  const autoGpsRequestedRef = useRef(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [geoDetails, setGeoDetails] = useState(null);
 
@@ -726,9 +730,11 @@ export default function TransporterRegister() {
     );
   };
 
-  const detectLocation = () => {
+  const detectLocation = useCallback(() => {
     if (!navigator.geolocation) {
-      setLocationStatus("Your browser does not support location access. Please enter the service area manually.");
+      setLocationStatus(
+        "This browser does not support GPS location. Please use a browser with location access."
+      );
       return;
     }
 
@@ -744,24 +750,68 @@ export default function TransporterRegister() {
           ? Math.round(position.coords.accuracy)
           : null;
 
-        setForm(current => ({
-          ...current,
-          pickupLat: String(lat),
-          pickupLng: String(lng),
-          locationAccuracyM: accuracy,
-          locationSource: "gps",
-        }));
-
         try {
           const data = await reverseGeocode(lat, lng);
-          const a = data?.address || {};
-          const detectedState = normalizeStateName(a.state || a.state_district || "");
-          const masterState = findStateByName(detectedState);
-          const matchedState = getMasterState(detectedState) || getMasterState(masterState?.id);
-          const detectedDistrict = a.state_district || a.county || a.district || "";
-          const detectedMandal = a.municipality || a.city_district || a.block || a.suburb || "";
-          const detectedVillage = a.village || a.town || a.city || a.hamlet || "";
-          const detectedPincode = a.postcode || "";
+          const address = data?.address || {};
+
+          const detectedState = normalizeStateName(
+            address.state ||
+              address.state_district ||
+              ""
+          );
+
+          const detectedDistrict = String(
+            address.state_district ||
+              address.county ||
+              address.district ||
+              address.region ||
+              ""
+          ).trim();
+
+          const detectedMandal = String(
+            address.municipality ||
+              address.city_district ||
+              address.block ||
+              address.township ||
+              address.suburb ||
+              ""
+          ).trim();
+
+          const detectedVillage = String(
+            address.village ||
+              address.town ||
+              address.city ||
+              address.hamlet ||
+              address.neighbourhood ||
+              ""
+          ).trim();
+
+          const detectedPincode = String(
+            address.postcode || ""
+          ).trim();
+
+          const masterState =
+            getMasterState(detectedState) ||
+            getMasterState(findStateByName(detectedState)?.id);
+
+          const nextLocation = {
+            stateId:
+              masterState?.stateId ||
+              "",
+            stateName:
+              masterState?.stateName ||
+              detectedState ||
+              "",
+            districtId: "",
+            districtName: detectedDistrict || "",
+            mandalId: "",
+            mandalName: detectedMandal || "",
+            village: detectedVillage || "",
+          };
+
+          const derived = deriveLocationFromMaster(
+            nextLocation
+          );
 
           setForm(current => ({
             ...current,
@@ -769,15 +819,51 @@ export default function TransporterRegister() {
             pickupLng: String(lng),
             locationAccuracyM: accuracy,
             locationSource: "gps+reverse-geocode",
-            stateId: matchedState?.stateId || masterState?.id || current.stateId,
-            stateName: matchedState?.stateName || masterState?.name || detectedState || current.stateName,
-            districtId: "",
-            districtName: detectedDistrict || current.districtName,
-            mandalId: "",
-            mandalName: detectedMandal || current.mandalName,
-            village: detectedVillage || current.village,
-            pincode: detectedPincode || current.pincode,
-            pickupAddress: data?.display_name || current.pickupAddress,
+
+            stateId:
+              derived.stateId ||
+              current.stateId ||
+              "",
+            stateName:
+              derived.stateName ||
+              current.stateName ||
+              detectedState ||
+              "",
+
+            districtId:
+              derived.districtId ||
+              current.districtId ||
+              "",
+            districtName:
+              derived.districtName ||
+              current.districtName ||
+              detectedDistrict ||
+              "",
+
+            mandalId:
+              derived.mandalId ||
+              current.mandalId ||
+              "",
+            mandalName:
+              derived.mandalName ||
+              current.mandalName ||
+              detectedMandal ||
+              "",
+
+            village:
+              detectedVillage ||
+              current.village ||
+              "",
+
+            pincode:
+              detectedPincode ||
+              current.pincode ||
+              "",
+
+            pickupAddress:
+              data?.display_name ||
+              current.pickupAddress ||
+              "",
           }));
 
           setGeoDetails({
@@ -788,25 +874,93 @@ export default function TransporterRegister() {
             detectedVillage,
             pincode: detectedPincode,
           });
-          setLocationStatus(`${copy("locationFound")}${accuracy ? ` · ±${accuracy} m` : ""}`);
+
+          setLocationStatus(
+            `${copy("locationFound")}${
+              accuracy
+                ? ` · ±${accuracy} m`
+                : ""
+            }`
+          );
         } catch (reverseError) {
-          console.warn("Reverse geocoding failed:", reverseError);
-          setLocationStatus(`GPS saved: ${lat}, ${lng}. Area names can be reviewed manually.`);
+          console.warn(
+            "Reverse geocoding failed:",
+            reverseError
+          );
+
+          /*
+           * GPS coordinates are still useful, but location registration
+           * needs readable locality values. Do not silently pretend that
+           * the coordinates identify the wrong village.
+           */
+          setForm(current => ({
+            ...current,
+            pickupLat: String(lat),
+            pickupLng: String(lng),
+            locationAccuracyM: accuracy,
+            locationSource: "gps",
+          }));
+
+          setLocationStatus(
+            `GPS captured (${lat}, ${lng}) but the area name could not be resolved. Tap "Use my current location" again to retry.`
+          );
         } finally {
           setLocationLoading(false);
         }
       },
       errorValue => {
-        let message = "Unable to read your current location.";
-        if (errorValue?.code === 1) message = "Location permission was denied. Please allow location access or enter the service area manually.";
-        if (errorValue?.code === 2) message = "Your location could not be determined. Please try again or enter the service area manually.";
-        if (errorValue?.code === 3) message = "Location request timed out. Please try again or enter the service area manually.";
+        let message =
+          "Unable to read your current GPS location.";
+
+        if (errorValue?.code === 1) {
+          message =
+            "Location permission was denied. Allow browser location access and try again.";
+        }
+
+        if (errorValue?.code === 2) {
+          message =
+            "Your current location could not be determined. Please try again.";
+        }
+
+        if (errorValue?.code === 3) {
+          message =
+            "GPS location timed out. Please try again in an open area.";
+        }
+
         setLocationStatus(message);
         setLocationLoading(false);
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
+      {
+        enableHighAccuracy: true,
+        timeout: 20000,
+        maximumAge: 10000,
+      }
     );
-  };
+  }, [copy, setForm]);
+
+  /*
+   * GPS-first registration:
+   * entering the location step automatically asks for the current
+   * position once. The user does not need to search for or type an area.
+   */
+  useEffect(() => {
+    if (
+      step !== 3 ||
+      autoGpsRequestedRef.current ||
+      form.pickupLat ||
+      form.pickupLng
+    ) {
+      return;
+    }
+
+    autoGpsRequestedRef.current = true;
+    detectLocation();
+  }, [
+    step,
+    form.pickupLat,
+    form.pickupLng,
+    detectLocation,
+  ]);
 
   const validateStep = currentStep => {
     setError("");
@@ -1419,14 +1573,13 @@ export default function TransporterRegister() {
 
                 <div>
                   <strong>
-                    Primary village is the anchor
+                    Your location is detected automatically
                   </strong>
 
                   <span>
-                    Your state, district, mandal and primary
-                    village define your local network.
-                    Additional villages and service radius
-                    expand that network.
+                    Tap "Use my current location" or allow the automatic GPS request.
+                    KrishiSetu fills the state, district, mandal, village,
+                    PIN and starting coordinates from your current position.
                   </span>
                 </div>
               </div>
@@ -1462,6 +1615,7 @@ export default function TransporterRegister() {
                   <div className="transporter-register-select-wrap">
                     <select
                       value={form.stateId || findStateByName(form.stateName)?.id || ""}
+                      disabled={form.locationSource.startsWith("gps")}
                       onChange={event => {
                         const selected = INDIA_STATES.find(item => item.id === event.target.value);
                         update("stateId", selected?.id || "");
@@ -1487,6 +1641,7 @@ export default function TransporterRegister() {
                     <div className="transporter-register-select-wrap">
                       <select
                         value={form.districtId || ""}
+                        disabled={form.locationSource.startsWith("gps")}
                         onChange={event => {
                           const item = masterDistricts.find(d => d.districtId === event.target.value);
                           update("districtId", item?.districtId || "");
@@ -1502,7 +1657,7 @@ export default function TransporterRegister() {
                       <ChevronDown size={17} />
                     </div>
                   ) : (
-                    <input className="transporter-register-input" value={form.districtName} onChange={event => update("districtName", event.target.value)} placeholder="e.g. Warangal" />
+                    <input className="transporter-register-input" value={form.districtName} readOnly={form.locationSource.startsWith("gps")} onChange={event => update("districtName", event.target.value)} placeholder="Detected from GPS" />
                   )}
                 </Field>
 
@@ -1511,6 +1666,7 @@ export default function TransporterRegister() {
                     <div className="transporter-register-select-wrap">
                       <select
                         value={form.mandalId || ""}
+                        disabled={form.locationSource.startsWith("gps")}
                         onChange={event => {
                           const item = masterMandals.find(d => d.mandalId === event.target.value);
                           update("mandalId", item?.mandalId || "");
@@ -1524,21 +1680,25 @@ export default function TransporterRegister() {
                       <ChevronDown size={17} />
                     </div>
                   ) : (
-                    <input className="transporter-register-input" value={form.mandalName} onChange={event => update("mandalName", event.target.value)} placeholder="e.g. Hanamkonda" />
+                    <input className="transporter-register-input" value={form.mandalName} readOnly={form.locationSource.startsWith("gps")} onChange={event => update("mandalName", event.target.value)} placeholder="Detected from GPS" />
                   )}
                 </Field>
 
                 <Field label={copy("village")} required hint={masterVillages.length ? "Choose your primary village from the master list." : "Type the village name. GPS can populate it automatically."}>
                   {masterVillages.length ? (
                     <div className="transporter-register-select-wrap">
-                      <select value={form.village} onChange={event => update("village", event.target.value)}>
+                      <select
+                        value={form.village}
+                        disabled={form.locationSource.startsWith("gps")}
+                        onChange={event => update("village", event.target.value)}
+                      >
                         <option value="">Select village</option>
                         {masterVillages.map(village => <option key={village} value={village}>{village}</option>)}
                       </select>
                       <ChevronDown size={17} />
                     </div>
                   ) : (
-                    <input className="transporter-register-input" value={form.village} onChange={event => update("village", event.target.value)} placeholder="e.g. Rampur" />
+                    <input className="transporter-register-input" value={form.village} readOnly={form.locationSource.startsWith("gps")} onChange={event => update("village", event.target.value)} placeholder="Detected from GPS" />
                   )}
                 </Field>
 
@@ -1546,8 +1706,9 @@ export default function TransporterRegister() {
                   <input
                     className="transporter-register-input"
                     value={form.pincode}
+                    readOnly={form.locationSource.startsWith("gps")}
                     onChange={event => update("pincode", event.target.value.replace(/\D/g, "").slice(0, 6))}
-                    placeholder="500001"
+                    placeholder="Detected from GPS"
                     inputMode="numeric"
                   />
                 </Field>
@@ -1907,7 +2068,7 @@ export default function TransporterRegister() {
                 <div className="transporter-register-subsection-heading">
                   <div>
                     <span>STARTING LOCATION</span>
-                    <h3>Optional GPS position for smarter matching</h3>
+                    <h3>GPS location for automatic registration</h3>
                   </div>
                 </div>
 
@@ -1921,7 +2082,7 @@ export default function TransporterRegister() {
 
                   {locationLoading
                     ? "Getting current location…"
-                    : "Use my current GPS location"}
+                    : "Detect my location automatically"}
                 </button>
 
                 {locationStatus ? (

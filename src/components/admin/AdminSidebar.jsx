@@ -8,6 +8,7 @@ import {
   MapPin,
   Scale,
   Settings,
+  Truck,
   Users,
   Wheat,
   X,
@@ -17,6 +18,12 @@ import {
   Link,
   useLocation,
 } from "react-router";
+
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import Logo from "../Logo";
 
@@ -32,10 +39,103 @@ function AdminSidebar({
 
   const location =
     useLocation();
+
   const {
-  t,
-} =
-  useLanguage();
+    t,
+  } = useLanguage();
+
+  const [centerCount, setCenterCount] =
+    useState({
+      total: 0,
+      active: 0,
+    });
+
+  const API_URL =
+    String(
+      import.meta.env.VITE_API_URL ||
+      "http://localhost:5000/api"
+    ).replace(/\/+$/, "");
+
+
+  /* =========================================================
+     CENTER NETWORK SUMMARY
+     This is intentionally NOT an "active center" selector.
+     The central admin manages the full procurement network.
+  ========================================================= */
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCenterSummary() {
+      try {
+        const response = await fetch(
+          `${API_URL}/centers`
+        );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const payload =
+          await response.json();
+
+        const centers =
+          Array.isArray(payload?.centers)
+            ? payload.centers
+            : [];
+
+        if (cancelled) {
+          return;
+        }
+
+        const active = centers.filter(
+          center =>
+            Number(
+              center?.active ??
+              1
+            ) === 1
+        ).length;
+
+        setCenterCount({
+          total: centers.length,
+          active,
+        });
+      } catch {
+        // Sidebar must remain usable even when the API is temporarily unavailable.
+      }
+    }
+
+    loadCenterSummary();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [API_URL]);
+
+
+  const transportTranslation =
+    t("admin.transport");
+
+  const transportLabel =
+    transportTranslation &&
+    transportTranslation !== "admin.transport"
+      ? transportTranslation
+      : "Transport";
+
+
+  const centerSummary =
+    useMemo(() => {
+      if (!centerCount.total) {
+        return "Center network";
+      }
+
+      if (centerCount.active === centerCount.total) {
+        return `${centerCount.total} centers • all operational`;
+      }
+
+      return `${centerCount.active} active of ${centerCount.total} centers`;
+    }, [centerCount]);
+
 
   const navigation = [
 
@@ -87,6 +187,17 @@ function AdminSidebar({
 
           icon:
             Wheat,
+        },
+
+        {
+          label:
+            transportLabel,
+
+          path:
+            "/admin/transport",
+
+          icon:
+            Truck,
         },
 
         {
@@ -230,10 +341,24 @@ function AdminSidebar({
               : ""
           }`
         }
+        style={{
+          height: "100dvh",
+          maxHeight: "100dvh",
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          boxSizing: "border-box",
+        }}
       >
 
 
-        <div className="admin-sidebar-top">
+        <div
+          className="admin-sidebar-top"
+          style={{
+            flexShrink: 0,
+          }}
+        >
 
 
           <Link
@@ -281,8 +406,23 @@ function AdminSidebar({
 
 
 
-        <div className="admin-center-selector">
+        {/* =====================================================
+            ADMIN WORKSPACE CONTEXT
+            No fake "active center" — this admin is network-level.
+        ====================================================== */}
 
+        <Link
+          to="/admin/centers"
+          className="admin-center-selector"
+          onClick={
+            onClose
+          }
+          title="Open procurement center management"
+          style={{
+            flexShrink: 0,
+            textDecoration: "none",
+          }}
+        >
 
           <div className="admin-center-selector-icon">
 
@@ -296,21 +436,46 @@ function AdminSidebar({
           <div>
 
             <span>
-              ACTIVE CENTER
+              PROCUREMENT NETWORK
             </span>
 
 
             <strong>
-              Main Procurement Center
+              All Centers
             </strong>
+
+
+            <small
+              style={{
+                display: "block",
+                marginTop: "3px",
+                fontSize: "11px",
+                lineHeight: 1.3,
+                opacity: 0.72,
+              }}
+            >
+              {centerSummary}
+            </small>
 
           </div>
 
-        </div>
+        </Link>
 
 
 
-        <nav className="admin-sidebar-nav">
+        <nav
+          className="admin-sidebar-nav"
+          aria-label="Admin navigation"
+          style={{
+            flex: "1 1 auto",
+            minHeight: 0,
+            overflowY: "auto",
+            overflowX: "hidden",
+            overscrollBehavior: "contain",
+            WebkitOverflowScrolling: "touch",
+            scrollbarGutter: "stable",
+          }}
+        >
 
 
           {navigation.map(
@@ -362,6 +527,11 @@ function AdminSidebar({
                                 : ""
                             }`
                           }
+                          aria-current={
+                            active
+                              ? "page"
+                              : undefined
+                          }
                         >
 
                           <Icon
@@ -398,7 +568,12 @@ function AdminSidebar({
 
 
 
-        <div className="admin-sidebar-bottom">
+        <div
+          className="admin-sidebar-bottom"
+          style={{
+            flexShrink: 0,
+          }}
+        >
 
 
           <div className="admin-sidebar-status">
@@ -425,6 +600,9 @@ function AdminSidebar({
           <Link
             to="/admin/login"
             className="admin-sidebar-logout"
+            onClick={
+              onClose
+            }
           >
 
             <LogOut

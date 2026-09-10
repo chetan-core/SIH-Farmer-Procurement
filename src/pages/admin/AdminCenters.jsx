@@ -6,13 +6,19 @@ import {
 } from "react";
 
 import {
+  createPortal,
+} from "react-dom";
+
+import {
   AlertTriangle,
   ArrowRight,
   CalendarDays,
   CheckCircle2,
   Database,
   Edit3,
+  LocateFixed,
   MapPin,
+  Navigation,
   Plus,
   RefreshCw,
   Search,
@@ -26,7 +32,13 @@ import AdminLayout from "../../components/admin/AdminLayout";
 import { useLanguage } from "../../translations/LanguageContext";
 
 const API_URL =
-  import.meta.env.VITE_API_URL;
+  String(
+    import.meta.env.VITE_API_URL ||
+    "http://localhost:5000/api"
+  ).replace(
+    /\/+$/,
+    ""
+  );
 
 
 function AdminCenters() {
@@ -66,6 +78,21 @@ function AdminCenters() {
 
   const [statusFilter, setStatusFilter] =
     useState("ALL");
+
+  const [locationFilter, setLocationFilter] =
+    useState("ALL");
+
+  const [adminLocation, setAdminLocation] =
+    useState(null);
+
+  const [locating, setLocating] =
+    useState(false);
+
+  const [locationError, setLocationError] =
+    useState("");
+
+  const [locationMessage, setLocationMessage] =
+    useState("");
 
   const {
   language,
@@ -265,6 +292,16 @@ function AdminCenters() {
                 : 0;
 
 
+            const distanceKm =
+              adminLocation
+                ? calculateDistanceKm(
+                    adminLocation.lat,
+                    adminLocation.lng,
+                    getCenterLatitude(center),
+                    getCenterLongitude(center)
+                  )
+                : null;
+
             return {
               center,
               centerId,
@@ -272,6 +309,7 @@ function AdminCenters() {
               activeBookings,
               capacity,
               utilization,
+              distanceKm,
             };
 
           }
@@ -279,8 +317,97 @@ function AdminCenters() {
       [
         centers,
         bookings,
+        adminLocation,
       ]
     );
+
+
+  async function findCentersByAdminGps() {
+
+    if (!navigator.geolocation) {
+      setLocationError(
+        "Location services are not available in this browser."
+      );
+      return;
+    }
+
+    setLocating(true);
+    setLocationError("");
+    setLocationMessage(
+      "Detecting your location and finding procurement centers..."
+    );
+
+    try {
+      const position =
+        await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
+            resolve,
+            reject,
+            {
+              enableHighAccuracy: true,
+              timeout: 20000,
+              maximumAge: 0,
+            }
+          );
+        });
+
+      const lat = Number(position.coords.latitude);
+      const lng = Number(position.coords.longitude);
+
+      const response = await fetch(
+        `${API_URL}/locations/resolve?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}&radiusKm=100`
+      );
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok || data?.success === false) {
+        throw new Error(
+          data?.message ||
+          "GPS was received, but the administrative region could not be resolved."
+        );
+      }
+
+      const location = data?.location || {};
+
+      setAdminLocation({
+        lat,
+        lng,
+        stateId: String(location.stateId ?? ""),
+        state: String(location.state ?? ""),
+        districtId: String(location.districtId ?? ""),
+        district: String(location.district ?? ""),
+        mandalId: String(location.mandalId ?? ""),
+        mandal: String(location.mandal ?? ""),
+      });
+
+      setLocationFilter("STATE");
+      setLocationMessage(
+        location.state
+          ? `Showing procurement centers in ${location.state}.`
+          : "Showing procurement centers in your current state."
+      );
+
+    } catch (error) {
+      console.error(
+        "Admin center region lookup error:",
+        error
+      );
+
+      const message =
+        error?.code === 1
+          ? "Location permission was denied. Allow location access and try again."
+          : error?.code === 3
+            ? "Location request timed out. Try again."
+            : error?.message ||
+              "Unable to find centers from your current location.";
+
+      setLocationError(message);
+      setLocationMessage("");
+
+    } finally {
+      setLocating(false);
+    }
+  }
 
 
   const filteredRows =
@@ -293,7 +420,7 @@ function AdminCenters() {
             .toLowerCase();
 
 
-        return centerRows.filter(
+        const rows = centerRows.filter(
           (
             row
           ) => {
@@ -304,6 +431,46 @@ function AdminCenters() {
                 1
               ) === 1;
 
+            if (locationFilter === "STATE") {
+              if (!adminLocation?.stateId && !adminLocation?.state) {
+                return false;
+              }
+
+              const centerStateId = String(
+                row.center.state_id ??
+                row.center.stateId ??
+                ""
+              ).trim();
+
+              const centerState = String(
+                row.center.state ??
+                row.center.state_name ??
+                ""
+              ).trim().toLowerCase();
+
+              const wantedStateId = String(
+                adminLocation.stateId ??
+                ""
+              ).trim();
+
+              const wantedState = String(
+                adminLocation.state ??
+                ""
+              ).trim().toLowerCase();
+
+              if (
+                (wantedStateId && centerStateId && centerStateId !== wantedStateId) &&
+                (wantedState && centerState && centerState !== wantedState)
+              ) {
+                return false;
+              }
+            }
+
+            if (locationFilter === "NEARBY") {
+              if (!Number.isFinite(row.distanceKm) || row.distanceKm > 100) {
+                return false;
+              }
+            }
 
             if (
               statusFilter ===
@@ -358,11 +525,27 @@ function AdminCenters() {
           }
         );
 
+        if (locationFilter !== "ALL") {
+          rows.sort((a, b) => {
+            const aDistance = Number.isFinite(a.distanceKm)
+              ? a.distanceKm
+              : Number.POSITIVE_INFINITY;
+            const bDistance = Number.isFinite(b.distanceKm)
+              ? b.distanceKm
+              : Number.POSITIVE_INFINITY;
+            return aDistance - bDistance;
+          });
+        }
+
+        return rows;
+
       },
       [
         centerRows,
         search,
         statusFilter,
+        locationFilter,
+        adminLocation,
       ]
     );
 
@@ -968,6 +1151,68 @@ function AdminCenters() {
         </section>
 
 
+        <section className="admin-centers-location-panel">
+
+          <div className="admin-centers-location-copy">
+            <div className="admin-centers-location-icon">
+              <LocateFixed size={17} />
+            </div>
+
+            <div>
+              <strong>Find verified centers by your location</strong>
+              <span>
+                Use GPS to load centers in your current state or only centers within 100 km.
+              </span>
+              {locationMessage && (
+                <small>{locationMessage}</small>
+              )}
+              {locationError && (
+                <small className="admin-centers-location-error-text">
+                  {locationError}
+                </small>
+              )}
+            </div>
+          </div>
+
+          <div className="admin-centers-location-actions">
+            <button
+              type="button"
+              className="admin-centers-location-gps-button"
+              onClick={findCentersByAdminGps}
+              disabled={locating}
+            >
+              <LocateFixed size={15} />
+              {locating ? "Finding..." : "Use my GPS"}
+            </button>
+
+            <select
+              className="admin-centers-location-filter"
+              value={locationFilter}
+              onChange={event => setLocationFilter(event.target.value)}
+              disabled={!adminLocation && locationFilter !== "ALL"}
+            >
+              <option value="ALL">All verified centers</option>
+              <option value="STATE">Current state</option>
+              <option value="NEARBY">Within 100 km</option>
+            </select>
+
+            {locationFilter !== "ALL" && (
+              <button
+                type="button"
+                className="admin-centers-location-clear"
+                onClick={() => {
+                  setLocationFilter("ALL");
+                  setLocationMessage("");
+                }}
+              >
+                Clear location
+              </button>
+            )}
+          </div>
+
+        </section>
+
+
 
         {/* =====================================================
             CENTER GRID
@@ -1019,6 +1264,7 @@ function AdminCenters() {
                   text={
                     text
                   }
+                  distanceKm={row.distanceKm}
                   onOpen={() =>
                     setSelectedCenter(
                       row
@@ -1189,6 +1435,7 @@ function CenterCard({
   row,
   language,
   text,
+  distanceKm,
   onOpen,
   onEdit,
 }) {
@@ -1304,9 +1551,9 @@ function CenterCard({
         {
           [
             center.village,
-            center.mandal_id,
-            center.district_id,
-            center.state_id,
+            center.mandal || center.mandal_id,
+            center.district || center.district_id,
+            center.state || center.state_id,
           ]
             .filter(Boolean)
             .join(", ") ||
@@ -1315,6 +1562,15 @@ function CenterCard({
         }
 
       </p>
+
+      {Number.isFinite(distanceKm) && (
+        <div className="admin-center-distance-badge">
+          <Navigation size={12} />
+          {distanceKm < 10
+            ? `${distanceKm.toFixed(1)} km away`
+            : `${Math.round(distanceKm)} km away`}
+        </div>
+      )}
 
 
 
@@ -1477,6 +1733,106 @@ function CenterCard({
    FORM
 ========================================================= */
 
+function normalizeLocationRow(row) {
+  return {
+    id: String(
+      row?.id ??
+      row?.stateId ??
+      row?.state_id ??
+      row?.districtId ??
+      row?.district_id ??
+      row?.mandalId ??
+      row?.mandal_id ??
+      row?.subDistrictId ??
+      row?.sub_district_id ??
+      row?.villageId ??
+      row?.village_id ??
+      ""
+    ),
+    name: String(
+      row?.name ??
+      row?.stateName ??
+      row?.state_name ??
+      row?.districtName ??
+      row?.district_name ??
+      row?.mandalName ??
+      row?.mandal_name ??
+      row?.subDistrictName ??
+      row?.sub_district_name ??
+      row?.villageName ??
+      row?.village_name ??
+      ""
+    ),
+    pincode: String(
+      row?.pincode ??
+      row?.pinCode ??
+      ""
+    ),
+  };
+}
+
+
+function extractLocationRows(data, keys) {
+  for (const key of keys) {
+    if (Array.isArray(data?.[key])) {
+      return data[key];
+    }
+  }
+
+  if (Array.isArray(data?.data)) {
+    return data.data;
+  }
+
+  if (Array.isArray(data?.results)) {
+    return data.results;
+  }
+
+  return [];
+}
+
+
+async function fetchLocationRows(endpoint, params = {}) {
+  const url = new URL(
+    `${API_URL}${endpoint}`
+  );
+
+  Object.entries(params).forEach(
+    ([key, value]) => {
+      if (
+        value !== undefined &&
+        value !== null &&
+        String(value) !== ""
+      ) {
+        url.searchParams.set(
+          key,
+          String(value)
+        );
+      }
+    }
+  );
+
+  const response = await fetch(
+    url.toString()
+  );
+
+  const data = await response
+    .json()
+    .catch(() => null);
+
+  if (
+    !response.ok ||
+    data?.success === false
+  ) {
+    throw new Error(
+      data?.message ||
+      "Unable to load official location data."
+    );
+  }
+
+  return data;
+}
+
+
 function CenterForm({
   center,
   text,
@@ -1495,6 +1851,425 @@ function CenterForm({
           center
         )
     );
+
+  const [
+    states,
+    setStates,
+  ] = useState([]);
+
+  const [
+    districts,
+    setDistricts,
+  ] = useState([]);
+
+  const [
+    mandals,
+    setMandals,
+  ] = useState([]);
+
+  const [
+    villages,
+    setVillages,
+  ] = useState([]);
+
+  const [
+    locating,
+    setLocating,
+  ] = useState(false);
+
+  const [
+    locationMessage,
+    setLocationMessage,
+  ] = useState("");
+
+  const [
+    locationError,
+    setLocationError,
+  ] = useState("");
+
+
+  useEffect(() => {
+
+    fetchLocationRows(
+      "/locations/states"
+    )
+      .then(data => {
+        const rows =
+          extractLocationRows(
+            data,
+            [
+              "states",
+              "locations",
+              "items",
+            ]
+          )
+            .map(normalizeLocationRow)
+            .filter(
+              row =>
+                row.id &&
+                row.name
+            );
+
+        setStates(rows);
+      })
+      .catch(error => {
+        console.error(
+          "Admin center states error:",
+          error
+        );
+        setLocationError(
+          error?.message ||
+          "Unable to load states."
+        );
+      });
+
+  }, []);
+
+
+  useEffect(() => {
+
+    if (!form.stateId) {
+      setDistricts([]);
+      setMandals([]);
+      setVillages([]);
+      return;
+    }
+
+    fetchLocationRows(
+      "/locations/districts",
+      {
+        stateId:
+          form.stateId,
+      }
+    )
+      .then(data => {
+        setDistricts(
+          extractLocationRows(
+            data,
+            [
+              "districts",
+              "locations",
+              "items",
+            ]
+          )
+            .map(normalizeLocationRow)
+            .filter(
+              row =>
+                row.id &&
+                row.name
+            )
+        );
+      })
+      .catch(error => {
+        console.error(
+          "Admin center districts error:",
+          error
+        );
+        setLocationError(
+          error?.message ||
+          "Unable to load districts."
+        );
+      });
+
+  }, [form.stateId]);
+
+
+  useEffect(() => {
+
+    if (!form.districtId) {
+      setMandals([]);
+      setVillages([]);
+      return;
+    }
+
+    fetchLocationRows(
+      "/locations/mandals",
+      {
+        districtId:
+          form.districtId,
+      }
+    )
+      .then(data => {
+        setMandals(
+          extractLocationRows(
+            data,
+            [
+              "mandals",
+              "subDistricts",
+              "sub_districts",
+              "locations",
+              "items",
+            ]
+          )
+            .map(normalizeLocationRow)
+            .filter(
+              row =>
+                row.id &&
+                row.name
+            )
+        );
+      })
+      .catch(error => {
+        console.error(
+          "Admin center mandals error:",
+          error
+        );
+        setLocationError(
+          error?.message ||
+          "Unable to load mandals."
+        );
+      });
+
+  }, [form.districtId]);
+
+
+  useEffect(() => {
+
+    if (!form.mandalId) {
+      setVillages([]);
+      return;
+    }
+
+    fetchLocationRows(
+      "/locations/villages",
+      {
+        mandalId:
+          form.mandalId,
+      }
+    )
+      .then(data => {
+        setVillages(
+          extractLocationRows(
+            data,
+            [
+              "villages",
+              "locations",
+              "items",
+            ]
+          )
+            .map(normalizeLocationRow)
+            .filter(
+              row =>
+                row.id &&
+                row.name
+            )
+        );
+      })
+      .catch(error => {
+        console.error(
+          "Admin center villages error:",
+          error
+        );
+        setLocationError(
+          error?.message ||
+          "Unable to load villages."
+        );
+      });
+
+  }, [form.mandalId]);
+
+
+  async function useCurrentLocation() {
+
+    if (!navigator.geolocation) {
+      setLocationError(
+        "Location services are not available in this browser."
+      );
+      return;
+    }
+
+    setLocating(true);
+    setLocationError("");
+    setLocationMessage(
+      "Scanning the center's GPS location..."
+    );
+
+    try {
+
+      const position =
+        await new Promise(
+          (resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(
+              resolve,
+              reject,
+              {
+                enableHighAccuracy: true,
+                timeout: 20000,
+                maximumAge: 0,
+              }
+            );
+          }
+        );
+
+      const lat =
+        Number(
+          position.coords.latitude
+        );
+
+      const lng =
+        Number(
+          position.coords.longitude
+        );
+
+      const accuracy =
+        Number(
+          position.coords.accuracy
+        );
+
+      const response =
+        await fetch(
+          `${API_URL}/locations/resolve?lat=${encodeURIComponent(
+            lat
+          )}&lng=${encodeURIComponent(
+            lng
+          )}&radiusKm=50`
+        );
+
+      const data =
+        await response
+          .json()
+          .catch(() => null);
+
+      if (
+        !response.ok ||
+        data?.success === false ||
+        !data?.location
+      ) {
+        throw new Error(
+          data?.message ||
+          "GPS was received but the administrative location could not be resolved."
+        );
+      }
+
+      const location =
+        data.location;
+
+      setForm(current => ({
+        ...current,
+        stateId:
+          String(
+            location.stateId ??
+            ""
+          ),
+        districtId:
+          String(
+            location.districtId ??
+            ""
+          ),
+        mandalId:
+          String(
+            location.mandalId ??
+            ""
+          ),
+        villageId:
+          String(
+            location.villageId ??
+            ""
+          ),
+        village:
+          location.village ||
+          current.village ||
+          "",
+        address:
+          data.displayName ||
+          current.address ||
+          "",
+        pincode:
+          location.pincode ||
+          current.pincode ||
+          "",
+        latitude:
+          lat,
+        longitude:
+          lng,
+        locationAccuracyM:
+          accuracy,
+        locationSource:
+          "GPS",
+        locationUpdatedAt:
+          new Date().toISOString(),
+      }));
+
+      setLocationMessage(
+        `GPS detected: ${
+          location.village ||
+          "location"
+        }${
+          location.mandal
+            ? `, ${location.mandal}`
+            : ""
+        }${
+          location.district
+            ? `, ${location.district}`
+            : ""
+        }${
+          location.state
+            ? `, ${location.state}`
+            : ""
+        }`
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Admin center GPS error:",
+        error
+      );
+
+      const message =
+        error?.code === 1
+          ? "Location permission was denied. Allow location access and try again."
+          : error?.code === 3
+            ? "Location request timed out. Try again."
+            : error?.message ||
+              "Unable to detect the center location.";
+
+      setLocationError(
+        message
+      );
+
+      setLocationMessage("");
+
+    } finally {
+
+      setLocating(false);
+
+    }
+
+  }
+
+
+  function openCenterMap() {
+
+    const lat =
+      Number(
+        form.latitude
+      );
+
+    const lng =
+      Number(
+        form.longitude
+      );
+
+    if (
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng)
+    ) {
+      setLocationError(
+        "Center GPS coordinates are not available."
+      );
+      return;
+    }
+
+    window.open(
+      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        `${lat},${lng}`
+      )}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+  }
 
 
   function update(
@@ -1542,12 +2317,29 @@ function CenterForm({
   }
 
 
-  return (
+  return createPortal(
 
-    <div className="admin-center-form-overlay">
+    <div
+      className="admin-center-form-overlay"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && !saving) {
+          onClose();
+        }
+      }}
+      onClick={(event) => {
+        if (event.target === event.currentTarget && !saving) {
+          onClose();
+        }
+      }}
+      role="presentation"
+    >
 
 
-      <div className="admin-center-form-modal">
+      <div
+        className="admin-center-form-modal"
+        onMouseDown={(event) => event.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
+      >
 
 
         <div className="admin-center-form-header">
@@ -1695,80 +2487,266 @@ function CenterForm({
             </div>
 
 
+            <div className="admin-center-location-tools">
+
+              <div className="admin-center-location-tool-copy">
+
+                <strong>
+                  Center GPS location
+                </strong>
+
+                <span>
+                  Use the actual center coordinates. GPS is kept separately from the administrative village hierarchy.
+                </span>
+
+              </div>
+
+
+              <div className="admin-center-location-tool-actions">
+
+                <button
+                  type="button"
+                  className="admin-center-location-gps"
+                  onClick={useCurrentLocation}
+                  disabled={locating}
+                >
+                  <LocateFixed size={16} />
+
+                  {locating
+                    ? "Scanning..."
+                    : "Use current location"}
+                </button>
+
+
+                <button
+                  type="button"
+                  className="admin-center-location-map"
+                  onClick={openCenterMap}
+                  disabled={
+                    !form.latitude ||
+                    !form.longitude
+                  }
+                >
+                  <Navigation size={16} />
+                  View on map
+                </button>
+
+              </div>
+
+            </div>
+
+
+            {locationMessage && (
+              <div className="admin-center-location-success">
+                <CheckCircle2 size={16} />
+                <span>
+                  {locationMessage}
+                </span>
+              </div>
+            )}
+
+
+            {locationError && (
+              <div className="admin-center-location-error">
+                <AlertTriangle size={16} />
+                <span>
+                  {locationError}
+                </span>
+              </div>
+            )}
+
+
             <div className="admin-center-form-grid three">
 
 
-              <FormField
-                label={
-                  text.state
-                }
-                value={
-                  form.stateId
-                }
-                onChange={(value) =>
+              <SelectFormField
+                label={text.state}
+                value={form.stateId}
+                onChange={(value) => {
+
+                  const selected =
+                    states.find(
+                      row =>
+                        String(row.id) ===
+                        String(value)
+                    );
+
                   update(
                     "stateId",
                     value
-                  )
-                }
+                  );
+
+                  update(
+                    "districtId",
+                    ""
+                  );
+
+                  update(
+                    "mandalId",
+                    ""
+                  );
+
+                  update(
+                    "villageId",
+                    ""
+                  );
+
+                  update(
+                    "village",
+                    ""
+                  );
+
+                  update(
+                    "state",
+                    selected?.name ||
+                    ""
+                  );
+
+                }}
+                options={states}
+                placeholder="Select state"
               />
 
 
-              <FormField
-                label={
-                  text.district
-                }
-                value={
-                  form.districtId
-                }
-                onChange={(value) =>
+              <SelectFormField
+                label={text.district}
+                value={form.districtId}
+                onChange={(value) => {
+
+                  const selected =
+                    districts.find(
+                      row =>
+                        String(row.id) ===
+                        String(value)
+                    );
+
                   update(
                     "districtId",
                     value
-                  )
+                  );
+
+                  update(
+                    "district",
+                    selected?.name ||
+                    ""
+                  );
+
+                  update(
+                    "mandalId",
+                    ""
+                  );
+
+                  update(
+                    "villageId",
+                    ""
+                  );
+
+                  update(
+                    "village",
+                    ""
+                  );
+
+                }}
+                options={districts}
+                disabled={!form.stateId}
+                placeholder={
+                  form.stateId
+                    ? "Select district"
+                    : "Select state first"
                 }
               />
 
 
-              <FormField
-                label={
-                  text.mandal
-                }
-                value={
-                  form.mandalId
-                }
-                onChange={(value) =>
+              <SelectFormField
+                label={text.mandal}
+                value={form.mandalId}
+                onChange={(value) => {
+
+                  const selected =
+                    mandals.find(
+                      row =>
+                        String(row.id) ===
+                        String(value)
+                    );
+
                   update(
                     "mandalId",
                     value
-                  )
-                }
-              />
+                  );
 
+                  update(
+                    "mandal",
+                    selected?.name ||
+                    ""
+                  );
 
-              <FormField
-                label={
-                  text.village
-                }
-                value={
-                  form.village
-                }
-                onChange={(value) =>
+                  update(
+                    "villageId",
+                    ""
+                  );
+
                   update(
                     "village",
+                    ""
+                  );
+
+                }}
+                options={mandals}
+                disabled={!form.districtId}
+                placeholder={
+                  form.districtId
+                    ? "Select mandal"
+                    : "Select district first"
+                }
+              />
+
+
+              <SelectFormField
+                label={text.village}
+                value={form.villageId}
+                onChange={(value) => {
+
+                  const selected =
+                    villages.find(
+                      row =>
+                        String(row.id) ===
+                        String(value)
+                    );
+
+                  update(
+                    "villageId",
                     value
-                  )
+                  );
+
+                  update(
+                    "village",
+                    selected?.name ||
+                    ""
+                  );
+
+                  if (
+                    selected?.pincode
+                  ) {
+                    update(
+                      "pincode",
+                      selected.pincode
+                    );
+                  }
+
+                }}
+                options={villages}
+                disabled={!form.mandalId}
+                placeholder={
+                  form.mandalId
+                    ? "Select village"
+                    : "Select mandal first"
                 }
               />
 
 
               <FormField
-                label={
-                  text.address
-                }
-                value={
-                  form.address
-                }
+                label={text.address}
+                value={form.address}
                 onChange={(value) =>
                   update(
                     "address",
@@ -1777,6 +2755,78 @@ function CenterForm({
                 }
                 className="wide"
               />
+
+            </div>
+
+
+            <div className="admin-center-form-grid three">
+
+              <FormField
+                label="Pincode"
+                value={form.pincode}
+                onChange={(value) =>
+                  update(
+                    "pincode",
+                    String(value)
+                      .replace(
+                        /[^0-9]/g,
+                        ""
+                      )
+                      .slice(
+                        0,
+                        6
+                      )
+                  )
+                }
+              />
+
+
+              <FormField
+                label="Latitude"
+                value={form.latitude}
+                type="number"
+                onChange={(value) =>
+                  update(
+                    "latitude",
+                    value
+                  )
+                }
+              />
+
+
+              <FormField
+                label="Longitude"
+                value={form.longitude}
+                type="number"
+                onChange={(value) =>
+                  update(
+                    "longitude",
+                    value
+                  )
+                }
+              />
+
+            </div>
+
+
+            <div className="admin-center-gps-meta">
+
+              <span>
+                Location source:{" "}
+                {form.locationSource ||
+                  "REGISTERED"}
+              </span>
+
+              {form.locationAccuracyM && (
+                <span>
+                  Accuracy: ±
+                  {Math.round(
+                    Number(
+                      form.locationAccuracyM
+                    )
+                  )} m
+                </span>
+              )}
 
             </div>
 
@@ -2023,8 +3073,61 @@ function CenterForm({
 
       </div>
 
-    </div>
+    </div>,
 
+    document.body
+
+  );
+}
+
+
+function SelectFormField({
+  label,
+  value,
+  onChange,
+  options = [],
+  disabled = false,
+  placeholder = "Select",
+}) {
+
+  return (
+    <label className="admin-center-form-field">
+      <span>
+        {label}
+      </span>
+
+      <select
+        value={
+          value ??
+          ""
+        }
+        disabled={
+          disabled
+        }
+        onChange={event =>
+          onChange(
+            event.target.value
+          )
+        }
+      >
+
+        <option value="">
+          {placeholder}
+        </option>
+
+        {options.map(
+          option => (
+            <option
+              key={option.id}
+              value={option.id}
+            >
+              {option.name}
+            </option>
+          )
+        )}
+
+      </select>
+    </label>
   );
 }
 
@@ -2609,6 +3712,66 @@ function CenterDetail({
    HELPERS
 ========================================================= */
 
+function getCenterLatitude(center) {
+  const value =
+    center?.latitude ??
+    center?.lat ??
+    center?.current_lat;
+
+  const number = Number(value);
+
+  return Number.isFinite(number) ? number : null;
+}
+
+
+function getCenterLongitude(center) {
+  const value =
+    center?.longitude ??
+    center?.lng ??
+    center?.current_lng;
+
+  const number = Number(value);
+
+  return Number.isFinite(number) ? number : null;
+}
+
+
+function calculateDistanceKm(
+  lat1,
+  lng1,
+  lat2,
+  lng2
+) {
+  if (
+    !Number.isFinite(Number(lat1)) ||
+    !Number.isFinite(Number(lng1)) ||
+    !Number.isFinite(Number(lat2)) ||
+    !Number.isFinite(Number(lng2))
+  ) {
+    return null;
+  }
+
+  const earthRadiusKm = 6371;
+  const toRadians = value =>
+    (Number(value) * Math.PI) / 180;
+
+  const dLat =
+    toRadians(lat2 - lat1);
+  const dLng =
+    toRadians(lng2 - lng1);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) *
+      Math.cos(toRadians(lat2)) *
+      Math.sin(dLng / 2) ** 2;
+
+  return Number(
+    (earthRadiusKm * 2 * Math.asin(Math.sqrt(a))).toFixed(3)
+  );
+}
+
+
 function createFormState(
   center
 ) {
@@ -2625,22 +3788,74 @@ function createFormState(
 
     stateId:
       center?.state_id ||
+      center?.stateId ||
+      "",
+
+    state:
+      center?.state ||
       "",
 
     districtId:
       center?.district_id ||
+      center?.districtId ||
+      "",
+
+    district:
+      center?.district ||
       "",
 
     mandalId:
       center?.mandal_id ||
+      center?.mandalId ||
+      "",
+
+    mandal:
+      center?.mandal ||
+      "",
+
+    villageId:
+      center?.village_id ||
+      center?.villageId ||
       "",
 
     village:
       center?.village ||
       "",
 
+    pincode:
+      center?.pincode ||
+      "",
+
     address:
       center?.address ||
+      "",
+
+    latitude:
+      center?.latitude ??
+      center?.lat ??
+      center?.current_lat ??
+      "",
+
+    longitude:
+      center?.longitude ??
+      center?.lng ??
+      center?.current_lng ??
+      "",
+
+    locationAccuracyM:
+      center?.location_accuracy_m ??
+      center?.locationAccuracyM ??
+      "",
+
+    locationSource:
+      center?.location_source ??
+      center?.locationSource ??
+      center?.location_source_type ??
+      "REGISTERED",
+
+    locationUpdatedAt:
+      center?.location_updated_at ??
+      center?.locationUpdatedAt ??
       "",
 
     managerName:

@@ -3,9 +3,13 @@ import {
   Bell,
   CheckCircle2,
   ChevronLeft,
+  ChevronDown,
   Globe2,
   Leaf,
+  LocateFixed,
+  LockKeyhole,
   MapPin,
+  Navigation,
   Phone,
   Save,
   ShieldCheck,
@@ -36,7 +40,13 @@ import {
 
 
 const API_URL =
-  import.meta.env.VITE_API_URL;
+  String(
+    import.meta.env.VITE_API_URL ||
+    "http://localhost:5000/api"
+  ).replace(
+    /\/+$/,
+    ""
+  );
 
 
 function FarmerSettings() {
@@ -69,7 +79,25 @@ function FarmerSettings() {
     useState({
       name: "",
       phone: "",
+      alternatePhone: "",
+      stateId: "",
+      state: "",
+      districtId: "",
+      district: "",
+      mandalId: "",
+      mandal: "",
+      villageId: "",
       village: "",
+      pincode: "",
+      farmAddress: "",
+      landmark: "",
+      currentLat: "",
+      currentLng: "",
+      locationAccuracyM: "",
+      locationSource: "REGISTERED",
+      locationUpdatedAt: "",
+      farmSizeAcres: "",
+      irrigationType: "",
       language: "en",
       preferredCenterId: "main",
       primaryCrop: "wheat",
@@ -118,6 +146,60 @@ function FarmerSettings() {
   ] =
     useState("");
 
+  const [
+    states,
+    setStates,
+  ] =
+    useState([]);
+
+  const [
+    districts,
+    setDistricts,
+  ] =
+    useState([]);
+
+  const [
+    mandals,
+    setMandals,
+  ] =
+    useState([]);
+
+  const [
+    villages,
+    setVillages,
+  ] =
+    useState([]);
+
+  const [
+    locationLoading,
+    setLocationLoading,
+  ] =
+    useState(false);
+
+  const [
+    locationMessage,
+    setLocationMessage,
+  ] =
+    useState("");
+
+  const [
+    passwordForm,
+    setPasswordForm,
+  ] =
+    useState({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
+
+  const [
+    passwordSaving,
+    setPasswordSaving,
+  ] =
+    useState(false);
+
+
+
 
   /*
     Refresh the local farmer reference when the
@@ -151,8 +233,96 @@ function FarmerSettings() {
           farmer.phone ||
           "",
 
+        alternatePhone:
+          farmer.alternate_phone ??
+          farmer.alternatePhone ??
+          "",
+
+        stateId:
+          farmer.state_id ??
+          farmer.stateId ??
+          "",
+
+        state:
+          farmer.state ||
+          farmer.state_name ||
+          "",
+
+        districtId:
+          farmer.district_id ??
+          farmer.districtId ??
+          "",
+
+        district:
+          farmer.district ||
+          farmer.district_name ||
+          "",
+
+        mandalId:
+          farmer.mandal_id ??
+          farmer.mandalId ??
+          "",
+
+        mandal:
+          farmer.mandal ||
+          farmer.mandal_name ||
+          "",
+
+        villageId:
+          farmer.village_id ??
+          farmer.villageId ??
+          "",
+
         village:
           farmer.village ||
+          "",
+
+        pincode:
+          farmer.pincode ||
+          "",
+
+        farmAddress:
+          farmer.farm_address ??
+          farmer.farmAddress ??
+          "",
+
+        landmark:
+          farmer.landmark ||
+          "",
+
+        currentLat:
+          farmer.current_lat ??
+          farmer.currentLat ??
+          "",
+
+        currentLng:
+          farmer.current_lng ??
+          farmer.currentLng ??
+          "",
+
+        locationAccuracyM:
+          farmer.location_accuracy_m ??
+          farmer.locationAccuracyM ??
+          "",
+
+        locationSource:
+          farmer.location_source ??
+          farmer.locationSource ??
+          "REGISTERED",
+
+        locationUpdatedAt:
+          farmer.location_updated_at ??
+          farmer.locationUpdatedAt ??
+          "",
+
+        farmSizeAcres:
+          farmer.farm_size_acres ??
+          farmer.farmSizeAcres ??
+          "",
+
+        irrigationType:
+          farmer.irrigation_type ??
+          farmer.irrigationType ??
           "",
 
         language:
@@ -273,6 +443,867 @@ function FarmerSettings() {
     loadCenters();
 
   }, []);
+
+
+  useEffect(() => {
+
+    loadStates();
+
+  }, []);
+
+
+  useEffect(() => {
+
+    if (
+      form.stateId
+    ) {
+
+      loadDistricts(
+        form.stateId
+      );
+
+    }
+
+  }, [
+    form.stateId,
+  ]);
+
+
+  useEffect(() => {
+
+    if (
+      form.districtId
+    ) {
+
+      loadMandals(
+        form.districtId
+      );
+
+    }
+
+  }, [
+    form.districtId,
+  ]);
+
+
+  useEffect(() => {
+
+    if (
+      form.mandalId
+    ) {
+
+      loadVillages(
+        form.mandalId
+      );
+
+    }
+
+  }, [
+    form.mandalId,
+  ]);
+
+
+
+  function extractRows(data, keys = []) {
+    for (const key of keys) {
+      if (Array.isArray(data?.[key])) {
+        return data[key];
+      }
+    }
+
+    if (Array.isArray(data?.data)) {
+      return data.data;
+    }
+
+    if (Array.isArray(data?.results)) {
+      return data.results;
+    }
+
+    return [];
+  }
+
+
+  function normaliseLocationRow(
+    row
+  ) {
+    return {
+      id:
+        String(
+          row?.id ??
+          row?.stateId ??
+          row?.state_id ??
+          row?.districtId ??
+          row?.district_id ??
+          row?.mandalId ??
+          row?.mandal_id ??
+          row?.subDistrictId ??
+          row?.sub_district_id ??
+          row?.villageId ??
+          row?.village_id ??
+          ""
+        ),
+
+      name:
+        String(
+          row?.name ??
+          row?.stateName ??
+          row?.state_name ??
+          row?.districtName ??
+          row?.district_name ??
+          row?.mandalName ??
+          row?.mandal_name ??
+          row?.subDistrictName ??
+          row?.sub_district_name ??
+          row?.villageName ??
+          row?.village_name ??
+          ""
+        ),
+
+      code:
+        row?.code ??
+        row?.stateCode ??
+        row?.state_code ??
+        row?.districtCode ??
+        row?.district_code ??
+        row?.mandalCode ??
+        row?.mandal_code ??
+        row?.villageCode ??
+        row?.village_code ??
+        "",
+
+      pincode:
+        row?.pincode ??
+        row?.pinCode ??
+        "",
+    };
+  }
+
+
+  async function fetchLocationRows(
+    endpoint,
+    params = {}
+  ) {
+
+    const url =
+      new URL(
+        `${API_URL}${endpoint}`
+      );
+
+    Object.entries(
+      params
+    ).forEach(
+      (
+        [
+          key,
+          value,
+        ]
+      ) => {
+
+        if (
+          value !==
+          undefined &&
+          value !==
+          null &&
+          String(value) !==
+          ""
+        ) {
+
+          url.searchParams.set(
+            key,
+            value
+          );
+
+        }
+
+      }
+    );
+
+
+    const response =
+      await fetch(
+        url.toString()
+      );
+
+
+    const data =
+      await response.json()
+        .catch(
+          () => null
+        );
+
+
+    if (
+      !response.ok ||
+      data?.success ===
+        false
+    ) {
+
+      throw new Error(
+        data?.message ||
+        "Unable to load location data."
+      );
+
+    }
+
+
+    return data;
+
+  }
+
+
+  async function loadStates() {
+
+    try {
+
+      const data =
+        await fetchLocationRows(
+          "/locations/states"
+        );
+
+
+      setStates(
+        extractRows(
+          data,
+          [
+            "states",
+            "locations",
+            "items",
+          ]
+        )
+          .map(
+            normaliseLocationRow
+          )
+          .filter(
+            row =>
+              row.id &&
+              row.name
+          )
+      );
+
+    } catch (
+      stateError
+    ) {
+
+      console.error(
+        "Farmer settings state load error:",
+        stateError
+      );
+
+      setError(
+        stateError?.message ||
+        "Unable to load states."
+      );
+
+    }
+
+  }
+
+
+  async function loadDistricts(
+    stateId
+  ) {
+
+    if (
+      !stateId
+    ) {
+
+      setDistricts([]);
+      setMandals([]);
+      setVillages([]);
+
+      return;
+
+    }
+
+
+    try {
+
+      const data =
+        await fetchLocationRows(
+          "/locations/districts",
+          {
+            stateId,
+          }
+        );
+
+
+      setDistricts(
+        extractRows(
+          data,
+          [
+            "districts",
+            "locations",
+            "items",
+          ]
+        )
+          .map(
+            normaliseLocationRow
+          )
+          .filter(
+            row =>
+              row.id &&
+              row.name
+          )
+      );
+
+    } catch (
+      districtError
+    ) {
+
+      console.error(
+        "Farmer settings district load error:",
+        districtError
+      );
+
+      setError(
+        districtError?.message ||
+        "Unable to load districts."
+      );
+
+    }
+
+  }
+
+
+  async function loadMandals(
+    districtId
+  ) {
+
+    if (
+      !districtId
+    ) {
+
+      setMandals([]);
+      setVillages([]);
+
+      return;
+
+    }
+
+
+    try {
+
+      const data =
+        await fetchLocationRows(
+          "/locations/mandals",
+          {
+            districtId,
+          }
+        );
+
+
+      setMandals(
+        extractRows(
+          data,
+          [
+            "mandals",
+            "subDistricts",
+            "sub_districts",
+            "locations",
+            "items",
+          ]
+        )
+          .map(
+            normaliseLocationRow
+          )
+          .filter(
+            row =>
+              row.id &&
+              row.name
+          )
+      );
+
+    } catch (
+      mandalError
+    ) {
+
+      console.error(
+        "Farmer settings mandal load error:",
+        mandalError
+      );
+
+      setError(
+        mandalError?.message ||
+        "Unable to load mandals."
+      );
+
+    }
+
+  }
+
+
+  async function loadVillages(
+    mandalId
+  ) {
+
+    if (
+      !mandalId
+    ) {
+
+      setVillages([]);
+
+      return;
+
+    }
+
+
+    try {
+
+      const data =
+        await fetchLocationRows(
+          "/locations/villages",
+          {
+            mandalId,
+          }
+        );
+
+
+      setVillages(
+        extractRows(
+          data,
+          [
+            "villages",
+            "locations",
+            "items",
+          ]
+        )
+          .map(
+            normaliseLocationRow
+          )
+          .filter(
+            row =>
+              row.id &&
+              row.name
+          )
+      );
+
+    } catch (
+      villageError
+    ) {
+
+      console.error(
+        "Farmer settings village load error:",
+        villageError
+      );
+
+      setError(
+        villageError?.message ||
+        "Unable to load villages."
+      );
+
+    }
+
+  }
+
+
+  async function useCurrentLocation() {
+
+    if (
+      !navigator.geolocation
+    ) {
+
+      setError(
+        "Location services are not available in this browser."
+      );
+
+      return;
+
+    }
+
+
+    setLocationLoading(
+      true
+    );
+
+    setLocationMessage(
+      "Scanning your current location..."
+    );
+
+    setError(
+      ""
+    );
+
+
+    try {
+
+      const position =
+        await new Promise(
+          (
+            resolve,
+            reject
+          ) => {
+
+            navigator.geolocation.getCurrentPosition(
+              resolve,
+              reject,
+              {
+                enableHighAccuracy:
+                  true,
+                timeout:
+                  20000,
+                maximumAge:
+                  0,
+              }
+            );
+
+          }
+        );
+
+
+      const latitude =
+        Number(
+          position.coords.latitude
+        );
+
+      const longitude =
+        Number(
+          position.coords.longitude
+        );
+
+      const accuracy =
+        Number(
+          position.coords.accuracy
+        );
+
+
+      const response =
+        await fetch(
+          `${API_URL}/locations/resolve?lat=${encodeURIComponent(
+            latitude
+          )}&lng=${encodeURIComponent(
+            longitude
+          )}&radiusKm=50`
+        );
+
+
+      const data =
+        await response.json()
+          .catch(
+            () => null
+          );
+
+
+      if (
+        !response.ok ||
+        data?.success ===
+          false ||
+        !data?.location
+      ) {
+
+        throw new Error(
+          data?.message ||
+          "Your GPS position could not be matched to an official village."
+        );
+
+      }
+
+
+      const location =
+        data.location;
+
+
+      setForm(
+        current => ({
+          ...current,
+
+          stateId:
+            String(
+              location.stateId ??
+              ""
+            ),
+
+          state:
+            location.state ||
+            "",
+
+          districtId:
+            String(
+              location.districtId ??
+              ""
+            ),
+
+          district:
+            location.district ||
+            "",
+
+          mandalId:
+            String(
+              location.mandalId ??
+              ""
+            ),
+
+          mandal:
+            location.mandal ||
+            "",
+
+          villageId:
+            String(
+              location.villageId ??
+              ""
+            ),
+
+          village:
+            location.village ||
+            "",
+
+          pincode:
+            location.pincode ||
+            current.pincode ||
+            "",
+
+          currentLat:
+            latitude,
+
+          currentLng:
+            longitude,
+
+          locationAccuracyM:
+            accuracy,
+
+          locationSource:
+            "GPS",
+
+          locationUpdatedAt:
+            new Date().toISOString(),
+
+        })
+      );
+
+
+      setLocationMessage(
+        `Location detected${location.village ? `: ${location.village}` : ""}${location.mandal ? `, ${location.mandal}` : ""}${location.district ? `, ${location.district}` : ""}${location.state ? `, ${location.state}` : ""}.`
+      );
+
+
+    } catch (
+      locationError
+    ) {
+
+      console.error(
+        "Farmer settings GPS error:",
+        locationError
+      );
+
+
+      const message =
+        locationError?.code ===
+          1
+          ? "Location permission was denied. Allow location access and try again."
+          : locationError?.code ===
+              2
+            ? "Your location could not be determined."
+            : locationError?.code ===
+                3
+              ? "Location request timed out. Please try again."
+              : locationError?.message ||
+                "Unable to detect your current location.";
+
+
+      setError(
+        message
+      );
+
+      setLocationMessage(
+        ""
+      );
+
+    } finally {
+
+      setLocationLoading(
+        false
+      );
+
+    }
+
+  }
+
+
+  function openLocationMap() {
+
+    const lat =
+      Number(
+        form.currentLat
+      );
+
+    const lng =
+      Number(
+        form.currentLng
+      );
+
+
+    if (
+      !Number.isFinite(lat) ||
+      !Number.isFinite(lng)
+    ) {
+
+      setError(
+        "Current GPS coordinates are not available yet."
+      );
+
+      return;
+
+    }
+
+
+    window.open(
+      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        `${lat},${lng}`
+      )}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+  }
+
+
+  async function handlePasswordChange(
+    event
+  ) {
+
+    event.preventDefault();
+
+
+    const currentPassword =
+      passwordForm.currentPassword;
+
+    const newPassword =
+      passwordForm.newPassword;
+
+    const confirmPassword =
+      passwordForm.confirmPassword;
+
+
+    if (
+      currentPassword.length <
+      6
+    ) {
+
+      setError(
+        "Enter your current password."
+      );
+
+      return;
+
+    }
+
+
+    if (
+      newPassword.length <
+      6
+    ) {
+
+      setError(
+        "New password must contain at least 6 characters."
+      );
+
+      return;
+
+    }
+
+
+    if (
+      newPassword !==
+      confirmPassword
+    ) {
+
+      setError(
+        "New password and confirmation do not match."
+      );
+
+      return;
+
+    }
+
+
+    setPasswordSaving(
+      true
+    );
+
+    setError(
+      ""
+    );
+
+
+    try {
+
+      const response =
+        await fetch(
+          `${API_URL}/farmers/${encodeURIComponent(
+            farmer.id
+          )}/change-password`,
+          {
+            method:
+              "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                currentPassword,
+                newPassword,
+              }),
+
+          }
+        );
+
+
+      const data =
+        await response.json()
+          .catch(
+            () => null
+          );
+
+
+      if (
+        !response.ok ||
+        data?.success ===
+          false
+      ) {
+
+        throw new Error(
+          data?.message ||
+          "Unable to change your password."
+        );
+
+      }
+
+
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+
+      setSaved(
+        true
+      );
+
+    } catch (
+      passwordError
+    ) {
+
+      console.error(
+        "Farmer password change error:",
+        passwordError
+      );
+
+      setError(
+        passwordError?.message ||
+        "Unable to change your password."
+      );
+
+    } finally {
+
+      setPasswordSaving(
+        false
+      );
+
+    }
+
+  }
 
 
   function updateField(
@@ -479,6 +1510,60 @@ function FarmerSettings() {
     }
 
 
+    const latitude =
+      form.currentLat === ""
+        ? null
+        : Number(
+            form.currentLat
+          );
+
+    const longitude =
+      form.currentLng === ""
+        ? null
+        : Number(
+            form.currentLng
+          );
+
+    if (
+      latitude !== null &&
+      (
+        !Number.isFinite(
+          latitude
+        ) ||
+        latitude < -90 ||
+        latitude > 90
+      )
+    ) {
+
+      setError(
+        "Current latitude is invalid."
+      );
+
+      return;
+
+    }
+
+
+    if (
+      longitude !== null &&
+      (
+        !Number.isFinite(
+          longitude
+        ) ||
+        longitude < -180 ||
+        longitude > 180
+      )
+    ) {
+
+      setError(
+        "Current longitude is invalid."
+      );
+
+      return;
+
+    }
+
+
     if (
       ![
         "en",
@@ -542,8 +1627,96 @@ function FarmerSettings() {
                 phone:
                   cleanedPhone,
 
+                alternatePhone:
+                  normalisePhone(
+                    form.alternatePhone
+                  ) ||
+                  null,
+
+                stateId:
+                  form.stateId ||
+                  null,
+
+                state:
+                  form.state ||
+                  null,
+
+                districtId:
+                  form.districtId ||
+                  null,
+
+                district:
+                  form.district ||
+                  null,
+
+                mandalId:
+                  form.mandalId ||
+                  null,
+
+                mandal:
+                  form.mandal ||
+                  null,
+
                 village:
                   village ||
+                  null,
+
+                villageId:
+                  form.villageId ||
+                  null,
+
+                pincode:
+                  form.pincode.trim() ||
+                  null,
+
+                farmAddress:
+                  form.farmAddress.trim() ||
+                  null,
+
+                landmark:
+                  form.landmark.trim() ||
+                  null,
+
+                currentLat:
+                  form.currentLat === ""
+                    ? null
+                    : Number(
+                        form.currentLat
+                      ),
+
+                currentLng:
+                  form.currentLng === ""
+                    ? null
+                    : Number(
+                        form.currentLng
+                      ),
+
+                locationAccuracyM:
+                  form.locationAccuracyM === ""
+                    ? null
+                    : Number(
+                        form.locationAccuracyM
+                      ),
+
+                locationSource:
+                  form.locationSource ||
+                  "REGISTERED",
+
+                primaryCrop:
+                  form.primaryCrop ||
+                  null,
+
+                estimatedQuantity,
+
+                farmSizeAcres:
+                  form.farmSizeAcres === ""
+                    ? null
+                    : Number(
+                        form.farmSizeAcres
+                      ),
+
+                irrigationType:
+                  form.irrigationType ||
                   null,
 
                 language:
@@ -552,12 +1725,6 @@ function FarmerSettings() {
                 preferredCenterId:
                   form.preferredCenterId ||
                   null,
-
-                primaryCrop:
-                  form.primaryCrop ||
-                  null,
-
-                estimatedQuantity,
 
               }),
 
@@ -634,37 +1801,131 @@ function FarmerSettings() {
       );
 
 
-      setForm({
+      setForm(
+        current => ({
+          ...current,
 
-        name:
-          savedFarmer.name ||
-          "",
+          name:
+            savedFarmer.name ||
+            "",
 
-        phone:
-          savedFarmer.phone ||
-          "",
+          phone:
+            savedFarmer.phone ||
+            "",
 
-        village:
-          savedFarmer.village ||
-          "",
+          alternatePhone:
+            savedFarmer.alternate_phone ??
+            savedFarmer.alternatePhone ??
+            "",
 
-        language:
-          savedFarmer.language ||
-          "en",
+          stateId:
+            savedFarmer.state_id ??
+            savedFarmer.stateId ??
+            "",
 
-        preferredCenterId:
-          savedFarmer.preferredCenterId ||
-          "main",
+          state:
+            savedFarmer.state ||
+            savedFarmer.state_name ||
+            "",
 
-        primaryCrop:
-          savedFarmer.primaryCrop ||
-          "wheat",
+          districtId:
+            savedFarmer.district_id ??
+            savedFarmer.districtId ??
+            "",
 
-        estimatedQuantity:
-          savedFarmer.estimatedQuantity ??
-          "",
+          district:
+            savedFarmer.district ||
+            savedFarmer.district_name ||
+            "",
 
-      });
+          mandalId:
+            savedFarmer.mandal_id ??
+            savedFarmer.mandalId ??
+            "",
+
+          mandal:
+            savedFarmer.mandal ||
+            savedFarmer.mandal_name ||
+            "",
+
+          villageId:
+            savedFarmer.village_id ??
+            savedFarmer.villageId ??
+            "",
+
+          village:
+            savedFarmer.village ||
+            "",
+
+          pincode:
+            savedFarmer.pincode ||
+            "",
+
+          farmAddress:
+            savedFarmer.farm_address ??
+            savedFarmer.farmAddress ??
+            "",
+
+          landmark:
+            savedFarmer.landmark ||
+            "",
+
+          currentLat:
+            savedFarmer.current_lat ??
+            savedFarmer.currentLat ??
+            "",
+
+          currentLng:
+            savedFarmer.current_lng ??
+            savedFarmer.currentLng ??
+            "",
+
+          locationAccuracyM:
+            savedFarmer.location_accuracy_m ??
+            savedFarmer.locationAccuracyM ??
+            "",
+
+          locationSource:
+            savedFarmer.location_source ??
+            savedFarmer.locationSource ??
+            "REGISTERED",
+
+          locationUpdatedAt:
+            savedFarmer.location_updated_at ??
+            savedFarmer.locationUpdatedAt ??
+            "",
+
+          farmSizeAcres:
+            savedFarmer.farm_size_acres ??
+            savedFarmer.farmSizeAcres ??
+            "",
+
+          irrigationType:
+            savedFarmer.irrigation_type ??
+            savedFarmer.irrigationType ??
+            "",
+
+          language:
+            savedFarmer.language ||
+            "en",
+
+          preferredCenterId:
+            savedFarmer.preferredCenterId ||
+            savedFarmer.preferred_center_id ||
+            "main",
+
+          primaryCrop:
+            savedFarmer.primaryCrop ||
+            savedFarmer.primary_crop ||
+            "wheat",
+
+          estimatedQuantity:
+            savedFarmer.estimatedQuantity ??
+            savedFarmer.estimated_quantity ??
+            "",
+
+        })
+      );
 
 
       setLanguage(
@@ -946,7 +2207,7 @@ function FarmerSettings() {
 
 
               <SettingsField
-                label="Village"
+                label="Registered village"
                 icon={
                   <MapPin
                     size={17}
@@ -958,14 +2219,8 @@ function FarmerSettings() {
                   value={
                     form.village
                   }
-                  onChange={
-                    event =>
-                      updateField(
-                        "village",
-                        event.target.value
-                      )
-                  }
-                  placeholder="Enter village"
+                  readOnly
+                  placeholder="Select village below"
                 />
 
               </SettingsField>
@@ -1007,6 +2262,510 @@ function FarmerSettings() {
 
                 </select>
 
+              </SettingsField>
+
+            </div>
+
+          </section>
+
+
+
+          <section className="farmer-settings-card">
+
+            <div className="farmer-settings-section-heading">
+
+              <div className="farmer-settings-section-icon">
+                <LocateFixed size={19} />
+              </div>
+
+              <div>
+                <h2>
+                  Current & registered location
+                </h2>
+
+                <p>
+                  GPS location is kept separate from your registered village and is used for transport pickup matching.
+                </p>
+              </div>
+
+            </div>
+
+
+            <div className="farmer-settings-location-actions">
+
+              <button
+                type="button"
+                className="farmer-settings-primary"
+                onClick={useCurrentLocation}
+                disabled={locationLoading}
+              >
+                <LocateFixed size={17} />
+
+                {locationLoading
+                  ? "Scanning..."
+                  : "Use current location"}
+              </button>
+
+
+              <button
+                type="button"
+                className="farmer-settings-secondary"
+                onClick={openLocationMap}
+                disabled={!form.currentLat || !form.currentLng}
+              >
+                <Navigation size={17} />
+                View GPS on map
+              </button>
+
+            </div>
+
+
+            {locationMessage && (
+              <div className="farmer-settings-location-message">
+                <CheckCircle2 size={17} />
+                <span>
+                  {locationMessage}
+                </span>
+              </div>
+            )}
+
+
+            <div className="farmer-settings-grid">
+
+              <SettingsField
+                label="State"
+                icon={<MapPin size={17} />}
+              >
+                <select
+                  value={form.stateId}
+                  onChange={event => {
+                    const value = event.target.value;
+                    const selected =
+                      states.find(
+                        item =>
+                          String(item.id) ===
+                          String(value)
+                      );
+
+                    updateField(
+                      "stateId",
+                      value
+                    );
+
+                    updateField(
+                      "state",
+                      selected?.name || ""
+                    );
+
+                    updateField(
+                      "districtId",
+                      ""
+                    );
+
+                    updateField(
+                      "district",
+                      ""
+                    );
+
+                    updateField(
+                      "mandalId",
+                      ""
+                    );
+
+                    updateField(
+                      "mandal",
+                      ""
+                    );
+
+                    updateField(
+                      "villageId",
+                      ""
+                    );
+
+                    updateField(
+                      "village",
+                      ""
+                    );
+                  }}
+                >
+                  <option value="">
+                    Select state
+                  </option>
+
+                  {states.map(
+                    state => (
+                      <option
+                        key={state.id}
+                        value={state.id}
+                      >
+                        {state.name}
+                      </option>
+                    )
+                  )}
+                </select>
+              </SettingsField>
+
+
+              <SettingsField
+                label="District"
+                icon={<MapPin size={17} />}
+              >
+                <select
+                  value={form.districtId}
+                  disabled={!form.stateId}
+                  onChange={event => {
+                    const value =
+                      event.target.value;
+
+                    const selected =
+                      districts.find(
+                        item =>
+                          String(item.id) ===
+                          String(value)
+                      );
+
+                    updateField(
+                      "districtId",
+                      value
+                    );
+
+                    updateField(
+                      "district",
+                      selected?.name || ""
+                    );
+
+                    updateField(
+                      "mandalId",
+                      ""
+                    );
+
+                    updateField(
+                      "mandal",
+                      ""
+                    );
+
+                    updateField(
+                      "villageId",
+                      ""
+                    );
+
+                    updateField(
+                      "village",
+                      ""
+                    );
+                  }}
+                >
+                  <option value="">
+                    {form.stateId
+                      ? "Select district"
+                      : "Select state first"}
+                  </option>
+
+                  {districts.map(
+                    district => (
+                      <option
+                        key={district.id}
+                        value={district.id}
+                      >
+                        {district.name}
+                      </option>
+                    )
+                  )}
+                </select>
+              </SettingsField>
+
+
+              <SettingsField
+                label="Mandal / Sub-district"
+                icon={<MapPin size={17} />}
+              >
+                <select
+                  value={form.mandalId}
+                  disabled={!form.districtId}
+                  onChange={event => {
+                    const value =
+                      event.target.value;
+
+                    const selected =
+                      mandals.find(
+                        item =>
+                          String(item.id) ===
+                          String(value)
+                      );
+
+                    updateField(
+                      "mandalId",
+                      value
+                    );
+
+                    updateField(
+                      "mandal",
+                      selected?.name || ""
+                    );
+
+                    updateField(
+                      "villageId",
+                      ""
+                    );
+
+                    updateField(
+                      "village",
+                      ""
+                    );
+                  }}
+                >
+                  <option value="">
+                    {form.districtId
+                      ? "Select mandal"
+                      : "Select district first"}
+                  </option>
+
+                  {mandals.map(
+                    mandal => (
+                      <option
+                        key={mandal.id}
+                        value={mandal.id}
+                      >
+                        {mandal.name}
+                      </option>
+                    )
+                  )}
+                </select>
+              </SettingsField>
+
+
+              <SettingsField
+                label="Village"
+                icon={<MapPin size={17} />}
+              >
+                <select
+                  value={form.villageId}
+                  disabled={!form.mandalId}
+                  onChange={event => {
+                    const value =
+                      event.target.value;
+
+                    const selected =
+                      villages.find(
+                        item =>
+                          String(item.id) ===
+                          String(value)
+                      );
+
+                    updateField(
+                      "villageId",
+                      value
+                    );
+
+                    updateField(
+                      "village",
+                      selected?.name || ""
+                    );
+
+                    if (
+                      selected?.pincode
+                    ) {
+
+                      updateField(
+                        "pincode",
+                        selected.pincode
+                      );
+
+                    }
+
+                  }}
+                >
+                  <option value="">
+                    {form.mandalId
+                      ? "Select village"
+                      : "Select mandal first"}
+                  </option>
+
+                  {villages.map(
+                    village => (
+                      <option
+                        key={village.id}
+                        value={village.id}
+                      >
+                        {village.name}
+                      </option>
+                    )
+                  )}
+                </select>
+              </SettingsField>
+
+
+              <SettingsField
+                label="Pincode"
+                icon={<MapPin size={17} />}
+              >
+                <input
+                  value={form.pincode}
+                  onChange={event =>
+                    updateField(
+                      "pincode",
+                      event.target.value
+                        .replace(
+                          /[^0-9]/g,
+                          ""
+                        )
+                        .slice(
+                          0,
+                          6
+                        )
+                    )
+                  }
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="6-digit pincode"
+                />
+              </SettingsField>
+
+
+              <SettingsField
+                label="Landmark"
+                icon={<MapPin size={17} />}
+              >
+                <input
+                  value={form.landmark}
+                  onChange={event =>
+                    updateField(
+                      "landmark",
+                      event.target.value
+                    )
+                  }
+                  placeholder="Nearby landmark"
+                />
+              </SettingsField>
+
+
+              <SettingsField
+                label="Farm / pickup address"
+                icon={<MapPin size={17} />}
+                full
+              >
+                <input
+                  value={form.farmAddress}
+                  onChange={event =>
+                    updateField(
+                      "farmAddress",
+                      event.target.value
+                    )
+                  }
+                  placeholder="Farm gate, road, hamlet or pickup address"
+                />
+              </SettingsField>
+
+            </div>
+
+
+            {form.currentLat &&
+              form.currentLng && (
+                <div className="farmer-settings-location-meta">
+                  <span>
+                    GPS: {Number(form.currentLat).toFixed(6)}, {Number(form.currentLng).toFixed(6)}
+                  </span>
+
+                  {form.locationAccuracyM && (
+                    <span>
+                      Accuracy: ±{Math.round(
+                        Number(
+                          form.locationAccuracyM
+                        )
+                      )} m
+                    </span>
+                  )}
+
+                  <span>
+                    Source: {form.locationSource}
+                  </span>
+                </div>
+              )}
+
+          </section>
+
+
+          <section className="farmer-settings-card">
+
+            <div className="farmer-settings-section-heading">
+
+              <div className="farmer-settings-section-icon green">
+                <Wheat size={19} />
+              </div>
+
+              <div>
+                <h2>
+                  Farm details
+                </h2>
+
+                <p>
+                  Keep your farming information ready for procurement and transport planning.
+                </p>
+              </div>
+
+            </div>
+
+
+            <div className="farmer-settings-grid">
+
+              <SettingsField
+                label="Farm size (acres)"
+                icon={<Wheat size={17} />}
+              >
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.farmSizeAcres}
+                  onChange={event =>
+                    updateField(
+                      "farmSizeAcres",
+                      event.target.value
+                    )
+                  }
+                  placeholder="e.g. 4.5"
+                />
+              </SettingsField>
+
+
+              <SettingsField
+                label="Irrigation"
+                icon={<Leaf size={17} />}
+              >
+                <select
+                  value={form.irrigationType}
+                  onChange={event =>
+                    updateField(
+                      "irrigationType",
+                      event.target.value
+                    )
+                  }
+                >
+                  <option value="">
+                    Select irrigation type
+                  </option>
+                  <option value="RAINFED">
+                    Rainfed
+                  </option>
+                  <option value="BOREWELL">
+                    Borewell
+                  </option>
+                  <option value="CANAL">
+                    Canal
+                  </option>
+                  <option value="OPEN_WELL">
+                    Open well
+                  </option>
+                  <option value="DRIP">
+                    Drip
+                  </option>
+                  <option value="SPRINKLER">
+                    Sprinkler
+                  </option>
+                  <option value="OTHER">
+                    Other
+                  </option>
+                </select>
               </SettingsField>
 
             </div>
@@ -1178,6 +2937,128 @@ function FarmerSettings() {
               </SettingsField>
 
             </div>
+
+          </section>
+
+
+
+          <section className="farmer-settings-card">
+
+            <div className="farmer-settings-section-heading">
+
+              <div className="farmer-settings-section-icon">
+                <LockKeyhole size={19} />
+              </div>
+
+              <div>
+                <h2>
+                  Account security
+                </h2>
+
+                <p>
+                  Change your farmer account password securely.
+                </p>
+              </div>
+
+            </div>
+
+
+            <form
+              className="farmer-settings-grid"
+              onSubmit={handlePasswordChange}
+            >
+
+              <SettingsField
+                label="Current password"
+                icon={<LockKeyhole size={17} />}
+              >
+                <input
+                  type="password"
+                  value={
+                    passwordForm.currentPassword
+                  }
+                  onChange={event =>
+                    setPasswordForm(
+                      current => ({
+                        ...current,
+                        currentPassword:
+                          event.target.value,
+                      })
+                    )
+                  }
+                  autoComplete="current-password"
+                  placeholder="Current password"
+                />
+              </SettingsField>
+
+
+              <SettingsField
+                label="New password"
+                icon={<LockKeyhole size={17} />}
+              >
+                <input
+                  type="password"
+                  value={
+                    passwordForm.newPassword
+                  }
+                  onChange={event =>
+                    setPasswordForm(
+                      current => ({
+                        ...current,
+                        newPassword:
+                          event.target.value,
+                      })
+                    )
+                  }
+                  autoComplete="new-password"
+                  placeholder="At least 6 characters"
+                />
+              </SettingsField>
+
+
+              <SettingsField
+                label="Confirm new password"
+                icon={<LockKeyhole size={17} />}
+              >
+                <input
+                  type="password"
+                  value={
+                    passwordForm.confirmPassword
+                  }
+                  onChange={event =>
+                    setPasswordForm(
+                      current => ({
+                        ...current,
+                        confirmPassword:
+                          event.target.value,
+                      })
+                    )
+                  }
+                  autoComplete="new-password"
+                  placeholder="Repeat new password"
+                />
+              </SettingsField>
+
+
+              <div className="farmer-settings-password-action">
+
+                <button
+                  type="submit"
+                  className="farmer-settings-secondary"
+                  disabled={
+                    passwordSaving
+                  }
+                >
+                  <LockKeyhole size={17} />
+
+                  {passwordSaving
+                    ? "Changing..."
+                    : "Change password"}
+                </button>
+
+              </div>
+
+            </form>
 
           </section>
 

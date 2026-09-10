@@ -18,6 +18,7 @@ import {
   MessageCircleWarning,
   RefreshCw,
   Scale,
+  Truck,
   Users,
   Wheat,
 } from "lucide-react";
@@ -63,6 +64,13 @@ function AdminDashboard() {
   const [
     paymentIssues,
     setPaymentIssues,
+  ] =
+    useState([]);
+
+
+  const [
+    transportRequests,
+    setTransportRequests,
   ] =
     useState([]);
 
@@ -146,6 +154,7 @@ function AdminDashboard() {
             centerResponse,
             settingsResponse,
             paymentIssueResponse,
+            transportResponse,
           ] =
             await Promise.all([
               fetch(
@@ -163,6 +172,10 @@ function AdminDashboard() {
               fetch(
                 `${API_URL}/payment-issues`
               ),
+
+              fetch(
+                `${API_URL}/transport/requests?activeOnly=false`
+              ).catch(() => null),
 
             ]);
 
@@ -206,6 +219,17 @@ function AdminDashboard() {
             paymentIssueData =
               null;
 
+          }
+
+
+          let transportData = null;
+
+          if (transportResponse) {
+            try {
+              transportData = await transportResponse.json();
+            } catch {
+              transportData = null;
+            }
           }
 
 
@@ -264,6 +288,18 @@ function AdminDashboard() {
             )
               ? paymentIssueData.issues
               : []
+          );
+
+
+          setTransportRequests(
+            transportResponse?.ok &&
+            Array.isArray(
+              transportData?.requests
+            )
+              ? transportData.requests
+              : Array.isArray(transportData)
+                ? transportData
+                : []
           );
 
 
@@ -442,6 +478,51 @@ function AdminDashboard() {
         bookings,
       ]
     );
+
+
+  const transportStats = useMemo(() => {
+    const statusOf = row => String(row?.status || "").toUpperCase();
+    const activeStatuses = new Set([
+      "REQUESTED",
+      "ASSIGNED",
+      "EN_ROUTE_TO_FARMER",
+      "CROP_PICKED_UP",
+      "EN_ROUTE_TO_CENTER",
+      "DELIVERED",
+    ]);
+
+    const pending = transportRequests.filter(row => statusOf(row) === "REQUESTED").length;
+    const active = transportRequests.filter(row => activeStatuses.has(statusOf(row))).length;
+    const completed = transportRequests.filter(row => statusOf(row) === "COMPLETED").length;
+    const onlineTransporters = new Set(
+      transportRequests
+        .filter(row => row?.transporter_online || row?.is_online)
+        .map(row => row?.transporter_id ?? row?.transporterId)
+        .filter(Boolean)
+    ).size;
+    const gpsActive = transportRequests.filter(row => {
+      const lat = Number(row?.transporter_lat ?? row?.transporterLat ?? row?.current_lat ?? row?.currentLat);
+      const lng = Number(row?.transporter_lng ?? row?.transporterLng ?? row?.current_lng ?? row?.currentLng);
+      return Number.isFinite(lat) && Number.isFinite(lng);
+    }).length;
+
+    return { pending, active, completed, onlineTransporters, gpsActive };
+  }, [transportRequests]);
+
+
+  const activeTransportPreview = useMemo(() =>
+    transportRequests
+      .filter(row => [
+        "REQUESTED",
+        "ASSIGNED",
+        "EN_ROUTE_TO_FARMER",
+        "CROP_PICKED_UP",
+        "EN_ROUTE_TO_CENTER",
+        "DELIVERED",
+      ].includes(String(row?.status || "").toUpperCase()))
+      .slice(0, 4),
+    [transportRequests]
+  );
 
 
   const recentBookings =
@@ -735,6 +816,51 @@ function AdminDashboard() {
             }
             label={
               text.paymentIssues
+            }
+          />
+
+          <DashboardKpi
+            tone="blue"
+            icon={
+              <Truck
+                size={18}
+              />
+            }
+            value={
+              transportStats.pending
+            }
+            label={
+              text.transportPending
+            }
+          />
+
+          <DashboardKpi
+            tone="purple"
+            icon={
+              <Truck
+                size={18}
+              />
+            }
+            value={
+              transportStats.active
+            }
+            label={
+              text.transportActive
+            }
+          />
+
+          <DashboardKpi
+            tone="green"
+            icon={
+              <Users
+                size={18}
+              />
+            }
+            value={
+              transportStats.onlineTransporters
+            }
+            label={
+              text.transportOnline
             }
           />
 
@@ -1321,6 +1447,126 @@ function AdminDashboard() {
 
 
 
+          {/* TRANSPORT OPERATIONS */}
+
+          <div className="admin-dashboard-panel">
+
+            <div className="admin-dashboard-panel-header">
+
+              <div>
+
+                <span className="admin-page-eyebrow">
+                  {text.transportControl}
+                </span>
+
+                <h3>
+                  {text.transportOperations}
+                </h3>
+
+              </div>
+
+              <Link
+                to="/admin/transport"
+                className="admin-dashboard-panel-link"
+              >
+
+                {text.openTransport}
+
+                <ArrowRight
+                  size={13}
+                />
+
+              </Link>
+
+            </div>
+
+
+            <div className="admin-dashboard-workflow">
+
+              <WorkflowStep
+                label={text.transportPending}
+                value={transportStats.pending}
+                tone="blue"
+              />
+
+              <WorkflowStep
+                label={text.transportActive}
+                value={transportStats.active}
+                tone="purple"
+              />
+
+              <WorkflowStep
+                label={text.transportCompleted}
+                value={transportStats.completed}
+                tone="green"
+              />
+
+              <WorkflowStep
+                label={text.transportOnline}
+                value={transportStats.onlineTransporters}
+                tone="teal"
+              />
+
+            </div>
+
+
+            <div className="admin-dashboard-recent-list">
+
+              {activeTransportPreview.length === 0 ? (
+
+                <DashboardEmpty
+                  text={text.noTransportActivity}
+                />
+
+              ) : (
+
+                activeTransportPreview.map((row, index) => (
+
+                  <div
+                    key={row?.id ?? row?.request_id ?? index}
+                    className="admin-dashboard-recent-row"
+                  >
+
+                    <div className="admin-dashboard-recent-token">
+                      <Truck size={14} />
+                    </div>
+
+                    <div className="admin-dashboard-recent-farmer">
+                      <strong>
+                        {row?.farmer_name || row?.farmerName || text.unknownFarmer}
+                      </strong>
+                      <span>
+                        {row?.farmer_village || row?.village || "—"}
+                      </span>
+                    </div>
+
+                    <div className="admin-dashboard-recent-crop">
+                      <Truck size={13} />
+                      <span>
+                        {row?.transporter_name || row?.transporterName || text.waitingTransporter}
+                      </span>
+                    </div>
+
+                    <div>
+                      <strong>
+                        {row?.center_name || row?.centerName || row?.procurement_center_name || "—"}
+                      </strong>
+                      <span>
+                        {row?.status || "—"}
+                      </span>
+                    </div>
+
+                  </div>
+
+                ))
+
+              )}
+
+            </div>
+
+          </div>
+
+
           {/* MONEY */}
 
           <div className="admin-dashboard-panel">
@@ -1505,6 +1751,21 @@ function AdminDashboard() {
                 }
                 description={
                   text.paymentIssuesDescriptionShort
+                }
+              />
+
+              <QuickAction
+                href="/admin/transport"
+                icon={
+                  <Truck
+                    size={17}
+                  />
+                }
+                title={
+                  text.transportOperations
+                }
+                description={
+                  text.transportQuickDescription
                 }
               />
 
@@ -3703,6 +3964,36 @@ function getDashboardCopy(
       paymentIssues:
         "Payment issues",
 
+      transportPending:
+        "Pending transport",
+
+      transportActive:
+        "Active trips",
+
+      transportCompleted:
+        "Completed trips",
+
+      transportOnline:
+        "Online transporters",
+
+      transportControl:
+        "TRANSPORT CONTROL",
+
+      transportOperations:
+        "Transport operations",
+
+      openTransport:
+        "Open transport",
+
+      noTransportActivity:
+        "No active transport activity yet.",
+
+      waitingTransporter:
+        "Waiting for transporter",
+
+      transportQuickDescription:
+        "Monitor requests, trips and transporter activity.",
+
       todayOverview:
         "TODAY AT A GLANCE",
 
@@ -3912,6 +4203,36 @@ function getDashboardCopy(
       paymentIssues:
         "भुगतान समस्याएं",
 
+      transportPending:
+        "लंबित परिवहन",
+
+      transportActive:
+        "सक्रिय यात्राएं",
+
+      transportCompleted:
+        "पूरी यात्राएं",
+
+      transportOnline:
+        "ऑनलाइन ट्रांसपोर्टर",
+
+      transportControl:
+        "परिवहन नियंत्रण",
+
+      transportOperations:
+        "परिवहन संचालन",
+
+      openTransport:
+        "परिवहन खोलें",
+
+      noTransportActivity:
+        "अभी कोई सक्रिय परिवहन गतिविधि नहीं है।",
+
+      waitingTransporter:
+        "ट्रांसपोर्टर की प्रतीक्षा",
+
+      transportQuickDescription:
+        "रिक्वेस्ट, यात्राएं और ट्रांसपोर्टर गतिविधि देखें।",
+
       todayOverview:
         "आज की स्थिति",
 
@@ -4120,6 +4441,36 @@ function getDashboardCopy(
 
       paymentIssues:
         "చెల్లింపు సమస్యలు",
+
+      transportPending:
+        "పెండింగ్ రవాణా",
+
+      transportActive:
+        "యాక్టివ్ ట్రిప్‌లు",
+
+      transportCompleted:
+        "పూర్తైన ట్రిప్‌లు",
+
+      transportOnline:
+        "ఆన్‌లైన్ ట్రాన్స్‌పోర్టర్లు",
+
+      transportControl:
+        "రవాణా నియంత్రణ",
+
+      transportOperations:
+        "రవాణా కార్యకలాపాలు",
+
+      openTransport:
+        "రవాణా తెరవండి",
+
+      noTransportActivity:
+        "ఇప్పటికీ యాక్టివ్ రవాణా కార్యకలాపాలు లేవు.",
+
+      waitingTransporter:
+        "ట్రాన్స్‌పోర్టర్ కోసం వేచి ఉంది",
+
+      transportQuickDescription:
+        "అభ్యర్థనలు, ట్రిప్‌లు మరియు ట్రాన్స్‌పోర్టర్ కార్యకలాపాలను పర్యవేక్షించండి.",
 
       todayOverview:
         "ఈరోజు స్థితి",

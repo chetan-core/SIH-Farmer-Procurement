@@ -19,10 +19,17 @@ import { Link } from "react-router";
 import AdminLayout from "../../components/admin/AdminLayout";
 import { useLanguage } from "../../translations/LanguageContext";
 
-const API_BASE = String(import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+const RAW_API_BASE =
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:5000";
+
+// VITE_API_URL may already end with /api.
+// The endpoint below includes /api, so remove it once to avoid /api/api/...
+const API_BASE = String(RAW_API_BASE)
+  .replace(/\/+$/, "")
+  .replace(/\/api$/i, "");
 
 const ACTIVE_STATUSES = new Set([
-  "REQUESTED",
   "ASSIGNED",
   "EN_ROUTE_TO_FARMER",
   "CROP_PICKED_UP",
@@ -393,6 +400,7 @@ export default function AdminTransportDashboard() {
   const [filter, setFilter] = useState("all");
   const [lastUpdated, setLastUpdated] = useState(null);
   const [selectedId, setSelectedId] = useState("");
+  const [apiConnected, setApiConnected] = useState(false);
 
   const load = useCallback(async (manual = false) => {
     if (manual) setRefreshing(true);
@@ -419,7 +427,9 @@ export default function AdminTransportDashboard() {
 
       setRows(data);
       setLastUpdated(new Date());
+      setApiConnected(true);
     } catch (requestError) {
+      setApiConnected(false);
       setError(requestError?.message || t(language, "apiError"));
     } finally {
       setLoading(false);

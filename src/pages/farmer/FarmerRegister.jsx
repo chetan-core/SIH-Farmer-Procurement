@@ -14,6 +14,14 @@ import {
   MapPin,
   Phone,
   UserRound,
+  LocateFixed,
+  LockKeyhole,
+  Wheat,
+  Ruler,
+  Droplets,
+  Home,
+  Navigation,
+  CheckCircle2,
 } from "lucide-react";
 
 import {
@@ -28,20 +36,107 @@ import {
   useLanguage,
 } from "../../translations/LanguageContext";
 
-import {
-  getStates,
-  getDistricts,
-  getMandals,
-  getVillages,
-} from "../../data/locationData";
 
 import {
   setCurrentFarmer,
 } from "../../data/appStore";
 
 
-const API_URL =
-  import.meta.env.VITE_API_URL;
+
+function extractLocationRows(data, keys) {
+  const candidates = [
+    data,
+    data?.data,
+    data?.result,
+    data?.location,
+  ];
+
+  for (const source of candidates) {
+    if (!source || typeof source !== "object") continue;
+    for (const key of keys) {
+      if (Array.isArray(source?.[key])) return source[key];
+    }
+  }
+
+  return [];
+}
+
+function normalizeStateRows(data) {
+  return extractLocationRows(data, ["states", "stateList", "locations"])
+    .map((item) => ({
+      ...item,
+      stateId: String(item?.stateId ?? item?.state_id ?? item?.id ?? "").trim(),
+      stateName: String(item?.stateName ?? item?.state_name ?? item?.name ?? "").trim(),
+      stateType: item?.stateType ?? item?.state_type ?? item?.type ?? "STATE",
+    }))
+    .filter((item) => item.stateId && item.stateName);
+}
+
+function normalizeDistrictRows(data) {
+  return extractLocationRows(data, ["districts", "districtList", "locations"])
+    .map((item) => ({
+      ...item,
+      districtId: String(item?.districtId ?? item?.district_id ?? item?.id ?? "").trim(),
+      districtName: String(item?.districtName ?? item?.district_name ?? item?.name ?? "").trim(),
+    }))
+    .filter((item) => item.districtId && item.districtName);
+}
+
+function normalizeMandalRows(data) {
+  return extractLocationRows(data, ["mandals", "subDistricts", "subdistricts", "mandalList", "locations"])
+    .map((item) => ({
+      ...item,
+      mandalId: String(item?.mandalId ?? item?.mandal_id ?? item?.subDistrictId ?? item?.subdistrict_id ?? item?.id ?? "").trim(),
+      mandalName: String(item?.mandalName ?? item?.mandal_name ?? item?.subDistrictName ?? item?.subdistrict_name ?? item?.name ?? "").trim(),
+    }))
+    .filter((item) => item.mandalId && item.mandalName);
+}
+
+function normalizeVillageRows(data) {
+  return extractLocationRows(data, ["villages", "villageList", "locations"])
+    .map((item) => ({
+      ...item,
+      villageId: String(item?.villageId ?? item?.village_id ?? item?.id ?? "").trim(),
+      village: String(item?.village ?? item?.villageName ?? item?.village_name ?? item?.name ?? "").trim(),
+    }))
+    .filter((item) => item.village);
+}
+
+const API_URL = String(
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:5000/api"
+).replace(/\/+$/, "");
+
+async function locationApi(path, options = {}) {
+  const response = await fetch(
+    `${API_URL}${path}`,
+    {
+      ...options,
+      headers: {
+        ...(options.headers || {}),
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  let data = null;
+
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      data?.message ||
+      data?.error ||
+      "Location service is unavailable."
+    );
+  }
+
+  return data;
+}
 
 
 const languages = [
@@ -75,10 +170,6 @@ function FarmerRegister() {
     useLanguage();
 
 
-  const states =
-    getStates();
-
-
   const [
     form,
     setForm,
@@ -86,11 +177,26 @@ function FarmerRegister() {
     useState({
       name: "",
       phone: "",
+      password: "",
+      confirmPassword: "",
 
-      stateId: "ts",
-      districtId: "hyd",
-      mandalId: "serilingampally",
-      village: "Gachibowli",
+      stateId: "",
+      districtId: "",
+      mandalId: "",
+      village: "",
+      pincode: "",
+      address: "",
+      landmark: "",
+      currentLat: null,
+      currentLng: null,
+      locationUpdatedAt: "",
+      locationSource: "REGISTERED",
+
+      alternatePhone: "",
+      farmSizeAcres: "",
+      irrigationType: "",
+      primaryCrop: "",
+      estimatedQuantity: "",
 
       language: "en",
     });
@@ -117,28 +223,35 @@ function FarmerRegister() {
     useState(false);
 
 
+  const [
+    locating,
+    setLocating,
+  ] =
+    useState(false);
+
+  const [
+    locationMessage,
+    setLocationMessage,
+  ] =
+    useState("");
+
+
+  const [states, setStates] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [mandals, setMandals] = useState([]);
+  const [villages, setVillages] = useState([]);
+  const [locationLoading, setLocationLoading] = useState(true);
+
   const selectedState =
     useMemo(
       () =>
         states.find(
           (item) =>
-            item.stateId ===
-            form.stateId
+            String(item.stateId) ===
+            String(form.stateId)
         ),
       [
         states,
-        form.stateId,
-      ]
-    );
-
-
-  const districts =
-    useMemo(
-      () =>
-        getDistricts(
-          form.stateId
-        ),
-      [
         form.stateId,
       ]
     );
@@ -149,25 +262,11 @@ function FarmerRegister() {
       () =>
         districts.find(
           (item) =>
-            item.districtId ===
-            form.districtId
+            String(item.districtId) ===
+            String(form.districtId)
         ),
       [
         districts,
-        form.districtId,
-      ]
-    );
-
-
-  const mandals =
-    useMemo(
-      () =>
-        getMandals(
-          form.stateId,
-          form.districtId
-        ),
-      [
-        form.stateId,
         form.districtId,
       ]
     );
@@ -178,27 +277,11 @@ function FarmerRegister() {
       () =>
         mandals.find(
           (item) =>
-            item.mandalId ===
-            form.mandalId
+            String(item.mandalId) ===
+            String(form.mandalId)
         ),
       [
         mandals,
-        form.mandalId,
-      ]
-    );
-
-
-  const villages =
-    useMemo(
-      () =>
-        getVillages(
-          form.stateId,
-          form.districtId,
-          form.mandalId
-        ),
-      [
-        form.stateId,
-        form.districtId,
         form.mandalId,
       ]
     );
@@ -214,109 +297,145 @@ function FarmerRegister() {
 
 
   useEffect(() => {
+    let cancelled = false;
 
-    const valid =
-      districts.some(
-        (item) =>
-          item.districtId ===
-          form.districtId
-      );
-
-
-    if (
-      districts.length > 0 &&
-      !valid
-    ) {
-
-      setForm(
-        (current) => ({
-          ...current,
-
-          districtId:
-            districts[0]
-              .districtId,
-
-          mandalId:
-            "",
-
-          village:
-            "",
-        })
-      );
-
+    async function loadStates() {
+      setLocationLoading(true);
+      try {
+        const data = await locationApi("/locations/states");
+        if (!cancelled) {
+          setStates(normalizeStateRows(data));
+        }
+      } catch (error) {
+        console.error("Unable to load states:", error);
+        if (!cancelled) {
+          setErrors((current) => ({
+            ...current,
+            stateId:
+              "Unable to load the official location list. Please try again.",
+          }));
+        }
+      } finally {
+        if (!cancelled) {
+          setLocationLoading(false);
+        }
+      }
     }
 
-  }, [
-    districts,
-    form.districtId,
-  ]);
+    loadStates();
 
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
+    let cancelled = false;
 
-    const valid =
-      mandals.some(
-        (item) =>
-          item.mandalId ===
-          form.mandalId
-      );
+    async function loadDistricts() {
+      if (!form.stateId) {
+        setDistricts([]);
+        return;
+      }
 
+      try {
+        const data = await locationApi(
+          `/locations/districts?stateId=${encodeURIComponent(form.stateId)}`
+        );
 
-    if (
-      mandals.length > 0 &&
-      !valid
-    ) {
-
-      setForm(
-        (current) => ({
-          ...current,
-
-          mandalId:
-            mandals[0]
-              .mandalId,
-
-          village:
-            "",
-        })
-      );
-
+        if (!cancelled) {
+          setDistricts(normalizeDistrictRows(data));
+        }
+      } catch (error) {
+        console.error("Unable to load districts:", error);
+        if (!cancelled) {
+          setDistricts([]);
+          setErrors((current) => ({
+            ...current,
+            districtId: "Unable to load districts for the selected state.",
+          }));
+        }
+      }
     }
 
-  }, [
-    mandals,
-    form.mandalId,
-  ]);
+    loadDistricts();
 
+    return () => {
+      cancelled = true;
+    };
+  }, [form.stateId]);
 
   useEffect(() => {
+    let cancelled = false;
 
-    const valid =
-      villages.includes(
-        form.village
-      );
+    async function loadMandals() {
+      if (!form.districtId) {
+        setMandals([]);
+        return;
+      }
 
+      try {
+        const data = await locationApi(
+          `/locations/mandals?districtId=${encodeURIComponent(form.districtId)}`
+        );
 
-    if (
-      villages.length > 0 &&
-      !valid
-    ) {
-
-      setForm(
-        (current) => ({
-          ...current,
-
-          village:
-            villages[0],
-        })
-      );
-
+        if (!cancelled) {
+          setMandals(normalizeMandalRows(data));
+        }
+      } catch (error) {
+        console.error("Unable to load mandals:", error);
+        if (!cancelled) {
+          setMandals([]);
+          setErrors((current) => ({
+            ...current,
+            mandalId: "Unable to load mandals for the selected district.",
+          }));
+        }
+      }
     }
 
-  }, [
-    villages,
-    form.village,
-  ]);
+    loadMandals();
 
+    return () => {
+      cancelled = true;
+    };
+  }, [form.districtId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadVillages() {
+      if (!form.mandalId) {
+        setVillages([]);
+        return;
+      }
+
+      try {
+        const data = await locationApi(
+          `/locations/villages?mandalId=${encodeURIComponent(form.mandalId)}`
+        );
+
+        if (!cancelled) {
+          setVillages(normalizeVillageRows(data));
+        }
+      } catch (error) {
+        console.error("Unable to load villages:", error);
+        if (!cancelled) {
+          setVillages([]);
+          setErrors((current) => ({
+            ...current,
+            village: "Unable to load villages for the selected mandal.",
+          }));
+        }
+      }
+    }
+
+    loadVillages();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [form.mandalId]);
 
   function updateField(
     field,
@@ -464,6 +583,215 @@ function FarmerRegister() {
   }
 
 
+  function normaliseLocationName(value) {
+    return String(value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function findLocationByName(items, value) {
+    const target = normaliseLocationName(value);
+
+    if (!target) {
+      return null;
+    }
+
+    return (
+      (items || []).find((item) => {
+        const names = [
+          item?.name,
+          item?.stateName,
+          item?.districtName,
+          item?.mandalName,
+          item?.villageName,
+          item?.village,
+          item?.localName,
+        ];
+
+        return names.some(
+          (name) =>
+            normaliseLocationName(name) === target
+        );
+      }) || null
+    );
+  }
+
+  async function useCurrentLocation() {
+    setLocationMessage("");
+    setLocating(true);
+
+    if (!navigator.geolocation) {
+      setLocationMessage(
+        "Location is not supported by this browser."
+      );
+      setLocating(false);
+      return;
+    }
+
+    try {
+      const position = await new Promise(
+        (resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
+            resolve,
+            reject,
+            {
+              enableHighAccuracy: true,
+              timeout: 20000,
+              maximumAge: 0,
+            }
+          );
+        }
+      );
+
+      const lat =
+        Number(
+          position.coords.latitude
+        );
+
+      const lng =
+        Number(
+          position.coords.longitude
+        );
+
+      /*
+        Production rule:
+        GPS coordinates are captured directly from the device.
+        The backend resolves those coordinates against the
+        official administrative location hierarchy. The browser
+        never guesses a village from a small demo dataset.
+      */
+
+      const data = await locationApi(
+        `/locations/resolve?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`
+      );
+
+      const resolved =
+        data?.location ||
+        data?.resolved ||
+        data;
+
+      const resolvedStateId =
+        resolved?.stateId ||
+        resolved?.state_id ||
+        "";
+
+      const resolvedDistrictId =
+        resolved?.districtId ||
+        resolved?.district_id ||
+        "";
+
+      const resolvedMandalId =
+        resolved?.mandalId ||
+        resolved?.mandal_id ||
+        "";
+
+      const resolvedVillage =
+        resolved?.village ||
+        resolved?.villageName ||
+        "";
+
+      const resolvedStateName =
+        resolved?.stateName ||
+        resolved?.state_name ||
+        "";
+
+      const resolvedDistrictName =
+        resolved?.districtName ||
+        resolved?.district_name ||
+        "";
+
+      const resolvedMandalName =
+        resolved?.mandalName ||
+        resolved?.mandal_name ||
+        "";
+
+      const resolvedPincode =
+        resolved?.pincode ||
+        resolved?.pinCode ||
+        "";
+
+      const resolvedAddress =
+        resolved?.formattedAddress ||
+        resolved?.formatted_address ||
+        "";
+
+      if (
+        !resolvedStateId ||
+        !resolvedDistrictId ||
+        !resolvedMandalId ||
+        !resolvedVillage
+      ) {
+        throw new Error(
+          "Your GPS position could not be mapped to a complete official village hierarchy. Please verify the location manually."
+        );
+      }
+
+      setForm((current) => ({
+        ...current,
+        stateId: resolvedStateId,
+        districtId: resolvedDistrictId,
+        mandalId: resolvedMandalId,
+        village: resolvedVillage,
+        pincode: resolvedPincode || current.pincode,
+        address: resolvedAddress || current.address,
+        currentLat: lat,
+        currentLng: lng,
+        locationUpdatedAt:
+          new Date().toISOString(),
+        locationSource: "GPS",
+      }));
+
+      setErrors((current) => ({
+        ...current,
+        stateId: "",
+        districtId: "",
+        mandalId: "",
+        village: "",
+      }));
+
+      setLocationMessage(
+        `GPS matched to ${[
+          resolvedVillage,
+          resolvedMandalName,
+          resolvedDistrictName,
+          resolvedStateName,
+        ]
+          .filter(Boolean)
+          .join(", ")}.`
+      );
+    } catch (error) {
+      console.error(
+        "Farmer GPS resolution error:",
+        error
+      );
+
+      setLocationMessage(
+        error?.message ||
+        "Unable to resolve your live GPS location. Please allow location access and verify the location manually."
+      );
+    } finally {
+      setLocating(false);
+    }
+  }
+
+  function openCurrentLocationInMaps() {
+    if (
+      form.currentLat == null ||
+      form.currentLng == null
+    ) {
+      return;
+    }
+
+    window.open(
+      `https://www.google.com/maps?q=${encodeURIComponent(form.currentLat)},${encodeURIComponent(form.currentLng)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  }
+
   function validate() {
 
     const nextErrors =
@@ -538,6 +866,40 @@ function FarmerRegister() {
 
     }
 
+    if (form.password.length < 6) {
+      nextErrors.password =
+        "Password must contain at least 6 characters.";
+    }
+
+    if (form.password !== form.confirmPassword) {
+      nextErrors.confirmPassword =
+        "Passwords do not match.";
+    }
+
+    if (
+      form.alternatePhone &&
+      normalisePhone(form.alternatePhone).length !== 10
+    ) {
+      nextErrors.alternatePhone =
+        "Enter a valid 10-digit alternate number.";
+    }
+
+    if (
+      form.farmSizeAcres &&
+      (!Number.isFinite(Number(form.farmSizeAcres)) || Number(form.farmSizeAcres) <= 0)
+    ) {
+      nextErrors.farmSizeAcres =
+        "Enter a valid farm size.";
+    }
+
+    if (
+      form.estimatedQuantity &&
+      (!Number.isFinite(Number(form.estimatedQuantity)) || Number(form.estimatedQuantity) <= 0)
+    ) {
+      nextErrors.estimatedQuantity =
+        "Enter a valid expected quantity.";
+    }
+
 
     return nextErrors;
 
@@ -604,6 +966,49 @@ function FarmerRegister() {
 
       village:
         farmer.village ||
+        "",
+
+      pincode:
+        farmer.pincode ||
+        "",
+
+      address:
+        farmer.address ||
+        farmer.farm_address ||
+        "",
+
+      landmark:
+        farmer.landmark ||
+        "",
+
+      currentLat:
+        farmer.current_lat ??
+        farmer.currentLat ??
+        null,
+
+      currentLng:
+        farmer.current_lng ??
+        farmer.currentLng ??
+        null,
+
+      alternatePhone:
+        farmer.alternate_phone ||
+        farmer.alternatePhone ||
+        "",
+
+      farmSizeAcres:
+        farmer.farm_size_acres ??
+        farmer.farmSizeAcres ??
+        "",
+
+      irrigationType:
+        farmer.irrigation_type ||
+        farmer.irrigationType ||
+        "",
+
+      primaryCrop:
+        farmer.primary_crop ??
+        farmer.primaryCrop ??
         "",
 
       language:
@@ -717,6 +1122,38 @@ function FarmerRegister() {
         village:
           form.village,
 
+        pincode:
+          form.pincode || null,
+
+        address:
+          form.address || null,
+
+        landmark:
+          form.landmark || null,
+
+        currentLat:
+          form.currentLat,
+
+        currentLng:
+          form.currentLng,
+
+        locationUpdatedAt:
+          form.locationUpdatedAt || null,
+
+        alternatePhone:
+          normalisePhone(form.alternatePhone) || null,
+
+        farmSizeAcres:
+          form.farmSizeAcres
+            ? Number(form.farmSizeAcres)
+            : null,
+
+        irrigationType:
+          form.irrigationType || null,
+
+        password:
+          form.password,
+
         language:
           form.language,
 
@@ -724,10 +1161,12 @@ function FarmerRegister() {
           null,
 
         primaryCrop:
-          null,
+          form.primaryCrop || null,
 
         estimatedQuantity:
-          0,
+          form.estimatedQuantity
+            ? Number(form.estimatedQuantity)
+            : 0,
 
       };
 
@@ -1191,6 +1630,75 @@ function FarmerRegister() {
 
               </div>
 
+              <div className="farmer-register-location-source-note">
+                <strong>Official administrative location data</strong>
+                <span>
+                  States, districts, mandals and villages are loaded from the
+                  server-backed location directory. No demo location list is
+                  used in this registration form.
+                </span>
+              </div>
+
+              <div className="farmer-register-gps-card">
+                <div className="farmer-register-gps-copy">
+                  <div className="farmer-register-gps-icon">
+                    <LocateFixed size={20} />
+                  </div>
+                  <div>
+                    <strong>Use your current location</strong>
+                    <span>
+                      GPS is used first for pickup and transporter matching.
+                      Your registered village is kept separately.
+                    </span>
+                  </div>
+                </div>
+
+                <div className="farmer-register-gps-actions">
+                  <button
+                    type="button"
+                    className="farmer-register-gps-button"
+                    onClick={useCurrentLocation}
+                    disabled={locating}
+                  >
+                    <LocateFixed size={17} />
+                    {locating ? "Getting location…" : "Use current location"}
+                  </button>
+
+                  {form.currentLat != null && form.currentLng != null ? (
+                    <button
+                      type="button"
+                      className="farmer-register-map-button"
+                      onClick={openCurrentLocationInMaps}
+                    >
+                      <Navigation size={16} />
+                      Open map
+                    </button>
+                  ) : null}
+                </div>
+
+                {locationMessage ? (
+                  <div className="farmer-register-gps-message">
+                    <CheckCircle2 size={15} />
+                    <span>{locationMessage}</span>
+                  </div>
+                ) : null}
+
+                {form.currentLat != null && form.currentLng != null ? (
+                  <div className="farmer-register-gps-meta">
+                    <span>
+                      <strong>Current GPS:</strong>{" "}
+                      {Number(form.currentLat).toFixed(6)},{" "}
+                      {Number(form.currentLng).toFixed(6)}
+                    </span>
+                    <span>
+                      {form.locationSource === "GPS"
+                        ? "Captured from this device"
+                        : "Registered location"}
+                    </span>
+                  </div>
+                ) : null}
+              </div>
+
 
               <div className="register-two-column">
 
@@ -1230,6 +1738,12 @@ function FarmerRegister() {
                     errors.stateId
                   }
                 >
+
+                  {locationLoading ? (
+                    <div className="register-dropdown-loading">
+                      Loading official states…
+                    </div>
+                  ) : null}
 
                   {states.map(
                     (
@@ -1317,6 +1831,7 @@ function FarmerRegister() {
                     />
                   }
                   disabled={
+                    locationLoading ||
                     !form.stateId
                   }
                   isOpen={
@@ -1438,6 +1953,7 @@ function FarmerRegister() {
                     />
                   }
                   disabled={
+                    locationLoading ||
                     !form.districtId
                   }
                   isOpen={
@@ -1553,6 +2069,7 @@ function FarmerRegister() {
                     />
                   }
                   disabled={
+                    locationLoading ||
                     !form.mandalId
                   }
                   isOpen={
@@ -1649,6 +2166,47 @@ function FarmerRegister() {
 
               </div>
 
+              <div className="register-two-column">
+                <TextField
+                  label="Pincode"
+                  icon={<MapPin size={16} />}
+                  value={form.pincode}
+                  onChange={(event) =>
+                    updateField(
+                      "pincode",
+                      event.target.value.replace(/[^0-9]/g, "").slice(0, 6)
+                    )
+                  }
+                  placeholder="6-digit pincode"
+                  error={errors.pincode}
+                />
+
+                <TextField
+                  label="Landmark"
+                  icon={<Home size={16} />}
+                  value={form.landmark}
+                  onChange={(event) =>
+                    updateField("landmark", event.target.value)
+                  }
+                  placeholder="Nearby landmark"
+                />
+              </div>
+
+              <div className="register-field">
+                <label htmlFor="farmer-address">Farm / pickup address</label>
+                <div className="register-input">
+                  <Home size={17} />
+                  <input
+                    id="farmer-address"
+                    type="text"
+                    value={form.address}
+                    placeholder="House, farm road, locality..."
+                    onChange={(event) =>
+                      updateField("address", event.target.value)
+                    }
+                  />
+                </div>
+              </div>
 
 
               <div className="location-path-card">
@@ -1703,6 +2261,139 @@ function FarmerRegister() {
 
             </div>
 
+
+            <div className="register-section">
+
+              <div className="register-section-label">
+                FARM & CROP DETAILS
+              </div>
+
+              <div className="register-two-column">
+                <TextField
+                  label="Farm size (acres)"
+                  icon={<Ruler size={16} />}
+                  type="number"
+                  value={form.farmSizeAcres}
+                  onChange={(event) =>
+                    updateField("farmSizeAcres", event.target.value)
+                  }
+                  placeholder="e.g. 2.5"
+                  min="0"
+                  step="0.1"
+                  error={errors.farmSizeAcres}
+                />
+
+                <TextField
+                  label="Expected crop quantity (kg)"
+                  icon={<Wheat size={16} />}
+                  type="number"
+                  value={form.estimatedQuantity}
+                  onChange={(event) =>
+                    updateField("estimatedQuantity", event.target.value)
+                  }
+                  placeholder="e.g. 1500"
+                  min="0"
+                  step="1"
+                  error={errors.estimatedQuantity}
+                />
+              </div>
+
+              <div className="register-two-column">
+                <div className="register-field">
+                  <label>Primary crop</label>
+                  <div className="register-input">
+                    <Wheat size={17} />
+                    <input
+                      type="text"
+                      value={form.primaryCrop}
+                      placeholder="Wheat, rice, cotton..."
+                      onChange={(event) =>
+                        updateField("primaryCrop", event.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="register-field">
+                  <label>Irrigation type</label>
+                  <div className="register-input">
+                    <Droplets size={17} />
+                    <select
+                      value={form.irrigationType}
+                      onChange={(event) =>
+                        updateField("irrigationType", event.target.value)
+                      }
+                    >
+                      <option value="">Select irrigation</option>
+                      <option value="RAINFED">Rainfed</option>
+                      <option value="BOREWELL">Borewell</option>
+                      <option value="CANAL">Canal</option>
+                      <option value="DRIP">Drip irrigation</option>
+                      <option value="SPRINKLER">Sprinkler</option>
+                      <option value="OTHER">Other</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="register-section">
+
+              <div className="register-section-label">
+                ACCOUNT SECURITY
+              </div>
+
+              <div className="register-two-column">
+                <TextField
+                  label="Create password"
+                  icon={<LockKeyhole size={16} />}
+                  type="password"
+                  value={form.password}
+                  onChange={(event) =>
+                    updateField("password", event.target.value)
+                  }
+                  placeholder="At least 6 characters"
+                  error={errors.password}
+                />
+
+                <TextField
+                  label="Confirm password"
+                  icon={<LockKeyhole size={16} />}
+                  type="password"
+                  value={form.confirmPassword}
+                  onChange={(event) =>
+                    updateField("confirmPassword", event.target.value)
+                  }
+                  placeholder="Re-enter password"
+                  error={errors.confirmPassword}
+                />
+              </div>
+
+              <div className="register-field">
+                <label>Alternate mobile number</label>
+                <div className="register-input">
+                  <Phone size={17} />
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
+                    value={form.alternatePhone}
+                    placeholder="Optional 10-digit number"
+                    onChange={(event) =>
+                      updateField(
+                        "alternatePhone",
+                        event.target.value.replace(/[^0-9]/g, "").slice(0, 10)
+                      )
+                    }
+                  />
+                </div>
+                {errors.alternatePhone ? (
+                  <span className="register-error">
+                    {errors.alternatePhone}
+                  </span>
+                ) : null}
+              </div>
+            </div>
 
             <div className="register-section">
 
@@ -1869,6 +2560,43 @@ function FarmerRegister() {
 
       </main>
 
+    </div>
+  );
+}
+
+
+/* =========================================================
+   SIMPLE FIELD
+========================================================= */
+
+function TextField({
+  label,
+  icon,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  error = "",
+  min,
+  step,
+}) {
+  return (
+    <div className="register-field">
+      <label>{label}</label>
+      <div className={`register-input ${error ? "register-input-error" : ""}`}>
+        {icon}
+        <input
+          type={type}
+          value={value ?? ""}
+          onChange={onChange}
+          placeholder={placeholder}
+          min={min}
+          step={step}
+        />
+      </div>
+      {error ? (
+        <span className="register-error">{error}</span>
+      ) : null}
     </div>
   );
 }
