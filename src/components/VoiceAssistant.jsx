@@ -24,6 +24,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -658,6 +659,18 @@ function VoiceAssistant() {
     useRef(null);
 
 
+  const conversationRef =
+    useRef(null);
+
+
+  const conversationBottomRef =
+    useRef(null);
+
+
+  const forceScrollToLatestRef =
+    useRef(true);
+
+
   const inputRef =
     useRef(null);
 
@@ -709,6 +722,8 @@ function VoiceAssistant() {
   const openAssistant =
     useCallback(
       () => {
+
+        forceScrollToLatestRef.current = true;
 
         setOpen(true);
 
@@ -1286,11 +1301,11 @@ function VoiceAssistant() {
   const scrollToBottom =
     useCallback(
       (
-        behavior = "smooth"
+        behavior = "auto"
       ) => {
 
         const body =
-          bodyRef.current;
+          conversationRef.current;
 
 
         if (
@@ -1317,12 +1332,46 @@ function VoiceAssistant() {
           requestAnimationFrame(
             () => {
 
-              body.scrollTo({
+              const bottom =
+                conversationBottomRef.current;
 
-                top:
-                  body.scrollHeight,
 
-                behavior,
+              if (
+                bottom
+              ) {
+
+                bottom.scrollIntoView({
+                  behavior,
+                  block: "end",
+                });
+
+              } else {
+
+                body.scrollTop =
+                  body.scrollHeight;
+
+              }
+
+
+              // A second frame handles content whose height changes
+              // after the first paint (long replies, fonts, etc.).
+              window.requestAnimationFrame(() => {
+
+                if (
+                  bottom
+                ) {
+
+                  bottom.scrollIntoView({
+                    behavior: "auto",
+                    block: "end",
+                  });
+
+                } else {
+
+                  body.scrollTop =
+                    body.scrollHeight;
+
+                }
 
               });
 
@@ -1350,7 +1399,7 @@ function VoiceAssistant() {
       () => {
 
         const body =
-          bodyRef.current;
+          conversationRef.current;
 
 
         if (
@@ -1386,12 +1435,13 @@ function VoiceAssistant() {
     );
 
 
-  useEffect(
+  useLayoutEffect(
     () => {
 
       if (
         !open ||
-        !shouldStickToBottomRef.current
+        !conversationRef.current ||
+        !forceScrollToLatestRef.current
       ) {
 
         return;
@@ -1399,23 +1449,67 @@ function VoiceAssistant() {
       }
 
 
-      const timer =
+      // Run after DOM insertion so the newest bubble is already measurable.
+      scrollToBottom("auto");
+
+    },
+    [
+      chatHistory,
+      processing,
+      transcript,
+      open,
+      scrollToBottom,
+    ]
+  );
+
+
+  useEffect(
+    () => {
+
+      if (
+        !open ||
+        !conversationRef.current ||
+        !forceScrollToLatestRef.current
+      ) {
+
+        return;
+
+      }
+
+
+      const timerOne =
         window.setTimeout(
           () => {
 
-            scrollToBottom(
-              "smooth"
-            );
+            scrollToBottom("auto");
 
           },
-          20
+          30
+        );
+
+
+      const timerTwo =
+        window.setTimeout(
+          () => {
+
+            scrollToBottom("auto");
+
+            forceScrollToLatestRef.current =
+              false;
+
+          },
+          160
         );
 
 
       return () => {
 
         window.clearTimeout(
-          timer
+          timerOne
+        );
+
+        window.clearTimeout(
+          timerTwo
         );
 
       };
@@ -1429,7 +1523,6 @@ function VoiceAssistant() {
       scrollToBottom,
     ]
   );
-
 
   useEffect(
     () => {
@@ -2145,6 +2238,8 @@ function VoiceAssistant() {
         }
 
 
+        forceScrollToLatestRef.current = true;
+
         setInput("");
 
         setTranscript("");
@@ -2598,6 +2693,8 @@ function VoiceAssistant() {
           CONVERSATION_STORAGE_KEY
         );
 
+
+        forceScrollToLatestRef.current = true;
 
         setChatHistory([]);
 
@@ -3464,9 +3561,12 @@ function VoiceAssistant() {
                 className="
                   voice-assistant-body
                 "
-                onScroll={
-                  handleBodyScroll
-                }
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  minHeight: 0,
+                  overflow: "hidden",
+                }}
                 onWheel={
                   event =>
                     event.stopPropagation()
@@ -3688,9 +3788,33 @@ function VoiceAssistant() {
                   0 && (
 
                   <div
+                    ref={
+                      conversationRef
+                    }
                     className="
                       voice-assistant-conversation
                     "
+                    style={{
+                      flex: "1 1 0",
+                      minHeight: 0,
+                      maxHeight: "100%",
+                      overflowY: "auto",
+                      overflowX: "hidden",
+                      overscrollBehavior: "contain",
+                      WebkitOverflowScrolling: "touch",
+                      scrollbarGutter: "stable",
+                    }}
+                    onScroll={
+                      handleBodyScroll
+                    }
+                    onWheel={
+                      event =>
+                        event.stopPropagation()
+                    }
+                    onTouchMove={
+                      event =>
+                        event.stopPropagation()
+                    }
                   >
 
                     {chatHistory.map(
@@ -3875,6 +3999,19 @@ function VoiceAssistant() {
 
                       }
                     )}
+
+
+                    <div
+                      ref={
+                        conversationBottomRef
+                      }
+                      aria-hidden="true"
+                      style={{
+                        height: 1,
+                        width: "100%",
+                        flex: "0 0 1px",
+                      }}
+                    />
 
 
                     {processing && (
