@@ -324955,3 +324955,2780 @@ span {
 /* =========================================================
    END FARMER TOKEN PREMIUM SYSTEM
 ========================================================= */
+
+/* =========================================================
+   KRISHISETU — FARMER LOGISTICS PREMIUM REDESIGN
+   Paste at the VERY END of src/index.css
+   =========================================================
+   ✓ Real photographic backgrounds
+   ✓ Large readable typography
+   ✓ Strong visual hierarchy
+   ✓ Bright action buttons
+   ✓ Premium glass/depth effects
+   ✓ Friendly agricultural palette
+   ✓ Transport/GPS/status emphasis
+   ✓ Mobile safe
+   ✓ Lightweight animations
+========================================================= */
+
+
+/* =========================================================
+   01 — PAGE FOUNDATION
+========================================================= */
+
+.fl-page {
+  position: relative !important;
+
+  isolation: isolate !important;
+
+  min-height: 100vh !important;
+
+  padding:
+    28px
+    clamp(14px, 4vw, 64px)
+    70px !important;
+
+  color:
+    #183b48 !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      #eef8f5 0%,
+      #f8fbf9 26%,
+      #f3f8f7 100%
+    ) !important;
+
+  overflow-x: clip !important;
+}
+
+
+/*
+   Large soft background glow.
+*/
+.fl-page::before {
+  content: "";
+
+  position: absolute;
+
+  top: -180px;
+  left: -160px;
+
+  width: 520px;
+  height: 520px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(53, 170, 125, .20) 0%,
+      rgba(53, 170, 125, 0) 70%
+    );
+
+  pointer-events: none;
+
+  z-index: -1;
+}
+
+.fl-page::after {
+  content: "";
+
+  position: absolute;
+
+  right: -180px;
+  top: 320px;
+
+  width: 480px;
+  height: 480px;
+
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(242, 181, 74, .16) 0%,
+      rgba(242, 181, 74, 0) 70%
+    );
+
+  pointer-events: none;
+
+  z-index: -1;
+}
+
+
+/* =========================================================
+   02 — HERO
+========================================================= */
+
+.fl-hero {
+  position: relative !important;
+
+  max-width: 1320px !important;
+
+  min-height: 310px !important;
+
+  margin:
+    0 auto 24px !important;
+
+  padding:
+    clamp(28px, 5vw, 52px) !important;
+
+  display:
+    flex !important;
+
+  align-items:
+    flex-end !important;
+
+  justify-content:
+    space-between !important;
+
+  gap:
+    30px !important;
+
+  overflow:
+    hidden !important;
+
+  border-radius:
+    28px !important;
+
+  border:
+    1px solid
+    rgba(255,255,255,.72) !important;
+
+  background:
+    linear-gradient(
+      100deg,
+      rgba(9,58,49,.94) 0%,
+      rgba(21,101,76,.84) 43%,
+      rgba(25,93,77,.42) 74%,
+      rgba(25,93,77,.18) 100%
+    ),
+    url("https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&w=1800&q=88")
+    center 58% / cover no-repeat !important;
+
+  box-shadow:
+    0 28px 75px
+      rgba(22,69,57,.19),
+    0 8px 25px
+      rgba(22,69,57,.09) !important;
+}
+
+
+/*
+   Gentle photograph highlight.
+*/
+.fl-hero::after {
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  background:
+    linear-gradient(
+      110deg,
+      rgba(255,255,255,.05),
+      rgba(255,255,255,0)
+    );
+
+  pointer-events: none;
+}
+
+
+/* Hero text */
+.fl-hero > div:first-child {
+  position: relative;
+
+  z-index: 2;
+
+  max-width: 720px;
+}
+
+.fl-eyebrow {
+  display:
+    inline-flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    9px !important;
+
+  margin-bottom:
+    13px !important;
+
+  padding:
+    8px 12px !important;
+
+  border-radius:
+    999px !important;
+
+  background:
+    rgba(255,255,255,.14) !important;
+
+  border:
+    1px solid
+    rgba(255,255,255,.24) !important;
+
+  color:
+    #ecfff6 !important;
+
+  font-size:
+    12px !important;
+
+  font-weight:
+    900 !important;
+
+  letter-spacing:
+    .13em !important;
+
+  text-transform:
+    uppercase !important;
+
+  backdrop-filter:
+    blur(7px) !important;
+}
+
+.fl-eyebrow svg {
+  color:
+    #ffd36a !important;
+
+  filter:
+    drop-shadow(0 2px 7px rgba(255,211,106,.32));
+}
+
+.fl-hero h1 {
+  margin:
+    0 !important;
+
+  max-width:
+    700px !important;
+
+  color:
+    #ffffff !important;
+
+  font-size:
+    clamp(36px, 5vw, 62px) !important;
+
+  font-weight:
+    950 !important;
+
+  letter-spacing:
+    -.045em !important;
+
+  line-height:
+    .99 !important;
+
+  text-wrap:
+    balance !important;
+}
+
+.fl-hero p {
+  max-width:
+    680px !important;
+
+  margin:
+    16px 0 0 !important;
+
+  color:
+    rgba(255,255,255,.88) !important;
+
+  font-size:
+    clamp(15px, 1.5vw, 18px) !important;
+
+  line-height:
+    1.65 !important;
+}
+
+
+/* =========================================================
+   03 — HERO ACTIONS
+========================================================= */
+
+.fl-hero-actions {
+  position:
+    relative !important;
+
+  z-index:
+    3 !important;
+
+  display:
+    flex !important;
+
+  gap:
+    11px !important;
+
+  align-items:
+    center !important;
+
+  flex-wrap:
+    wrap !important;
+}
+
+.fl-hero-actions .fl-secondary-btn,
+.fl-hero-actions .fl-primary-btn {
+  min-height:
+    52px !important;
+
+  padding:
+    0 19px !important;
+
+  border-radius:
+    15px !important;
+
+  font-size:
+    14px !important;
+
+  font-weight:
+    900 !important;
+}
+
+
+/* Refresh */
+.fl-hero-actions .fl-secondary-btn {
+  background:
+    rgba(255,255,255,.92) !important;
+
+  color:
+    #235868 !important;
+
+  border:
+    1px solid
+    rgba(255,255,255,.75) !important;
+
+  box-shadow:
+    0 8px 22px
+    rgba(7,50,60,.10) !important;
+}
+
+
+/* Request transport */
+.fl-hero-actions .fl-primary-btn {
+  background:
+    linear-gradient(
+      135deg,
+      #18a56f,
+      #117d58
+    ) !important;
+
+  color:
+    #ffffff !important;
+
+  border:
+    1px solid
+    rgba(255,255,255,.20) !important;
+
+  box-shadow:
+    0 12px 28px
+      rgba(14,126,88,.30) !important;
+}
+
+.fl-hero-actions .fl-primary-btn:hover,
+.fl-hero-actions .fl-secondary-btn:hover {
+  transform:
+    translateY(-3px) !important;
+}
+
+.fl-hero-actions .fl-primary-btn:hover {
+  box-shadow:
+    0 18px 34px
+      rgba(14,126,88,.36) !important;
+}
+
+
+/* =========================================================
+   04 — STAT CARDS
+========================================================= */
+
+.fl-stat-grid {
+  position:
+    relative !important;
+
+  z-index:
+    2 !important;
+
+  max-width:
+    1320px !important;
+
+  margin:
+    -3px auto 26px !important;
+
+  display:
+    grid !important;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr)) !important;
+
+  gap:
+    15px !important;
+}
+
+.fl-stat {
+  min-height:
+    92px !important;
+
+  display:
+    grid !important;
+
+  grid-template-columns:
+    48px 1fr auto !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    13px !important;
+
+  padding:
+    17px 19px !important;
+
+  border:
+    1px solid
+    #d7e7e5 !important;
+
+  border-radius:
+    19px !important;
+
+  background:
+    rgba(255,255,255,.96) !important;
+
+  box-shadow:
+    0 12px 32px
+      rgba(27,76,83,.08) !important;
+
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease !important;
+}
+
+.fl-stat:hover {
+  transform:
+    translateY(-3px) !important;
+
+  box-shadow:
+    0 18px 36px
+      rgba(27,76,83,.12) !important;
+}
+
+
+/* Stat icon */
+.fl-stat svg {
+  width:
+    24px !important;
+
+  height:
+    24px !important;
+
+  padding:
+    11px !important;
+
+  box-sizing:
+    content-box !important;
+
+  border-radius:
+    14px !important;
+
+  color:
+    #168762 !important;
+
+  background:
+    #e4f6ef !important;
+}
+
+.fl-stat:nth-child(2) svg {
+  color:
+    #247fa1 !important;
+
+  background:
+    #e4f4fa !important;
+}
+
+.fl-stat:nth-child(3) svg {
+  color:
+    #c5851d !important;
+
+  background:
+    #fff2d5 !important;
+}
+
+.fl-stat span {
+  color:
+    #758b91 !important;
+
+  font-size:
+    13px !important;
+
+  font-weight:
+    750 !important;
+}
+
+.fl-stat strong {
+  color:
+    #204d5d !important;
+
+  font-size:
+    30px !important;
+
+  line-height:
+    1 !important;
+
+  font-weight:
+    950 !important;
+}
+
+
+/* =========================================================
+   05 — MAIN LAYOUT
+========================================================= */
+
+.fl-layout {
+  max-width:
+    1320px !important;
+
+  margin:
+    0 auto !important;
+
+  display:
+    grid !important;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    355px !important;
+
+  gap:
+    24px !important;
+
+  align-items:
+    start !important;
+}
+
+.fl-main,
+.fl-side {
+  min-width:
+    0 !important;
+}
+
+
+/* =========================================================
+   06 — SECTION TITLES
+========================================================= */
+
+.fl-section-head {
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  justify-content:
+    space-between !important;
+
+  gap:
+    15px !important;
+
+  margin:
+    0 0 14px !important;
+}
+
+.fl-section-head > div {
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    10px !important;
+}
+
+.fl-section-kicker {
+  min-width:
+    32px !important;
+
+  height:
+    27px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    9px !important;
+
+  color:
+    #15855d !important;
+
+  background:
+    #dff4eb !important;
+
+  font-size:
+    11px !important;
+
+  font-weight:
+    950 !important;
+}
+
+.fl-section-head h2 {
+  margin:
+    0 !important;
+
+  color:
+    #244f5f !important;
+
+  font-size:
+    clamp(20px, 2.2vw, 26px) !important;
+
+  font-weight:
+    950 !important;
+
+  letter-spacing:
+    -.025em !important;
+}
+
+.fl-live {
+  display:
+    inline-flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    8px !important;
+
+  min-height:
+    31px !important;
+
+  padding:
+    0 12px !important;
+
+  border-radius:
+    999px !important;
+
+  background:
+    #e6f7ee !important;
+
+  color:
+    #177b55 !important;
+
+  font-size:
+    10px !important;
+
+  font-weight:
+    950 !important;
+
+  letter-spacing:
+    .10em !important;
+}
+
+.fl-live span {
+  width:
+    8px !important;
+
+  height:
+    8px !important;
+
+  border-radius:
+    50% !important;
+
+  background:
+    #19a56e !important;
+
+  box-shadow:
+    0 0 0 5px
+      rgba(25,165,110,.13) !important;
+
+  animation:
+    flLivePulse
+    1.9s
+    ease-out
+    infinite !important;
+}
+
+@keyframes flLivePulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 4px
+      rgba(25,165,110,.10);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 8px
+      rgba(25,165,110,.03);
+  }
+}
+
+
+/* =========================================================
+   07 — ACTIVE TRANSPORT CARD
+========================================================= */
+
+.fl-active-card {
+  position:
+    relative !important;
+
+  overflow:
+    hidden !important;
+
+  padding:
+    25px !important;
+
+  border:
+    1px solid
+    #d2e3e5 !important;
+
+  border-radius:
+    24px !important;
+
+  background:
+    linear-gradient(
+      112deg,
+      rgba(255,255,255,.98) 0%,
+      rgba(255,255,255,.97) 58%,
+      rgba(240,249,246,.92) 100%
+    ) !important;
+
+  box-shadow:
+    0 22px 50px
+      rgba(29,76,85,.10) !important;
+}
+
+
+/*
+   Real agricultural photograph on the right.
+*/
+.fl-active-card::after {
+  content:
+    "";
+
+  position:
+    absolute;
+
+  right:
+    -20px;
+
+  bottom:
+    -50px;
+
+  width:
+    300px;
+
+  height:
+    300px;
+
+  border-radius:
+    50%;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(20,113,80,.20),
+      rgba(20,113,80,.04)
+    ),
+    url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=900&q=82")
+    center / cover no-repeat;
+
+  opacity:
+    .22;
+
+  pointer-events:
+    none;
+}
+
+.fl-active-card > * {
+  position:
+    relative !important;
+
+  z-index:
+    2 !important;
+}
+
+
+/* =========================================================
+   08 — ACTIVE TOP
+========================================================= */
+
+.fl-active-top {
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    15px !important;
+
+  padding:
+    0 0 21px !important;
+
+  border-bottom:
+    1px solid
+    #e0ecec !important;
+}
+
+.fl-status-icon {
+  width:
+    58px !important;
+
+  height:
+    58px !important;
+
+  min-width:
+    58px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    17px !important;
+
+  color:
+    #187f5c !important;
+
+  background:
+    #e1f6ed !important;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.95),
+    0 7px 18px rgba(22,127,91,.08) !important;
+}
+
+.fl-status-label {
+  color:
+    #84999f !important;
+
+  font-size:
+    11px !important;
+
+  font-weight:
+    900 !important;
+
+  letter-spacing:
+    .09em !important;
+
+  text-transform:
+    uppercase !important;
+}
+
+.fl-active-top h3 {
+  margin:
+    4px 0 5px !important;
+
+  color:
+    #214d5d !important;
+
+  font-size:
+    clamp(21px, 2.3vw, 30px) !important;
+
+  font-weight:
+    950 !important;
+
+  letter-spacing:
+    -.03em !important;
+}
+
+.fl-muted {
+  color:
+    #84989d !important;
+
+  font-size:
+    12px !important;
+
+  font-weight:
+    650 !important;
+}
+
+
+/* =========================================================
+   09 — ACTION BUTTONS
+========================================================= */
+
+.fl-active-actions {
+  margin-left:
+    auto !important;
+
+  display:
+    flex !important;
+
+  gap:
+    9px !important;
+
+  align-items:
+    center !important;
+}
+
+.fl-ghost-btn {
+  min-height:
+    45px !important;
+
+  padding:
+    0 14px !important;
+
+  border-radius:
+    13px !important;
+
+  background:
+    #e9f7f1 !important;
+
+  border:
+    1px solid
+    #cae8dc !important;
+
+  color:
+    #147a55 !important;
+
+  font-size:
+    13px !important;
+
+  font-weight:
+    900 !important;
+}
+
+.fl-icon-btn {
+  width:
+    45px !important;
+
+  height:
+    45px !important;
+
+  min-width:
+    45px !important;
+
+  border-radius:
+    13px !important;
+
+  display:
+    inline-flex !important;
+
+  align-items:
+    center !important;
+
+  justify-content:
+    center !important;
+
+  background:
+    #e8f5fb !important;
+
+  border:
+    1px solid
+    #cde4ed !important;
+
+  color:
+    #247f9e !important;
+}
+
+.fl-ghost-btn:hover,
+.fl-icon-btn:hover {
+  transform:
+    translateY(-2px) !important;
+
+  box-shadow:
+    0 9px 20px
+      rgba(31,101,101,.10) !important;
+}
+
+
+/* =========================================================
+   10 — PROGRESS
+========================================================= */
+
+.fl-progress {
+  position:
+    relative !important;
+
+  display:
+    grid !important;
+
+  grid-template-columns:
+    repeat(7, minmax(0, 1fr)) !important;
+
+  gap:
+    4px !important;
+
+  padding:
+    23px 0 9px !important;
+}
+
+.fl-progress::before {
+  content:
+    "";
+
+  position:
+    absolute;
+
+  left:
+    7%;
+
+  right:
+    7%;
+
+  top:
+    36px;
+
+  height:
+    3px;
+
+  border-radius:
+    999px;
+
+  background:
+    #e0eaeb !important;
+
+  z-index:
+    0;
+}
+
+.fl-progress-step {
+  position:
+    relative !important;
+
+  z-index:
+    1 !important;
+
+  min-width:
+    0 !important;
+
+  text-align:
+    center !important;
+}
+
+.fl-progress-dot {
+  width:
+    32px !important;
+
+  height:
+    32px !important;
+
+  margin:
+    0 auto 8px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border:
+    2px solid
+    #d6e4e7 !important;
+
+  border-radius:
+    50% !important;
+
+  background:
+    #ffffff !important;
+
+  color:
+    #94a8ae !important;
+
+  font-size:
+    11px !important;
+
+  font-weight:
+    950 !important;
+}
+
+.fl-progress-step.done .fl-progress-dot {
+  border-color:
+    #178b61 !important;
+
+  background:
+    #178b61 !important;
+
+  color:
+    #ffffff !important;
+
+  box-shadow:
+    0 5px 14px
+      rgba(23,139,97,.22) !important;
+}
+
+.fl-progress-step span {
+  display:
+    block !important;
+
+  color:
+    #80969c !important;
+
+  font-size:
+    10px !important;
+
+  font-weight:
+    700 !important;
+
+  line-height:
+    1.3 !important;
+}
+
+.fl-progress-step.done span {
+  color:
+    #217653 !important;
+
+  font-weight:
+    900 !important;
+}
+
+
+/* =========================================================
+   11 — DETAIL CARDS
+========================================================= */
+
+.fl-detail-grid {
+  display:
+    grid !important;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr)) !important;
+
+  gap:
+    11px !important;
+
+  margin-top:
+    21px !important;
+}
+
+.fl-info-card {
+  min-width:
+    0 !important;
+
+  min-height:
+    80px !important;
+
+  padding:
+    13px !important;
+
+  display:
+    grid !important;
+
+  grid-template-columns:
+    34px 1fr !important;
+
+  column-gap:
+    9px !important;
+
+  row-gap:
+    4px !important;
+
+  align-items:
+    start !important;
+
+  border:
+    1px solid
+    #dfeaec !important;
+
+  border-radius:
+    15px !important;
+
+  background:
+    rgba(249,253,253,.94) !important;
+
+  transition:
+    transform .16s ease,
+    box-shadow .16s ease !important;
+}
+
+.fl-info-card:hover {
+  transform:
+    translateY(-2px) !important;
+
+  box-shadow:
+    0 9px 22px
+      rgba(34,83,91,.07) !important;
+}
+
+.fl-info-card svg {
+  grid-row:
+    1 / 3 !important;
+
+  width:
+    18px !important;
+
+  height:
+    18px !important;
+
+  margin:
+    2px auto 0 !important;
+
+  padding:
+    8px !important;
+
+  box-sizing:
+    content-box !important;
+
+  border-radius:
+    10px !important;
+
+  color:
+    #26839f !important;
+
+  background:
+    #e7f5fa !important;
+}
+
+.fl-info-card span {
+  color:
+    #8a9fa4 !important;
+
+  font-size:
+    9px !important;
+
+  font-weight:
+    900 !important;
+
+  letter-spacing:
+    .08em !important;
+
+  text-transform:
+    uppercase !important;
+}
+
+.fl-info-card strong {
+  min-width:
+    0 !important;
+
+  color:
+    #2c5360 !important;
+
+  font-size:
+    13px !important;
+
+  line-height:
+    1.42 !important;
+
+  font-weight:
+    850 !important;
+
+  overflow-wrap:
+    anywhere !important;
+}
+
+
+/* =========================================================
+   12 — TRANSPORTER CARD
+========================================================= */
+
+.fl-transporter {
+  position:
+    relative !important;
+
+  overflow:
+    hidden !important;
+
+  margin-top:
+    14px !important;
+
+  padding:
+    17px !important;
+
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    13px !important;
+
+  border:
+    1px solid
+    #cfe6df !important;
+
+  border-radius:
+    17px !important;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(236,249,244,.98),
+      rgba(245,251,249,.96)
+    ),
+    url("https://images.unsplash.com/photo-1509099836639-18ba1795216d?auto=format&fit=crop&w=900&q=82")
+    right center / 46% 100% no-repeat !important;
+}
+
+.fl-transporter::after {
+  content:
+    "";
+
+  position:
+    absolute;
+
+  right:
+    0;
+
+  top:
+    0;
+
+  bottom:
+    0;
+
+  width:
+    42%;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(236,249,244,1),
+      rgba(236,249,244,.18)
+    );
+
+  pointer-events:
+    none;
+}
+
+.fl-transporter > * {
+  position:
+    relative !important;
+
+  z-index:
+    2 !important;
+}
+
+.fl-person-icon {
+  width:
+    48px !important;
+
+  height:
+    48px !important;
+
+  min-width:
+    48px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    14px !important;
+
+  background:
+    #dff3e9 !important;
+
+  color:
+    #277b52 !important;
+}
+
+.fl-transporter-info {
+  min-width:
+    0 !important;
+
+  flex:
+    1 1 auto !important;
+}
+
+.fl-transporter-info span {
+  display:
+    block !important;
+
+  color:
+    #84999d !important;
+
+  font-size:
+    10px !important;
+
+  font-weight:
+    900 !important;
+
+  letter-spacing:
+    .08em !important;
+
+  text-transform:
+    uppercase !important;
+}
+
+.fl-transporter-info strong {
+  display:
+    block !important;
+
+  margin-top:
+    3px !important;
+
+  color:
+    #245466 !important;
+
+  font-size:
+    15px !important;
+
+  font-weight:
+    900 !important;
+}
+
+.fl-transporter-info small {
+  color:
+    #70888e !important;
+
+  font-size:
+    11px !important;
+}
+
+
+/* =========================================================
+   13 — ROW ACTIONS
+========================================================= */
+
+.fl-row-actions {
+  margin-left:
+    auto !important;
+
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  justify-content:
+    flex-end !important;
+
+  gap:
+    8px !important;
+
+  flex-wrap:
+    wrap !important;
+}
+
+.fl-row-actions .fl-secondary-btn {
+  min-height:
+    42px !important;
+
+  padding:
+    0 12px !important;
+
+  border-radius:
+    12px !important;
+
+  background:
+    rgba(255,255,255,.95) !important;
+
+  border:
+    1px solid
+    #cfe0e4 !important;
+
+  color:
+    #2b6274 !important;
+
+  font-size:
+    12px !important;
+
+  font-weight:
+    850 !important;
+}
+
+.fl-row-actions .fl-primary-btn {
+  min-height:
+    42px !important;
+
+  padding:
+    0 13px !important;
+
+  border-radius:
+    12px !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #179967,
+      #117a57
+    ) !important;
+
+  color:
+    #ffffff !important;
+
+  box-shadow:
+    0 8px 20px
+      rgba(18,127,87,.19) !important;
+
+  font-size:
+    12px !important;
+
+  font-weight:
+    900 !important;
+}
+
+
+/* =========================================================
+   14 — EMPTY STATE
+========================================================= */
+
+.fl-empty {
+  position:
+    relative !important;
+
+  overflow:
+    hidden !important;
+
+  min-height:
+    330px !important;
+
+  padding:
+    35px 25px !important;
+
+  border:
+    1px solid
+    #d6e6e6 !important;
+
+  border-radius:
+    23px !important;
+
+  background:
+    linear-gradient(
+      105deg,
+      rgba(255,255,255,.97),
+      rgba(244,250,248,.93)
+    ),
+    url("https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1200&q=82")
+    right center / cover no-repeat !important;
+
+  box-shadow:
+    0 20px 48px
+      rgba(26,74,82,.09) !important;
+}
+
+.fl-empty::after {
+  content:
+    "";
+
+  position:
+    absolute;
+
+  inset:
+    0;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255,255,255,.98) 15%,
+      rgba(255,255,255,.80) 62%,
+      rgba(255,255,255,.22)
+    );
+
+  pointer-events:
+    none;
+}
+
+.fl-empty > * {
+  position:
+    relative !important;
+
+  z-index:
+    2 !important;
+}
+
+.fl-empty-icon {
+  width:
+    72px !important;
+
+  height:
+    72px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  margin-bottom:
+    16px !important;
+
+  border-radius:
+    20px !important;
+
+  background:
+    #ddf3e8 !important;
+
+  color:
+    #18845d !important;
+
+  box-shadow:
+    0 10px 24px
+      rgba(23,132,93,.14) !important;
+}
+
+.fl-empty h3 {
+  margin:
+    0 !important;
+
+  color:
+    #255465 !important;
+
+  font-size:
+    clamp(20px, 2vw, 27px) !important;
+
+  font-weight:
+    950 !important;
+}
+
+.fl-empty p {
+  max-width:
+    500px !important;
+
+  margin:
+    10px 0 21px !important;
+
+  color:
+    #728b91 !important;
+
+  font-size:
+    14px !important;
+
+  line-height:
+    1.65 !important;
+}
+
+
+/* =========================================================
+   15 — SIDE PANELS
+========================================================= */
+
+.fl-side {
+  display:
+    flex !important;
+
+  flex-direction:
+    column !important;
+
+  gap:
+    15px !important;
+}
+
+.fl-side-card {
+  position:
+    relative !important;
+
+  overflow:
+    hidden !important;
+
+  padding:
+    20px !important;
+
+  border:
+    1px solid
+    #d8e7e7 !important;
+
+  border-radius:
+    21px !important;
+
+  background:
+    rgba(255,255,255,.97) !important;
+
+  box-shadow:
+    0 15px 34px
+      rgba(26,72,79,.07) !important;
+}
+
+.fl-side-card::after {
+  content:
+    "";
+
+  position:
+    absolute;
+
+  right:
+    -25px;
+
+  bottom:
+    -32px;
+
+  width:
+    135px;
+
+  height:
+    135px;
+
+  border-radius:
+    50%;
+
+  opacity:
+    .18;
+
+  pointer-events:
+    none;
+}
+
+
+/* GPS card */
+.fl-side-card:first-child::after {
+  background:
+    url("https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=500&q=78")
+    center / cover no-repeat;
+}
+
+
+/* Ready card */
+.fl-side-card:nth-child(2)::after {
+  background:
+    url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=500&q=78")
+    center / cover no-repeat;
+}
+
+
+/* How it works */
+.fl-side-card:nth-child(3)::after {
+  background:
+    url("https://images.unsplash.com/photo-1473448912268-2022ce9509d8?auto=format&fit=crop&w=500&q=78")
+    center / cover no-repeat;
+}
+
+.fl-side-card > * {
+  position:
+    relative !important;
+
+  z-index:
+    2 !important;
+}
+
+.fl-side-head {
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    11px !important;
+}
+
+.fl-side-head svg {
+  width:
+    21px !important;
+
+  height:
+    21px !important;
+
+  padding:
+    9px !important;
+
+  box-sizing:
+    content-box !important;
+
+  border-radius:
+    12px !important;
+
+  color:
+    #18815d !important;
+
+  background:
+    #e3f5ed !important;
+}
+
+.fl-side-head h3 {
+  margin:
+    0 !important;
+
+  color:
+    #2b5665 !important;
+
+  font-size:
+    17px !important;
+
+  font-weight:
+    950 !important;
+}
+
+.fl-side-card p {
+  margin:
+    13px 0 15px !important;
+
+  color:
+    #72888e !important;
+
+  font-size:
+    13px !important;
+
+  line-height:
+    1.65 !important;
+}
+
+
+/* =========================================================
+   16 — GPS BUTTON
+========================================================= */
+
+.fl-location-btn {
+  width:
+    100% !important;
+
+  min-height:
+    49px !important;
+
+  padding:
+    0 15px !important;
+
+  border:
+    1px solid
+    #cde4df !important;
+
+  border-radius:
+    14px !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #edf9f4,
+      #e2f5ed
+    ) !important;
+
+  color:
+    #147a56 !important;
+
+  font-size:
+    13px !important;
+
+  font-weight:
+    950 !important;
+
+  box-shadow:
+    0 8px 18px
+      rgba(25,129,91,.08) !important;
+
+  transition:
+    transform .16s ease,
+    box-shadow .16s ease !important;
+}
+
+.fl-location-btn:hover {
+  transform:
+    translateY(-2px) !important;
+
+  box-shadow:
+    0 13px 25px
+      rgba(25,129,91,.13) !important;
+}
+
+.fl-location-btn:disabled {
+  opacity:
+    .70 !important;
+
+  cursor:
+    wait !important;
+}
+
+.fl-gps-ok {
+  display:
+    flex !important;
+
+  align-items:
+    flex-start !important;
+
+  gap:
+    9px !important;
+
+  margin-top:
+    12px !important;
+
+  padding:
+    11px !important;
+
+  border:
+    1px solid
+    #cfe8da !important;
+
+  border-radius:
+    12px !important;
+
+  background:
+    #eef9f2 !important;
+
+  color:
+    #2d7951 !important;
+
+  font-size:
+    12px !important;
+
+  font-weight:
+    750 !important;
+}
+
+.fl-gps-ok small {
+  display:
+    block !important;
+
+  margin-top:
+    4px !important;
+
+  color:
+    #769087 !important;
+
+  font-size:
+    10px !important;
+}
+
+.fl-gps-note {
+  display:
+    flex !important;
+
+  align-items:
+    flex-start !important;
+
+  gap:
+    7px !important;
+
+  margin-top:
+    12px !important;
+
+  color:
+    #85989c !important;
+
+  font-size:
+    11px !important;
+
+  line-height:
+    1.5 !important;
+}
+
+
+/* =========================================================
+   17 — SIDE LINKS
+========================================================= */
+
+.fl-side-link {
+  min-height:
+    51px !important;
+
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  justify-content:
+    space-between !important;
+
+  gap:
+    10px !important;
+
+  padding:
+    0 2px !important;
+
+  border-top:
+    1px solid
+    #e7efef !important;
+
+  color:
+    #2b6071 !important;
+
+  font-size:
+    13px !important;
+
+  font-weight:
+    900 !important;
+
+  text-decoration:
+    none !important;
+
+  transition:
+    color .15s ease,
+    transform .15s ease !important;
+}
+
+.fl-side-link:hover {
+  color:
+    #15805a !important;
+
+  transform:
+    translateX(3px) !important;
+}
+
+
+/* =========================================================
+   18 — HOW IT WORKS
+========================================================= */
+
+.fl-step {
+  min-height:
+    52px !important;
+
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    12px !important;
+
+  border-top:
+    1px solid
+    #e7efef !important;
+}
+
+.fl-step span {
+  width:
+    32px !important;
+
+  height:
+    32px !important;
+
+  min-width:
+    32px !important;
+
+  display:
+    grid !important;
+
+  place-items:
+    center !important;
+
+  border-radius:
+    10px !important;
+
+  color:
+    #177d59 !important;
+
+  background:
+    #e4f5ed !important;
+
+  font-size:
+    10px !important;
+
+  font-weight:
+    950 !important;
+}
+
+.fl-step strong {
+  color:
+    #3a5963 !important;
+
+  font-size:
+    12px !important;
+
+  line-height:
+    1.4 !important;
+}
+
+
+/* =========================================================
+   19 — HISTORY
+========================================================= */
+
+.fl-history {
+  max-width:
+    1320px !important;
+
+  margin:
+    30px auto 0 !important;
+}
+
+.fl-table-wrap {
+  border:
+    1px solid
+    #d9e7e8 !important;
+
+  border-radius:
+    20px !important;
+
+  background:
+    rgba(255,255,255,.97) !important;
+
+  box-shadow:
+    0 15px 34px
+      rgba(26,72,79,.06) !important;
+
+  overflow-x:
+    auto !important;
+
+  -webkit-overflow-scrolling:
+    touch !important;
+}
+
+.fl-table {
+  width:
+    100% !important;
+
+  min-width:
+    700px !important;
+
+  border-collapse:
+    collapse !important;
+}
+
+.fl-table th {
+  padding:
+    16px 17px !important;
+
+  color:
+    #81979c !important;
+
+  background:
+    #f7fbfb !important;
+
+  border-bottom:
+    1px solid
+    #e3eded !important;
+
+  font-size:
+    10px !important;
+
+  font-weight:
+    950 !important;
+
+  letter-spacing:
+    .08em !important;
+
+  text-transform:
+    uppercase !important;
+}
+
+.fl-table td {
+  padding:
+    16px 17px !important;
+
+  color:
+    #45636d !important;
+
+  border-bottom:
+    1px solid
+    #edf3f3 !important;
+
+  font-size:
+    13px !important;
+
+  font-weight:
+    650 !important;
+}
+
+.fl-table tbody tr {
+  transition:
+    background-color .14s ease !important;
+}
+
+.fl-table tbody tr:hover {
+  background:
+    #f8fcfb !important;
+}
+
+.fl-table td strong {
+  color:
+    #285667 !important;
+
+  font-weight:
+    900 !important;
+}
+
+.fl-history-status {
+  display:
+    inline-flex !important;
+
+  align-items:
+    center !important;
+
+  gap:
+    6px !important;
+
+  min-height:
+    30px !important;
+
+  padding:
+    0 9px !important;
+
+  border-radius:
+    999px !important;
+
+  background:
+    #eaf7ef !important;
+
+  color:
+    #22754e !important;
+
+  font-size:
+    10px !important;
+
+  font-weight:
+    900 !important;
+}
+
+.fl-small-btn {
+  min-height:
+    37px !important;
+
+  padding:
+    0 12px !important;
+
+  border-radius:
+    10px !important;
+
+  background:
+    #e8f5fa !important;
+
+  color:
+    #25718c !important;
+
+  font-size:
+    11px !important;
+
+  font-weight:
+    900 !important;
+
+  text-decoration:
+    none !important;
+}
+
+
+/* =========================================================
+   20 — ALERT
+========================================================= */
+
+.fl-alert {
+  max-width:
+    1320px !important;
+
+  margin:
+    0 auto 18px !important;
+
+  min-height:
+    65px !important;
+
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  justify-content:
+    space-between !important;
+
+  gap:
+    16px !important;
+
+  padding:
+    13px 17px !important;
+
+  border-radius:
+    16px !important;
+
+  box-sizing:
+    border-box !important;
+}
+
+.fl-error {
+  border:
+    1px solid
+    #f1c9c3 !important;
+
+  background:
+    #fff4f1 !important;
+
+  color:
+    #9b4b42 !important;
+
+  box-shadow:
+    0 8px 24px
+      rgba(155,75,66,.07) !important;
+}
+
+.fl-alert strong {
+  display:
+    block !important;
+
+  font-size:
+    13px !important;
+
+  font-weight:
+    900 !important;
+}
+
+.fl-alert span {
+  display:
+    block !important;
+
+  margin-top:
+    3px !important;
+
+  font-size:
+    11px !important;
+}
+
+
+/* =========================================================
+   21 — LOADING
+========================================================= */
+
+.fl-loading {
+  min-height:
+    180px !important;
+
+  display:
+    flex !important;
+
+  align-items:
+    center !important;
+
+  justify-content:
+    center !important;
+
+  gap:
+    11px !important;
+
+  border:
+    1px solid
+    #d9e8ea !important;
+
+  border-radius:
+    21px !important;
+
+  background:
+    rgba(255,255,255,.94) !important;
+
+  color:
+    #71898f !important;
+
+  font-size:
+    14px !important;
+
+  font-weight:
+    750 !important;
+}
+
+
+/* =========================================================
+   22 — PREMIUM BUTTON GENERAL EFFECTS
+========================================================= */
+
+.fl-primary-btn,
+.fl-secondary-btn,
+.fl-ghost-btn,
+.fl-icon-btn,
+.fl-small-btn,
+.fl-location-btn {
+  transition:
+    transform .17s ease,
+    box-shadow .17s ease,
+    background-color .17s ease,
+    border-color .17s ease !important;
+}
+
+.fl-primary-btn:active,
+.fl-secondary-btn:active,
+.fl-ghost-btn:active,
+.fl-icon-btn:active,
+.fl-small-btn:active,
+.fl-location-btn:active {
+  transform:
+    scale(.975) !important;
+}
+
+
+/* =========================================================
+   23 — PHOTO DETAIL FOR ACTIVE INFO
+========================================================= */
+
+.fl-info-card:nth-child(1) svg {
+  color:
+    #a56e17 !important;
+
+  background:
+    #fff1d0 !important;
+}
+
+.fl-info-card:nth-child(2) svg {
+  color:
+    #18865e !important;
+
+  background:
+    #e4f6ed !important;
+}
+
+.fl-info-card:nth-child(3) svg {
+  color:
+    #2d7fa0 !important;
+
+  background:
+    #e5f4fa !important;
+}
+
+.fl-info-card:nth-child(4) svg {
+  color:
+    #2493a4 !important;
+
+  background:
+    #e5f6f7 !important;
+}
+
+.fl-info-card:nth-child(5) svg {
+  color:
+    #2b7e98 !important;
+
+  background:
+    #e7f5f9 !important;
+}
+
+.fl-info-card:nth-child(6) svg {
+  color:
+    #aa741a !important;
+
+  background:
+    #fff3d8 !important;
+}
+
+
+/* =========================================================
+   24 — RESPONSIVE TABLET
+========================================================= */
+
+@media (max-width: 1100px) {
+
+  .fl-layout {
+    grid-template-columns:
+      minmax(0, 1fr)
+      310px !important;
+  }
+
+  .fl-detail-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .fl-progress {
+    grid-template-columns:
+      repeat(4, minmax(0, 1fr)) !important;
+
+    row-gap:
+      18px !important;
+  }
+
+  .fl-progress::before {
+    display:
+      none !important;
+  }
+}
+
+
+/* =========================================================
+   25 — MOBILE
+========================================================= */
+
+@media (max-width: 760px) {
+
+  .fl-page {
+    padding:
+      15px 12px 46px !important;
+  }
+
+
+  /* Hero */
+  .fl-hero {
+    min-height:
+      470px !important;
+
+    padding:
+      25px 20px !important;
+
+    flex-direction:
+      column !important;
+
+    align-items:
+      stretch !important;
+
+    justify-content:
+      flex-end !important;
+
+    border-radius:
+      23px !important;
+
+    background-position:
+      58% center !important;
+  }
+
+  .fl-hero h1 {
+    font-size:
+      clamp(32px, 10vw, 48px) !important;
+
+    line-height:
+      1.02 !important;
+  }
+
+  .fl-hero p {
+    font-size:
+      15px !important;
+
+    line-height:
+      1.58 !important;
+  }
+
+  .fl-hero-actions {
+    display:
+      grid !important;
+
+    grid-template-columns:
+      1fr 1.15fr !important;
+
+    width:
+      100% !important;
+  }
+
+  .fl-hero-actions > * {
+    width:
+      100% !important;
+
+    min-width:
+      0 !important;
+  }
+
+
+  /* Stats */
+  .fl-stat-grid {
+    grid-template-columns:
+      1fr !important;
+
+    gap:
+      10px !important;
+  }
+
+  .fl-stat {
+    min-height:
+      76px !important;
+  }
+
+
+  /* Main */
+  .fl-layout {
+    grid-template-columns:
+      1fr !important;
+
+    gap:
+      18px !important;
+  }
+
+
+  /* Section headings */
+  .fl-section-head {
+    align-items:
+      flex-start !important;
+  }
+
+  .fl-section-head h2 {
+    font-size:
+      21px !important;
+  }
+
+
+  /* Active card */
+  .fl-active-card {
+    padding:
+      17px !important;
+
+    border-radius:
+      20px !important;
+  }
+
+  .fl-active-top {
+    align-items:
+      flex-start !important;
+
+    flex-wrap:
+      wrap !important;
+  }
+
+  .fl-active-actions {
+    width:
+      100% !important;
+
+    margin-left:
+      0 !important;
+  }
+
+  .fl-active-actions .fl-ghost-btn {
+    flex:
+      1 1 auto !important;
+  }
+
+
+  /* Progress */
+  .fl-progress {
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr)) !important;
+
+    gap:
+      11px 4px !important;
+  }
+
+  .fl-progress::before {
+    display:
+      none !important;
+  }
+
+  .fl-progress-step span {
+    font-size:
+      9px !important;
+  }
+
+
+  /* Details */
+  .fl-detail-grid {
+    grid-template-columns:
+      1fr !important;
+
+    gap:
+      9px !important;
+  }
+
+
+  /* Transporter */
+  .fl-transporter {
+    align-items:
+      flex-start !important;
+
+    flex-wrap:
+      wrap !important;
+
+    background-size:
+      60% 100% !important;
+  }
+
+  .fl-row-actions {
+    width:
+      100% !important;
+
+    margin-left:
+      0 !important;
+
+    display:
+      grid !important;
+
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .fl-row-actions > * {
+    width:
+      100% !important;
+  }
+
+  .fl-row-actions .fl-primary-btn {
+    grid-column:
+      1 / -1 !important;
+  }
+
+
+  /* Side cards */
+  .fl-side {
+    gap:
+      11px !important;
+  }
+
+  .fl-side-card {
+    padding:
+      17px !important;
+  }
+
+
+  /* History */
+  .fl-history {
+    margin-top:
+      24px !important;
+  }
+
+  .fl-table-wrap {
+    border-radius:
+      16px !important;
+  }
+
+
+  /* Empty */
+  .fl-empty {
+    min-height:
+      290px !important;
+
+    border-radius:
+      20px !important;
+  }
+}
+
+
+/* =========================================================
+   26 — SMALL MOBILE
+========================================================= */
+
+@media (max-width: 460px) {
+
+  .fl-hero-actions {
+    grid-template-columns:
+      1fr !important;
+  }
+
+  .fl-hero-actions > * {
+    min-height:
+      50px !important;
+  }
+
+  .fl-status-icon {
+    width:
+      52px !important;
+
+    height:
+      52px !important;
+
+    min-width:
+      52px !important;
+  }
+
+  .fl-active-top h3 {
+    font-size:
+      22px !important;
+  }
+
+  .fl-progress-step span {
+    font-size:
+      8px !important;
+  }
+
+  .fl-person-icon {
+    width:
+      44px !important;
+
+    height:
+      44px !important;
+
+    min-width:
+      44px !important;
+  }
+}
+
+
+/* =========================================================
+   27 — ACCESSIBILITY / PERFORMANCE
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .fl-page *,
+  .fl-page *::before,
+  .fl-page *::after {
+    animation-duration:
+      .01ms !important;
+
+    animation-iteration-count:
+      1 !important;
+
+    transition-duration:
+      .01ms !important;
+  }
+}
+
+
+/*
+   Prevent accidental horizontal overflow.
+*/
+.fl-page,
+.fl-page * {
+  max-width:
+    100% !important;
+}
+
+.fl-table-wrap,
+.fl-page {
+  scrollbar-gutter:
+    stable !important;
+}
+
+
+/* =========================================================
+   END — FARMER LOGISTICS PREMIUM REDESIGN
+========================================================= */
+
