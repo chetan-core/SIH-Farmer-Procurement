@@ -1058,10 +1058,22 @@ export default function TransporterProfile() {
   if (!transporterId) return null;
 
   return (
-    <div style={styles.page}>
+    <div
+      className="transporter-profile-page"
+      style={{
+        ...styles.page,
+        position: "relative",
+        isolation: "isolate",
+      }}
+    >
       <Header />
 
-      <main style={styles.shell}>
+      <style>{TRANSPORTER_PROFILE_INTERACTION_CSS}</style>
+
+      <main
+        className="transporter-profile-shell"
+        style={styles.shell}
+      >
         <header style={styles.topbar}>
           <div style={styles.topbarLeft}>
             <button
@@ -1257,15 +1269,29 @@ export default function TransporterProfile() {
               </span>
             </div>
 
-            <nav style={styles.tabs}>
+            <nav
+              className="transporter-profile-tabs"
+              style={{
+                ...styles.tabs,
+                position: "relative",
+                zIndex: 100,
+                pointerEvents: "auto",
+              }}
+            >
               {tabs.map(([id, label]) => (
                 <button
                   key={id}
                   type="button"
+                  className={`transporter-profile-tab ${
+                    activeTab === id ? "is-active" : ""
+                  }`}
                   onClick={() => setActiveTab(id)}
                   style={{
                     ...styles.tabButton,
                     ...(activeTab === id ? styles.tabActive : {}),
+                    position: "relative",
+                    zIndex: 101,
+                    pointerEvents: "auto",
                   }}
                 >
                   {label}
@@ -1275,14 +1301,31 @@ export default function TransporterProfile() {
               {!editing ? (
                 <button
                   type="button"
+                  className="transporter-profile-edit-button"
                   onClick={() => setEditing(true)}
-                  style={styles.primaryButton}
+                  onMouseDown={(event) => event.stopPropagation()}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  style={{
+                    ...styles.primaryButton,
+                    position: "relative",
+                    zIndex: 200,
+                    pointerEvents: "auto",
+                    cursor: "pointer",
+                  }}
                 >
                   <Pencil size={15} />
                   {copy.edit}
                 </button>
               ) : (
-                <div style={styles.editActions}>
+                <div
+                  className="transporter-profile-edit-actions"
+                  style={{
+                    ...styles.editActions,
+                    position: "relative",
+                    zIndex: 200,
+                    pointerEvents: "auto",
+                  }}
+                >
                   <button
                     type="button"
                     onClick={cancelEdit}
@@ -1995,6 +2038,63 @@ function LocationPanel({
     </div>
   );
 }
+
+
+/*
+ * Critical interaction fallback.
+ * The main premium appearance is intended to live in index.css; these few
+ * rules guarantee that the navigation/edit controls cannot be visually
+ * covered or become pointer-inert because of a global stylesheet override.
+ */
+const TRANSPORTER_PROFILE_INTERACTION_CSS = `
+.transporter-profile-page,
+.transporter-profile-page *{
+  box-sizing:border-box;
+}
+
+.transporter-profile-page{
+  position:relative;
+  isolation:isolate;
+}
+
+.transporter-profile-tabs{
+  position:relative !important;
+  z-index:100 !important;
+  pointer-events:auto !important;
+}
+
+.transporter-profile-tab,
+.transporter-profile-edit-button,
+.transporter-profile-edit-actions button{
+  position:relative !important;
+  z-index:200 !important;
+  pointer-events:auto !important;
+  cursor:pointer !important;
+}
+
+.transporter-profile-edit-button{
+  user-select:none !important;
+  -webkit-user-select:none !important;
+  touch-action:manipulation !important;
+}
+
+@media (max-width:700px){
+  .transporter-profile-tabs{
+    overflow-x:auto !important;
+    overflow-y:hidden !important;
+    flex-wrap:nowrap !important;
+  }
+
+  .transporter-profile-tab{
+    flex:0 0 auto !important;
+    white-space:nowrap !important;
+  }
+
+  .transporter-profile-edit-button{
+    flex:0 0 auto !important;
+  }
+}
+`;
 
 const styles = {
   page: {

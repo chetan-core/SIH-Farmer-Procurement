@@ -29,9 +29,33 @@ import {
 import Header from "../../components/Header";
 import { useLanguage } from "../../translations/LanguageContext";
 
-const API_BASE =
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:5000";
+/*
+ * Normalize the configured backend URL before appending /api routes.
+ *
+ * This supports:
+ *   VITE_API_URL=http://localhost:5000
+ *   VITE_API_URL=http://localhost:5000/
+ *   VITE_API_URL=http://localhost:5000/api
+ *   VITE_API_URL=http://localhost:5000/api/
+ *   VITE_API_URL=/api
+ *   VITE_API_URL=   (defaults to localhost:5000)
+ */
+const RAW_API_BASE =
+  String(import.meta.env.VITE_API_URL || "").trim();
+
+const API_BASE = (() => {
+  if (!RAW_API_BASE) {
+    return "http://localhost:5000";
+  }
+
+  if (RAW_API_BASE === "/api") {
+    return "";
+  }
+
+  return RAW_API_BASE
+    .replace(/\/+$/, "")
+    .replace(/\/api$/i, "");
+})();
 
 const SESSION_KEY =
   "krishisetu_transporter_session";
@@ -351,9 +375,14 @@ async function requestJson(
   path,
   options = {}
 ) {
+  const normalizedPath =
+    String(path || "").startsWith("/")
+      ? String(path || "")
+      : `/${String(path || "")}`;
+
   const response =
     await fetch(
-      `${API_BASE}${path}`,
+      `${API_BASE}${normalizedPath}`,
       {
         ...options,
         headers: {
@@ -376,12 +405,22 @@ async function requestJson(
   }
 
   if (!response.ok) {
-    throw new Error(
+    const message =
       data?.message ||
-        data?.error?.message ||
-        data?.error ||
-        `Request failed (${response.status})`
-    );
+      data?.error?.message ||
+      data?.error ||
+      `Request failed (${response.status})`;
+
+    const error =
+      new Error(message);
+
+    error.status =
+      response.status;
+
+    error.url =
+      response.url;
+
+    throw error;
   }
 
   return data;
@@ -948,6 +987,14 @@ export default function TransporterTrip() {
   const watchRef =
     useRef(null);
 
+  /*
+   * IMPORTANT:
+   * Do not make loadTrip depend on request state or transporter state.
+   * When /transporter/trip is opened without an :id`, loadTrip discovers
+   * the active trip and then setRequest() runs. If loadTrip depended on
+   * request?.id or transporter, every state update recreated the callback,
+   * the effect ran again, and the page flickered forever on "Refreshing…".
+   */
   const effectiveRequestId =
     routeId ||
     request?.id ||
@@ -968,21 +1015,97 @@ export default function TransporterTrip() {
           return;
         }
 
-        if (
-          !effectiveRequestId
-        ) {
-          setLoading(false);
-          setError(
-            copy.notFound
-          );
-          return;
-        }
-
         if (!silent) {
           setLoading(true);
         }
 
+        setError("");
+
         try {
+          /*
+           * /transporter/trip is valid without an :id.
+           * In that case discover the latest ACTIVE trip that is
+           * actually assigned to this transporter.
+           *
+           * The backend may also return REQUESTED region-matched jobs
+           * for the same transporterId, so REQUESTED is deliberately
+           * excluded here.
+           */
+          let requestId =
+            routeId ||
+            "";
+
+          if (!requestId) {
+            const activeResponse =
+              await requestJson(
+                `/api/transport/requests?transporterId=${encodeURIComponent(
+                  transporterId
+                )}&activeOnly=true`
+              );
+
+            const activeRequests =
+              Array.isArray(
+                activeResponse?.requests
+              )
+                ? activeResponse.requests
+                : [];
+
+            const assignedTrips =
+              activeRequests.filter(
+                (item) =>
+                  String(
+                    item?.transporter_id ||
+                      ""
+                  ) ===
+                  String(
+                    transporterId
+                  ) &&
+                  ACTIVE_STATUSES.has(
+                    String(
+                      item?.status ||
+                        ""
+                    )
+                      .trim()
+                      .toUpperCase()
+                  )
+              );
+
+            /*
+             * The server already sorts active requests by creation time.
+             * Pick the first genuinely assigned active trip.
+             */
+            const assignedTrip =
+              assignedTrips[0] ||
+              null;
+
+            requestId =
+              assignedTrip?.id ||
+              "";
+
+            if (!requestId) {
+              const transporterResponse =
+                await requestJson(
+                  `/api/transporters/${encodeURIComponent(
+                    transporterId
+                  )}`
+                );
+
+              setTransporter(
+                transporterResponse?.transporter ||
+                  session?.transporter ||
+                  null
+              );
+
+              setRequest(null);
+              setEvents([]);
+              setLoading(false);
+              setError(
+                copy.notFound
+              );
+              return;
+            }
+          }
+
           const [
             tripResponse,
             transporterResponse,
@@ -991,7 +1114,7 @@ export default function TransporterTrip() {
             await Promise.all([
               requestJson(
                 `/api/transport/requests/${encodeURIComponent(
-                  effectiveRequestId
+                  requestId
                 )}`
               ),
               requestJson(
@@ -1001,7 +1124,7 @@ export default function TransporterTrip() {
               ),
               requestJson(
                 `/api/transport/requests/${encodeURIComponent(
-                  effectiveRequestId
+                  requestId
                 )}/events`
               ),
             ]);
@@ -1036,7 +1159,7 @@ export default function TransporterTrip() {
 
           setTransporter(
             transporterResponse?.transporter ||
-              transporter ||
+              session?.transporter ||
               null
           );
 
@@ -1056,6 +1179,24 @@ export default function TransporterTrip() {
         } catch (
           loadError
         ) {
+          console.error(
+            "Transport trip load failed:",
+            {
+              requestId:
+                routeId ||
+                "(auto-discovery)",
+              transporterId,
+              status:
+                loadError?.status ||
+                null,
+              url:
+                loadError?.url ||
+                null,
+              error:
+                loadError,
+            }
+          );
+
           setError(
             loadError?.message ||
               copy.error
@@ -1071,9 +1212,9 @@ export default function TransporterTrip() {
         copy.error,
         copy.login,
         copy.notFound,
-        effectiveRequestId,
-        transporter,
+        routeId,
         transporterId,
+        session,
       ]
     );
 
@@ -1490,6 +1631,7 @@ export default function TransporterTrip() {
 
   return (
     <div
+      className="transporter-trip-page"
       style={
         styles.page
       }

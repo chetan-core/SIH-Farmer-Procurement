@@ -27,9 +27,34 @@ import {
 import Header from "../../components/Header";
 import { useLanguage } from "../../translations/LanguageContext";
 
-const API_BASE =
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:5000";
+/*
+ * API base normalization.
+ *
+ * This component sends paths beginning with /api/ below. If VITE_API_URL
+ * is configured as http://localhost:5000/api, concatenating it directly
+ * would produce /api/api/... and Express would correctly return 404
+ * ("Route not found").
+ *
+ * Supported values:
+ *   VITE_API_URL=http://localhost:5000
+ *   VITE_API_URL=http://localhost:5000/api
+ *   VITE_API_URL=/api        (works with a Vite /api proxy)
+ *   unset                    -> http://localhost:5000
+ */
+const RAW_API_BASE =
+  String(import.meta.env.VITE_API_URL || "").trim();
+
+const API_BASE = (() => {
+  if (!RAW_API_BASE || RAW_API_BASE === "/api") {
+    return RAW_API_BASE === "/api"
+      ? ""
+      : "http://localhost:5000";
+  }
+
+  return RAW_API_BASE
+    .replace(/\/+$/, "")
+    .replace(/\/api$/i, "");
+})();
 
 const SESSION_KEY =
   "krishisetu_transporter_session";
@@ -312,8 +337,13 @@ async function api(
   path,
   options = {}
 ) {
+  const normalizedPath =
+    String(path || "").startsWith("/")
+      ? String(path || "")
+      : `/${String(path || "")}`;
+
   const response = await fetch(
-    `${API_BASE}${path}`,
+    `${API_BASE}${normalizedPath}`,
     {
       ...options,
       headers: {

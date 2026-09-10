@@ -244,18 +244,13 @@ function TransporterLogin() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  // The login page must remain directly reachable even when an old
+  // transporter session exists in browser storage. A user may need to
+  // switch accounts, so the login route must never auto-redirect simply
+  // because a previous session was saved.
   useEffect(() => {
-    const session = getStoredSession();
-
-    if (session?.authenticated && session?.transporter?.id) {
-      navigate("/transporter/dashboard", {
-        replace: true,
-      });
-      return;
-    }
-
     setCheckingSession(false);
-  }, [navigate]);
+  }, []);
 
   function handlePhoneChange(event) {
     const value = event.target.value

@@ -11,6 +11,9 @@ import {
 } from "../../translations/LanguageContext";
 
 
+import ScrollLockManager
+  from "./ScrollLockManager";
+
 function AdminLayout({
   children,
   title,

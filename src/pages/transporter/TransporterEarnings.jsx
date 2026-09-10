@@ -17,9 +17,34 @@ import {
 import Header from "../../components/Header";
 import { useLanguage } from "../../translations/LanguageContext";
 
-const API_BASE =
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:5000";
+/*
+ * Normalize the configured API origin.
+ * This page builds its own /api/... paths, so a VITE_API_URL ending in
+ * /api would otherwise create /api/api/... and Express will return 404.
+ *
+ * Supported:
+ *   http://localhost:5000
+ *   http://localhost:5000/
+ *   http://localhost:5000/api
+ *   http://localhost:5000/api/
+ *   /api (when Vite proxies /api)
+ */
+const RAW_API_BASE =
+  String(import.meta.env.VITE_API_URL || "").trim();
+
+const API_BASE = (() => {
+  if (!RAW_API_BASE) {
+    return "http://localhost:5000";
+  }
+
+  if (RAW_API_BASE === "/api") {
+    return "";
+  }
+
+  return RAW_API_BASE
+    .replace(/\/+$/, "")
+    .replace(/\/api$/i, "");
+})();
 
 const SESSION_KEY =
   "krishisetu_transporter_session";
@@ -188,8 +213,13 @@ function getSession() {
 }
 
 async function api(path, options = {}) {
+  const normalizedPath =
+    String(path || "").startsWith("/")
+      ? String(path || "")
+      : `/${String(path || "")}`;
+
   const response = await fetch(
-    `${API_BASE}${path}`,
+    `${API_BASE}${normalizedPath}`,
     {
       ...options,
       headers: {
@@ -210,12 +240,17 @@ async function api(path, options = {}) {
   }
 
   if (!response.ok) {
-    throw new Error(
+    const error = new Error(
       data?.message ||
         data?.error?.message ||
         data?.error ||
         `Request failed (${response.status})`
     );
+
+    error.status = response.status;
+    error.url = response.url;
+
+    throw error;
   }
 
   return data;
@@ -446,6 +481,24 @@ export default function TransporterEarnings() {
           );
           setError("");
         } catch (loadError) {
+          console.error(
+            "Transporter earnings API request failed:",
+            {
+              apiBase:
+                API_BASE ||
+                "(relative /api proxy)",
+              transporterId,
+              status:
+                loadError?.status ||
+                null,
+              url:
+                loadError?.url ||
+                null,
+              error:
+                loadError,
+            }
+          );
+
           setConnection(
             "unavailable"
           );
@@ -605,6 +658,7 @@ export default function TransporterEarnings() {
 
   return (
     <div
+      className="transporter-earnings-page"
       style={styles.page}
     >
       <Header />
@@ -1181,49 +1235,6 @@ export default function TransporterEarnings() {
         </footer>
       </main>
 
-      <style>
-        {`
-          @keyframes transporter-earnings-spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-
-          .transporter-earnings-spin {
-            animation: transporter-earnings-spin .8s linear infinite;
-          }
-
-          @media (max-width: 1050px) {
-            .transporter-earnings-stat-grid {
-              grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-            }
-          }
-
-          @media (max-width: 760px) {
-            .transporter-earnings-header {
-              flex-direction: column !important;
-              align-items: stretch !important;
-            }
-
-            .transporter-earnings-actions {
-              justify-content: flex-start !important;
-            }
-
-            .transporter-earnings-stat-grid {
-              grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            }
-
-            .transporter-earnings-table-wrap {
-              overflow-x: auto;
-            }
-          }
-
-          @media (max-width: 520px) {
-            .transporter-earnings-stat-grid {
-              grid-template-columns: 1fr !important;
-            }
-          }
-        `}
-      </style>
     </div>
   );
 }
