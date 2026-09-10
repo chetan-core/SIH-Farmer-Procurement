@@ -13,9 +13,14 @@ import {
 
 import { useLanguage } from "../../translations/LanguageContext";
 
-const API_BASE =
+const RAW_API_BASE =
   import.meta.env.VITE_API_URL ||
   "http://localhost:5000";
+
+const API_BASE = String(RAW_API_BASE)
+  .trim()
+  .replace(/\/+$/, "")
+  .replace(/\/api$/i, "");
 
 const STORAGE_KEY = "krishisetu_transporter_session";
 const TEMP_SESSION_KEY = "krishisetu_transporter_temp_session";
@@ -293,8 +298,12 @@ function TransporterLogin() {
     setLoading(true);
 
     try {
+      const loginUrl = `${API_BASE}/api/transporters/login`;
+
+      console.info("[KrishiSetu transporter login] POST", loginUrl);
+
       const response = await fetch(
-        `${API_BASE}/api/transporters/login`,
+        loginUrl,
         {
           method: "POST",
           headers: {
