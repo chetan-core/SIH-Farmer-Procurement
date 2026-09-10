@@ -352450,3 +352450,1760 @@ body:has(.farmer-notification-overlay) {
     transform: translateY(0) scale(1);
   }
 }
+
+
+/* ============================================================
+   ADMIN DRAWERS — LARGE FLOATING MODAL STYLE
+   Applies to:
+   1. Booking Details drawer
+   2. Farmer Profile drawer
+
+   Paste at the VERY BOTTOM of index.css.
+   Remove older drawer CSS afterwards so there is no conflict.
+   ============================================================ */
+
+
+/* ============================================================
+   GLOBAL BACKGROUND LOCK
+   ============================================================ */
+
+html:has(
+  .admin-booking-drawer-layer,
+  .admin-farmer-drawer-overlay
+),
+body:has(
+  .admin-booking-drawer-layer,
+  .admin-farmer-drawer-overlay
+) {
+  overflow: hidden !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overscroll-behavior: none !important;
+}
+
+/* Keep the application behind the modal completely still */
+body:has(
+  .admin-booking-drawer-layer,
+  .admin-farmer-drawer-overlay
+) {
+  overscroll-behavior-y: none !important;
+}
+
+
+/* ============================================================
+   BOOKING DETAILS
+   ============================================================ */
+
+/* Full-page dimmer */
+.admin-booking-drawer-layer {
+  position: fixed !important;
+  inset: 0 !important;
+
+  width: 100vw !important;
+  height: 100dvh !important;
+
+  z-index: 2147483000 !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  padding: 4.5vh 5vw !important;
+  box-sizing: border-box !important;
+
+  overflow: hidden !important;
+
+  background: rgba(27, 47, 39, 0.28) !important;
+
+  backdrop-filter: blur(7px) !important;
+  -webkit-backdrop-filter: blur(7px) !important;
+
+  overscroll-behavior: none !important;
+}
+
+/* Override the inline right-side drawer */
+.admin-booking-drawer-layer .admin-booking-drawer {
+  position: relative !important;
+
+  inset: auto !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+
+  width: min(920px, 90vw) !important;
+  height: min(820px, 88vh) !important;
+
+  max-width: 920px !important;
+  max-height: 820px !important;
+
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+
+  overflow: hidden !important;
+
+  box-sizing: border-box !important;
+
+  background: #ffffff !important;
+
+  border: 1px solid #dbe7e1 !important;
+  border-radius: 26px !important;
+
+  box-shadow:
+    0 32px 90px rgba(22, 58, 43, 0.22),
+    0 10px 35px rgba(22, 58, 43, 0.11) !important;
+
+  animation: adminDrawerFloatIn 220ms ease-out both !important;
+}
+
+
+/* Booking header */
+.admin-booking-drawer .admin-drawer-header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 5 !important;
+
+  flex: 0 0 auto !important;
+
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 20px !important;
+
+  padding: 26px 30px 20px !important;
+
+  min-height: 112px !important;
+
+  box-sizing: border-box !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #fbfdfc 100%
+    ) !important;
+
+  border-bottom: 1px solid #e4ece8 !important;
+}
+
+/* Booking title eyebrow */
+.admin-booking-drawer .admin-drawer-header .admin-page-eyebrow {
+  display: block !important;
+
+  margin: 0 0 8px !important;
+
+  color: #b3760c !important;
+  font-size: 13px !important;
+  line-height: 1.1 !important;
+  font-weight: 900 !important;
+  letter-spacing: .14em !important;
+}
+
+/* Booking number */
+.admin-booking-drawer .admin-drawer-header h2 {
+  margin: 0 !important;
+
+  color: #28566e !important;
+
+  font-size: clamp(25px, 2.5vw, 34px) !important;
+  line-height: 1.12 !important;
+  font-weight: 900 !important;
+}
+
+/* Booking close */
+.admin-booking-drawer .admin-drawer-close {
+  width: 46px !important;
+  height: 46px !important;
+
+  flex: 0 0 auto !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+
+  border: 1px solid #d7e4de !important;
+  border-radius: 13px !important;
+
+  background: #ffffff !important;
+  color: #59766b !important;
+
+  cursor: pointer !important;
+
+  transition:
+    transform .16s ease,
+    background .16s ease,
+    border-color .16s ease,
+    color .16s ease !important;
+}
+
+.admin-booking-drawer .admin-drawer-close:hover {
+  transform: scale(1.05) !important;
+  background: #eef8f3 !important;
+  border-color: #bad4c6 !important;
+  color: #1d6949 !important;
+}
+
+
+/* Booking status strip */
+.admin-booking-drawer .admin-drawer-status {
+  flex: 0 0 auto !important;
+
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+
+  padding: 14px 30px !important;
+
+  border-bottom: 1px solid #e7eee9 !important;
+  background: #fcfefd !important;
+
+  color: #66808b !important;
+  font-size: 14px !important;
+  line-height: 1.45 !important;
+}
+
+/* Priority row */
+.admin-booking-drawer .admin-drawer-priority-row {
+  flex: 0 0 auto !important;
+
+  display: flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+
+  padding: 11px 30px !important;
+
+  border-bottom: 1px solid #e7eee9 !important;
+  background: #ffffff !important;
+}
+
+/* Actual scrolling area */
+.admin-booking-drawer .admin-drawer-body {
+  flex: 1 1 auto !important;
+
+  min-height: 0 !important;
+  height: 0 !important;
+
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+
+  padding: 4px 30px 30px !important;
+
+  box-sizing: border-box !important;
+
+  overscroll-behavior: contain !important;
+  touch-action: pan-y !important;
+  -webkit-overflow-scrolling: touch !important;
+
+  scrollbar-width: thin !important;
+  scrollbar-color: #b8cabe transparent !important;
+}
+
+.admin-booking-drawer .admin-drawer-body::-webkit-scrollbar {
+  width: 8px !important;
+}
+
+.admin-booking-drawer .admin-drawer-body::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.admin-booking-drawer .admin-drawer-body::-webkit-scrollbar-thumb {
+  background: #b8cabe !important;
+  border-radius: 999px !important;
+}
+
+
+/* Booking section */
+.admin-booking-drawer .admin-drawer-section {
+  padding: 24px 0 !important;
+
+  border-bottom: 1px solid #e9efeb !important;
+}
+
+/* Section heading */
+.admin-booking-drawer .admin-drawer-section h3,
+.admin-booking-drawer .admin-drawer-section-title {
+  color: #28566e !important;
+  font-size: 18px !important;
+  line-height: 1.3 !important;
+  font-weight: 900 !important;
+}
+
+
+/* Booking fields — make text readable */
+.admin-booking-drawer .admin-drawer-field {
+  display: grid !important;
+  grid-template-columns: minmax(150px, .8fr) minmax(0, 1.5fr) !important;
+
+  gap: 18px !important;
+  align-items: baseline !important;
+
+  padding: 13px 0 !important;
+
+  border-bottom: 1px solid #f0f4f2 !important;
+}
+
+.admin-booking-drawer .admin-drawer-field:last-child {
+  border-bottom: 0 !important;
+}
+
+.admin-booking-drawer .admin-drawer-field > span {
+  color: #81939a !important;
+
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  font-weight: 800 !important;
+}
+
+.admin-booking-drawer .admin-drawer-field > strong {
+  color: #304c5b !important;
+
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+  font-weight: 850 !important;
+
+  overflow-wrap: anywhere !important;
+}
+
+
+/* Mini timeline */
+.admin-booking-drawer .admin-mini-timeline-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+
+  padding: 10px 0 !important;
+
+  color: #7b8e95 !important;
+  font-size: 14px !important;
+  font-weight: 750 !important;
+}
+
+.admin-booking-drawer .admin-mini-timeline-item.active {
+  color: #246a49 !important;
+  font-weight: 900 !important;
+}
+
+.admin-booking-drawer .admin-mini-timeline-item.complete {
+  color: #4f7565 !important;
+}
+
+
+/* Action card */
+.admin-booking-drawer .admin-drawer-action-card {
+  margin: 22px 0 !important;
+  padding: 20px !important;
+
+  border: 1px solid #e7d89e !important;
+  border-radius: 16px !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fffbed 0%,
+      #fff4ca 100%
+    ) !important;
+}
+
+.admin-booking-drawer .admin-drawer-action-card > span {
+  color: #aa790d !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+}
+
+.admin-booking-drawer .admin-drawer-action-card > strong {
+  display: block !important;
+
+  margin-top: 5px !important;
+
+  color: #7c5d03 !important;
+  font-size: 19px !important;
+  font-weight: 900 !important;
+}
+
+.admin-booking-drawer .admin-drawer-action-card > p {
+  margin: 6px 0 15px !important;
+
+  color: #826f35 !important;
+  font-size: 14px !important;
+  line-height: 1.55 !important;
+}
+
+
+/* ============================================================
+   FARMER PROFILE DRAWER
+   ============================================================ */
+
+/* Dimmer */
+.admin-farmer-drawer-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+
+  z-index: 2147483000 !important;
+
+  width: 100vw !important;
+  height: 100dvh !important;
+
+  background: rgba(27, 47, 39, 0.28) !important;
+
+  backdrop-filter: blur(7px) !important;
+  -webkit-backdrop-filter: blur(7px) !important;
+
+  overflow: hidden !important;
+}
+
+/* Convert right-side drawer into floating modal */
+.admin-farmer-drawer {
+  position: fixed !important;
+
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+
+  transform: translate(-50%, -50%) !important;
+
+  width: min(920px, 90vw) !important;
+  height: min(820px, 88vh) !important;
+
+  max-width: 920px !important;
+  max-height: 820px !important;
+
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+
+  box-sizing: border-box !important;
+
+  z-index: 2147483001 !important;
+
+  background: #ffffff !important;
+
+  border: 1px solid #dbe7e1 !important;
+  border-radius: 26px !important;
+
+  box-shadow:
+    0 32px 90px rgba(22, 58, 43, 0.22),
+    0 10px 35px rgba(22, 58, 43, 0.11) !important;
+
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #b8cabe transparent !important;
+
+  animation: adminFarmerDrawerFloatIn 220ms ease-out both !important;
+}
+
+.admin-farmer-drawer::-webkit-scrollbar {
+  width: 8px !important;
+}
+
+.admin-farmer-drawer::-webkit-scrollbar-thumb {
+  background: #b8cabe !important;
+  border-radius: 999px !important;
+}
+
+
+/* Farmer header */
+.admin-farmer-drawer .admin-farmer-drawer-header {
+  position: sticky !important;
+  top: 0 !important;
+
+  z-index: 10 !important;
+
+  flex: 0 0 auto !important;
+
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 20px !important;
+
+  padding: 26px 30px 20px !important;
+
+  min-height: 112px !important;
+
+  box-sizing: border-box !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff 0%,
+      #fbfdfc 100%
+    ) !important;
+
+  border-bottom: 1px solid #e4ece8 !important;
+}
+
+/* Farmer profile eyebrow */
+.admin-farmer-drawer-header .admin-page-eyebrow {
+  color: #b3760c !important;
+
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  letter-spacing: .14em !important;
+}
+
+/* Farmer name */
+.admin-farmer-drawer-header h2 {
+  margin: 7px 0 3px !important;
+
+  color: #28566e !important;
+
+  font-size: clamp(25px, 2.5vw, 34px) !important;
+  line-height: 1.1 !important;
+  font-weight: 900 !important;
+}
+
+/* Farmer ID */
+.admin-farmer-drawer-header > div:first-child > span:last-child {
+  color: #82949b !important;
+
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+
+/* Close */
+.admin-farmer-drawer .admin-farmer-drawer-close {
+  flex: 0 0 auto !important;
+
+  width: 46px !important;
+  height: 46px !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  padding: 0 !important;
+
+  border: 1px solid #d7e4de !important;
+  border-radius: 13px !important;
+
+  background: #ffffff !important;
+  color: #59766b !important;
+
+  cursor: pointer !important;
+}
+
+/* Farmer identity card */
+.admin-farmer-drawer .admin-farmer-profile-summary {
+  flex: 0 0 auto !important;
+
+  display: flex !important;
+  align-items: center !important;
+  gap: 15px !important;
+
+  margin: 22px 30px 0 !important;
+  padding: 17px 18px !important;
+
+  border: 1px solid #e2ebe6 !important;
+  border-radius: 16px !important;
+
+  background: #f8fcfa !important;
+}
+
+.admin-farmer-drawer .admin-farmer-profile-summary strong {
+  display: block !important;
+
+  color: #2d5062 !important;
+  font-size: 18px !important;
+  font-weight: 900 !important;
+}
+
+.admin-farmer-drawer .admin-farmer-profile-summary span {
+  display: block !important;
+
+  margin-top: 3px !important;
+
+  color: #718992 !important;
+  font-size: 14px !important;
+}
+
+
+/* Profile fields */
+.admin-farmer-drawer .admin-farmer-profile-grid {
+  flex: 0 0 auto !important;
+
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+
+  gap: 12px !important;
+
+  margin: 20px 30px 0 !important;
+}
+
+.admin-farmer-drawer .admin-farmer-drawer-field {
+  min-width: 0 !important;
+
+  padding: 16px !important;
+
+  border: 1px solid #e1eae5 !important;
+  border-radius: 15px !important;
+
+  background: #ffffff !important;
+
+  box-shadow: 0 4px 13px rgba(29, 69, 49, .035) !important;
+}
+
+.admin-farmer-drawer .admin-farmer-drawer-field > span {
+  display: block !important;
+
+  color: #82949b !important;
+
+  font-size: 12px !important;
+  line-height: 1.3 !important;
+  font-weight: 800 !important;
+}
+
+.admin-farmer-drawer .admin-farmer-drawer-field > strong {
+  display: block !important;
+
+  margin-top: 7px !important;
+
+  color: #345465 !important;
+
+  font-size: 17px !important;
+  line-height: 1.4 !important;
+  font-weight: 900 !important;
+
+  overflow-wrap: anywhere !important;
+}
+
+
+/* Farmer stats */
+.admin-farmer-drawer .admin-farmer-profile-stats {
+  flex: 0 0 auto !important;
+
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+
+  gap: 12px !important;
+
+  margin: 20px 30px 0 !important;
+}
+
+.admin-farmer-drawer .admin-farmer-profile-stats > div {
+  padding: 17px !important;
+
+  border: 1px solid #dfe9e4 !important;
+  border-radius: 15px !important;
+
+  background: #fbfdfc !important;
+}
+
+.admin-farmer-drawer .admin-farmer-profile-stats strong {
+  display: block !important;
+
+  color: #2d5265 !important;
+  font-size: 22px !important;
+  line-height: 1.15 !important;
+  font-weight: 900 !important;
+}
+
+.admin-farmer-drawer .admin-farmer-profile-stats span {
+  display: block !important;
+
+  margin-top: 6px !important;
+
+  color: #84969d !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+}
+
+
+/* Farmer history */
+.admin-farmer-drawer .admin-farmer-history {
+  flex: 0 0 auto !important;
+
+  margin: 26px 30px 30px !important;
+}
+
+.admin-farmer-drawer .admin-farmer-history-heading {
+  display: flex !important;
+  align-items: flex-end !important;
+  justify-content: space-between !important;
+  gap: 15px !important;
+
+  margin-bottom: 13px !important;
+}
+
+.admin-farmer-drawer .admin-farmer-history-heading h3 {
+  margin: 5px 0 0 !important;
+
+  color: #2d5265 !important;
+  font-size: 20px !important;
+  font-weight: 900 !important;
+}
+
+/* History rows */
+.admin-farmer-drawer .admin-farmer-history-row {
+  display: grid !important;
+
+  grid-template-columns: 90px 1fr 130px !important;
+
+  align-items: center !important;
+  gap: 18px !important;
+
+  padding: 16px 0 !important;
+
+  border-top: 1px solid #e9efeb !important;
+}
+
+.admin-farmer-drawer .admin-farmer-history-row strong {
+  color: #345465 !important;
+  font-size: 15px !important;
+  font-weight: 900 !important;
+}
+
+.admin-farmer-drawer .admin-farmer-history-row span {
+  display: block !important;
+
+  margin-top: 4px !important;
+
+  color: #82949b !important;
+  font-size: 12px !important;
+  font-weight: 750 !important;
+}
+
+.admin-farmer-drawer .admin-farmer-history-token {
+  display: inline-flex !important;
+  width: fit-content !important;
+
+  padding: 6px 8px !important;
+
+  border-radius: 8px !important;
+
+  background: #eaf5fb !important;
+  color: #23779c !important;
+
+  font-size: 13px !important;
+  font-weight: 900 !important;
+}
+
+
+/* Footer stays visible */
+.admin-farmer-drawer .admin-farmer-drawer-footer {
+  position: sticky !important;
+  bottom: 0 !important;
+
+  z-index: 10 !important;
+
+  flex: 0 0 auto !important;
+
+  display: flex !important;
+  justify-content: flex-end !important;
+
+  margin-top: auto !important;
+  padding: 15px 30px !important;
+
+  background: rgba(255,255,255,.97) !important;
+
+  border-top: 1px solid #e5ece8 !important;
+  backdrop-filter: blur(5px) !important;
+}
+
+.admin-farmer-drawer .admin-farmer-drawer-footer button {
+  min-height: 42px !important;
+
+  padding: 0 19px !important;
+
+  border: 1px solid #d7e4de !important;
+  border-radius: 12px !important;
+
+  background: #ffffff !important;
+  color: #47695a !important;
+
+  font-size: 13px !important;
+  font-weight: 850 !important;
+
+  cursor: pointer !important;
+}
+
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 720px) {
+
+  .admin-booking-drawer-layer {
+    padding: 3vh 4vw !important;
+  }
+
+  .admin-booking-drawer-layer .admin-booking-drawer {
+    width: 92vw !important;
+    height: 86vh !important;
+
+    border-radius: 22px !important;
+  }
+
+  .admin-booking-drawer .admin-drawer-header {
+    padding: 20px 20px 16px !important;
+  }
+
+  .admin-booking-drawer .admin-drawer-status,
+  .admin-booking-drawer .admin-drawer-priority-row {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+
+  .admin-booking-drawer .admin-drawer-body {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+
+  .admin-booking-drawer .admin-drawer-field {
+    grid-template-columns: 1fr !important;
+    gap: 5px !important;
+  }
+
+  .admin-farmer-drawer {
+    width: 92vw !important;
+    height: 86vh !important;
+
+    border-radius: 22px !important;
+  }
+
+  .admin-farmer-drawer .admin-farmer-drawer-header {
+    padding: 20px !important;
+  }
+
+  .admin-farmer-drawer .admin-farmer-profile-summary,
+  .admin-farmer-drawer .admin-farmer-profile-grid,
+  .admin-farmer-drawer .admin-farmer-profile-stats,
+  .admin-farmer-drawer .admin-farmer-history {
+    margin-left: 18px !important;
+    margin-right: 18px !important;
+  }
+
+  .admin-farmer-drawer .admin-farmer-profile-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-farmer-drawer .admin-farmer-profile-stats {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-farmer-drawer .admin-farmer-history-row {
+    grid-template-columns: 70px 1fr !important;
+  }
+
+  .admin-farmer-drawer .admin-farmer-history-row > div:last-child {
+    grid-column: 2 !important;
+  }
+
+  .admin-farmer-drawer .admin-farmer-drawer-footer {
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+  }
+}
+
+
+/* ============================================================
+   ANIMATION
+   ============================================================ */
+
+@keyframes adminDrawerFloatIn {
+  from {
+    opacity: 0;
+    transform: translateY(13px) scale(.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes adminFarmerDrawerFloatIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 13px)) scale(.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+
+
+/* ============================================================
+   ADMIN FARMERS — FIXED TABLE + NO TEXT OVERFLOW
+   Paste at the VERY BOTTOM of index.css.
+   This is written for the exact AdminFarmers classes.
+   ============================================================ */
+
+
+/* ------------------------------------------------------------
+   PAGE SAFETY
+   ------------------------------------------------------------ */
+
+.admin-farmers-page,
+.admin-farmers-page * {
+  box-sizing: border-box;
+}
+
+.admin-farmers-page {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden !important;
+}
+
+
+/* ------------------------------------------------------------
+   FARMER TABLE PANEL
+   ------------------------------------------------------------ */
+
+.admin-farmers-table-panel {
+  width: 100% !important;
+  max-width: 100% !important;
+
+  overflow: hidden !important;
+
+  border-radius: 20px !important;
+}
+
+
+/* ------------------------------------------------------------
+   TABLE HEADER + ROW
+   IMPORTANT:
+   Every grid child gets min-width:0 so long IDs/locations
+   cannot force the whole row outside the screen.
+   ------------------------------------------------------------ */
+
+.admin-farmers-table-head,
+.admin-farmer-row {
+  width: 100% !important;
+  max-width: 100% !important;
+
+  min-width: 0 !important;
+
+  display: grid !important;
+
+  grid-template-columns:
+    minmax(180px, 1.28fr)
+    minmax(145px, .95fr)
+    minmax(180px, 1.42fr)
+    minmax(130px, .95fr)
+    minmax(105px, .72fr)
+    minmax(92px, .60fr) !important;
+
+  column-gap: 18px !important;
+
+  align-items: center !important;
+}
+
+
+/* Header cells */
+.admin-farmers-table-head > *,
+.admin-farmer-row > * {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+
+/* ------------------------------------------------------------
+   FARMER COLUMN
+   ------------------------------------------------------------ */
+
+.admin-farmer-main-cell {
+  min-width: 0 !important;
+  max-width: 100% !important;
+
+  display: flex !important;
+  align-items: center !important;
+
+  gap: 13px !important;
+}
+
+.admin-farmer-main-cell > div:last-child {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.admin-farmer-main-cell strong {
+  display: block !important;
+
+  max-width: 100% !important;
+
+  color: #234c60 !important;
+
+  font-size: 17px !important;
+  line-height: 1.25 !important;
+  font-weight: 900 !important;
+
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.admin-farmer-main-cell span {
+  display: block !important;
+
+  max-width: 100% !important;
+
+  margin-top: 5px !important;
+
+  color: #607b87 !important;
+
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  font-weight: 750 !important;
+
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+
+/* ------------------------------------------------------------
+   CONTACT
+   ------------------------------------------------------------ */
+
+.admin-farmer-contact-cell {
+  min-width: 0 !important;
+  max-width: 100% !important;
+
+  overflow: hidden !important;
+}
+
+.admin-farmer-contact-cell > div {
+  min-width: 0 !important;
+  max-width: 100% !important;
+
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.admin-farmer-contact-cell span {
+  min-width: 0 !important;
+  max-width: 100% !important;
+
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+
+  color: #56717e !important;
+
+  font-size: 15px !important;
+  font-weight: 750 !important;
+}
+
+
+/* ------------------------------------------------------------
+   LOCATION — MOST IMPORTANT FIX
+   Long state/district/mandal strings MUST NOT overflow.
+   ------------------------------------------------------------ */
+
+.admin-farmer-location-cell {
+  min-width: 0 !important;
+  max-width: 100% !important;
+
+  overflow: hidden !important;
+}
+
+.admin-farmer-location-cell strong {
+  display: block !important;
+
+  max-width: 100% !important;
+
+  margin: 0 !important;
+
+  color: #31566a !important;
+
+  font-size: 16px !important;
+  line-height: 1.3 !important;
+  font-weight: 900 !important;
+
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.admin-farmer-location-cell span {
+  display: block !important;
+
+  width: 100% !important;
+  max-width: 100% !important;
+
+  margin-top: 5px !important;
+
+  color: #728893 !important;
+
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+  font-weight: 650 !important;
+
+  /*
+    Break long generated IDs instead of escaping the cell.
+  */
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+
+  /*
+    Show at most two lines.
+  */
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+
+  overflow: hidden !important;
+}
+
+
+/* ------------------------------------------------------------
+   CROP
+   ------------------------------------------------------------ */
+
+.admin-farmer-crop-cell {
+  min-width: 0 !important;
+  max-width: 100% !important;
+
+  overflow: hidden !important;
+}
+
+.admin-farmer-crop-cell > div {
+  min-width: 0 !important;
+  max-width: 100% !important;
+
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.admin-farmer-crop-cell strong {
+  min-width: 0 !important;
+  max-width: 100% !important;
+
+  color: #2d7d55 !important;
+
+  font-size: 16px !important;
+  line-height: 1.3 !important;
+  font-weight: 900 !important;
+
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+
+/* ------------------------------------------------------------
+   ACTIVITY
+   ------------------------------------------------------------ */
+
+.admin-farmer-activity-cell {
+  min-width: 0 !important;
+  max-width: 100% !important;
+
+  overflow: hidden !important;
+}
+
+.admin-farmer-activity-cell strong {
+  display: block !important;
+
+  color: #2b5165 !important;
+
+  font-size: 24px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+}
+
+.admin-farmer-activity-cell span {
+  display: block !important;
+
+  margin-top: 5px !important;
+
+  color: #85969d !important;
+
+  font-size: 12px !important;
+  font-weight: 750 !important;
+}
+
+.admin-farmer-activity-cell small {
+  display: inline-flex !important;
+
+  max-width: 100% !important;
+
+  margin-top: 7px !important;
+  padding: 5px 8px !important;
+
+  border-radius: 999px !important;
+
+  background: #eaf5fb !important;
+  color: #287da0 !important;
+
+  font-size: 11px !important;
+  font-weight: 850 !important;
+
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+
+/* ------------------------------------------------------------
+   VIEW BUTTON
+   ------------------------------------------------------------ */
+
+.admin-farmer-row > div:last-child {
+  min-width: 0 !important;
+  max-width: 100% !important;
+
+  display: flex !important;
+  justify-content: flex-end !important;
+}
+
+.admin-farmer-view-button {
+  flex: 0 0 auto !important;
+
+  min-width: 88px !important;
+  height: 46px !important;
+
+  padding: 0 15px !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+
+  border: 2px solid #2d9bc8 !important;
+  border-radius: 13px !important;
+
+  background: #f4fbfe !important;
+  color: #17799f !important;
+
+  font-size: 14px !important;
+  font-weight: 900 !important;
+
+  white-space: nowrap !important;
+
+  cursor: pointer !important;
+
+  transition:
+    transform .16s ease,
+    background .16s ease,
+    box-shadow .16s ease !important;
+}
+
+.admin-farmer-view-button:hover {
+  transform: translateY(-2px) !important;
+
+  background: #eaf8fd !important;
+
+  box-shadow:
+    0 8px 20px rgba(35, 137, 177, .14) !important;
+}
+
+
+/* ------------------------------------------------------------
+   ROW HEIGHT / SPACING
+   ------------------------------------------------------------ */
+
+.admin-farmer-row {
+  min-height: 104px !important;
+
+  padding: 16px 20px !important;
+
+  overflow: hidden !important;
+}
+
+.admin-farmers-table-head {
+  min-height: 52px !important;
+
+  padding: 0 20px !important;
+}
+
+
+/* ------------------------------------------------------------
+   DRAWER — PREVENT LONG LOCATION VALUES FROM OVERFLOWING
+   ------------------------------------------------------------ */
+
+.admin-farmer-drawer {
+  overflow-x: hidden !important;
+}
+
+.admin-farmer-drawer * {
+  min-width: 0 !important;
+}
+
+.admin-farmer-profile-grid {
+  min-width: 0 !important;
+}
+
+.admin-farmer-drawer-field {
+  min-width: 0 !important;
+  max-width: 100% !important;
+
+  overflow: hidden !important;
+}
+
+.admin-farmer-drawer-field > span {
+  display: block !important;
+
+  color: #83959d !important;
+
+  font-size: 12px !important;
+  font-weight: 800 !important;
+}
+
+.admin-farmer-drawer-field > strong {
+  display: block !important;
+
+  max-width: 100% !important;
+
+  color: #35576a !important;
+
+  font-size: 17px !important;
+  line-height: 1.4 !important;
+  font-weight: 900 !important;
+
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+
+  white-space: normal !important;
+}
+
+
+/* ------------------------------------------------------------
+   TABLET
+   ------------------------------------------------------------ */
+
+@media (max-width: 1200px) {
+
+  .admin-farmers-table-head,
+  .admin-farmer-row {
+    grid-template-columns:
+      minmax(155px, 1.2fr)
+      minmax(125px, .9fr)
+      minmax(160px, 1.35fr)
+      minmax(115px, .85fr)
+      minmax(95px, .7fr)
+      86px !important;
+
+    column-gap: 12px !important;
+  }
+
+  .admin-farmer-main-cell strong {
+    font-size: 15px !important;
+  }
+
+  .admin-farmer-location-cell strong,
+  .admin-farmer-crop-cell strong {
+    font-size: 14px !important;
+  }
+
+  .admin-farmer-contact-cell span {
+    font-size: 13px !important;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   PHONE
+   Instead of letting a 6-column row overflow the screen,
+   make the table horizontally scrollable inside its own box.
+   The page/background itself remains stable.
+   ------------------------------------------------------------ */
+
+@media (max-width: 800px) {
+
+  .admin-farmers-table-panel {
+    overflow: hidden !important;
+  }
+
+  .admin-farmers-table {
+    width: 100% !important;
+
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .admin-farmers-table-head,
+  .admin-farmer-row {
+    width: 980px !important;
+    max-width: none !important;
+
+    grid-template-columns:
+      180px
+      145px
+      200px
+      130px
+      110px
+      94px !important;
+  }
+
+  .admin-farmer-row {
+    min-height: 98px !important;
+  }
+}
+
+
+/* ------------------------------------------------------------
+   VERY SMALL PHONE
+   ------------------------------------------------------------ */
+
+@media (max-width: 480px) {
+
+  .admin-farmers-table-head,
+  .admin-farmer-row {
+    width: 900px !important;
+
+    grid-template-columns:
+      165px
+      135px
+      180px
+      120px
+      100px
+      90px !important;
+  }
+
+  .admin-farmer-row {
+    padding: 14px 16px !important;
+  }
+}
+
+/* ============================================================
+   ADMIN FARMERS DRAWER — FINAL CENTERING FIX
+   Replace the previous .admin-farmer-drawer rules with this
+   block and keep it at the VERY BOTTOM of index.css.
+   ============================================================ */
+
+/* Lock the page while the Farmer Profile is open */
+html:has(.admin-farmer-drawer),
+body:has(.admin-farmer-drawer) {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+/* Keep possible layout transforms from affecting the modal */
+body:has(.admin-farmer-drawer) .admin-farmers-page {
+  transform: none !important;
+  filter: none !important;
+  perspective: none !important;
+}
+
+/* Full-screen dim layer */
+.admin-farmer-drawer-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+
+  width: 100vw !important;
+  height: 100dvh !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  z-index: 2147483000 !important;
+
+  background: rgba(27, 47, 39, 0.30) !important;
+  backdrop-filter: blur(7px) !important;
+  -webkit-backdrop-filter: blur(7px) !important;
+
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+/* ------------------------------------------------------------
+   FARMER PROFILE — TRUE CENTER
+   ------------------------------------------------------------ */
+
+.admin-farmer-drawer {
+  position: fixed !important;
+
+  top: 50vh !important;
+  left: 50vw !important;
+
+  right: auto !important;
+  bottom: auto !important;
+
+  width: min(920px, 90vw) !important;
+  height: min(820px, 88vh) !important;
+
+  max-width: 920px !important;
+  max-height: 820px !important;
+
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  transform: translate3d(-50%, -50%, 0) !important;
+
+  display: flex !important;
+  flex-direction: column !important;
+
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+
+  box-sizing: border-box !important;
+
+  z-index: 2147483001 !important;
+
+  background: #ffffff !important;
+
+  border: 1px solid #d8e6df !important;
+  border-radius: 26px !important;
+
+  box-shadow:
+    0 35px 95px rgba(18, 56, 41, 0.23),
+    0 10px 30px rgba(18, 56, 41, 0.12) !important;
+
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+
+  scrollbar-width: thin !important;
+  scrollbar-color: #b8cabe transparent !important;
+
+  animation: none !important;
+}
+
+.admin-farmer-drawer::-webkit-scrollbar {
+  width: 8px !important;
+}
+
+.admin-farmer-drawer::-webkit-scrollbar-thumb {
+  background: #b8cabe !important;
+  border-radius: 999px !important;
+}
+
+/* ------------------------------------------------------------
+   HEADER — FIXED INSIDE MODAL
+   ------------------------------------------------------------ */
+
+.admin-farmer-drawer .admin-farmer-drawer-header {
+  position: sticky !important;
+  top: 0 !important;
+
+  z-index: 20 !important;
+
+  flex: 0 0 auto !important;
+
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+
+  gap: 20px !important;
+
+  padding: 26px 30px 20px !important;
+  min-height: 112px !important;
+
+  box-sizing: border-box !important;
+
+  background: rgba(255, 255, 255, 0.98) !important;
+  border-bottom: 1px solid #e2ebe6 !important;
+}
+
+/* Header text */
+.admin-farmer-drawer .admin-farmer-drawer-header .admin-page-eyebrow {
+  margin: 0 0 8px !important;
+
+  color: #b4770b !important;
+  font-size: 13px !important;
+  line-height: 1.1 !important;
+  font-weight: 900 !important;
+  letter-spacing: .14em !important;
+}
+
+.admin-farmer-drawer .admin-farmer-drawer-header h2 {
+  margin: 0 !important;
+
+  color: #28566e !important;
+
+  font-size: 32px !important;
+  line-height: 1.12 !important;
+  font-weight: 900 !important;
+
+  overflow-wrap: anywhere !important;
+}
+
+/* Close button */
+.admin-farmer-drawer .admin-farmer-drawer-close {
+  flex: 0 0 auto !important;
+
+  width: 46px !important;
+  height: 46px !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  margin: 0 !important;
+  padding: 0 !important;
+
+  border: 1px solid #d7e4de !important;
+  border-radius: 13px !important;
+
+  background: #ffffff !important;
+  color: #59766b !important;
+
+  cursor: pointer !important;
+}
+
+/* ------------------------------------------------------------
+   CONTENT
+   ------------------------------------------------------------ */
+
+.admin-farmer-drawer .admin-farmer-profile-summary,
+.admin-farmer-drawer .admin-farmer-profile-grid,
+.admin-farmer-drawer .admin-farmer-profile-stats,
+.admin-farmer-drawer .admin-farmer-history {
+  flex-shrink: 0 !important;
+}
+
+/* Identity card */
+.admin-farmer-drawer .admin-farmer-profile-summary {
+  margin: 22px 30px 0 !important;
+  padding: 18px !important;
+
+  display: flex !important;
+  align-items: center !important;
+  gap: 15px !important;
+
+  border: 1px solid #dfe9e4 !important;
+  border-radius: 16px !important;
+
+  background: #f8fcfa !important;
+}
+
+/* Profile fields */
+.admin-farmer-drawer .admin-farmer-profile-grid {
+  display: grid !important;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+
+  gap: 12px !important;
+
+  margin: 20px 30px 0 !important;
+}
+
+.admin-farmer-drawer .admin-farmer-drawer-field {
+  min-width: 0 !important;
+  max-width: 100% !important;
+
+  padding: 16px !important;
+
+  overflow: hidden !important;
+
+  border: 1px solid #e0e9e5 !important;
+  border-radius: 15px !important;
+
+  background: #ffffff !important;
+}
+
+.admin-farmer-drawer .admin-farmer-drawer-field > span {
+  display: block !important;
+
+  color: #84959d !important;
+  font-size: 12px !important;
+  line-height: 1.3 !important;
+  font-weight: 800 !important;
+}
+
+.admin-farmer-drawer .admin-farmer-drawer-field > strong {
+  display: block !important;
+
+  margin-top: 7px !important;
+  max-width: 100% !important;
+
+  color: #345465 !important;
+  font-size: 17px !important;
+  line-height: 1.45 !important;
+  font-weight: 900 !important;
+
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+}
+
+/* Stats */
+.admin-farmer-drawer .admin-farmer-profile-stats {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+
+  gap: 12px !important;
+
+  margin: 20px 30px 0 !important;
+}
+
+/* History */
+.admin-farmer-drawer .admin-farmer-history {
+  margin: 26px 30px 30px !important;
+}
+
+.admin-farmer-drawer .admin-farmer-history-row {
+  min-width: 0 !important;
+  max-width: 100% !important;
+
+  overflow: hidden !important;
+}
+
+/* ------------------------------------------------------------
+   MOBILE
+   ------------------------------------------------------------ */
+
+@media (max-width: 720px) {
+  .admin-farmer-drawer {
+    top: 50vh !important;
+    left: 50vw !important;
+
+    width: 92vw !important;
+    height: 86vh !important;
+
+    max-width: 92vw !important;
+    max-height: 86vh !important;
+
+    border-radius: 22px !important;
+  }
+
+  .admin-farmer-drawer .admin-farmer-drawer-header {
+    padding: 20px !important;
+    min-height: 98px !important;
+  }
+
+  .admin-farmer-drawer .admin-farmer-drawer-header h2 {
+    font-size: 25px !important;
+  }
+
+  .admin-farmer-drawer .admin-farmer-profile-summary,
+  .admin-farmer-drawer .admin-farmer-profile-grid,
+  .admin-farmer-drawer .admin-farmer-profile-stats,
+  .admin-farmer-drawer .admin-farmer-history {
+    margin-left: 18px !important;
+    margin-right: 18px !important;
+  }
+
+  .admin-farmer-drawer .admin-farmer-profile-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-farmer-drawer .admin-farmer-profile-stats {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ------------------------------------------------------------
+   NO OPEN ANIMATION — prevents transform conflict
+   ------------------------------------------------------------ */

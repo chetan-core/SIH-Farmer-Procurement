@@ -5,6 +5,8 @@ import {
   useState,
 } from "react";
 
+import { createPortal } from "react-dom";
+
 import {
   AlertTriangle,
   ArrowRight,
@@ -985,9 +987,159 @@ function FarmerDrawer({
     );
 
 
-  return (
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return undefined;
+    }
 
-    <>
+    const body = document.body;
+    const html = document.documentElement;
+    const previousBodyOverflow = body.style.overflow;
+    const previousHtmlOverflow = html.style.overflow;
+    const previousBodyPaddingRight = body.style.paddingRight;
+
+    const scrollbarWidth =
+      window.innerWidth - document.documentElement.clientWidth;
+
+    body.style.overflow = "hidden";
+    html.style.overflow = "hidden";
+
+    if (scrollbarWidth > 0) {
+      body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    return () => {
+      body.style.overflow = previousBodyOverflow;
+      html.style.overflow = previousHtmlOverflow;
+      body.style.paddingRight = previousBodyPaddingRight;
+    };
+  }, []);
+
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  return createPortal(
+
+    <div
+      className="admin-farmer-modal-root"
+      role="presentation"
+    >
+
+      <style>{`
+        .admin-farmer-modal-root {
+          position: fixed !important;
+          inset: 0 !important;
+          width: 100vw !important;
+          height: 100dvh !important;
+          z-index: 2147483646 !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          padding: 5vh 5vw !important;
+          box-sizing: border-box !important;
+          overflow: hidden !important;
+          isolation: isolate !important;
+          pointer-events: auto !important;
+        }
+
+        .admin-farmer-modal-root .admin-farmer-drawer-overlay {
+          position: absolute !important;
+          inset: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          z-index: 0 !important;
+          background: rgba(27, 47, 39, 0.30) !important;
+          backdrop-filter: blur(7px) !important;
+          -webkit-backdrop-filter: blur(7px) !important;
+        }
+
+        .admin-farmer-modal-root .admin-farmer-modal {
+          position: relative !important;
+          top: auto !important;
+          right: auto !important;
+          bottom: auto !important;
+          left: auto !important;
+          transform: none !important;
+
+          width: min(920px, 90vw) !important;
+          height: min(820px, 88vh) !important;
+          max-width: 920px !important;
+          max-height: 820px !important;
+          min-width: 0 !important;
+          min-height: 0 !important;
+
+          margin: 0 !important;
+          padding: 0 !important;
+          box-sizing: border-box !important;
+
+          display: flex !important;
+          flex-direction: column !important;
+          overflow-x: hidden !important;
+          overflow-y: auto !important;
+
+          z-index: 1 !important;
+          background: #fff !important;
+          border: 1px solid #d8e6df !important;
+          border-radius: 26px !important;
+          box-shadow: 0 35px 95px rgba(18,56,41,.23), 0 10px 30px rgba(18,56,41,.12) !important;
+
+          overscroll-behavior: contain !important;
+          -webkit-overflow-scrolling: touch !important;
+          scrollbar-width: thin !important;
+          scrollbar-color: #b8cabe transparent !important;
+        }
+
+        .admin-farmer-modal-root .admin-farmer-modal::-webkit-scrollbar {
+          width: 8px !important;
+        }
+
+        .admin-farmer-modal-root .admin-farmer-modal::-webkit-scrollbar-thumb {
+          background: #b8cabe !important;
+          border-radius: 999px !important;
+        }
+
+        .admin-farmer-modal-root .admin-farmer-modal > .admin-farmer-drawer-header {
+          position: sticky !important;
+          top: 0 !important;
+          z-index: 10 !important;
+          flex: 0 0 auto !important;
+          background: rgba(255,255,255,.98) !important;
+        }
+
+        .admin-farmer-modal-root .admin-farmer-profile-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
+
+        .admin-farmer-modal-root .admin-farmer-drawer-field {
+          min-width: 0 !important;
+          max-width: 100% !important;
+          overflow: hidden !important;
+        }
+
+        .admin-farmer-modal-root .admin-farmer-drawer-field > strong {
+          max-width: 100% !important;
+          white-space: normal !important;
+          overflow-wrap: anywhere !important;
+          word-break: break-word !important;
+        }
+
+        @media (max-width: 720px) {
+          .admin-farmer-modal-root {
+            padding: 4vh 4vw !important;
+          }
+
+          .admin-farmer-modal-root .admin-farmer-modal {
+            width: 92vw !important;
+            height: 86vh !important;
+            border-radius: 22px !important;
+          }
+
+          .admin-farmer-modal-root .admin-farmer-profile-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
 
       <div
         className="admin-farmer-drawer-overlay"
@@ -997,7 +1149,12 @@ function FarmerDrawer({
       />
 
 
-      <aside className="admin-farmer-drawer">
+      <aside
+        className="admin-farmer-drawer admin-farmer-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={text.farmerProfile}
+      >
 
         <div className="admin-farmer-drawer-header">
 
@@ -1276,8 +1433,8 @@ function FarmerDrawer({
 
       </aside>
 
-    </>
-
+    </div>,
+    document.body
   );
 }
 
