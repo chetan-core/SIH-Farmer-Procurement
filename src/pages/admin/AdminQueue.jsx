@@ -582,10 +582,25 @@ function AdminQueue() {
       }
 
 
-      await loadBookings(
-        true
+      // The PATCH already changed the booking on the server.
+      // Update this row locally instead of immediately re-fetching the
+      // entire queue. The 5-second live refresh will reconcile the list
+      // with the database without making the operator wait for a second
+      // /bookings request.
+      setBookings((current) =>
+        current.map((item) =>
+          item.id === booking.id
+            ? {
+                ...item,
+                ...(data?.booking || {}),
+                status: data?.booking?.status || nextStatus,
+              }
+            : item
+        )
       );
 
+      setLastUpdated(new Date());
+      setError("");
 
       setSelectedBooking(
         null

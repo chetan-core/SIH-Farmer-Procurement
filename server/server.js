@@ -11427,6 +11427,50 @@ app.get(
 
 
 /* =========================================================
+   BOOKING STATUS HELPERS
+   Kept close to the status route so every status transition is
+   validated consistently without relying on a missing helper.
+========================================================= */
+
+const BOOKING_STATUS_VALUES = new Set([
+  "CONFIRMED",
+  "ARRIVED",
+  "LATE",
+  "WEIGHING",
+  "PROCURED",
+  "PAYMENT_PENDING",
+  "PAYMENT_SENT",
+  "COMPLETED",
+  "CANCELLED",
+]);
+
+function isValidStatus(status) {
+  return BOOKING_STATUS_VALUES.has(
+    String(status || "").trim().toUpperCase()
+  );
+}
+
+function getAllowedNextStatuses(currentStatus) {
+  const status = String(currentStatus || "CONFIRMED")
+    .trim()
+    .toUpperCase();
+
+  const transitions = {
+    CONFIRMED: ["ARRIVED", "LATE", "CANCELLED"],
+    LATE: ["ARRIVED", "CANCELLED"],
+    ARRIVED: ["WEIGHING", "LATE", "CANCELLED"],
+    WEIGHING: ["PROCURED", "CANCELLED"],
+    PROCURED: ["PAYMENT_PENDING", "CANCELLED"],
+    PAYMENT_PENDING: ["PAYMENT_SENT", "CANCELLED"],
+    PAYMENT_SENT: ["COMPLETED"],
+    COMPLETED: [],
+    CANCELLED: [],
+  };
+
+  return transitions[status] || [];
+}
+
+/* =========================================================
    BOOKING STATUS
 ========================================================= */
 
