@@ -3246,6 +3246,25 @@ async function notifyTransportFarmer({
   });
 }
 
+
+// Safe notification title helper used by booking/transport notifications.
+function getNotificationTitle(status) {
+  const titles = {
+    CONFIRMED: "Booking confirmed",
+    ARRIVED: "Farmer arrived",
+    LATE: "Booking marked late",
+    WEIGHING: "Weighing started",
+    PROCURED: "Produce procured",
+    PAYMENT_PENDING: "Payment pending",
+    PAYMENT_SENT: "Payment sent",
+    CANCELLED: "Booking cancelled",
+    BOOKING_UPDATED: "Booking updated",
+  };
+
+  const key = String(status || "").trim().toUpperCase();
+  return titles[key] || "Booking update";
+}
+
 /* =========================================================
    NOTIFICATIONS
 ========================================================= */
@@ -11427,50 +11446,6 @@ app.get(
 
 
 /* =========================================================
-   BOOKING STATUS HELPERS
-   Kept close to the status route so every status transition is
-   validated consistently without relying on a missing helper.
-========================================================= */
-
-const BOOKING_STATUS_VALUES = new Set([
-  "CONFIRMED",
-  "ARRIVED",
-  "LATE",
-  "WEIGHING",
-  "PROCURED",
-  "PAYMENT_PENDING",
-  "PAYMENT_SENT",
-  "COMPLETED",
-  "CANCELLED",
-]);
-
-function isValidStatus(status) {
-  return BOOKING_STATUS_VALUES.has(
-    String(status || "").trim().toUpperCase()
-  );
-}
-
-function getAllowedNextStatuses(currentStatus) {
-  const status = String(currentStatus || "CONFIRMED")
-    .trim()
-    .toUpperCase();
-
-  const transitions = {
-    CONFIRMED: ["ARRIVED", "LATE", "CANCELLED"],
-    LATE: ["ARRIVED", "CANCELLED"],
-    ARRIVED: ["WEIGHING", "LATE", "CANCELLED"],
-    WEIGHING: ["PROCURED", "CANCELLED"],
-    PROCURED: ["PAYMENT_PENDING", "CANCELLED"],
-    PAYMENT_PENDING: ["PAYMENT_SENT", "CANCELLED"],
-    PAYMENT_SENT: ["COMPLETED"],
-    COMPLETED: [],
-    CANCELLED: [],
-  };
-
-  return transitions[status] || [];
-}
-
-/* =========================================================
    BOOKING STATUS
 ========================================================= */
 
@@ -11678,73 +11653,94 @@ app.patch(
       );
 
 
-      const settings =
-        await getSettings();
-
-
-      const shouldSendSms =
-        settings.smsEnabled ===
-          true &&
-        SMS_ENABLED ===
-          true &&
-        Boolean(
-          booking.farmer_phone
+      /*
+       * The booking status transaction above is the primary operation.
+       * Do not wait for notifications/SMS before replying to the admin.
+       * External SMS providers can be slow or unavailable and must not turn
+       * a successful status update into a 500 response.
+       */
+      const updatedBooking =
+        await getBookingById(
+          bookingId
         );
 
-
-      const notification =
-        await createNotification({
-
-          farmerId:
-            booking.farmer_id,
-
-          bookingId:
-            bookingId,
-
-          type:
-            nextStatus,
-
-          title:
-            getNotificationTitle(
-              nextStatus
-            ),
-
-          message:
-            getStatusSms(
-              booking.token,
-              nextStatus
-            ) ||
-            `Booking ${booking.token} status updated.`,
-
-          sms:
-            shouldSendSms,
-
-          phone:
-            booking.farmer_phone,
-
-        });
-
+      if (!updatedBooking) {
+        throw new Error(
+          "Booking was updated but could not be reloaded."
+        );
+      }
 
       res.json({
-
-        success:
-          true,
-
-        message:
-          "Booking status updated.",
-
-        booking:
-          await getBookingById(
-            bookingId
-          ),
-
-        smsStatus:
-          notification.status,
-
-        notificationId:
-          notification.id,
-
+        success: true,
+        message: "Booking status updated.",
+        booking: updatedBooking,
+        smsStatus: "QUEUED",
+        notificationId: null,
       });
+
+      /*
+       * Run notification/SMS work after the HTTP response has been sent.
+       * Any failure is logged only and cannot break the booking update.
+       */
+      void (async () => {
+        try {
+          const settings =
+            await getSettings();
+
+          const shouldSendSms =
+            settings.smsEnabled === true &&
+            SMS_ENABLED === true &&
+            Boolean(booking.farmer_phone);
+
+          const notification =
+            await createNotification({
+              farmerId:
+                booking.farmer_id,
+
+              bookingId:
+                bookingId,
+
+              type:
+                nextStatus,
+
+              title:
+                getNotificationTitle(
+                  nextStatus
+                ),
+
+              message:
+                getStatusSms(
+                  booking.token,
+                  nextStatus
+                ) ||
+                `Booking ${booking.token} status updated.`,
+
+              sms:
+                shouldSendSms,
+
+              phone:
+                booking.farmer_phone,
+            });
+
+          console.log(
+            "Background booking notification completed:",
+            {
+              bookingId,
+              status: nextStatus,
+              notificationId:
+                notification?.id || null,
+              smsStatus:
+                notification?.status || "UNKNOWN",
+            }
+          );
+        } catch (notificationError) {
+          console.error(
+            "Background booking notification failed:",
+            notificationError
+          );
+        }
+      })();
+
 
     } catch (
       error
