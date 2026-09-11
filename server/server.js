@@ -3247,6 +3247,62 @@ async function notifyTransportFarmer({
 }
 
 
+// Booking status helpers used by the admin queue status endpoint.
+const BOOKING_STATUS_VALUES = new Set([
+  "CONFIRMED",
+  "ARRIVED",
+  "LATE",
+  "WEIGHING",
+  "PROCURED",
+  "PAYMENT_PENDING",
+  "PAYMENT_SENT",
+  "CANCELLED",
+]);
+
+function isValidStatus(status) {
+  return BOOKING_STATUS_VALUES.has(
+    String(status || "").trim().toUpperCase()
+  );
+}
+
+function getAllowedNextStatuses(currentStatus) {
+  const status = String(currentStatus || "CONFIRMED")
+    .trim()
+    .toUpperCase();
+
+  const transitions = {
+    CONFIRMED: ["ARRIVED", "LATE", "CANCELLED"],
+    LATE: ["ARRIVED", "CANCELLED"],
+    ARRIVED: ["WEIGHING", "LATE", "CANCELLED"],
+    WEIGHING: ["PROCURED", "CANCELLED"],
+    PROCURED: ["PAYMENT_PENDING"],
+    PAYMENT_PENDING: ["PAYMENT_SENT"],
+    PAYMENT_SENT: [],
+    CANCELLED: [],
+  };
+
+  return transitions[status] || [];
+}
+
+function getStatusSms(token, status) {
+  const bookingToken = String(token || "").trim() || "your booking";
+  const key = String(status || "").trim().toUpperCase();
+
+  const messages = {
+    CONFIRMED: `Your KrishiSetu booking ${bookingToken} is confirmed.`,
+    ARRIVED: `Your KrishiSetu booking ${bookingToken}: you have been marked arrived.`,
+    LATE: `Your KrishiSetu booking ${bookingToken} has been marked late.`,
+    WEIGHING: `Your KrishiSetu booking ${bookingToken} has entered weighing.`,
+    PROCURED: `Your KrishiSetu booking ${bookingToken}: produce has been procured.`,
+    PAYMENT_PENDING: `Your KrishiSetu booking ${bookingToken}: payment is pending.`,
+    PAYMENT_SENT: `Your KrishiSetu booking ${bookingToken}: payment has been sent.`,
+    CANCELLED: `Your KrishiSetu booking ${bookingToken} has been cancelled.`,
+    BOOKING_UPDATED: `Your KrishiSetu booking ${bookingToken} was updated.`,
+  };
+
+  return messages[key] || `Your KrishiSetu booking ${bookingToken} was updated.`;
+}
+
 // Safe notification title helper used by booking/transport notifications.
 function getNotificationTitle(status) {
   const titles = {
