@@ -139,7 +139,7 @@ const COPY = {
       "Your transporter session is missing. Please sign in again.",
     updated:
       "Updated",
-    cancelTrip: "Cancel trip",
+    cancelTrip: "Cancel active trip",
     cancelTripTitle: "Cancel this active trip?",
     cancelTripReason: "Cancellation reason",
     cancelTripReasonPlaceholder: "Tell the farmer why you are cancelling this trip",
@@ -1582,8 +1582,6 @@ export default function TransporterJobs() {
           "ASSIGNED",
           "EN_ROUTE_TO_FARMER",
           "CROP_PICKED_UP",
-          "EN_ROUTE_TO_CENTER",
-          "DELIVERED",
         ].includes(status)
       ) {
         setError(copy.cancelTripError);
@@ -2151,8 +2149,6 @@ export default function TransporterJobs() {
                   "ASSIGNED",
                   "EN_ROUTE_TO_FARMER",
                   "CROP_PICKED_UP",
-                  "EN_ROUTE_TO_CENTER",
-                  "DELIVERED",
                 ].includes(
                   String(
                     activeTrip.status || ""

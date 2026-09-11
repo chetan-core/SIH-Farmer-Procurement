@@ -3247,6 +3247,62 @@ async function notifyTransportFarmer({
 }
 
 
+// Booking status helpers used by the admin queue status endpoint.
+const BOOKING_STATUS_VALUES = new Set([
+  "CONFIRMED",
+  "ARRIVED",
+  "LATE",
+  "WEIGHING",
+  "PROCURED",
+  "PAYMENT_PENDING",
+  "PAYMENT_SENT",
+  "CANCELLED",
+]);
+
+function isValidStatus(status) {
+  return BOOKING_STATUS_VALUES.has(
+    String(status || "").trim().toUpperCase()
+  );
+}
+
+function getAllowedNextStatuses(currentStatus) {
+  const status = String(currentStatus || "CONFIRMED")
+    .trim()
+    .toUpperCase();
+
+  const transitions = {
+    CONFIRMED: ["ARRIVED", "LATE", "CANCELLED"],
+    LATE: ["ARRIVED", "CANCELLED"],
+    ARRIVED: ["WEIGHING", "LATE", "CANCELLED"],
+    WEIGHING: ["PROCURED", "CANCELLED"],
+    PROCURED: ["PAYMENT_PENDING"],
+    PAYMENT_PENDING: ["PAYMENT_SENT"],
+    PAYMENT_SENT: [],
+    CANCELLED: [],
+  };
+
+  return transitions[status] || [];
+}
+
+function getStatusSms(token, status) {
+  const bookingToken = String(token || "").trim() || "your booking";
+  const key = String(status || "").trim().toUpperCase();
+
+  const messages = {
+    CONFIRMED: `Your KrishiSetu booking ${bookingToken} is confirmed.`,
+    ARRIVED: `Your KrishiSetu booking ${bookingToken}: you have been marked arrived.`,
+    LATE: `Your KrishiSetu booking ${bookingToken} has been marked late.`,
+    WEIGHING: `Your KrishiSetu booking ${bookingToken} has entered weighing.`,
+    PROCURED: `Your KrishiSetu booking ${bookingToken}: produce has been procured.`,
+    PAYMENT_PENDING: `Your KrishiSetu booking ${bookingToken}: payment is pending.`,
+    PAYMENT_SENT: `Your KrishiSetu booking ${bookingToken}: payment has been sent.`,
+    CANCELLED: `Your KrishiSetu booking ${bookingToken} has been cancelled.`,
+    BOOKING_UPDATED: `Your KrishiSetu booking ${bookingToken} was updated.`,
+  };
+
+  return messages[key] || `Your KrishiSetu booking ${bookingToken} was updated.`;
+}
+
 // Safe notification title helper used by booking/transport notifications.
 function getNotificationTitle(status) {
   const titles = {
@@ -7980,49 +8036,6 @@ app.patch(
 );
 
 
-function getTransportStatusMessage(status, language = "en") {
-  const key = normalizeTransportStatus(status);
-
-  const messages = {
-    en: {
-      REQUESTED: "A transport request is waiting for a transporter.",
-      ASSIGNED: "A transporter has accepted your transport request.",
-      EN_ROUTE_TO_FARMER: "Your transporter is travelling to the pickup location.",
-      CROP_PICKED_UP: "Your crop has been picked up by the transporter.",
-      EN_ROUTE_TO_CENTER: "Your crop is travelling to the procurement center.",
-      DELIVERED: "Your crop has been delivered to the procurement center.",
-      COMPLETED: "Your transport trip has been completed.",
-      CANCELLED: "Your transport trip has been cancelled by the transporter.",
-    },
-    hi: {
-      REQUESTED: "आपके परिवहन अनुरोध के लिए ट्रांसपोर्टर की प्रतीक्षा है।",
-      ASSIGNED: "एक ट्रांसपोर्टर ने आपका परिवहन अनुरोध स्वीकार किया है।",
-      EN_ROUTE_TO_FARMER: "ट्रांसपोर्टर पिकअप स्थान की ओर आ रहा है।",
-      CROP_PICKED_UP: "ट्रांसपोर्टर ने आपकी फसल उठा ली है।",
-      EN_ROUTE_TO_CENTER: "आपकी फसल खरीद केंद्र की ओर जा रही है।",
-      DELIVERED: "आपकी फसल खरीद केंद्र पहुंच गई है।",
-      COMPLETED: "आपकी परिवहन यात्रा पूरी हो गई है।",
-      CANCELLED: "ट्रांसपोर्टर ने आपकी परिवहन यात्रा रद्द कर दी है।",
-    },
-    te: {
-      REQUESTED: "మీ రవాణా అభ్యర్థనకు ట్రాన్స్‌పోర్టర్ కోసం వేచి ఉంది.",
-      ASSIGNED: "ఒక ట్రాన్స్‌పోర్టర్ మీ రవాణా అభ్యర్థనను అంగీకరించారు.",
-      EN_ROUTE_TO_FARMER: "ట్రాన్స్‌పోర్టర్ పికప్ ప్రదేశానికి వస్తున్నారు.",
-      CROP_PICKED_UP: "ట్రాన్స్‌పోర్టర్ మీ పంటను తీసుకున్నారు.",
-      EN_ROUTE_TO_CENTER: "మీ పంట కొనుగోలు కేంద్రానికి వెళుతోంది.",
-      DELIVERED: "మీ పంట కొనుగోలు కేంద్రానికి చేరింది.",
-      COMPLETED: "మీ రవాణా ప్రయాణం పూర్తయింది.",
-      CANCELLED: "ట్రాన్స్‌పోర్టర్ మీ రవాణా ప్రయాణాన్ని రద్దు చేశారు.",
-    },
-  };
-
-  return (
-    messages[language]?.[key] ||
-    messages.en[key] ||
-    `Transport status changed to ${key}.`
-  );
-}
-
 app.patch(
   "/api/transport/requests/:id/status",
   async (
@@ -8106,14 +8119,7 @@ app.patch(
           request.status
         );
 
-      const isActiveCancellation =
-        nextStatus === "CANCELLED" &&
-        isTransportActiveStatus(
-          request.status
-        );
-
       if (
-        !isActiveCancellation &&
         !allowed.includes(
           nextStatus
         )
@@ -8184,18 +8190,6 @@ app.patch(
               finalFare,
             ];
 
-            if (nextStatus === "CANCELLED") {
-              updateSql += `,
-                cancellation_reason = $3,
-                cancelled_at = CURRENT_TIMESTAMP
-              `;
-
-              updateParams.push(
-                note ||
-                "Transporter cancelled the trip."
-              );
-            }
-
             if (
               nextStatus ===
               "EN_ROUTE_TO_FARMER"
@@ -8228,21 +8222,18 @@ app.patch(
                 `, completed_at = CURRENT_TIMESTAMP`;
             }
 
-            const whereParamStart =
-              updateParams.length + 1;
-
-            updateSql += `
-              WHERE id = $${whereParamStart}
-                AND transporter_id = $${whereParamStart + 1}
-                AND status = $${whereParamStart + 2}
-              RETURNING *
-            `;
-
             updateParams.push(
               request.id,
               transporter.id,
               request.status
             );
+
+            updateSql += `
+              WHERE id = $3
+                AND transporter_id = $4
+                AND status = $5
+              RETURNING *
+            `;
 
             const result =
               await client.query(
@@ -8320,20 +8311,7 @@ app.patch(
           request.id
         );
 
-      res.json({
-        success: true,
-        message:
-          "Transport status updated successfully.",
-        request:
-          hydrated,
-      });
-
-      /*
-       * Notification delivery is best-effort. A missing/failed SMS or
-       * notification helper must never turn a successful DB status update
-       * into an HTTP error or attempt a second response.
-       */
-      void notifyTransportFarmer({
+      await notifyTransportFarmer({
         request:
           hydrated,
         type:
@@ -8348,11 +8326,14 @@ app.patch(
             hydrated.farmer_language ||
               "en"
           ),
-      }).catch((notificationError) => {
-        console.error(
-          "Transport notification error:",
-          notificationError
-        );
+      });
+
+      return res.json({
+        success: true,
+        message:
+          "Transport status updated successfully.",
+        request:
+          hydrated,
       });
     } catch (
       error
@@ -11547,9 +11528,20 @@ app.patch(
         ).trim();
 
 
+      const validBookingStatuses = new Set([
+        "CONFIRMED",
+        "ARRIVED",
+        "LATE",
+        "WEIGHING",
+        "PROCURED",
+        "PAYMENT_PENDING",
+        "PAYMENT_SENT",
+        "CANCELLED",
+      ]);
+
       if (
-        !isValidStatus(
-          nextStatus
+        !validBookingStatuses.has(
+          String(nextStatus || "").trim().toUpperCase()
         )
       ) {
 
@@ -11635,10 +11627,21 @@ app.patch(
       }
 
 
+      const allowedStatusTransitions = {
+        CONFIRMED: ["ARRIVED", "LATE", "CANCELLED"],
+        LATE: ["ARRIVED", "CANCELLED"],
+        ARRIVED: ["WEIGHING", "LATE", "CANCELLED"],
+        WEIGHING: ["PROCURED", "CANCELLED"],
+        PROCURED: ["PAYMENT_PENDING"],
+        PAYMENT_PENDING: ["PAYMENT_SENT"],
+        PAYMENT_SENT: [],
+        CANCELLED: [],
+      };
+
       const allowed =
-        getAllowedNextStatuses(
-          currentStatus
-        );
+        allowedStatusTransitions[
+          String(currentStatus || "CONFIRMED").trim().toUpperCase()
+        ] || [];
 
 
       if (

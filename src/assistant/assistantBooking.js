@@ -2657,6 +2657,95 @@ export function findSlotReference(
 
 
     /*
+     * Conversational 12-hour fallback.
+     *
+     * Users commonly say:
+     *   "1 to 1:30"
+     *   "1 to 130"
+     * when the displayed list is in afternoon time.
+     *
+     * Plain numeric times are parsed as 24-hour values by
+     * time24(), so the examples above initially become
+     * 01:00–01:30. If that exact range is not present, also
+     * try the corresponding PM range (13:00–13:30).
+     *
+     * Exact matching still wins, so an actual 01:00–01:30
+     * slot is never overridden.
+     */
+    const requestHadMeridiem =
+      /\b(?:am|pm)\b/i.test(text);
+
+    if (
+      !requestHadMeridiem &&
+      requestedStart != null
+    ) {
+
+      const pmStart =
+        requestedStart < 12 * 60
+          ? requestedStart + 12 * 60
+          : requestedStart;
+
+      const pmEnd =
+        requestedEnd == null
+          ? null
+          : requestedEnd < 12 * 60
+            ? requestedEnd + 12 * 60
+            : requestedEnd;
+
+      const pmMatch =
+        availableSlots.find(
+          item => {
+
+            const itemStart =
+              timeToMinutes(
+                item?.start ??
+                item?.startTime ??
+                item?.from
+              );
+
+            const itemEnd =
+              timeToMinutes(
+                item?.end ??
+                item?.endTime ??
+                item?.to
+              );
+
+            if (
+              itemStart == null
+            ) {
+
+              return false;
+
+            }
+
+            if (
+              pmEnd == null
+            ) {
+
+              return itemStart === pmStart;
+
+            }
+
+            return (
+              itemStart === pmStart &&
+              itemEnd === pmEnd
+            );
+
+          }
+        );
+
+      if (
+        pmMatch
+      ) {
+
+        return pmMatch;
+
+      }
+
+    }
+
+
+    /*
      * Normalize backend slot IDs/labels.
      */
 
@@ -4292,52 +4381,6 @@ function asksForCenterTimings(
 }
 
 
-function asksForCenterSelection(
-  text
-) {
-
-  const value =
-    String(
-      text ||
-      ""
-    )
-      .trim();
-
-  return (
-    /\b(select|choose|pick|set|use)\b.*\b(center|centre)\b/i.test(
-      value
-    ) ||
-    /\b(center|centre)\b.*\b(select|choose|pick)\b/i.test(
-      value
-    )
-  );
-
-}
-
-
-function asksForAnyCenter(
-  text
-) {
-
-  const value =
-    String(
-      text ||
-      ""
-    )
-      .trim();
-
-  return (
-    /\b(select|choose|pick|use|give)\b.*\b(any|whatever|anyone|one)\b.*\b(center|centre)\b/i.test(
-      value
-    ) ||
-    /\b(any|whatever|anyone)\b.*\b(center|centre)\b/i.test(
-      value
-    )
-  );
-
-}
-
-
 export function isBookingInformationRequest(
   text
 ) {
@@ -5950,123 +5993,6 @@ export function processBookingConversation(
 
         }
       );
-
-  }
-
-
-  /* =======================================================
-     CENTER SELECTION COMMANDS
-  ======================================================= */
-
-  if (
-    asksForAnyCenter(
-      normalizedText
-    )
-  ) {
-
-    if (
-      availableCenters.length
-    ) {
-
-      state =
-        ensurePreferredCenter(
-          state,
-          availableCenters,
-          availability
-        );
-
-      persistState(
-        state
-      );
-
-      return {
-
-        handled:
-          true,
-
-        intent:
-          BOOKING_INTENTS.UPDATE,
-
-        state,
-
-        selectedCenter:
-          availableCenters.find(
-            center =>
-              String(
-                center?.id
-              ) ===
-              String(
-                state.centerId
-              )
-          ) ||
-          availableCenters[0],
-
-        nextStep:
-          getBookingStage(
-            state
-          ),
-
-      };
-
-    }
-
-    return {
-
-      handled:
-        true,
-
-      intent:
-        BOOKING_INTENTS.SHOW_CENTERS,
-
-      state,
-
-      centers:
-        [],
-
-      nextStep:
-        BOOKING_STEPS.DETAILS,
-
-    };
-
-  }
-
-
-  if (
-    asksForCenterSelection(
-      normalizedText
-    )
-  ) {
-
-    persistState(
-      state
-    );
-
-    return {
-
-      handled:
-        true,
-
-      intent:
-        BOOKING_INTENTS.SHOW_CENTERS,
-
-      state,
-
-      centers:
-        availableCenters,
-
-      centerText:
-        formatCenterOptions(
-          availableCenters,
-          options.language ||
-            "en"
-        ),
-
-      nextStep:
-        getBookingStage(
-          state
-        ),
-
-    };
 
   }
 
