@@ -2001,7 +2001,6 @@ const TRANSPORT_ALLOWED_TRANSITIONS = {
 
   EN_ROUTE_TO_CENTER: [
     "DELIVERED",
-    "CANCELLED",
   ],
 
   DELIVERED: [
@@ -8064,7 +8063,19 @@ app.patch(
           request.status
         );
 
+      /*
+       * Transporters may cancel any trip that is still active,
+       * including DELIVERED. Cancellation is a terminal action and
+       * does not depend on the normal forward-only lifecycle.
+       */
+      const isActiveCancellation =
+        nextStatus === "CANCELLED" &&
+        isTransportActiveStatus(
+          request.status
+        );
+
       if (
+        !isActiveCancellation &&
         !allowed.includes(
           nextStatus
         )
@@ -8136,6 +8147,20 @@ app.patch(
             ];
 
             if (
+              nextStatus === "CANCELLED"
+            ) {
+              updateSql += `,
+                cancellation_reason = $3,
+                cancelled_at = CURRENT_TIMESTAMP
+              `;
+
+              updateParams.push(
+                note ||
+                "Transporter cancelled the trip."
+              );
+            }
+
+            if (
               nextStatus ===
               "EN_ROUTE_TO_FARMER"
             ) {
@@ -8167,32 +8192,21 @@ app.patch(
                 `, completed_at = CURRENT_TIMESTAMP`;
             }
 
+            const whereParamStart =
+              updateParams.length + 1;
+
             updateSql += `
-              , cancellation_reason = CASE
-                  WHEN $3 = 'CANCELLED' THEN $4
-                  ELSE cancellation_reason
-                END
-              , cancelled_at = CASE
-                  WHEN $3 = 'CANCELLED' THEN CURRENT_TIMESTAMP
-                  ELSE cancelled_at
-                END
+              WHERE id = $${whereParamStart}
+                AND transporter_id = $${whereParamStart + 1}
+                AND status = $${whereParamStart + 2}
+              RETURNING *
             `;
 
             updateParams.push(
-              nextStatus,
-              note ||
-                "Transporter cancelled the active trip.",
               request.id,
               transporter.id,
               request.status
             );
-
-            updateSql += `
-              WHERE id = $5
-                AND transporter_id = $6
-                AND status = $7
-              RETURNING *
-            `;
 
             const result =
               await client.query(
@@ -8270,7 +8284,15 @@ app.patch(
           request.id
         );
 
-      await notifyTransportFarmer({
+      res.json({
+        success: true,
+        message:
+          "Transport status updated successfully.",
+        request:
+          hydrated,
+      });
+
+      void notifyTransportFarmer({
         request:
           hydrated,
         type:
@@ -8285,14 +8307,11 @@ app.patch(
             hydrated.farmer_language ||
               "en"
           ),
-      });
-
-      return res.json({
-        success: true,
-        message:
-          "Transport status updated successfully.",
-        request:
-          hydrated,
+      }).catch((notificationError) => {
+        console.error(
+          "Transport notification error:",
+          notificationError
+        );
       });
     } catch (
       error
