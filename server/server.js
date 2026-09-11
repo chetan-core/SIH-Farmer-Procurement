@@ -7980,6 +7980,49 @@ app.patch(
 );
 
 
+function getTransportStatusMessage(status, language = "en") {
+  const key = normalizeTransportStatus(status);
+
+  const messages = {
+    en: {
+      REQUESTED: "A transport request is waiting for a transporter.",
+      ASSIGNED: "A transporter has accepted your transport request.",
+      EN_ROUTE_TO_FARMER: "Your transporter is travelling to the pickup location.",
+      CROP_PICKED_UP: "Your crop has been picked up by the transporter.",
+      EN_ROUTE_TO_CENTER: "Your crop is travelling to the procurement center.",
+      DELIVERED: "Your crop has been delivered to the procurement center.",
+      COMPLETED: "Your transport trip has been completed.",
+      CANCELLED: "Your transport trip has been cancelled by the transporter.",
+    },
+    hi: {
+      REQUESTED: "आपके परिवहन अनुरोध के लिए ट्रांसपोर्टर की प्रतीक्षा है।",
+      ASSIGNED: "एक ट्रांसपोर्टर ने आपका परिवहन अनुरोध स्वीकार किया है।",
+      EN_ROUTE_TO_FARMER: "ट्रांसपोर्टर पिकअप स्थान की ओर आ रहा है।",
+      CROP_PICKED_UP: "ट्रांसपोर्टर ने आपकी फसल उठा ली है।",
+      EN_ROUTE_TO_CENTER: "आपकी फसल खरीद केंद्र की ओर जा रही है।",
+      DELIVERED: "आपकी फसल खरीद केंद्र पहुंच गई है।",
+      COMPLETED: "आपकी परिवहन यात्रा पूरी हो गई है।",
+      CANCELLED: "ट्रांसपोर्टर ने आपकी परिवहन यात्रा रद्द कर दी है।",
+    },
+    te: {
+      REQUESTED: "మీ రవాణా అభ్యర్థనకు ట్రాన్స్‌పోర్టర్ కోసం వేచి ఉంది.",
+      ASSIGNED: "ఒక ట్రాన్స్‌పోర్టర్ మీ రవాణా అభ్యర్థనను అంగీకరించారు.",
+      EN_ROUTE_TO_FARMER: "ట్రాన్స్‌పోర్టర్ పికప్ ప్రదేశానికి వస్తున్నారు.",
+      CROP_PICKED_UP: "ట్రాన్స్‌పోర్టర్ మీ పంటను తీసుకున్నారు.",
+      EN_ROUTE_TO_CENTER: "మీ పంట కొనుగోలు కేంద్రానికి వెళుతోంది.",
+      DELIVERED: "మీ పంట కొనుగోలు కేంద్రానికి చేరింది.",
+      COMPLETED: "మీ రవాణా ప్రయాణం పూర్తయింది.",
+      CANCELLED: "ట్రాన్స్‌పోర్టర్ మీ రవాణా ప్రయాణాన్ని రద్దు చేశారు.",
+    },
+  };
+
+  return (
+    messages[language]?.[key] ||
+    messages.en[key] ||
+    `Transport status changed to ${key}.`
+  );
+}
+
 app.patch(
   "/api/transport/requests/:id/status",
   async (
@@ -8063,11 +8106,6 @@ app.patch(
           request.status
         );
 
-      /*
-       * Transporters may cancel any trip that is still active,
-       * including DELIVERED. Cancellation is a terminal action and
-       * does not depend on the normal forward-only lifecycle.
-       */
       const isActiveCancellation =
         nextStatus === "CANCELLED" &&
         isTransportActiveStatus(
@@ -8146,9 +8184,7 @@ app.patch(
               finalFare,
             ];
 
-            if (
-              nextStatus === "CANCELLED"
-            ) {
+            if (nextStatus === "CANCELLED") {
               updateSql += `,
                 cancellation_reason = $3,
                 cancelled_at = CURRENT_TIMESTAMP
@@ -8292,6 +8328,11 @@ app.patch(
           hydrated,
       });
 
+      /*
+       * Notification delivery is best-effort. A missing/failed SMS or
+       * notification helper must never turn a successful DB status update
+       * into an HTTP error or attempt a second response.
+       */
       void notifyTransportFarmer({
         request:
           hydrated,
