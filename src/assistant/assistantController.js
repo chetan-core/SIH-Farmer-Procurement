@@ -4141,10 +4141,106 @@ async function submitBookingThroughFarmerBook(
   options
 ) {
 
-  const safe =
+  /*
+   * Resolve the procurement center one final time before
+   * validation/submission. The conversational booking state can
+   * contain the center name while the database-facing centerId is
+   * still missing. Never allow confirmation to proceed in that case.
+   */
+  let safe =
     assistantBooking.normalize(
       state
     );
+
+
+  if (
+    !safe.centerId &&
+    typeof assistantBooking.getBookingAvailabilityContext ===
+      "function"
+  ) {
+
+    const availability =
+      assistantBooking.getBookingAvailabilityContext() ||
+      {};
+
+    const centers =
+      Array.isArray(
+        availability.availableCenters
+      )
+        ? availability.availableCenters
+        : [];
+
+    if (
+      centers.length
+    ) {
+
+      const wanted =
+        String(
+          safe.centerName ||
+          ""
+        )
+          .trim()
+          .toLowerCase();
+
+      const matched =
+        wanted
+          ? centers.find(
+              center => {
+                const name =
+                  String(
+                    center?.name ||
+                    center?.centerName ||
+                    center?.title ||
+                    ""
+                  )
+                    .trim()
+                    .toLowerCase();
+
+                return (
+                  name &&
+                  (name === wanted ||
+                    name.includes(wanted) ||
+                    wanted.includes(name))
+                );
+              }
+            )
+          : null;
+
+      const selected =
+        matched ||
+        centers.find(
+          center =>
+            center?.id !== undefined &&
+            center?.id !== null &&
+            String(
+              center.id
+            ).trim() !== ""
+        );
+
+      if (
+        selected?.id !== undefined &&
+        selected?.id !== null &&
+        String(
+          selected.id
+        ).trim() !== ""
+      ) {
+        safe =
+          assistantBooking.normalize({
+            ...safe,
+            centerId:
+              selected.id,
+            centerName:
+              selected.name ||
+              selected.centerName ||
+              selected.title ||
+              safe.centerName ||
+              null,
+          });
+      }
+
+    }
+
+  }
 
 
   const validation =
