@@ -2084,7 +2084,7 @@ function FarmerSettings() {
 
 
             <h1>
-              {!savedFarmer?.village ? "Complete Your Profile" : "Account & preferences"}
+              {!farmer?.village ? "Complete Your Profile" : "Account & preferences"}
             </h1>
 
 
