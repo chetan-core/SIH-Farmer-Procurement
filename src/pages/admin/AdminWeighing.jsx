@@ -245,21 +245,7 @@ function AdminWeighing() {
       );
 
 
-    function handleLanguageChange() {
-
-      setLanguage(
-        localStorage.getItem(
-          "krishisetu-language"
-        ) || "en"
-      );
-
-    }
-
-
-    window.addEventListener(
-      "storage",
-      handleLanguageChange
-    );
+    
 
 
     return () => {
@@ -269,16 +255,7 @@ function AdminWeighing() {
       );
 
 
-      window.removeEventListener(
-        "krishisetu-admin-refresh",
-        handleExternalRefresh
-      );
-
-
-      window.removeEventListener(
-        "storage",
-        handleLanguageChange
-      );
+      
 
     };
 
