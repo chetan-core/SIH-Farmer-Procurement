@@ -7139,18 +7139,12 @@ async function createTransportRequestHandler(
           });
       }
 
-      let safeEstimatedFare =
-        null;
-
-      if (
-        Number.isFinite(
-          estimatedFare
-        ) &&
-        estimatedFare >= 100
-      ) {
-        safeEstimatedFare =
-          estimatedFare;
+      
+      if (!Number.isFinite(estimatedFare) || estimatedFare < 100) {
+        return res.status(400).json({ success: false, message: "Estimated fare must be at least 100." });
       }
+      let safeEstimatedFare = estimatedFare;
+
 
       const farmerRegion = {
         village: String(farmer.village || '').trim(),
