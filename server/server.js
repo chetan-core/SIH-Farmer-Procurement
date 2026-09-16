@@ -8262,7 +8262,7 @@ app.patch(
         Number.isFinite(
           finalFareNumber
         ) &&
-        finalFareNumber > 0
+        finalFareNumber >= 100
           ? finalFareNumber
           : request.final_fare;
 
@@ -8276,12 +8276,12 @@ app.patch(
        */
       if (
         nextStatus === "COMPLETED" &&
-        !(Number.isFinite(Number(finalFare)) && Number(finalFare) > 0)
+        !(Number.isFinite(Number(finalFare)) && Number(finalFare) >= 100)
       ) {
         return res.status(409).json({
           success: false,
           message:
-            "A valid final transport fare greater than ₹0 is required before completing the trip.",
+            "A valid final transport fare of at least ₹100 is required before completing the trip.",
         });
       }
 
@@ -8890,7 +8890,7 @@ app.post(
 
       const amount = Number(request.final_fare);
 
-      if (!Number.isFinite(amount) || amount <= 0) {
+      if (!Number.isFinite(amount) || amount < 100) {
         return res.status(409).json({
           success: false,
           message:

@@ -1424,10 +1424,7 @@ export default function TransporterTrip() {
         );
 
       const needsFareBeforePickup =
-        [
-          "EN_ROUTE_TO_FARMER",
-          "CROP_PICKED_UP",
-        ].includes(next) &&
+        ["EN_ROUTE_TO_FARMER", "CROP_PICKED_UP", "COMPLETED"].includes(next) &&
         !currentFare;
 
       if (needsFareBeforePickup) {
@@ -1446,7 +1443,7 @@ export default function TransporterTrip() {
 
       if (
         !Number.isFinite(fare) ||
-        fare <= 0
+        fare < 100
       ) {
         setFareError(copy.fareRequired);
         return;
