@@ -2887,9 +2887,7 @@ const TWILIO_TRIAL_TEMPLATE =
   "sms_event_notifications";
 
 
-async function sendSms(
-  number
-) {
+async function sendSms(number, customMessage = null) {
 
   const accountSid =
     process.env.TWILIO_ACCOUNT_SID;
@@ -3051,8 +3049,7 @@ async function sendSms(
         from:
           from,
 
-        body:
-          TWILIO_TRIAL_TEMPLATE,
+        body: customMessage || TWILIO_TRIAL_TEMPLATE,
 
       });
 
@@ -4503,6 +4500,22 @@ app.post("/api/farmers/auth/send-otp", async (req, res) => {
     if (!process.env.EMAIL_USER) {
       console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
     }
+
+    // --- PHONE OTP SYSTEM ---
+    if (SMS_ENABLED) {
+      console.log(`[Twilio OTP] Attempting to send OTP ${otp} to ${phone}`);
+      try {
+        const smsResult = await sendSms(phone, `Your KrishiSetu login OTP is ${otp}. Valid for 10 minutes.`);
+        if (!smsResult.sent) {
+          console.warn("[Twilio OTP] SMS failed to send:", smsResult.reason);
+        } else {
+          console.log(`[Twilio OTP] SMS successfully sent to ${phone}`);
+        }
+      } catch (smsErr) {
+        console.error("[Twilio OTP] Error sending SMS:", smsErr);
+      }
+    }
+
 
     res.json({ 
       success: true, 

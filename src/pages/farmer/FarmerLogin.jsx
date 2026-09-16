@@ -42,7 +42,7 @@ function FarmerLogin() {
       const data = await response.json();
       if (data.success) {
         setStep(2);
-        setSuccessMsg(`OTP sent to ${email}!`);
+        setSuccessMsg(`OTP sent to ${email} and your phone!`);
       } else {
         setError(data.message || "Failed to send OTP.");
       }
