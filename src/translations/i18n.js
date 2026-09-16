@@ -29,7 +29,6 @@ export const supportedLanguages = [
     label: "Telugu",
     nativeLabel: "తెలుగు",
   },
-,
   {
     id: "mr",
     label: "Marathi",
