@@ -182,21 +182,9 @@ function FarmerSettings() {
   ] =
     useState("");
 
-  const [
-    passwordForm,
-    setPasswordForm,
-  ] =
-    useState({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
+  
 
-  const [
-    passwordSaving,
-    setPasswordSaving,
-  ] =
-    useState(false);
+  
 
 
 
@@ -2942,125 +2930,7 @@ function FarmerSettings() {
 
 
 
-          <section className="farmer-settings-card">
-
-            <div className="farmer-settings-section-heading">
-
-              <div className="farmer-settings-section-icon">
-                <LockKeyhole size={19} />
-              </div>
-
-              <div>
-                <h2>
-                  Account security
-                </h2>
-
-                <p>
-                  Change your farmer account password securely.
-                </p>
-              </div>
-
-            </div>
-
-
-            <form
-              className="farmer-settings-grid"
-              onSubmit={handlePasswordChange}
-            >
-
-              <SettingsField
-                label="Current password"
-                icon={<LockKeyhole size={17} />}
-              >
-                <input
-                  type="password"
-                  value={
-                    passwordForm.currentPassword
-                  }
-                  onChange={event =>
-                    setPasswordForm(
-                      current => ({
-                        ...current,
-                        currentPassword:
-                          event.target.value,
-                      })
-                    )
-                  }
-                  autoComplete="current-password"
-                  placeholder="Current password"
-                />
-              </SettingsField>
-
-
-              <SettingsField
-                label="New password"
-                icon={<LockKeyhole size={17} />}
-              >
-                <input
-                  type="password"
-                  value={
-                    passwordForm.newPassword
-                  }
-                  onChange={event =>
-                    setPasswordForm(
-                      current => ({
-                        ...current,
-                        newPassword:
-                          event.target.value,
-                      })
-                    )
-                  }
-                  autoComplete="new-password"
-                  placeholder="At least 6 characters"
-                />
-              </SettingsField>
-
-
-              <SettingsField
-                label="Confirm new password"
-                icon={<LockKeyhole size={17} />}
-              >
-                <input
-                  type="password"
-                  value={
-                    passwordForm.confirmPassword
-                  }
-                  onChange={event =>
-                    setPasswordForm(
-                      current => ({
-                        ...current,
-                        confirmPassword:
-                          event.target.value,
-                      })
-                    )
-                  }
-                  autoComplete="new-password"
-                  placeholder="Repeat new password"
-                />
-              </SettingsField>
-
-
-              <div className="farmer-settings-password-action">
-
-                <button
-                  type="submit"
-                  className="farmer-settings-secondary"
-                  disabled={
-                    passwordSaving
-                  }
-                >
-                  <LockKeyhole size={17} />
-
-                  {passwordSaving
-                    ? "Changing..."
-                    : "Change password"}
-                </button>
-
-              </div>
-
-            </form>
-
-          </section>
+          
 
 
           <section className="farmer-settings-card">
