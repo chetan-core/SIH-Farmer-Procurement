@@ -4509,6 +4509,13 @@ app.post("/api/farmers/auth/verify-otp", async (req, res) => {
     try { existingByEmail = await get("SELECT * FROM farmers WHERE email = $1", [email]); } catch(e){}
     try { existingByPhone = await get("SELECT * FROM farmers WHERE phone = $1", [record.phone]); } catch(e){}
     
+    if (existingByEmail && existingByPhone && existingByEmail.id !== existingByPhone.id) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Conflict: This email and phone number belong to two different accounts. Please use a unique email and phone." 
+      });
+    }
+
     let farmer = existingByEmail || existingByPhone;
 
     if (!farmer) {
