@@ -7146,7 +7146,7 @@ async function createTransportRequestHandler(
         Number.isFinite(
           estimatedFare
         ) &&
-        estimatedFare > 0
+        estimatedFare >= 100
       ) {
         safeEstimatedFare =
           estimatedFare;
