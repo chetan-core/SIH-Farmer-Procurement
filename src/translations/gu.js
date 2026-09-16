@@ -1,4 +1,4 @@
-const en = {
+const gu = {
     crops: {
   wheat: "Wheat",
   paddy: "Paddy",

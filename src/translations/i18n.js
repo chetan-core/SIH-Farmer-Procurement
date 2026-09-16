@@ -9,11 +9,7 @@ import kn from "./kn";
 import ml from "./ml";
 import pa from "./pa";
 
-const translations = {
-  en,
-  hi,
-  te,
-};
+const translations = { en, hi, te, mr, ta, bn, gu, kn, ml, pa };
 
 const LANGUAGE_KEY = "krishisetu-language";
 
