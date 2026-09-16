@@ -1,0 +1,8823 @@
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
+import {
+  createPortal,
+} from "react-dom";
+
+import {
+  ArrowLeft,
+  ArrowRight,
+  CalendarDays,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  CircleHelp,
+  Clock3,
+  Info,
+  Leaf,
+  LoaderCircle,
+  MapPin,
+  Scale,
+  ShieldCheck,
+  Wheat,
+} from "lucide-react";
+
+import {
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router";
+
+import Header from "../../components/Header";
+import Button from "../../components/Button";
+import CropIcon from "../../components/CropIcon";
+
+import {
+  useLanguage,
+} from "../../translations/LanguageContext";
+
+import {
+  getCurrentFarmer,
+  getState,
+} from "../../data/appStore";
+
+import {
+  syncBookingToPrototype,
+} from "../../data/bookingBridge";
+
+import {
+  loadBookingDraft,
+  updateBookingDraft,
+  clearBookingDraft,
+  saveBookingAvailabilityContext,
+} from "../../assistant/assistantBooking";
+
+import {
+  getBookingState,
+} from "../../assistant/assistantController";
+
+
+function PortalDropdown({
+  open,
+  anchorRef,
+  children,
+  onClose,
+  className = "",
+  maxHeight = 360,
+}) {
+
+  const menuRef =
+    useRef(null);
+
+  const [position, setPosition] =
+    useState({
+      top: 0,
+      left: 0,
+      width: 0,
+      maxHeight: 240,
+      placement: "bottom",
+      visible: false,
+    });
+
+
+  const calculatePosition =
+    () => {
+
+      const anchor =
+        anchorRef?.current;
+
+      if (!anchor) {
+        return null;
+      }
+
+      const rect =
+        anchor.getBoundingClientRect();
+
+      const gap =
+        8;
+
+      const padding =
+        12;
+
+      const viewportHeight =
+        window.innerHeight;
+
+      const viewportWidth =
+        window.innerWidth;
+
+      const width =
+        Math.min(
+          rect.width,
+          viewportWidth -
+            padding * 2
+        );
+
+      const left =
+        Math.max(
+          padding,
+          Math.min(
+            rect.left,
+            viewportWidth -
+              width -
+              padding
+          )
+        );
+
+      const spaceBelow =
+        viewportHeight -
+        rect.bottom -
+        gap -
+        padding;
+
+      const spaceAbove =
+        rect.top -
+        gap -
+        padding;
+
+      const requestedHeight =
+        Math.min(
+          Number(maxHeight) || 360,
+          viewportHeight -
+            padding * 2
+        );
+
+      const minimumUsefulHeight =
+        Math.min(
+          180,
+          requestedHeight
+        );
+
+      const openAbove =
+        spaceBelow <
+          minimumUsefulHeight &&
+        spaceAbove >
+          spaceBelow;
+
+      const availableSpace =
+        Math.max(
+          140,
+          openAbove
+            ? spaceAbove
+            : spaceBelow
+        );
+
+      const finalHeight =
+        Math.min(
+          requestedHeight,
+          availableSpace
+        );
+
+      const top =
+        openAbove
+          ? Math.max(
+              padding,
+              rect.top -
+                gap -
+                finalHeight
+            )
+          : Math.min(
+              rect.bottom +
+                gap,
+              viewportHeight -
+                padding -
+                finalHeight
+            );
+
+      return {
+        top,
+        left,
+        width,
+        maxHeight:
+          finalHeight,
+        placement:
+          openAbove
+            ? "top"
+            : "bottom",
+      };
+    };
+
+
+  const updatePosition =
+    () => {
+
+      const next =
+        calculatePosition();
+
+      if (!next) {
+        return;
+      }
+
+      setPosition({
+        ...next,
+        visible: true,
+      });
+    };
+
+
+  useLayoutEffect(() => {
+
+    if (!open) {
+      return;
+    }
+
+    updatePosition();
+
+  }, [
+    open,
+    maxHeight,
+  ]);
+
+
+  useEffect(() => {
+
+    if (!open) {
+      return;
+    }
+
+    let frame = null;
+
+    const schedulePosition =
+      () => {
+
+        if (frame !== null) {
+          cancelAnimationFrame(
+            frame
+          );
+        }
+
+        frame =
+          requestAnimationFrame(
+            updatePosition
+          );
+      };
+
+
+    const handleOutsidePointer =
+      event => {
+
+        const target =
+          event.target;
+
+        if (
+          menuRef.current?.contains(
+            target
+          )
+        ) {
+          return;
+        }
+
+        if (
+          anchorRef?.current?.contains(
+            target
+          )
+        ) {
+          return;
+        }
+
+        onClose?.();
+      };
+
+
+    const handleEscape =
+      event => {
+
+        if (
+          event.key ===
+          "Escape"
+        ) {
+          onClose?.();
+        }
+
+      };
+
+
+    window.addEventListener(
+      "resize",
+      schedulePosition,
+      {
+        passive: true,
+      }
+    );
+
+    window.addEventListener(
+      "scroll",
+      schedulePosition,
+      {
+        capture: true,
+        passive: true,
+      }
+    );
+
+    document.addEventListener(
+      "pointerdown",
+      handleOutsidePointer,
+      true
+    );
+
+    document.addEventListener(
+      "keydown",
+      handleEscape
+    );
+
+
+    return () => {
+
+      if (frame !== null) {
+        cancelAnimationFrame(
+          frame
+        );
+      }
+
+      window.removeEventListener(
+        "resize",
+        schedulePosition
+      );
+
+      window.removeEventListener(
+        "scroll",
+        schedulePosition,
+        true
+      );
+
+      document.removeEventListener(
+        "pointerdown",
+        handleOutsidePointer,
+        true
+      );
+
+      document.removeEventListener(
+        "keydown",
+        handleEscape
+      );
+
+    };
+
+  }, [
+    open,
+    anchorRef,
+    onClose,
+  ]);
+
+
+  if (
+    !open ||
+    typeof document ===
+      "undefined"
+  ) {
+    return null;
+  }
+
+
+  return createPortal(
+
+    <div
+      ref={
+        menuRef
+      }
+      className={
+        `krishi-book-portal-dropdown ${
+          className
+        }`
+      }
+      data-placement={
+        position.placement
+      }
+      style={{
+        position:
+          "fixed",
+
+        top:
+          position.top,
+
+        left:
+          position.left,
+
+        width:
+          position.width,
+
+        maxHeight:
+          position.maxHeight,
+
+        zIndex:
+          2147483000,
+
+        visibility:
+          position.visible
+            ? "visible"
+            : "hidden",
+
+        overflowY:
+          "auto",
+
+        overflowX:
+          "hidden",
+
+        boxSizing:
+          "border-box",
+
+        overscrollBehavior:
+          "contain",
+
+        WebkitOverflowScrolling:
+          "touch",
+      }}
+      onWheel={
+        event => {
+          event.stopPropagation();
+        }
+      }
+    >
+
+      {children}
+
+    </div>,
+
+    document.body
+  );
+}
+
+
+
+const API_URL =
+  import.meta.env.VITE_API_URL;
+
+
+/* =========================================================
+   LANGUAGE COPY
+========================================================= */
+
+const languageCopy = {
+
+  en: {
+
+    bookingEyebrow:
+      "FARMER BOOKING",
+
+    liveAvailability:
+      "Live availability",
+
+    title:
+      "Plan your procurement visit.",
+
+    editTitle:
+      "Correct your booking.",
+
+    description:
+      "Tell us what you are bringing, choose your procurement center and reserve a time window that works for you.",
+
+    editDescription:
+      "Update the crop, quantity, center or arrival window for your existing booking. The system checks live capacity before saving.",
+
+    secureTitle:
+      "Secure booking record",
+
+    secureText:
+      "Your booking is linked to your farmer account.",
+
+    reserveTitle:
+      "Reserve your arrival window",
+
+    reserveText:
+      "Choose from currently available slots.",
+
+    tokenTitle:
+      "Get a digital token",
+
+    tokenText:
+      "The token is generated after confirmation.",
+
+    stepOne:
+      "STEP 1",
+
+    produceTitle:
+      "What are you bringing?",
+
+    produceDescription:
+      "Select your crop and enter the approximate quantity you expect to bring.",
+
+    crop:
+      "Crop / Produce",
+
+    cropSelected:
+      "Produce selected for this visit",
+
+    agriculturalProduce:
+      "Agricultural produce",
+
+    quantity:
+      "Estimated quantity",
+
+    quantityHelp:
+      "Approximate weight is enough. Final weight is recorded at the center.",
+
+    quantityTip:
+      "You do not need to know the exact weight now. Give us your best estimate; the procurement team will record the actual quantity during weighing.",
+
+    stepTwo:
+      "STEP 2",
+
+    whereTitle:
+      "Where will you bring it?",
+
+    whereDescription:
+      "Select the procurement center where you plan to deliver your produce.",
+
+    center:
+      "Procurement center",
+
+    selectCenter:
+      "Select procurement center",
+
+    chooseCenter:
+      "Choose a center for your booking",
+
+    openWindows:
+      "Open procurement windows",
+
+    produceIntake:
+      "Produce intake",
+
+    bookingsSlot:
+      "bookings / slot",
+
+    near:
+      "Near",
+
+    preferredDate:
+      "Preferred arrival date",
+
+    chooseDate:
+      "Choose a date",
+
+    readyCheck:
+      "READY TO CHECK?",
+
+    findWindow:
+      "Find an available arrival window",
+
+    checkText:
+      "We'll check the latest bookings for your selected center and date.",
+
+    checking:
+      "Checking...",
+
+    review:
+      "Review details",
+
+    yourBooking:
+      "YOUR BOOKING",
+
+    estimated:
+      "estimated",
+
+    notEntered:
+      "Not entered",
+
+    chooseWindow:
+      "Choose a window below",
+
+    bookingStatus:
+      "BOOKING STATUS",
+
+    readyConfirm:
+      "Ready to confirm",
+
+    chooseArrival:
+      "Choose an arrival window",
+
+    detailsProgress:
+      "Details in progress",
+
+    finalSecurity:
+      "Your final token is generated only after the booking is successfully saved.",
+
+    needHelp:
+      "Need help choosing a slot?",
+
+    helpText:
+      "Pick a window you can comfortably reach. Avoid arriving significantly earlier than your assigned time.",
+
+    bookingHelp:
+      "Booking help",
+
+    windowsAvailable:
+      "Windows available",
+
+    chooseArrivalWindow:
+      "Choose your arrival window",
+
+    availabilityText:
+      "Select a time when you can reach the procurement center comfortably. Your token will be tied to this window.",
+
+    availableWindows:
+      "Available windows",
+
+    openCapacity:
+      "Open capacity",
+
+    placesRemaining:
+      "places remaining",
+
+    selectedDate:
+      "SELECTED DATE",
+
+    limitedAvailability:
+      "Limited availability",
+
+    nearlyFull:
+      "Nearly full",
+
+    goodAvailability:
+      "Good availability",
+
+    full:
+      "Full",
+
+    noPlaces:
+      "No places remaining",
+
+    selectedWindow:
+      "SELECTED ARRIVAL WINDOW",
+
+    change:
+      "Change",
+
+    finalStep:
+      "FINAL STEP",
+
+    checkEverything:
+      "Check everything before confirming.",
+
+    finalText:
+      "Once confirmed, your booking will be saved and a unique token will be generated.",
+
+    whatHappens:
+      "What happens after confirmation?",
+
+    afterText:
+      "Your booking is saved to KrishiSetu, assigned a unique token, and made available to the procurement team. You can then open the token page to follow the booking status.",
+
+    arriveText:
+      "Please arrive during your selected window and keep your produce ready.",
+
+    saving:
+      "Saving booking...",
+
+    confirm:
+      "Confirm booking",
+
+    saveChanges:
+      "Save booking changes",
+
+    traceable:
+      "Your booking is traceable",
+
+    traceableText:
+      "A unique token connects your booking with the procurement workflow.",
+
+    arriveDuring:
+      "Arrive during your window",
+
+    arriveDuringText:
+      "Choosing a suitable time helps keep the procurement queue organised.",
+
+    assistance:
+      "Need assistance?",
+
+    assistanceText:
+      "Read booking guidance and common questions.",
+
+    statusReady:
+      "Ready to confirm",
+
+  },
+
+
+  hi: {
+
+    bookingEyebrow:
+      "किसान बुकिंग",
+
+    liveAvailability:
+      "लाइव उपलब्धता",
+
+    title:
+      "अपनी खरीद यात्रा की योजना बनाएं।",
+
+    editTitle:
+      "अपनी बुकिंग सुधारें।",
+
+    description:
+      "बताएं कि आप क्या लेकर आ रहे हैं, खरीद केंद्र चुनें और अपने लिए सही समय बुक करें।",
+
+    editDescription:
+      "अपनी मौजूदा बुकिंग में फसल, मात्रा, केंद्र या आने का समय बदलें। सेव करने से पहले लाइव उपलब्धता जाँची जाएगी।",
+
+    secureTitle:
+      "सुरक्षित बुकिंग रिकॉर्ड",
+
+    secureText:
+      "आपकी बुकिंग आपके किसान खाते से जुड़ी है।",
+
+    reserveTitle:
+      "आने का समय सुरक्षित करें",
+
+    reserveText:
+      "उपलब्ध समय स्लॉट में से चुनें।",
+
+    tokenTitle:
+      "डिजिटल टोकन प्राप्त करें",
+
+    tokenText:
+      "पुष्टि के बाद टोकन बनाया जाएगा।",
+
+    stepOne:
+      "चरण 1",
+
+    produceTitle:
+      "आप क्या लेकर आ रहे हैं?",
+
+    produceDescription:
+      "अपनी फसल चुनें और अनुमानित मात्रा दर्ज करें।",
+
+    crop:
+      "फसल / उपज",
+
+    cropSelected:
+      "इस यात्रा के लिए चुनी गई उपज",
+
+    agriculturalProduce:
+      "कृषि उपज",
+
+    quantity:
+      "अनुमानित मात्रा",
+
+    quantityHelp:
+      "अनुमानित वजन पर्याप्त है। अंतिम वजन केंद्र पर दर्ज होगा।",
+
+    quantityTip:
+      "अभी सटीक वजन जानना जरूरी नहीं है। अनुमानित मात्रा दें; अंतिम मात्रा वजन के समय दर्ज की जाएगी।",
+
+    stepTwo:
+      "चरण 2",
+
+    whereTitle:
+      "आप इसे कहाँ लाएंगे?",
+
+    whereDescription:
+      "वह खरीद केंद्र चुनें जहाँ आप अपनी उपज लाना चाहते हैं।",
+
+    center:
+      "खरीद केंद्र",
+
+    selectCenter:
+      "खरीद केंद्र चुनें",
+
+    chooseCenter:
+      "अपनी बुकिंग के लिए केंद्र चुनें",
+
+    openWindows:
+      "खुले खरीद समय",
+
+    produceIntake:
+      "उपज स्वीकार",
+
+    bookingsSlot:
+      "बुकिंग / स्लॉट",
+
+    near:
+      "पास",
+
+    preferredDate:
+      "पसंदीदा आने की तारीख",
+
+    chooseDate:
+      "तारीख चुनें",
+
+    readyCheck:
+      "जाँच के लिए तैयार?",
+
+    findWindow:
+      "उपलब्ध समय खोजें",
+
+    checkText:
+      "हम आपके चुने हुए केंद्र और तारीख की नवीनतम बुकिंग जाँचेंगे।",
+
+    checking:
+      "जाँच हो रही है...",
+
+    review:
+      "विवरण की समीक्षा करें",
+
+    yourBooking:
+      "आपकी बुकिंग",
+
+    estimated:
+      "अनुमानित",
+
+    notEntered:
+      "दर्ज नहीं किया गया",
+
+    chooseWindow:
+      "नीचे समय चुनें",
+
+    bookingStatus:
+      "बुकिंग स्थिति",
+
+    readyConfirm:
+      "पुष्टि के लिए तैयार",
+
+    chooseArrival:
+      "आने का समय चुनें",
+
+    detailsProgress:
+      "विवरण प्रगति में",
+
+    finalSecurity:
+      "बुकिंग सफलतापूर्वक सेव होने के बाद आपका टोकन बनाया जाएगा।",
+
+    needHelp:
+      "समय चुनने में सहायता चाहिए?",
+
+    helpText:
+      "ऐसा समय चुनें जब आप आसानी से केंद्र पहुँच सकें। अपने समय से बहुत पहले आने से बचें।",
+
+    bookingHelp:
+      "बुकिंग सहायता",
+
+    windowsAvailable:
+      "उपलब्ध समय",
+
+    chooseArrivalWindow:
+      "अपना आने का समय चुनें",
+
+    availabilityText:
+      "ऐसा समय चुनें जब आप आराम से खरीद केंद्र पहुँच सकें। आपका टोकन इसी समय से जुड़ा होगा।",
+
+    availableWindows:
+      "उपलब्ध समय",
+
+    openCapacity:
+      "उपलब्ध क्षमता",
+
+    placesRemaining:
+      "स्थान शेष",
+
+    selectedDate:
+      "चयनित तारीख",
+
+    limitedAvailability:
+      "सीमित उपलब्धता",
+
+    nearlyFull:
+      "लगभग पूरा",
+
+    goodAvailability:
+      "अच्छी उपलब्धता",
+
+    full:
+      "पूरा",
+
+    noPlaces:
+      "कोई स्थान शेष नहीं",
+
+    selectedWindow:
+      "चयनित आने का समय",
+
+    change:
+      "बदलें",
+
+    finalStep:
+      "अंतिम चरण",
+
+    checkEverything:
+      "पुष्टि से पहले सभी विवरण जाँचें।",
+
+    finalText:
+      "पुष्टि के बाद आपकी बुकिंग सेव होगी और एक विशेष टोकन बनाया जाएगा।",
+
+    whatHappens:
+      "पुष्टि के बाद क्या होगा?",
+
+    afterText:
+      "आपकी बुकिंग KrishiSetu में सेव होगी, एक टोकन दिया जाएगा और खरीद टीम को उपलब्ध कराई जाएगी।",
+
+    arriveText:
+      "चयनित समय के दौरान आएं और अपनी उपज तैयार रखें।",
+
+    saving:
+      "बुकिंग सेव हो रही है...",
+
+    confirm:
+      "बुकिंग की पुष्टि करें",
+
+    saveChanges:
+      "बुकिंग बदलाव सेव करें",
+
+    traceable:
+      "आपकी बुकिंग ट्रैक की जा सकती है",
+
+    traceableText:
+      "एक अद्वितीय टोकन आपकी बुकिंग को खरीद प्रक्रिया से जोड़ता है।",
+
+    arriveDuring:
+      "अपने समय पर आएं",
+
+    arriveDuringText:
+      "उपयुक्त समय चुनने से खरीद कतार व्यवस्थित रहती है।",
+
+    assistance:
+      "सहायता चाहिए?",
+
+    assistanceText:
+      "बुकिंग मार्गदर्शन और सामान्य प्रश्न देखें।",
+
+    statusReady:
+      "पुष्टि के लिए तैयार",
+
+  },
+
+
+  te: {
+
+    bookingEyebrow:
+      "రైతు బుకింగ్",
+
+    liveAvailability:
+      "లైవ్ అందుబాటు",
+
+    title:
+      "మీ కొనుగోలు సందర్శనను ప్లాన్ చేసుకోండి.",
+
+    editTitle:
+      "మీ బుకింగ్‌ను సరిచేయండి.",
+
+    description:
+      "మీరు తీసుకువచ్చే పంటను తెలియజేసి, కొనుగోలు కేంద్రాన్ని ఎంచుకుని, మీకు అనుకూలమైన సమయాన్ని బుక్ చేసుకోండి.",
+
+    editDescription:
+      "మీ ప్రస్తుత బుకింగ్‌లో పంట, పరిమాణం, కేంద్రం లేదా రాక సమయాన్ని మార్చండి. సేవ్ చేసే ముందు లైవ్ అందుబాటును తనిఖీ చేస్తాము.",
+
+    secureTitle:
+      "సురక్షిత బుకింగ్ రికార్డు",
+
+    secureText:
+      "మీ బుకింగ్ మీ రైతు ఖాతాతో అనుసంధానించబడింది.",
+
+    reserveTitle:
+      "రాక సమయాన్ని రిజర్వ్ చేయండి",
+
+    reserveText:
+      "అందుబాటులో ఉన్న సమయాల్లో ఎంచుకోండి.",
+
+    tokenTitle:
+      "డిజిటల్ టోకెన్ పొందండి",
+
+    tokenText:
+      "నిర్ధారణ తర్వాత టోకెన్ రూపొందించబడుతుంది.",
+
+    stepOne:
+      "దశ 1",
+
+    produceTitle:
+      "మీరు ఏమి తీసుకువస్తున్నారు?",
+
+    produceDescription:
+      "మీ పంటను ఎంచుకుని అంచనా పరిమాణాన్ని నమోదు చేయండి.",
+
+    crop:
+      "పంట / ఉత్పత్తి",
+
+    cropSelected:
+      "ఈ సందర్శన కోసం ఎంచుకున్న పంట",
+
+    agriculturalProduce:
+      "వ్యవసాయ ఉత్పత్తి",
+
+    quantity:
+      "అంచనా పరిమాణం",
+
+    quantityHelp:
+      "అంచనా బరువు సరిపోతుంది. తుది బరువు కేంద్రంలో నమోదు చేయబడుతుంది.",
+
+    quantityTip:
+      "ఇప్పుడే ఖచ్చితమైన బరువు తెలుసుకోవాల్సిన అవసరం లేదు. అంచనా పరిమాణాన్ని నమోదు చేయండి.",
+
+    stepTwo:
+      "దశ 2",
+
+    whereTitle:
+      "మీరు దీనిని ఎక్కడికి తీసుకువస్తారు?",
+
+    whereDescription:
+      "మీ పంటను తీసుకురావాలనుకునే కొనుగోలు కేంద్రాన్ని ఎంచుకోండి.",
+
+    center:
+      "కొనుగోలు కేంద్రం",
+
+    selectCenter:
+      "కొనుగోలు కేంద్రాన్ని ఎంచుకోండి",
+
+    chooseCenter:
+      "మీ బుకింగ్ కోసం కేంద్రాన్ని ఎంచుకోండి",
+
+    openWindows:
+      "అందుబాటులో ఉన్న కొనుగోలు సమయాలు",
+
+    produceIntake:
+      "ఉత్పత్తి స్వీకరణ",
+
+    bookingsSlot:
+      "బుకింగ్ / స్లాట్",
+
+    near:
+      "సమీపంలో",
+
+    preferredDate:
+      "ఇష్టమైన రాక తేదీ",
+
+    chooseDate:
+      "తేదీని ఎంచుకోండి",
+
+    readyCheck:
+      "తనిఖీ చేయడానికి సిద్ధంగా ఉన్నారా?",
+
+    findWindow:
+      "అందుబాటులో ఉన్న సమయాన్ని కనుగొనండి",
+
+    checkText:
+      "మీరు ఎంచుకున్న కేంద్రం మరియు తేదీకి సంబంధించిన తాజా బుకింగ్‌లను తనిఖీ చేస్తాము.",
+
+    checking:
+      "తనిఖీ చేస్తోంది...",
+
+    review:
+      "వివరాలను పరిశీలించండి",
+
+    yourBooking:
+      "మీ బుకింగ్",
+
+    estimated:
+      "అంచనా",
+
+    notEntered:
+      "నమోదు కాలేదు",
+
+    chooseWindow:
+      "క్రింద సమయాన్ని ఎంచుకోండి",
+
+    bookingStatus:
+      "బుకింగ్ స్థితి",
+
+    readyConfirm:
+      "నిర్ధారించడానికి సిద్ధంగా ఉంది",
+
+    chooseArrival:
+      "రాక సమయాన్ని ఎంచుకోండి",
+
+    detailsProgress:
+      "వివరాలు ప్రగతిలో ఉన్నాయి",
+
+    finalSecurity:
+      "బుకింగ్ విజయవంతంగా సేవ్ అయిన తర్వాత మీ టోకెన్ రూపొందించబడుతుంది.",
+
+    needHelp:
+      "సమయాన్ని ఎంచుకోవడంలో సహాయం కావాలా?",
+
+    helpText:
+      "మీరు సులభంగా కేంద్రానికి చేరుకోగల సమయాన్ని ఎంచుకోండి.",
+
+    bookingHelp:
+      "బుకింగ్ సహాయం",
+
+    windowsAvailable:
+      "అందుబాటులో ఉన్న సమయాలు",
+
+    chooseArrivalWindow:
+      "మీ రాక సమయాన్ని ఎంచుకోండి",
+
+    availabilityText:
+      "మీరు సౌకర్యంగా కొనుగోలు కేంద్రానికి చేరుకోగల సమయాన్ని ఎంచుకోండి.",
+
+    availableWindows:
+      "అందుబాటులో ఉన్న సమయాలు",
+
+    openCapacity:
+      "అందుబాటులో ఉన్న సామర్థ్యం",
+
+    placesRemaining:
+      "స్థానాలు మిగిలి ఉన్నాయి",
+
+    selectedDate:
+      "ఎంచుకున్న తేదీ",
+
+    limitedAvailability:
+      "పరిమిత అందుబాటు",
+
+    nearlyFull:
+      "దాదాపు నిండింది",
+
+    goodAvailability:
+      "మంచి అందుబాటు",
+
+    full:
+      "పూర్తి",
+
+    noPlaces:
+      "స్థానాలు మిగల్లేదు",
+
+    selectedWindow:
+      "ఎంచుకున్న రాక సమయం",
+
+    change:
+      "మార్చండి",
+
+    finalStep:
+      "చివరి దశ",
+
+    checkEverything:
+      "నిర్ధారించే ముందు అన్ని వివరాలను తనిఖీ చేయండి.",
+
+    finalText:
+      "నిర్ధారించిన తర్వాత మీ బుకింగ్ సేవ్ చేయబడుతుంది మరియు ప్రత్యేక టోకెన్ రూపొందించబడుతుంది.",
+
+    whatHappens:
+      "నిర్ధారణ తర్వాత ఏమి జరుగుతుంది?",
+
+    afterText:
+      "మీ బుకింగ్ KrishiSetuలో సేవ్ చేయబడుతుంది, ప్రత్యేక టోకెన్ కేటాయించబడుతుంది మరియు కొనుగోలు బృందానికి అందుబాటులో ఉంటుంది.",
+
+    arriveText:
+      "ఎంచుకున్న సమయానికి చేరుకుని మీ పంటను సిద్ధంగా ఉంచండి.",
+
+    saving:
+      "బుకింగ్ సేవ్ చేస్తోంది...",
+
+    confirm:
+      "బుకింగ్ నిర్ధారించండి",
+
+    saveChanges:
+      "బుకింగ్ మార్పులను సేవ్ చేయండి",
+
+    traceable:
+      "మీ బుకింగ్ ట్రాక్ చేయవచ్చు",
+
+    traceableText:
+      "ఒక ప్రత్యేక టోకెన్ మీ బుకింగ్‌ను కొనుగోలు ప్రక్రియతో అనుసంధానిస్తుంది.",
+
+    arriveDuring:
+      "మీ సమయానికి రండి",
+
+    arriveDuringText:
+      "సరైన సమయాన్ని ఎంచుకోవడం కొనుగోలు క్యూను సక్రమంగా ఉంచుతుంది.",
+
+    assistance:
+      "సహాయం కావాలా?",
+
+    assistanceText:
+      "బుకింగ్ మార్గదర్శకాలు మరియు సాధారణ ప్రశ్నలను చూడండి.",
+
+    statusReady:
+      "నిర్ధారించడానికి సిద్ధంగా ఉంది",
+
+  },
+
+};
+
+
+/* =========================================================
+   FARMER BOOK
+========================================================= */
+
+function FarmerBook() {
+
+  const navigate =
+    useNavigate();
+
+
+  const location =
+    useLocation();
+
+
+  const editBookingId =
+    new URLSearchParams(
+      location.search ||
+      ""
+    ).get("edit");
+
+
+  const isEditMode =
+    Boolean(editBookingId);
+
+
+  const {
+    t,
+    language,
+  } =
+    useLanguage();
+
+
+  const farmer =
+    getCurrentFarmer();
+
+
+  const appState =
+    getState();
+
+
+  const copy =
+    languageCopy[
+      language
+    ] ||
+    languageCopy.en;
+
+
+  /* =======================================================
+     STATE
+  ======================================================= */
+
+  const [
+    settings,
+    setSettings,
+  ] =
+  useState({
+    slotDuration:
+      30,
+
+    advanceBookingDays:
+      7,
+
+    maxQuantity:
+      5000,
+
+    defaultCapacity:
+      20,
+  });
+
+
+  const [
+    settingsLoading,
+    setSettingsLoading,
+  ] =
+  useState(true);
+
+
+  const [
+    settingsError,
+    setSettingsError,
+  ] =
+  useState("");
+
+
+  const [
+    centers,
+    setCenters,
+  ] =
+  useState([]);
+
+
+  const [
+    centersLoading,
+    setCentersLoading,
+  ] =
+  useState(true);
+
+
+  const [
+    crop,
+    setCrop,
+  ] =
+  useState("");
+
+
+  const [
+    quantity,
+    setQuantity,
+  ] =
+  useState("");
+
+
+  const [
+    centerId,
+    setCenterId,
+  ] =
+  useState("");
+
+
+  const [
+    date,
+    setDate,
+  ] =
+  useState("");
+
+
+  const [
+    openMenu,
+    setOpenMenu,
+  ] =
+  useState(null);
+
+
+  const cropSelectRef =
+    useRef(null);
+
+  const centerSelectRef =
+    useRef(null);
+
+
+  const [
+    available,
+    setAvailable,
+  ] =
+  useState(false);
+
+
+  const [
+    selectedSlot,
+    setSelectedSlot,
+  ] =
+  useState(null);
+
+
+  const [
+    bookings,
+    setBookings,
+  ] =
+  useState([]);
+
+
+  const [
+    loadingBookings,
+    setLoadingBookings,
+  ] =
+  useState(true);
+
+
+  const [
+    loadingAvailability,
+    setLoadingAvailability,
+  ] =
+  useState(false);
+
+
+  const [
+    confirming,
+    setConfirming,
+  ] =
+  useState(false);
+
+
+  const confirmingRef =
+    useRef(false);
+
+
+  const [
+    error,
+    setError,
+  ] =
+  useState("");
+
+
+  const [
+    centerSwitchMessage,
+    setCenterSwitchMessage,
+  ] =
+  useState("");
+
+
+  const [
+    availabilityCheckedAt,
+    setAvailabilityCheckedAt,
+  ] =
+  useState(null);
+
+
+  const [
+    bookingConfirmed,
+    setBookingConfirmed,
+  ] =
+  useState(false);
+
+
+  const [
+    editingBooking,
+    setEditingBooking,
+  ] =
+  useState(null);
+
+
+  const [
+    editingBookingLoading,
+    setEditingBookingLoading,
+  ] =
+  useState(false);
+
+
+  const editHydrationRef =
+    useRef(
+      ""
+    );
+
+
+  /* =======================================================
+     ASSISTANT BOOKING STATE
+  ======================================================= */
+
+  const assistantBooking =
+    location.state?.assistantBooking ||
+    null;
+
+
+  const assistantBookingKey =
+    assistantBooking
+      ? JSON.stringify(
+          assistantBooking
+        )
+      : "";
+
+  const assistantAutoConfirm =
+    Boolean(
+      location.state?.assistantAutoConfirm
+    );
+
+
+  const appliedAssistantBookingRef =
+    useRef("");
+
+  const assistantAutoConfirmKeyRef =
+    useRef("");
+
+  const assistantConfirmRequestRef =
+    useRef(null);
+
+  const assistantConfirmCompleteRef =
+    useRef(null);
+
+
+  const assistantSlotAppliedRef =
+    useRef("");
+
+
+  const assistantManagedRef =
+    useRef(
+      Boolean(assistantBooking)
+    );
+
+
+  /* =======================================================
+     CROPS
+  ======================================================= */
+
+  const crops =
+    Array.isArray(
+      appState?.crops
+    ) &&
+    appState.crops.length > 0
+      ? appState.crops
+      : [
+          {
+            id:
+              "wheat",
+            name:
+              "Wheat",
+          },
+          {
+            id:
+              "paddy",
+            name:
+              "Paddy",
+          },
+          {
+            id:
+              "maize",
+            name:
+              "Maize",
+          },
+          {
+            id:
+              "cotton",
+            name:
+              "Cotton",
+          },
+        ];
+
+
+  /* =======================================================
+     ACTIVE CENTERS
+  ======================================================= */
+
+  const availableCenters =
+    useMemo(
+      () =>
+        centers.filter(
+          center =>
+            Number(
+              center?.active ??
+              1
+            ) === 1
+        ),
+      [
+        centers,
+      ]
+    );
+
+
+  useEffect(() => {
+    const syncAssistantBooking = event => {
+      const explicitClear =
+        Boolean(event?.detail) &&
+        event.detail.active === false;
+
+      const storedBooking =
+        explicitClear
+          ? null
+          : getBookingState();
+
+      const booking =
+        storedBooking?.active
+          ? storedBooking
+          : !event && assistantBooking?.active
+            ? assistantBooking
+            : null;
+
+      if (!booking) {
+        if (explicitClear) {
+          assistantManagedRef.current = false;
+          setCrop('');
+          setQuantity('');
+          setCenterId('');
+          setDate('');
+          setSelectedSlot(current =>
+            current ? null : current
+          );
+          setAvailable(false);
+          setAvailabilityCheckedAt(null);
+          setCenterSwitchMessage('');
+          return;
+        }
+
+        if (!assistantBooking?.active) {
+          assistantManagedRef.current = false;
+        }
+
+        return;
+      }
+
+      assistantManagedRef.current =
+        booking.assistantManaged === true ||
+        Boolean(assistantBooking?.active);
+
+      if (booking.crop) {
+        const matchedCrop = crops.find(
+          item =>
+            String(item.id) === String(booking.crop) ||
+            String(item.name || '').toLowerCase() ===
+              String(booking.crop).toLowerCase()
+        );
+
+        if (matchedCrop) {
+          setCrop(current =>
+            String(current) === String(matchedCrop.id)
+              ? current
+              : matchedCrop.id
+          );
+        }
+      }
+
+      if (booking.quantity != null) {
+        const nextQuantity = String(booking.quantity);
+        setQuantity(current =>
+          current === nextQuantity ? current : nextQuantity
+        );
+      }
+
+      if (booking.centerId) {
+        const nextCenterId = String(booking.centerId);
+        setCenterId(current =>
+          String(current) === nextCenterId
+            ? current
+            : nextCenterId
+        );
+      }
+
+      if (booking.date) {
+        const nextDate = dateToOptionId(booking.date);
+        if (nextDate) {
+          setDate(current =>
+            current === nextDate ? current : nextDate
+          );
+        }
+      }
+
+      if (booking.slotStart) {
+        const nextSlot = {
+          id:
+            booking.slotId ||
+            String(booking.slotStart).replace(':', '-'),
+          start: String(booking.slotStart),
+          end: String(booking.slotEnd || ''),
+          display:
+            booking.slotDisplay ||
+            (booking.slotEnd
+              ? `${booking.slotStart} – ${booking.slotEnd}`
+              : String(booking.slotStart)),
+        };
+
+        setSelectedSlot(current =>
+          sameSlot(current, nextSlot) ? current : nextSlot
+        );
+      } else {
+        setSelectedSlot(current =>
+          current ? null : current
+        );
+      }
+    };
+
+    syncAssistantBooking();
+
+    window.addEventListener(
+      'krishisetu:assistant-booking-updated',
+      syncAssistantBooking
+    );
+
+    return () => {
+      window.removeEventListener(
+        'krishisetu:assistant-booking-updated',
+        syncAssistantBooking
+      );
+    };
+  }, [crops, assistantBooking]);
+
+  useEffect(() => {
+  if (assistantBooking?.active) return;
+
+  const draft = loadBookingDraft();
+
+  if (!draft) return;
+
+  if (draft.assistantManaged === true) {
+    assistantManagedRef.current = true;
+  }
+
+  if (draft.crop) {
+    const matchedCrop = crops.find(
+      (item) =>
+        item.id === draft.crop ||
+        item.name?.toLowerCase() === draft.crop?.toLowerCase()
+    );
+
+    if (matchedCrop) {
+      setCrop(matchedCrop.id);
+    }
+  }
+
+  if (draft.quantity) {
+    setQuantity(String(draft.quantity));
+  }
+
+  if (draft.centerId) {
+    setCenterId(String(draft.centerId));
+  }
+
+  if (draft.date) {
+    setDate(dateToOptionId(draft.date));
+  }
+
+  if (draft.slotStart) {
+    setSelectedSlot({
+      id:
+        draft.slotId ||
+        String(draft.slotStart).replace(':', '-'),
+      start: draft.slotStart,
+      end: draft.slotEnd || '',
+      display:
+        draft.slotDisplay ||
+        (draft.slotEnd
+          ? `${draft.slotStart} – ${draft.slotEnd}`
+          : String(draft.slotStart)),
+    });
+  }
+}, [crops]);
+
+  useEffect(() => {
+  if (
+    assistantBookingKey &&
+    appliedAssistantBookingRef.current !== assistantBookingKey
+  ) {
+    return;
+  }
+
+  if (!crop && !quantity && !centerId && !date) return;
+
+  const updates = {
+    crop: crop || null,
+    quantity: quantity ? Number(quantity) : null,
+    centerId: centerId || null,
+    date: dateOptionIdToIso(date),
+    slotStart: selectedSlot?.start || null,
+    slotEnd: selectedSlot?.end || null,
+  };
+
+  if (
+    assistantManagedRef.current
+  ) {
+    updates.assistantManaged = true;
+  }
+
+  updateBookingDraft(updates);
+}, [
+  crop,
+  quantity,
+  centerId,
+  date,
+  selectedSlot,
+]);
+  /* =======================================================
+     INITIAL CROP
+  ======================================================= */
+
+  useEffect(() => {
+
+    if (
+      crop ||
+      crops.length ===
+        0 ||
+      assistantManagedRef.current ||
+      isEditMode
+    ) {
+
+      return;
+
+    }
+
+
+    const preferredCrop =
+      farmer?.primaryCrop ||
+      farmer?.primary_crop;
+
+
+    const cropExists =
+      crops.some(
+        item =>
+          String(
+            item.id
+          ) ===
+          String(
+            preferredCrop
+          )
+      );
+
+
+    setCrop(
+      cropExists
+        ? preferredCrop
+        : crops[0].id
+    );
+
+  }, [
+    crops,
+    crop,
+    farmer?.primaryCrop,
+    farmer?.primary_crop,
+    isEditMode,
+  ]);
+
+
+  /* =======================================================
+     INITIAL QUANTITY
+  ======================================================= */
+
+  useEffect(() => {
+
+    const farmerQuantity =
+      farmer?.estimatedQuantity ??
+      farmer?.estimated_quantity ??
+      "";
+
+
+    if (
+      quantity === "" &&
+      Number(
+        farmerQuantity
+      ) > 0 &&
+      !assistantManagedRef.current
+    ) {
+
+      setQuantity(
+        String(
+          farmerQuantity
+        )
+      );
+
+    }
+
+  }, [
+    farmer?.estimatedQuantity,
+    farmer?.estimated_quantity,
+    quantity,
+  ]);
+
+
+  /* =======================================================
+     APPLY ASSISTANT BOOKING
+  ======================================================= */
+
+  useEffect(() => {
+
+    if (
+      !assistantBooking ||
+      !assistantBookingKey
+    ) {
+
+      return;
+
+    }
+
+    if (
+      appliedAssistantBookingRef.current ===
+      assistantBookingKey
+    ) {
+
+      return;
+
+    }
+
+    assistantManagedRef.current = true;
+
+    if (assistantBooking.crop) {
+      const requestedCrop =
+        String(assistantBooking.crop)
+          .trim()
+          .toLowerCase();
+
+      const matchingCrop =
+        crops.find(
+          item =>
+            String(item.id)
+              .trim()
+              .toLowerCase() === requestedCrop
+        );
+
+      setCrop(
+        matchingCrop?.id || ''
+      );
+    } else {
+      setCrop('');
+    }
+
+    const requestedQuantity = Number(
+      assistantBooking.quantity ??
+      assistantBooking.estimatedQuantity
+    );
+
+    setQuantity(
+      Number.isFinite(requestedQuantity) &&
+        requestedQuantity > 0
+        ? String(requestedQuantity)
+        : ''
+    );
+
+    if (
+      assistantBooking.centerId !== undefined &&
+      assistantBooking.centerId !== null &&
+      String(assistantBooking.centerId)
+    ) {
+      setCenterId(
+        String(assistantBooking.centerId)
+      );
+    } else {
+      setCenterId('');
+    }
+
+    if (assistantBooking.date) {
+      setDate(
+        dateToOptionId(assistantBooking.date)
+      );
+    } else {
+      setDate('');
+    }
+
+    if (assistantBooking.slotStart) {
+      const slot = {
+        id:
+          assistantBooking.slotId ||
+          String(assistantBooking.slotStart).replace(':', '-'),
+        start: String(assistantBooking.slotStart),
+        end: String(assistantBooking.slotEnd || ''),
+        display:
+          assistantBooking.slotDisplay ||
+          (assistantBooking.slotEnd
+            ? `${assistantBooking.slotStart} – ${assistantBooking.slotEnd}`
+            : String(assistantBooking.slotStart)),
+      };
+
+      setSelectedSlot(slot);
+    } else {
+      setSelectedSlot(null);
+    }
+
+    setAvailable(
+      Boolean(assistantBooking.slotStart)
+    );
+
+    assistantSlotAppliedRef.current = '';
+    appliedAssistantBookingRef.current =
+      assistantBookingKey;
+
+    setError('');
+    setCenterSwitchMessage('');
+  }, [
+    assistantBooking,
+    assistantBookingKey,
+    crops,
+  ]);
+
+  /* =======================================================
+     LOAD CENTERS
+  ======================================================= */
+
+  useEffect(() => {
+
+    let cancelled =
+      false;
+
+
+    async function loadCenters() {
+
+      setCentersLoading(
+        true
+      );
+
+
+      try {
+
+        const response =
+          await fetch(
+            `${API_URL}/centers`
+          );
+
+
+        let data =
+          null;
+
+
+        try {
+
+          data =
+            await response.json();
+
+        } catch {
+
+          data =
+            null;
+
+        }
+
+
+        if (
+          !response.ok
+        ) {
+
+          throw new Error(
+            data?.message ||
+            "Unable to load procurement centers."
+          );
+
+        }
+
+
+        const rows =
+          Array.isArray(
+            data?.centers
+          )
+            ? data.centers
+            : [];
+
+
+        const activeRows =
+          rows.filter(
+            center =>
+              Number(
+                center?.active ??
+                1
+              ) === 1
+          );
+
+
+        if (
+          !cancelled
+        ) {
+
+          setCenters(
+            activeRows
+          );
+
+        }
+
+      } catch (
+        centerError
+      ) {
+
+        console.error(
+          "FarmerBook center loading error:",
+          centerError
+        );
+
+
+        if (
+          !cancelled
+        ) {
+
+          setCenters(
+            []
+          );
+
+          setError(
+            centerError?.message ||
+            "Unable to load procurement centers."
+          );
+
+        }
+
+      } finally {
+
+        if (
+          !cancelled
+        ) {
+
+          setCentersLoading(
+            false
+          );
+
+        }
+
+      }
+
+    }
+
+
+    loadCenters();
+
+
+    return () => {
+
+      cancelled =
+        true;
+
+    };
+
+  }, []);
+
+
+  /* =======================================================
+     SELECT VALID CENTER
+  ======================================================= */
+
+  useEffect(() => {
+
+    if (availableCenters.length === 0) {
+      if (!assistantManagedRef.current) {
+        setCenterId('');
+      }
+      return;
+    }
+
+    /*
+     * In assistant mode, never silently replace a missing or requested
+     * center with the first center. The assistant must be allowed to
+     * ask the farmer to choose one. A requested center may also arrive
+     * before the API has finished loading the centers, so keep the id
+     * untouched while we wait.
+     */
+    if (assistantManagedRef.current) {
+      return;
+    }
+
+    const preferredCenter =
+      farmer?.preferredCenterId ||
+      farmer?.preferred_center_id ||
+      '';
+
+    const preferredExists =
+      availableCenters.some(
+        center =>
+          String(center.id) ===
+          String(preferredCenter)
+      );
+
+    const currentExists =
+      availableCenters.some(
+        center =>
+          String(center.id) ===
+          String(centerId)
+      );
+
+    if (
+      preferredExists &&
+      !currentExists
+    ) {
+      setCenterId(preferredCenter);
+      return;
+    }
+
+    if (!currentExists) {
+      setCenterId(
+        availableCenters[0].id
+      );
+    }
+  }, [
+    availableCenters,
+    centerId,
+    farmer?.preferredCenterId,
+    farmer?.preferred_center_id,
+  ]);
+
+  /* =======================================================
+     SELECTED CENTER
+  ======================================================= */
+
+  const selectedCenter =
+    useMemo(
+      () => {
+        const match =
+          availableCenters.find(
+            center =>
+              String(center.id) ===
+              String(centerId)
+          ) || null;
+
+        if (match) return match;
+
+        if (assistantManagedRef.current) {
+          return null;
+        }
+
+        return availableCenters[0] || null;
+      },
+      [
+        availableCenters,
+        centerId,
+        assistantBookingKey,
+      ]
+    );
+
+
+  /* =======================================================
+     SETTINGS
+  ======================================================= */
+
+  useEffect(() => {
+
+    let cancelled =
+      false;
+
+
+    async function loadSettings() {
+
+      setSettingsLoading(
+        true
+      );
+
+
+      setSettingsError(
+        ""
+      );
+
+
+      try {
+
+        const response =
+          await fetch(
+            `${API_URL}/settings`
+          );
+
+
+        let data =
+          null;
+
+
+        try {
+
+          data =
+            await response.json();
+
+        } catch {
+
+          data =
+            null;
+
+        }
+
+
+        if (
+          !response.ok
+        ) {
+
+          throw new Error(
+            data?.message ||
+            "Unable to load booking settings."
+          );
+
+        }
+
+
+        if (
+          !cancelled &&
+          data?.settings
+        ) {
+
+          setSettings(
+            current => ({
+              ...current,
+              ...data.settings,
+            })
+          );
+
+        }
+
+      } catch (
+        settingsErrorValue
+      ) {
+
+        console.error(
+          "Booking settings error:",
+          settingsErrorValue
+        );
+
+
+        if (
+          !cancelled
+        ) {
+
+          setSettingsError(
+            settingsErrorValue?.message ||
+            "Unable to load booking settings."
+          );
+
+        }
+
+      } finally {
+
+        if (
+          !cancelled
+        ) {
+
+          setSettingsLoading(
+            false
+          );
+
+        }
+
+      }
+
+    }
+
+
+    loadSettings();
+
+
+    return () => {
+
+      cancelled =
+        true;
+
+    };
+
+  }, []);
+
+
+  /* =======================================================
+     DATES
+  ======================================================= */
+
+  const dates =
+    useMemo(
+      () =>
+        generateBookingDates(
+          Number(
+            settings?.advanceBookingDays ??
+            7
+          )
+        ),
+      [
+        settings?.advanceBookingDays,
+      ]
+    );
+
+
+  useEffect(() => {
+
+    const assistantState =
+      getBookingState();
+
+    if (assistantManagedRef.current) {
+      const assistantDate =
+        assistantState?.assistantManaged
+          ? assistantState.date
+          : null;
+
+      if (assistantDate) {
+        const matchingDate =
+          dates.find(
+            item =>
+              item.date === String(assistantDate) ||
+              item.id === String(assistantDate)
+          );
+
+        if (
+          matchingDate &&
+          date !== matchingDate.id
+        ) {
+          setDate(matchingDate.id);
+        }
+      }
+
+      /*
+       * Do not clear a farmer-selected date merely because the static
+       * route state has no date. Manual changes are persisted into the
+       * canonical assistant draft by the handlers below.
+       */
+      return;
+    }
+
+    if (dates.length === 0) {
+      if (date !== '') {
+        setDate('');
+      }
+      return;
+    }
+
+    const valid =
+      dates.some(
+        item =>
+          item.id === date
+      );
+
+    if (!valid) {
+      setDate(
+        dates[0].id
+      );
+    }
+  }, [
+    dates,
+  ]);
+
+  const selectedDate =
+    useMemo(
+      () => {
+        const match =
+          dates.find(
+            item =>
+              item.id === date
+          );
+
+        if (match) return match;
+
+        if (
+          assistantManagedRef.current
+        ) {
+          return null;
+        }
+
+        return dates[0] || null;
+      },
+      [
+        dates,
+        date,
+      ]
+    );
+
+
+  /* =======================================================
+     SELECTED CROP
+  ======================================================= */
+
+  const selectedCrop =
+    useMemo(
+      () => {
+        const match =
+          crops.find(
+            item =>
+              String(item?.id) ===
+              String(crop)
+          ) || null;
+
+        if (match) return match;
+
+        if (assistantManagedRef.current && !crop) {
+          return null;
+        }
+
+        return crops[0] || null;
+      },
+      [
+        crops,
+        crop,
+        assistantBookingKey,
+      ]
+    );
+
+
+  /* =======================================================
+     EDIT / RESCHEDULE EXISTING BOOKING
+  ======================================================= */
+
+  useEffect(() => {
+    if (
+      !isEditMode ||
+      !editBookingId ||
+      !farmer?.id ||
+      centersLoading ||
+      settingsLoading ||
+      availableCenters.length === 0 ||
+      dates.length === 0
+    ) {
+      return;
+    }
+
+    const hydrationKey =
+      `${editBookingId}:${farmer.id}`;
+
+    if (
+      editHydrationRef.current ===
+      hydrationKey
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadEditableBooking() {
+      setEditingBookingLoading(true);
+      setError("");
+
+      try {
+        const response =
+          await fetch(
+            `${API_URL}/bookings/${encodeURIComponent(editBookingId)}`
+          );
+
+        let data = null;
+        try {
+          data = await response.json();
+        } catch {
+          data = null;
+        }
+
+        if (!response.ok || !data?.booking) {
+          throw new Error(
+            data?.message ||
+            "Unable to load the booking you want to edit."
+          );
+        }
+
+        const current = data.booking;
+
+        if (
+          String(current.farmer_id || "") !==
+          String(farmer.id || "")
+        ) {
+          throw new Error(
+            "You can only edit your own booking."
+          );
+        }
+
+        if (
+          !["CONFIRMED", "LATE"].includes(
+            String(current.status || "CONFIRMED").toUpperCase()
+          )
+        ) {
+          throw new Error(
+            "This booking can no longer be edited because processing has already started."
+          );
+        }
+
+        const matchedCrop =
+          crops.find(item =>
+            String(item?.id || "") ===
+              String(current.crop || "") ||
+            String(item?.name || "")
+              .trim()
+              .toLowerCase() ===
+              String(current.crop || "")
+                .trim()
+                .toLowerCase()
+          );
+
+        if (!matchedCrop) {
+          throw new Error(
+            "The crop in this booking is no longer available."
+          );
+        }
+
+        const matchedCenter =
+          availableCenters.find(item =>
+            String(item?.id || "") ===
+            String(current.center_id || "")
+          );
+
+        if (!matchedCenter) {
+          throw new Error(
+            "The procurement center for this booking is no longer active."
+          );
+        }
+
+        const matchedDate =
+          dates.find(item =>
+            String(item?.date || "") ===
+            String(current.date || "")
+          );
+
+        if (!matchedDate) {
+          throw new Error(
+            "This booking date is no longer within the editable booking window."
+          );
+        }
+
+        if (cancelled) return;
+
+        editHydrationRef.current = hydrationKey;
+        setEditingBooking(current);
+        setCrop(matchedCrop.id);
+        setQuantity(
+          String(current.estimated_quantity ?? "")
+        );
+        setCenterId(
+          String(matchedCenter.id)
+        );
+        setDate(
+          String(matchedDate.id)
+        );
+        setSelectedSlot(null);
+        setAvailable(false);
+        setAvailabilityCheckedAt(null);
+        setCenterSwitchMessage("");
+        setBookingConfirmed(false);
+      } catch (loadError) {
+        if (!cancelled) {
+          setEditingBooking(null);
+          setError(
+            loadError?.message ||
+            "Unable to load the booking you want to edit."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setEditingBookingLoading(false);
+        }
+      }
+    }
+
+    loadEditableBooking();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    isEditMode,
+    editBookingId,
+    farmer?.id,
+    centersLoading,
+    settingsLoading,
+    availableCenters,
+    dates,
+    crops,
+  ]);
+
+
+  /* =======================================================
+     AVAILABILITY TEMPLATE
+  ======================================================= */
+
+  const availabilityTemplate =
+    useMemo(
+      () => {
+
+        if (
+          !selectedCenter
+        ) {
+
+          return [];
+
+        }
+
+
+        const openingTime =
+          selectedCenter.opening_time ||
+          selectedCenter.openingTime ||
+          "09:00";
+
+
+        const closingTime =
+          selectedCenter.closing_time ||
+          selectedCenter.closingTime ||
+          "17:00";
+
+
+        const duration =
+          Number(
+            settings?.slotDuration ||
+            30
+          );
+
+
+        const capacity =
+          getCenterCapacity(
+            selectedCenter,
+            settings
+          );
+
+
+        return generateTimeSlots(
+          openingTime,
+          closingTime,
+          duration,
+          capacity
+        );
+
+      },
+      [
+        selectedCenter,
+        settings,
+      ]
+    );
+
+
+  /* =======================================================
+     QUANTITY
+  ======================================================= */
+
+  const estimatedQuantity =
+    Number(
+      quantity ||
+      0
+    );
+
+
+  /* =======================================================
+     AVAILABILITY
+  ======================================================= */
+
+  const availability =
+    useMemo(
+      () => {
+
+        if (
+          !selectedCenter ||
+          !selectedDate
+        ) {
+
+          return [];
+
+        }
+
+
+        return availabilityTemplate.map(
+          slot => {
+
+            const past =
+              isSlotInPast(
+                slot,
+                selectedDate
+              );
+
+
+            if (
+              past
+            ) {
+
+              const pastCapacity =
+                getCenterCapacity(
+                  selectedCenter,
+                  settings
+                );
+
+
+              return {
+
+                ...slot,
+
+                capacity:
+                  pastCapacity,
+
+                booked:
+                  pastCapacity,
+
+                remaining:
+                  0,
+
+                loadClass:
+                  "past",
+
+              };
+
+            }
+
+
+            const booked =
+              getBookedCount(
+                bookings,
+                selectedCenter.id,
+                selectedDate.date,
+                slot.start,
+                slot.end,
+                isEditMode ? editBookingId : null
+              );
+
+
+            const capacity =
+              Math.max(
+                getCenterCapacity(
+                  selectedCenter,
+                  settings
+                ),
+                Number(
+                  slot.capacity ||
+                  0
+                )
+              );
+
+
+            const safeBooked =
+              Math.min(
+                booked,
+                capacity
+              );
+
+
+            const remaining =
+              Math.max(
+                capacity -
+                safeBooked,
+                0
+              );
+
+
+            let loadClass =
+              "normal";
+
+
+            if (
+              remaining ===
+              0
+            ) {
+
+              loadClass =
+                "full";
+
+            } else if (
+              remaining <=
+              Math.ceil(
+                capacity *
+                0.25
+              )
+            ) {
+
+              loadClass =
+                "busy";
+
+            } else if (
+              remaining <=
+              Math.ceil(
+                capacity *
+                0.5
+              )
+            ) {
+
+              loadClass =
+                "limited";
+
+            }
+
+
+            return {
+
+              ...slot,
+
+              capacity,
+
+              booked:
+                safeBooked,
+
+              remaining,
+
+              loadClass,
+
+            };
+
+          }
+        );
+
+      },
+      [
+        bookings,
+        selectedCenter,
+        selectedDate,
+        availabilityTemplate,
+        settings,
+      ]
+    );
+
+
+  /* =======================================================
+     ASSISTANT LIVE AVAILABILITY BRIDGE
+  ======================================================= */
+
+  useEffect(() => {
+    const buildAvailabilityContext = () => {
+      const liveAvailableDates =
+        dates.filter(day => {
+          return availableCenters.some(center => {
+            const openingTime =
+              center.opening_time ||
+              center.openingTime ||
+              "09:00";
+
+            const closingTime =
+              center.closing_time ||
+              center.closingTime ||
+              "17:00";
+
+            const duration =
+              Number(
+                settings?.slotDuration ||
+                30
+              );
+
+            const capacity =
+              getCenterCapacity(
+                center,
+                settings
+              );
+
+            const slots =
+              generateTimeSlots(
+                openingTime,
+                closingTime,
+                duration,
+                capacity
+              );
+
+            return slots.some(slot => {
+              if (
+                isSlotInPast(
+                  slot,
+                  day
+                )
+              ) {
+                return false;
+              }
+
+              const booked =
+                getBookedCount(
+                  bookings,
+                  center.id,
+                  day.date,
+                  slot.start,
+                  slot.end,
+                  isEditMode ? editBookingId : null
+                );
+
+              return booked < capacity;
+            });
+          });
+        });
+
+      const liveAvailableSlots =
+        selectedDate
+          ? availability.filter(
+              slot =>
+                Number(slot.remaining) > 0 &&
+                slot.loadClass !== "past"
+            )
+          : [];
+
+      saveBookingAvailabilityContext({
+        availableDates:
+          liveAvailableDates,
+        availableSlots:
+          liveAvailableSlots,
+        availableCenters:
+          availableCenters.map(center => ({
+            id: center.id,
+            name: center.name,
+            openingTime:
+              center.opening_time ||
+              center.openingTime ||
+              "09:00",
+            closingTime:
+              center.closing_time ||
+              center.closingTime ||
+              "17:00",
+            capacity:
+              getCenterCapacity(
+                center,
+                settings
+              ),
+          })),
+        selectedDate:
+          selectedDate?.date || null,
+        selectedCenterId:
+          selectedCenter?.id || null,
+      });
+    };
+
+    buildAvailabilityContext();
+
+    window.addEventListener(
+      "krishisetu:assistant-request-availability",
+      buildAvailabilityContext
+    );
+
+    return () => {
+      window.removeEventListener(
+        "krishisetu:assistant-request-availability",
+        buildAvailabilityContext
+      );
+    };
+  }, [
+    dates,
+    availability,
+    availableCenters,
+    bookings,
+    settings,
+    selectedDate?.date,
+    selectedCenter?.id,
+  ]);
+
+
+  /* =======================================================
+     APPLY ASSISTANT SLOT
+  ======================================================= */
+
+  useEffect(() => {
+
+    if (
+      !assistantManagedRef.current ||
+      !availability.length
+    ) {
+
+      return;
+
+    }
+
+    const booking = getBookingState();
+
+    const requestedStart =
+      booking?.slotStart || '';
+
+    const requestedEnd =
+      booking?.slotEnd || '';
+
+    const requestedSlotId =
+      booking?.slotId || '';
+
+    if (!requestedStart) {
+      assistantSlotAppliedRef.current = '';
+      return;
+    }
+
+    const signature = [
+      booking?.date || '',
+      booking?.centerId || '',
+      requestedSlotId || '',
+      requestedStart,
+      requestedEnd,
+    ].join('|');
+
+    const matchingSlot =
+      availability.find(slot => {
+        if (
+          requestedSlotId &&
+          String(slot.id) === String(requestedSlotId)
+        ) {
+          return true;
+        }
+
+        return (
+          String(slot.start) === String(requestedStart) &&
+          (!requestedEnd ||
+            String(slot.end) === String(requestedEnd))
+        );
+      });
+
+    if (!matchingSlot) {
+      return;
+    }
+
+    if (
+      matchingSlot.loadClass === 'past' ||
+      Number(matchingSlot.remaining) <= 0
+    ) {
+      setSelectedSlot(null);
+      setAvailable(true);
+
+      setError(
+        language === 'hi'
+          ? 'चुना गया समय अब उपलब्ध नहीं है। कृपया दूसरा स्लॉट चुनें।'
+          : language === 'te'
+            ? 'ఎంచుకున్న సమయం ఇప్పుడు అందుబాటులో లేదు. దయచేసి మరో స్లాట్ ఎంచుకోండి.'
+            : 'The selected arrival window is no longer available. Please choose another slot.'
+      );
+
+      return;
+    }
+
+    setAvailable(true);
+    setAvailabilityCheckedAt(
+      current => current || new Date()
+    );
+
+    setSelectedSlot(current =>
+      sameSlot(current, matchingSlot)
+        ? current
+        : matchingSlot
+    );
+
+    setError('');
+    assistantSlotAppliedRef.current =
+      signature;
+  }, [
+    availability,
+    language,
+    selectedDate?.date,
+    selectedCenter?.id,
+  ]);
+
+  /* =======================================================
+     SELECTED SLOT
+  ======================================================= */
+
+  const selectedSlotRecord =
+    useMemo(
+      () => {
+
+        if (
+          !selectedSlot
+        ) {
+
+          return null;
+
+        }
+
+
+        const record =
+          availability.find(
+            slot =>
+              slot.id ===
+              selectedSlot.id
+          ) ||
+          null;
+
+
+        if (
+          record?.loadClass ===
+          "past"
+        ) {
+
+          return null;
+
+        }
+
+
+        if (
+          record?.remaining <=
+          0
+        ) {
+
+          return null;
+
+        }
+
+
+        return record;
+
+      },
+      [
+        availability,
+        selectedSlot,
+      ]
+    );
+
+
+  const totalRemaining =
+    availability.reduce(
+      (
+        total,
+        slot
+      ) =>
+        total +
+        Number(
+          slot?.remaining ||
+          0
+        ),
+      0
+    );
+
+
+  /* =======================================================
+     BOOKING LOAD
+  ======================================================= */
+
+  useEffect(() => {
+
+    if (
+      !farmer?.id
+    ) {
+
+      setBookings(
+        []
+      );
+
+      setLoadingBookings(
+        false
+      );
+
+      return;
+
+    }
+
+
+    let cancelled =
+      false;
+
+
+    async function loadBookings() {
+
+      setLoadingBookings(
+        true
+      );
+
+
+      try {
+
+        const response =
+          await fetch(
+            `${API_URL}/bookings`
+          );
+
+
+        let data =
+          null;
+
+
+        try {
+
+          data =
+            await response.json();
+
+        } catch {
+
+          data =
+            null;
+
+        }
+
+
+        if (
+          !response.ok
+        ) {
+
+          throw new Error(
+            data?.message ||
+            "Unable to load bookings."
+          );
+
+        }
+
+
+        const rows =
+          Array.isArray(
+            data?.bookings
+          )
+            ? data.bookings
+            : [];
+
+
+        if (
+          !cancelled
+        ) {
+
+          setBookings(
+            rows
+          );
+
+        }
+
+      } catch (
+        loadError
+      ) {
+
+        console.error(
+          "FarmerBook booking load error:",
+          loadError
+        );
+
+
+        if (
+          !cancelled
+        ) {
+
+          setBookings(
+            []
+          );
+
+          setError(
+            loadError?.message ||
+            "Unable to load bookings."
+          );
+
+        }
+
+      } finally {
+
+        if (
+          !cancelled
+        ) {
+
+          setLoadingBookings(
+            false
+          );
+
+        }
+
+      }
+
+    }
+
+
+    loadBookings();
+
+
+    return () => {
+
+      cancelled =
+        true;
+
+    };
+
+  }, [
+    farmer?.id,
+  ]);
+
+
+  /* =======================================================
+     SELECTION RESET
+  =======================================================
+
+     Availability is reset explicitly by the selection handlers.
+     Do not reset it from an effect keyed to the same selection
+     values: assistant state hydration and React effects can race
+     with manual date/slot clicks and clear a fresh selection.
+  */
+
+  /* =======================================================
+     HELPERS
+  ======================================================= */
+
+  function tr(
+    key,
+    fallback
+  ) {
+
+    const translated =
+      t(
+        key,
+        fallback
+      );
+
+
+    return (
+      translated ||
+      fallback
+    );
+
+  }
+
+
+  function cropLabel(
+    cropId
+  ) {
+
+    const key =
+      `crops.${cropId}`;
+
+
+    const translated =
+      tr(
+        key,
+        ""
+      );
+
+
+    if (
+      translated &&
+      translated !==
+      key
+    ) {
+
+      return translated;
+
+    }
+
+
+    const item =
+      crops.find(
+        cropItem =>
+          String(
+            cropItem?.id
+          ) ===
+          String(
+            cropId
+          )
+      );
+
+
+    return (
+      item?.name ||
+      cropId ||
+      "Produce"
+    );
+
+  }
+
+
+  function validate() {
+
+    if (
+      !farmer?.id
+    ) {
+
+      return "Farmer account could not be loaded. Please login again.";
+
+    }
+
+
+    if (
+      !selectedCrop
+    ) {
+
+      return "Please select a crop.";
+
+    }
+
+
+    if (
+      !quantity ||
+      !Number.isFinite(
+        estimatedQuantity
+      )
+    ) {
+
+      return tr(
+        "booking.quantityRequired",
+        "Enter the estimated quantity."
+      );
+
+    }
+
+
+    if (
+      estimatedQuantity <=
+      0
+    ) {
+
+      return tr(
+        "booking.quantityPositive",
+        "Quantity must be greater than zero."
+      );
+
+    }
+
+
+    const maximumQuantity =
+      Number(
+        settings?.maxQuantity ??
+        5000
+      );
+
+
+    if (
+      estimatedQuantity >
+      maximumQuantity
+    ) {
+
+      return `${tr(
+        "booking.quantityLimit",
+        "Quantity cannot exceed"
+      )} ${maximumQuantity.toLocaleString()} kg.`;
+
+    }
+
+
+    if (
+      !selectedCenter
+    ) {
+
+      return tr(
+        "location.noCenter",
+        "No procurement center is available."
+      );
+
+    }
+
+
+    if (
+      !selectedDate
+    ) {
+
+      return "Please choose an arrival date.";
+
+    }
+
+
+    return "";
+
+  }
+
+
+  function resetAvailability() {
+
+    setAvailable(
+      false
+    );
+
+    setSelectedSlot(
+      null
+    );
+
+    setAvailabilityCheckedAt(
+      null
+    );
+
+    setError(
+      ""
+    );
+
+    setCenterSwitchMessage(
+      ""
+    );
+
+  }
+
+
+  function handleQuantityChange(
+    event
+  ) {
+
+    const value =
+      event.target.value
+        .replace(
+          /[^0-9.]/g,
+          ''
+        )
+        .slice(
+          0,
+          8
+        );
+
+    setQuantity(value);
+
+    updateBookingDraft({
+      crop: crop || null,
+      quantity: value ? Number(value) : null,
+      centerId: centerId || null,
+      date: selectedDate?.date || null,
+      slot: null,
+      slotStart: null,
+      slotEnd: null,
+      assistantManaged:
+        assistantManagedRef.current,
+    });
+
+    resetAvailability();
+  }
+
+
+  function handleCropSelect(
+    id
+  ) {
+
+    setCrop(id);
+    setOpenMenu(null);
+
+    updateBookingDraft({
+      crop: id || null,
+      quantity: quantity ? Number(quantity) : null,
+      centerId: centerId || null,
+      date: selectedDate?.date || null,
+      slot: null,
+      slotStart: null,
+      slotEnd: null,
+      assistantManaged:
+        assistantManagedRef.current,
+    });
+
+    resetAvailability();
+  }
+
+
+  function handleCenterSelect(
+    id
+  ) {
+
+    setCenterId(id);
+    setOpenMenu(null);
+
+    updateBookingDraft({
+      crop: crop || null,
+      quantity: quantity ? Number(quantity) : null,
+      centerId: id || null,
+      date: selectedDate?.date || null,
+      slot: null,
+      slotStart: null,
+      slotEnd: null,
+      assistantManaged:
+        assistantManagedRef.current,
+    });
+
+    resetAvailability();
+  }
+
+
+  function handleDateSelect(
+    id
+  ) {
+
+    const selected =
+      dates.find(
+        item =>
+          String(item.id) === String(id)
+      );
+
+    const nextDate =
+      selected?.date || null;
+
+    setDate(id);
+
+    updateBookingDraft({
+      crop: crop || null,
+      quantity: quantity ? Number(quantity) : null,
+      centerId: centerId || null,
+      date: nextDate,
+      slot: null,
+      slotStart: null,
+      slotEnd: null,
+      assistantManaged:
+        assistantManagedRef.current,
+    });
+
+    assistantSlotAppliedRef.current = '';
+    resetAvailability();
+  }
+
+
+  async function refreshBookings() {
+
+    try {
+
+      const response =
+        await fetch(
+          `${API_URL}/bookings`
+        );
+
+
+      let data =
+        null;
+
+
+      try {
+
+        data =
+          await response.json();
+
+      } catch {
+
+        data =
+          null;
+
+      }
+
+
+      if (
+        !response.ok
+      ) {
+
+        throw new Error(
+          data?.message ||
+          "Unable to load bookings."
+        );
+
+      }
+
+
+      const rows =
+        Array.isArray(
+          data?.bookings
+        )
+          ? data.bookings
+          : [];
+
+
+      setBookings(
+        rows
+      );
+
+
+      return rows;
+
+    } catch (
+      loadError
+    ) {
+
+      console.error(
+        "Refresh bookings error:",
+        loadError
+      );
+
+
+      return Array.isArray(
+        bookings
+      )
+        ? bookings
+        : [];
+
+    }
+
+  }
+
+
+  function getFreeSlotForCenter(
+    center,
+    bookingRows
+  ) {
+
+    if (
+      !center ||
+      !selectedDate
+    ) {
+
+      return null;
+
+    }
+
+
+    const slots =
+      generateTimeSlots(
+        center.opening_time ||
+        center.openingTime ||
+        "09:00",
+
+        center.closing_time ||
+        center.closingTime ||
+        "17:00",
+
+        Number(
+          settings?.slotDuration ||
+          30
+        ),
+
+        getCenterCapacity(
+          center,
+          settings
+        )
+      );
+
+
+    for (
+      const slot of slots
+    ) {
+
+      if (
+        isSlotInPast(
+          slot,
+          selectedDate
+        )
+      ) {
+
+        continue;
+
+      }
+
+
+      const booked =
+        getBookedCount(
+          bookingRows,
+          center.id,
+          selectedDate.date,
+          slot.start,
+          slot.end,
+          isEditMode ? editBookingId : null
+        );
+
+
+      const capacity =
+        getCenterCapacity(
+          center,
+          settings
+        );
+
+
+      if (
+        booked <
+        capacity
+      ) {
+
+        return {
+
+          slot,
+
+          remaining:
+            Math.max(
+              capacity -
+              Math.min(
+                booked,
+                capacity
+              ),
+              0
+            ),
+
+        };
+
+      }
+
+    }
+
+
+    return null;
+
+  }
+
+
+  async function handleCheckAvailability(
+    event
+  ) {
+
+    event.preventDefault();
+
+
+    const validationError =
+      validate();
+
+
+    if (
+      validationError
+    ) {
+
+      setError(
+        validationError
+      );
+
+      return;
+
+    }
+
+
+    setLoadingAvailability(
+      true
+    );
+
+    setError(
+      ""
+    );
+
+    setCenterSwitchMessage(
+      ""
+    );
+
+    setSelectedSlot(
+      null
+    );
+
+
+    try {
+
+      const latestBookings =
+        await refreshBookings();
+
+
+      const selectedAvailability =
+        getFreeSlotForCenter(
+          selectedCenter,
+          latestBookings
+        );
+
+
+      if (
+        selectedAvailability
+      ) {
+
+        setAvailable(
+          true
+        );
+
+        setAvailabilityCheckedAt(
+          new Date()
+        );
+
+        return;
+
+      }
+
+
+      const alternatives =
+        availableCenters.filter(
+          center =>
+            String(
+              center.id
+            ) !==
+            String(
+              selectedCenter?.id
+            )
+        );
+
+
+      const alternative =
+        alternatives
+          .map(
+            center => ({
+
+              center,
+
+              availability:
+                getFreeSlotForCenter(
+                  center,
+                  latestBookings
+                ),
+
+            })
+          )
+          .find(
+            item =>
+              item.availability
+          );
+
+
+      if (
+        alternative
+      ) {
+
+        setCenterId(
+          alternative.center.id
+        );
+
+
+        setAvailable(
+          true
+        );
+
+
+        setAvailabilityCheckedAt(
+          new Date()
+        );
+
+
+        setSelectedSlot(
+          null
+        );
+
+
+        setCenterSwitchMessage(
+          language ===
+            "hi"
+            ? `चयनित केंद्र भर गया है। आपको ${alternative.center.name} पर उपलब्ध स्लॉट दिखाए जा रहे हैं।`
+            : language ===
+                "te"
+              ? `ఎంచుకున్న కేంద్రం నిండిపోయింది. ${alternative.center.name}లో అందుబాటులో ఉన్న స్లాట్‌లను చూపిస్తున్నాము.`
+              : `The selected center is full. We switched you to ${alternative.center.name}, where slots are available.`
+        );
+
+
+        return;
+
+      }
+
+
+      setAvailable(
+        false
+      );
+
+
+      setAvailabilityCheckedAt(
+        new Date()
+      );
+
+
+      setError(
+        language ===
+          "hi"
+          ? "इस तारीख के लिए किसी भी सक्रिय खरीद केंद्र में कोई समय उपलब्ध नहीं है। कृपया दूसरी तारीख चुनें।"
+          : language ===
+              "te"
+            ? "ఈ తేదీకి ఏ యాక్టివ్ కొనుగోలు కేంద్రంలోనూ సమయం అందుబాటులో లేదు. దయచేసి మరొక తేదీని ఎంచుకోండి."
+            : "No arrival windows are available at any active procurement center for this date. Please choose another date."
+      );
+
+    } catch (
+      availabilityError
+    ) {
+
+      console.error(
+        "Check availability error:",
+        availabilityError
+      );
+
+
+      setAvailable(
+        false
+      );
+
+
+      setError(
+        availabilityError?.message ||
+        "Unable to check availability."
+      );
+
+    } finally {
+
+      setLoadingAvailability(
+        false
+      );
+
+    }
+
+  }
+
+
+  function handleSelectSlot(
+    slot
+  ) {
+
+    if (
+      !slot ||
+      Number(
+        slot.remaining
+      ) <=
+      0 ||
+      slot.loadClass ===
+      "past"
+    ) {
+
+      return;
+
+    }
+
+
+    
+
+    setSelectedSlot(slot);
+
+    updateBookingDraft({
+      crop: crop || null,
+      quantity: quantity ? Number(quantity) : null,
+      centerId: centerId || null,
+      date: selectedDate?.date || date || null,
+      slot: {
+        id: slot.id,
+        start: slot.start,
+        end: slot.end,
+        display: slot.display,
+      },
+      assistantManaged:
+        assistantManagedRef.current,
+    });
+
+    setError(
+      ""
+    );
+
+  }
+
+
+  async function handleConfirmBooking(
+    assistantBookingOverride = null
+  ) {
+
+    if (
+      confirming ||
+      confirmingRef.current
+    ) {
+      return {
+        success: false,
+        reason: "Booking is already being submitted.",
+      };
+    }
+
+    /*
+     * When the assistant confirms a booking, React may not have
+     * finished hydrating the visible FarmerBook controls yet.
+     *
+     * Use the assistant snapshot as the source of truth when one
+     * is supplied. The normal button path continues to use the
+     * current UI state exactly as before.
+     */
+    const requested =
+      assistantBookingOverride &&
+      typeof assistantBookingOverride === "object" &&
+      !("nativeEvent" in assistantBookingOverride) &&
+      (
+        "slotStart" in assistantBookingOverride ||
+        "slot" in assistantBookingOverride ||
+        "centerId" in assistantBookingOverride ||
+        "date" in assistantBookingOverride ||
+        "crop" in assistantBookingOverride ||
+        "quantity" in assistantBookingOverride
+      )
+        ? assistantBookingOverride
+        : null;
+
+    const requestedCenterId =
+      requested?.centerId != null
+        ? String(requested.centerId)
+        : String(centerId || "");
+
+    const submissionCenter =
+      requestedCenterId
+        ? availableCenters.find(
+            item =>
+              String(item?.id) ===
+              requestedCenterId
+          ) || selectedCenter
+        : selectedCenter;
+
+    const requestedDateValue =
+      requested?.date
+        ? String(requested.date)
+        : String(
+            selectedDate?.date ||
+            dateToOptionId(date) ||
+            ""
+          );
+
+    const submissionDate =
+      dates.find(
+        item =>
+          String(item?.date) ===
+          requestedDateValue ||
+          String(item?.id) ===
+          requestedDateValue
+      ) || selectedDate;
+
+    const requestedCrop =
+      requested?.crop
+        ? String(requested.crop)
+        : String(crop || "");
+
+    const submissionCrop =
+      crops.find(
+        item =>
+          String(item?.id) ===
+            requestedCrop ||
+          String(item?.name || "")
+            .trim()
+            .toLowerCase() ===
+            requestedCrop
+              .trim()
+              .toLowerCase()
+      ) || selectedCrop;
+
+    const requestedQuantity =
+      requested?.quantity != null
+        ? Number(requested.quantity)
+        : estimatedQuantity;
+
+    const requestedSlotStart =
+      requested?.slotStart ||
+      requested?.slot?.start ||
+      "";
+
+    const requestedSlotEnd =
+      requested?.slotEnd ||
+      requested?.slot?.end ||
+      "";
+
+    const requestedSlotId =
+      requested?.slotId ||
+      requested?.slot?.id ||
+      "";
+
+    /*
+     * Normal button confirmation must trust the slot the farmer actually
+     * clicked. `selectedSlotRecord` is only a derived lookup into the
+     * live availability array and can temporarily become null when that
+     * array is refreshed/recomputed. Keep the clicked slot as the stable
+     * source of truth, while still using the live record when available.
+     */
+    const selectedSlotFallback =
+      selectedSlot
+        ? {
+            id:
+              selectedSlot.id,
+            start:
+              String(selectedSlot.start || ""),
+            end:
+              String(selectedSlot.end || ""),
+            display:
+              selectedSlot.display ||
+              (selectedSlot.end
+                ? `${selectedSlot.start} – ${selectedSlot.end}`
+                : String(selectedSlot.start || "")),
+            remaining:
+              selectedSlot.remaining,
+            capacity:
+              selectedSlot.capacity,
+            loadClass:
+              selectedSlot.loadClass,
+          }
+        : null;
+
+    const submissionSlot =
+      requested
+        ? (
+            availability.find(
+              slot => {
+                const sameId =
+                  requestedSlotId &&
+                  String(slot?.id) ===
+                    String(requestedSlotId);
+
+                const sameTime =
+                  requestedSlotStart &&
+                  String(slot?.start) ===
+                    String(requestedSlotStart) &&
+                  (
+                    !requestedSlotEnd ||
+                    String(slot?.end) ===
+                      String(requestedSlotEnd)
+                  );
+
+                return (
+                  sameId ||
+                  sameTime
+                );
+              }
+            ) ||
+            (
+              requestedSlotStart
+                ? {
+                    id:
+                      requestedSlotId ||
+                      String(
+                        requestedSlotStart
+                      ).replace(
+                        ":",
+                        "-"
+                      ),
+                    start:
+                      String(
+                        requestedSlotStart
+                      ),
+                    end:
+                      String(
+                        requestedSlotEnd
+                      ),
+                    display:
+                      requested?.slotDisplay ||
+                      (
+                        requestedSlotEnd
+                          ? `${requestedSlotStart} – ${requestedSlotEnd}`
+                          : requestedSlotStart
+                      ),
+                  }
+                : null
+            )
+          )
+        : (
+            selectedSlotRecord ||
+            selectedSlotFallback
+          );
+
+    if (
+      !submissionCenter
+    ) {
+      setError(
+        "Please select a procurement center."
+      );
+
+      return {
+        success: false,
+        reason:
+          "Please select a procurement center.",
+      };
+    }
+
+    if (
+      !submissionDate
+    ) {
+      setError(
+        "Please choose an arrival date."
+      );
+
+      return {
+        success: false,
+        reason:
+          "Please choose an arrival date.",
+      };
+    }
+
+    if (
+      !submissionSlot
+    ) {
+      setError(
+        tr(
+          "booking.selectWindowError",
+          "Choose an available arrival window."
+        )
+      );
+
+      return {
+        success: false,
+        reason:
+          "Choose an available arrival window.",
+      };
+    }
+
+    if (
+      submissionSlot.loadClass ===
+        "past" ||
+      (
+        submissionSlot.remaining != null &&
+        Number(
+          submissionSlot.remaining
+        ) <= 0
+      )
+    ) {
+      setError(
+        "The selected arrival window is no longer available. Please choose another slot."
+      );
+
+      return {
+        success: false,
+        reason:
+          "The selected arrival window is no longer available. Please choose another slot.",
+      };
+    }
+
+    if (
+      !submissionCrop
+    ) {
+      setError(
+        "Please select a crop."
+      );
+
+      return {
+        success: false,
+        reason:
+          "Please select a crop.",
+      };
+    }
+
+    if (
+      !Number.isFinite(
+        requestedQuantity
+      ) ||
+      requestedQuantity <=
+        0
+    ) {
+      setError(
+        tr(
+          "booking.quantityPositive",
+          "Quantity must be greater than zero."
+        )
+      );
+
+      return {
+        success: false,
+        reason:
+          "Quantity must be greater than zero.",
+      };
+    }
+
+    if (
+      !farmer?.id
+    ) {
+      const reason =
+        "Farmer account could not be loaded. Please login again.";
+
+      setError(
+        reason
+      );
+
+      return {
+        success: false,
+        reason,
+      };
+    }
+
+    const maximumQuantity =
+      Number(
+        settings?.maxQuantity ??
+          5000
+      );
+
+    if (
+      requestedQuantity >
+      maximumQuantity
+    ) {
+      const reason =
+        `${tr(
+          "booking.quantityLimit",
+          "Quantity cannot exceed"
+        )} ${maximumQuantity.toLocaleString()} kg.`;
+
+      setError(
+        reason
+      );
+
+      return {
+        success: false,
+        reason,
+      };
+    }
+
+    confirmingRef.current =
+      true;
+
+    setConfirming(
+      true
+    );
+
+    setError(
+      ""
+    );
+
+    setBookingConfirmed(
+      false
+    );
+
+    try {
+      const farmerResponse =
+        await fetch(
+          `${API_URL}/farmers/${encodeURIComponent(
+            farmer.id
+          )}`
+        );
+
+      let farmerData =
+        null;
+
+      try {
+        farmerData =
+          await farmerResponse.json();
+      } catch {
+        farmerData =
+          null;
+      }
+
+      if (
+        !farmerResponse.ok ||
+        !farmerData?.farmer
+      ) {
+        throw new Error(
+          farmerData?.message ||
+          "Your farmer account could not be verified. Please login again."
+        );
+      }
+
+      const serverFarmer =
+        normalizeFarmer(
+          farmerData.farmer
+        );
+
+      if (
+        !serverFarmer?.id
+      ) {
+        throw new Error(
+          "The server returned an invalid farmer account."
+        );
+      }
+
+      const latestBookings =
+        await refreshBookings();
+
+      const matchingBookings =
+        getBookedCount(
+          latestBookings,
+          submissionCenter.id,
+          submissionDate.date,
+          submissionSlot.start,
+          submissionSlot.end,
+          isEditMode ? editBookingId : null
+        );
+
+      const capacity =
+        getCenterCapacity(
+          submissionCenter,
+          settings
+        );
+
+      if (
+        matchingBookings >=
+        capacity
+      ) {
+        /*
+         * Do not silently change the farmer's selected center
+         * during an AI-confirmed booking. The user confirmed a
+         * specific center/slot; report that it became unavailable.
+         */
+        setAvailable(
+          false
+        );
+
+        throw new Error(
+          "This arrival window was just filled. Please choose another available window."
+        );
+      }
+
+      /*
+       * A saved booking is edited in place. Never create a second
+       * booking or token when the farmer is correcting an existing one.
+       */
+      let response;
+      let responseData = null;
+      let bookingToken = null;
+
+      if (
+        isEditMode &&
+        editBookingId
+      ) {
+        response =
+          await fetch(
+            `${API_URL}/bookings/${encodeURIComponent(editBookingId)}/reschedule`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                farmerId:
+                  serverFarmer.id,
+                phone:
+                  serverFarmer.phone,
+                crop:
+                  submissionCrop.id,
+                estimatedQuantity:
+                  requestedQuantity,
+                centerId:
+                  submissionCenter.id,
+                date:
+                  submissionDate.date,
+                slotStart:
+                  submissionSlot.start,
+                slotEnd:
+                  submissionSlot.end,
+                reason:
+                  "Updated by farmer",
+              }),
+            }
+          );
+
+        try {
+          responseData =
+            await response.json();
+        } catch {
+          responseData = null;
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            responseData?.message ||
+            "Unable to update your booking."
+          );
+        }
+      } else {
+        const bookingId =
+          `B${Date.now()}${Math.floor(
+            Math.random() *
+            1000
+          )}`;
+
+        bookingToken =
+          String(
+            Date.now()
+          ).slice(
+            -6
+          );
+
+        const requestBody = {
+          id:
+            bookingId,
+
+          token:
+            bookingToken,
+
+          farmer: {
+            id:
+              serverFarmer.id,
+
+            name:
+              serverFarmer.name,
+
+            phone:
+              serverFarmer.phone,
+
+            stateId:
+              serverFarmer.stateId,
+
+            districtId:
+              serverFarmer.districtId,
+
+            mandalId:
+              serverFarmer.mandalId,
+
+            village:
+              serverFarmer.village,
+
+            language:
+              serverFarmer.language,
+
+            preferredCenterId:
+              serverFarmer.preferredCenterId,
+
+            primaryCrop:
+              serverFarmer.primaryCrop,
+
+            estimatedQuantity:
+              serverFarmer.estimatedQuantity,
+          },
+
+          centerId:
+            submissionCenter.id,
+
+          crop:
+            submissionCrop.id,
+
+          estimatedQuantity:
+            requestedQuantity,
+
+          date:
+            submissionDate.date,
+
+          slotStart:
+            submissionSlot.start,
+
+          slotEnd:
+            submissionSlot.end,
+        };
+
+        response =
+          await fetch(
+            `${API_URL}/bookings`,
+            {
+              method:
+                "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              body:
+                JSON.stringify(
+                  requestBody
+                ),
+            }
+          );
+
+        try {
+          responseData =
+            await response.json();
+        } catch {
+          responseData = null;
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            responseData?.message ||
+            "Failed to save your booking."
+          );
+        }
+      }
+
+      const savedBooking =
+        responseData?.booking;
+
+      if (!savedBooking?.id) {
+        throw new Error(
+          isEditMode
+            ? "Booking was updated but the server did not return a valid booking record."
+            : "Booking was accepted but the server did not return a valid booking record."
+        );
+      }
+
+      try {
+        syncBookingToPrototype(
+          {
+            id:
+              savedBooking.id,
+
+            farmerId:
+              serverFarmer.id,
+
+            centerId:
+              savedBooking.center_id ||
+              submissionCenter.id,
+
+            token:
+              String(
+                savedBooking.token ||
+                bookingToken ||
+                ""
+              ),
+
+            date:
+              savedBooking.date ||
+              submissionDate.date,
+
+            slotStart:
+              savedBooking.slot_start ||
+              submissionSlot.start,
+
+            slotEnd:
+              savedBooking.slot_end ||
+              submissionSlot.end,
+
+            crop:
+              savedBooking.crop ||
+              submissionCrop.id,
+
+            estimatedQuantity:
+              Number(
+                savedBooking.estimated_quantity ??
+                requestedQuantity
+              ),
+
+            actualQuantity:
+              savedBooking.actual_quantity ??
+              null,
+
+            status:
+              savedBooking.status ||
+              "CONFIRMED",
+
+            payment: {
+              amount:
+                Number(
+                  savedBooking.payment_amount ||
+                  0
+                ) ||
+                null,
+
+              status:
+                savedBooking.payment_status ||
+                "NOT_CREATED",
+
+              reference:
+                savedBooking.payment_reference ||
+                null,
+
+              sentAt:
+                savedBooking.payment_sms_sent_at ||
+                null,
+            },
+          },
+          serverFarmer,
+          submissionCenter,
+          submissionCrop
+        );
+      } catch (bridgeError) {
+        console.warn(
+          "Prototype sync warning:",
+          bridgeError
+        );
+      }
+
+      const verifyResponse =
+        await fetch(
+          `${API_URL}/bookings/${encodeURIComponent(
+            savedBooking.id
+          )}`
+        );
+
+      let verifyData =
+        null;
+
+      try {
+        verifyData =
+          await verifyResponse.json();
+      } catch {
+        verifyData =
+          null;
+      }
+
+      if (
+        !verifyResponse.ok ||
+        !verifyData?.booking?.id
+      ) {
+        throw new Error(
+          isEditMode
+            ? "Booking was updated but could not be verified. Please refresh and check your booking."
+            : "Booking was created but could not be verified. Please refresh and check your bookings."
+        );
+      }
+
+      const finalBooking =
+        verifyData.booking;
+
+      setBookingConfirmed(
+        true
+      );
+
+      /*
+       * Preserve the successful booking information long enough
+       * for the assistant callback and token navigation.
+       */
+      try {
+        updateBookingDraft({
+          crop:
+            finalBooking.crop ||
+            submissionCrop.id,
+
+          quantity:
+            Number(
+              finalBooking.estimated_quantity ??
+              requestedQuantity
+            ),
+
+          centerId:
+            finalBooking.center_id ||
+            submissionCenter.id,
+
+          date:
+            finalBooking.date ||
+            submissionDate.date,
+
+          slotStart:
+            finalBooking.slot_start ||
+            submissionSlot.start,
+
+          slotEnd:
+            finalBooking.slot_end ||
+            submissionSlot.end,
+
+          token:
+            finalBooking.token ||
+            bookingToken,
+
+          confirmed:
+            true,
+
+          readyForConfirmation:
+            false,
+
+          awaitingConfirmation:
+            false,
+
+          active:
+            false,
+
+          assistantManaged:
+            false,
+        });
+      } catch {
+        /* Booking itself is already saved. */
+      }
+
+      clearBookingDraft();
+
+      assistantConfirmRequestRef.current =
+        null;
+
+      assistantAutoConfirmKeyRef.current =
+        "";
+
+      window.setTimeout(() => {
+  navigate(
+    `/farmer/token?booking=${encodeURIComponent(finalBooking.id)}`,
+    { replace: true }
+  );
+}, 650);
+      return {
+        success:
+          true,
+
+        booking:
+          finalBooking,
+
+        edited:
+          isEditMode,
+      };
+
+    } catch (
+      bookingError
+    ) {
+
+      console.error(
+        "Booking error:",
+        bookingError
+      );
+
+      const reason =
+        bookingError?.message ||
+        "Unable to complete the booking.";
+
+      setError(
+        reason
+      );
+
+      return {
+        success:
+          false,
+
+        reason,
+      };
+
+    } finally {
+
+      confirmingRef.current =
+        false;
+
+      setConfirming(
+        false
+      );
+
+    }
+  }
+
+
+  /* =======================================================
+     ASSISTANT CONFIRMATION HANDOFF
+  ======================================================= */
+
+  useEffect(() => {
+    const handleAssistantConfirm = event => {
+      const requestedBooking =
+        event?.detail?.booking ||
+        event?.detail?.assistantBooking ||
+        null;
+
+      const fallbackBooking =
+        requestedBooking ||
+        getBookingState();
+
+      if (
+        !fallbackBooking
+      ) {
+        return;
+      }
+
+      assistantManagedRef.current =
+        true;
+
+      assistantConfirmRequestRef.current =
+        fallbackBooking;
+
+      const completion =
+        typeof event?.detail?.onComplete ===
+        "function"
+          ? event.detail.onComplete
+          : null;
+
+      assistantConfirmCompleteRef.current =
+        completion;
+
+      /*
+       * Hydrate the visible UI for the farmer, but DO NOT wait
+       * for those React states to become the source of truth.
+       * handleConfirmBooking receives the original snapshot.
+       */
+      if (
+        fallbackBooking.crop
+      ) {
+        const matchedCrop =
+          crops.find(
+            item =>
+              String(item?.id) ===
+                String(
+                  fallbackBooking.crop
+                ) ||
+              String(
+                item?.name || ""
+              )
+                .trim()
+                .toLowerCase() ===
+                String(
+                  fallbackBooking.crop
+                )
+                  .trim()
+                  .toLowerCase()
+          );
+
+        if (
+          matchedCrop
+        ) {
+          setCrop(
+            matchedCrop.id
+          );
+        }
+      }
+
+      if (
+        fallbackBooking.quantity !=
+        null
+      ) {
+        setQuantity(
+          String(
+            fallbackBooking.quantity
+          )
+        );
+      }
+
+      if (
+        fallbackBooking.centerId !=
+        null
+      ) {
+        setCenterId(
+          String(
+            fallbackBooking.centerId
+          )
+        );
+      }
+
+      if (
+        fallbackBooking.date
+      ) {
+        setDate(
+          dateToOptionId(
+            fallbackBooking.date
+          )
+        );
+      }
+
+      if (
+        fallbackBooking.slotStart
+      ) {
+        const slot =
+          {
+            id:
+              fallbackBooking.slotId ||
+              String(
+                fallbackBooking.slotStart
+              ).replace(
+                ":",
+                "-"
+              ),
+
+            start:
+              String(
+                fallbackBooking.slotStart
+              ),
+
+            end:
+              String(
+                fallbackBooking.slotEnd ||
+                ""
+              ),
+
+            display:
+              fallbackBooking.slotDisplay ||
+              (
+                fallbackBooking.slotEnd
+                  ? `${fallbackBooking.slotStart} – ${fallbackBooking.slotEnd}`
+                  : String(
+                      fallbackBooking.slotStart
+                    )
+              ),
+          };
+
+        setSelectedSlot(
+          slot
+        );
+
+        setAvailable(
+          true
+        );
+      }
+
+      /*
+       * Submit directly from the authoritative assistant snapshot.
+       * No dependency on selectedSlotRecord or the availability memo.
+       */
+      window.setTimeout(
+        () => {
+          Promise.resolve(
+            handleConfirmBooking(
+              fallbackBooking
+            )
+          )
+            .then(
+              result => {
+                if (
+                  completion
+                ) {
+                  completion(
+                    result || {
+                      success:
+                        true,
+                    }
+                  );
+                }
+              }
+            )
+            .catch(
+              error => {
+                if (
+                  completion
+                ) {
+                  completion({
+                    success:
+                      false,
+
+                    reason:
+                      error?.message ||
+                      "Unable to complete the booking.",
+                  });
+                }
+              }
+            );
+        },
+        0
+      );
+    };
+
+    window.addEventListener(
+      "krishisetu:assistant-confirm-booking",
+      handleAssistantConfirm
+    );
+
+    return () => {
+      window.removeEventListener(
+        "krishisetu:assistant-confirm-booking",
+        handleAssistantConfirm
+      );
+    };
+  }, [
+    crops,
+  ]);
+
+  /*
+   * Auto-confirm is used only when the assistant explicitly routed
+   * the farmer to FarmerBook with assistantAutoConfirm=true.
+   *
+   * Like the event bridge above, the authoritative booking snapshot
+   * is passed directly to the submit function.
+   */
+  useEffect(() => {
+    if (
+      !assistantAutoConfirm ||
+      !assistantBookingKey ||
+      assistantAutoConfirmKeyRef.current ===
+        assistantBookingKey
+    ) {
+      return;
+    }
+
+    if (
+      !assistantBooking?.active
+    ) {
+      return;
+    }
+
+    if (
+      !assistantBooking?.crop ||
+      assistantBooking?.quantity == null ||
+      !assistantBooking?.centerId ||
+      !assistantBooking?.date ||
+      !assistantBooking?.slotStart
+    ) {
+      return;
+    }
+
+    assistantAutoConfirmKeyRef.current =
+      assistantBookingKey;
+
+    const timer =
+      setTimeout(
+        () => {
+          handleConfirmBooking(
+            assistantBooking
+          );
+        },
+        0
+      );
+
+    return () => {
+      clearTimeout(
+        timer
+      );
+    };
+  }, [
+    assistantAutoConfirm,
+    assistantBookingKey,
+    assistantBooking,
+  ]);
+
+  /* =======================================================
+     RENDER
+  ======================================================= */
+
+  return (
+
+    <div className="farmer-book-page">
+
+      {
+        isEditMode && editingBookingLoading && (
+          <div
+            className="booking-error prominent"
+            style={{
+              margin: "0 auto 18px",
+              maxWidth: "1180px",
+            }}
+          >
+            <LoaderCircle
+              size={17}
+              className="loading-spin"
+            />
+            <span>
+              {
+                language === "hi"
+                  ? "आपकी बुकिंग लोड हो रही है..."
+                  : language === "te"
+                    ? "మీ బుకింగ్ లోడ్ అవుతోంది..."
+                    : "Loading your booking for editing..."
+              }
+            </span>
+          </div>
+        )
+      }
+
+      {
+        bookingConfirmed && (
+
+          <div className="booking-confirmed-overlay">
+
+            <div className="booking-confirmed-card">
+
+              <div className="booking-confirmed-icon">
+
+                <CheckCircle2
+                  size={30}
+                />
+
+              </div>
+
+
+              <span className="page-eyebrow">
+
+                {
+                  language ===
+                    "hi"
+                    ? "बुकिंग सफल"
+                    : language ===
+                        "te"
+                      ? "బుకింగ్ విజయవంతం"
+                      : "BOOKING CONFIRMED"
+                }
+
+              </span>
+
+
+              <h2>
+
+                {
+                  language ===
+                    "hi"
+                    ? "आपकी बुकिंग सफलतापूर्वक सेव हो गई"
+                    : language ===
+                        "te"
+                      ? "మీ బుకింగ్ విజయవంతంగా సేవ్ చేయబడింది"
+                      : (isEditMode ? "Your booking has been updated" : "Your booking is confirmed")
+                }
+
+              </h2>
+
+
+              <p>
+
+                {
+                  language ===
+                    "hi"
+                    ? "आपका डिजिटल टोकन तैयार किया जा रहा है..."
+                    : language ===
+                        "te"
+                      ? "మీ డిజిటల్ టోకెన్ సిద్ధం అవుతోంది..."
+                      : "Your digital token is being prepared..."
+                }
+
+              </p>
+
+
+              <LoaderCircle
+                size={19}
+                className="loading-spin"
+              />
+
+            </div>
+
+          </div>
+
+        )
+      }
+
+
+      <Header />
+
+
+      <main className="booking-container">
+
+        <div className="booking-top-row">
+
+          <div className="booking-title-area">
+
+            <Link
+              to="/farmer/home"
+              className="back-link"
+            >
+
+              <ArrowLeft
+                size={16}
+              />
+
+              {
+                tr(
+                  "common.back",
+                  "Back"
+                )
+              }
+
+            </Link>
+
+
+            <div className="booking-eyebrow-row">
+
+              <span className="page-eyebrow">
+
+                {
+                  copy.bookingEyebrow
+                }
+
+              </span>
+
+
+              <span className="booking-live-pill">
+
+                <span />
+
+                {
+                  copy.liveAvailability
+                }
+
+              </span>
+
+            </div>
+
+
+            <h1>
+              {
+                isEditMode
+                  ? copy.editTitle
+                  : copy.title
+              }
+            </h1>
+
+
+            <p>
+              {
+                isEditMode
+                  ? copy.editDescription
+                  : copy.description
+              }
+            </p>
+
+          </div>
+
+
+          <div className="booking-process-mini">
+
+            <div className="mini-step active">
+
+              <span>
+                1
+              </span>
+
+              {
+                tr(
+                  "booking.details",
+                  language ===
+                    "hi"
+                    ? "विवरण"
+                    : language ===
+                        "te"
+                      ? "వివరాలు"
+                      : "Details"
+                )
+              }
+
+            </div>
+
+
+            <div className="mini-step-line" />
+
+
+            <div
+              className={
+                `mini-step ${
+                  available
+                    ? "active"
+                    : ""
+                }`
+              }
+            >
+
+              <span>
+                2
+              </span>
+
+              {
+                tr(
+                  "booking.availability",
+                  language ===
+                    "hi"
+                    ? "उपलब्धता"
+                    : language ===
+                        "te"
+                      ? "అందుబాటు"
+                      : "Availability"
+                )
+              }
+
+            </div>
+
+
+            <div className="mini-step-line" />
+
+
+            <div
+              className={
+                `mini-step ${
+                  selectedSlot
+                    ? "active"
+                    : ""
+                }`
+              }
+            >
+
+              <span>
+                3
+              </span>
+
+              {
+                tr(
+                  "booking.confirm",
+                  language ===
+                    "hi"
+                    ? "पुष्टि"
+                    : language ===
+                        "te"
+                      ? "నిర్ధారణ"
+                      : "Confirm"
+                )
+              }
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <section className="booking-info-bar">
+
+          <div>
+
+            <div className="booking-info-icon green">
+
+              <ShieldCheck
+                size={19}
+              />
+
+            </div>
+
+
+            <div>
+
+              <strong>
+                {
+                  copy.secureTitle
+                }
+              </strong>
+
+              <span>
+                {
+                  copy.secureText
+                }
+              </span>
+
+            </div>
+
+          </div>
+
+
+          <div>
+
+            <div className="booking-info-icon blue">
+
+              <Clock3
+                size={19}
+              />
+
+            </div>
+
+
+            <div>
+
+              <strong>
+                {
+                  copy.reserveTitle
+                }
+              </strong>
+
+              <span>
+                {
+                  copy.reserveText
+                }
+              </span>
+
+            </div>
+
+          </div>
+
+
+          <div>
+
+            <div className="booking-info-icon gold">
+
+              <CheckCircle2
+                size={19}
+              />
+
+            </div>
+
+
+            <div>
+
+              <strong>
+                {
+                  copy.tokenTitle
+                }
+              </strong>
+
+              <span>
+                {
+                  copy.tokenText
+                }
+              </span>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <section className="booking-layout">
+
+          <div className="booking-form-column">
+
+            <section className="booking-panel">
+
+              <div className="booking-panel-number">
+                01
+              </div>
+
+
+              <div className="booking-panel-heading">
+
+                <div className="panel-icon green">
+
+                  <Wheat
+                    size={21}
+                  />
+
+                </div>
+
+
+                <div>
+
+                  <span className="panel-step-label">
+                    {
+                      copy.stepOne
+                    }
+                  </span>
+
+
+                  <h2>
+                    {
+                      copy.produceTitle
+                    }
+                  </h2>
+
+
+                  <p>
+                    {
+                      copy.produceDescription
+                    }
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              <div className="form-grid">
+
+                <div className="booking-form-field">
+
+                  <label>
+                    {
+                      copy.crop
+                    }
+                  </label>
+
+
+                  <div
+                    className="custom-select"
+                    ref={
+                      cropSelectRef
+                    }
+                  >
+
+                    <button
+                      type="button"
+                      className="select-control"
+                      onClick={() =>
+                        setOpenMenu(
+                          openMenu ===
+                            "crop"
+                            ? null
+                            : "crop"
+                        )
+                      }
+                    >
+
+                      <div className="select-main">
+
+                        <div
+                          className={
+                            `crop-visual crop-${
+                              selectedCrop?.id ||
+                              "wheat"
+                            }`
+                          }
+                        >
+
+                          <CropIcon
+                            crop={
+                              selectedCrop?.id ||
+                              "wheat"
+                            }
+                            size={24}
+                          />
+
+                        </div>
+
+
+                        <div className="selected-value-stack">
+
+                          <strong>
+                            {
+                              cropLabel(
+                                selectedCrop?.id ||
+                                "wheat"
+                              )
+                            }
+                          </strong>
+
+
+                          <span>
+                            {
+                              copy.cropSelected
+                            }
+                          </span>
+
+                        </div>
+
+                      </div>
+
+
+                      <ChevronDown
+                        size={17}
+                      />
+
+                    </button>
+
+
+                    <PortalDropdown
+                      open={
+                        openMenu ===
+                        "crop"
+                      }
+                      anchorRef={
+                        cropSelectRef
+                      }
+                      onClose={() =>
+                        setOpenMenu(
+                          null
+                        )
+                      }
+                      className="farmer-book-crop-menu"
+                      maxHeight={330}
+                    >
+
+                      {
+                        crops.map(
+                          item => (
+                            <button
+                              key={
+                                item.id
+                              }
+                              type="button"
+                              className={
+                                String(
+                                  crop
+                                ) ===
+                                String(
+                                  item.id
+                                )
+                                  ? "select-option selected"
+                                  : "select-option"
+                              }
+                              onClick={() =>
+                                handleCropSelect(
+                                  item.id
+                                )
+                              }
+                            >
+
+                              <div
+                                className={
+                                  `crop-visual crop-${
+                                    item.id
+                                  } crop-visual-small`
+                                }
+                              >
+
+                                <CropIcon
+                                  crop={
+                                    item.id
+                                  }
+                                  size={20}
+                                />
+
+                              </div>
+
+
+                              <div>
+
+                                <strong>
+                                  {
+                                    cropLabel(
+                                      item.id
+                                    )
+                                  }
+                                </strong>
+
+
+                                <span>
+                                  {
+                                    copy.agriculturalProduce
+                                  }
+                                </span>
+
+                              </div>
+
+
+                              {
+                                String(
+                                  crop
+                                ) ===
+                                String(
+                                  item.id
+                                ) && (
+                                  <Check
+                                    size={16}
+                                  />
+                                )
+                              }
+
+                            </button>
+                          )
+                        )
+                      }
+
+                    </PortalDropdown>
+
+                  </div>
+
+                </div>
+
+
+                <div className="booking-form-field">
+
+                  <label htmlFor="booking-quantity">
+
+                    {
+                      copy.quantity
+                    }
+
+                  </label>
+
+
+                  <div
+                    className={
+                      `quantity-input ${
+                        error &&
+                        (
+                          !quantity ||
+                          estimatedQuantity <=
+                          0
+                        )
+                          ? "booking-input-error"
+                          : ""
+                      }`
+                    }
+                  >
+
+                    <Scale
+                      size={19}
+                    />
+
+
+                    <input
+                      id="booking-quantity"
+                      type="text"
+                      inputMode="decimal"
+                      value={
+                        quantity
+                      }
+                      placeholder="250"
+                      onChange={
+                        handleQuantityChange
+                      }
+                    />
+
+
+                    <strong>
+                      kg
+                    </strong>
+
+                  </div>
+
+
+                  <span className="field-help">
+                    {
+                      copy.quantityHelp
+                    }
+                  </span>
+
+                </div>
+
+              </div>
+
+
+              <div className="booking-tip-card">
+
+                <div>
+
+                  <Info
+                    size={16}
+                  />
+
+                </div>
+
+
+                <p>
+                  {
+                    copy.quantityTip
+                  }
+                </p>
+
+              </div>
+
+            </section>
+
+
+            <section className="booking-panel">
+
+              <div className="booking-panel-number">
+                02
+              </div>
+
+
+              <div className="booking-panel-heading">
+
+                <div className="panel-icon blue">
+
+                  <MapPin
+                    size={21}
+                  />
+
+                </div>
+
+
+                <div>
+
+                  <span className="panel-step-label">
+
+                    {
+                      copy.stepTwo
+                    }
+
+                  </span>
+
+
+                  <h2>
+                    {
+                      copy.whereTitle
+                    }
+                  </h2>
+
+
+                  <p>
+                    {
+                      copy.whereDescription
+                    }
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              <div className="booking-form-field">
+
+                <label>
+                  {
+                    copy.center
+                  }
+                </label>
+
+
+                <div
+                  className="custom-select"
+                  ref={
+                    centerSelectRef
+                  }
+                >
+
+                  <button
+                    type="button"
+                    className="select-control"
+                    disabled={
+                      centersLoading
+                    }
+                    onClick={() =>
+                      setOpenMenu(
+                        openMenu ===
+                          "center"
+                          ? null
+                          : "center"
+                      )
+                    }
+                  >
+
+                    <div className="select-main">
+
+                      <div className="center-select-icon large">
+
+                        <MapPin
+                          size={18}
+                        />
+
+                      </div>
+
+
+                      <div className="selected-value-stack">
+
+                        <strong>
+
+                          {
+                            centersLoading
+                              ? "Loading centers..."
+                              : selectedCenter?.name ||
+                                copy.selectCenter
+                          }
+
+                        </strong>
+
+
+                        <span>
+
+                          {
+                            selectedCenter?.address ||
+                            copy.chooseCenter
+                          }
+
+                        </span>
+
+                      </div>
+
+                    </div>
+
+
+                    <ChevronDown
+                      size={17}
+                    />
+
+                  </button>
+
+
+                  <PortalDropdown
+                    open={
+                      openMenu ===
+                      "center"
+                    }
+                    anchorRef={
+                      centerSelectRef
+                    }
+                    onClose={() =>
+                      setOpenMenu(
+                        null
+                      )
+                    }
+                    className="farmer-book-center-menu"
+                    maxHeight={360}
+                  >
+
+                    {
+                      centersLoading ? (
+
+                        <div className="booking-menu-empty">
+                          {
+                            tr(
+                              "location.loadingCenters",
+                              "Loading procurement centers..."
+                            )
+                          }
+                        </div>
+
+                      ) : availableCenters.length ===
+                        0 ? (
+
+                        <div className="booking-menu-empty">
+                          {
+                            tr(
+                              "location.noCenter",
+                              "No active procurement center available."
+                            )
+                          }
+                        </div>
+
+                      ) : (
+
+                        availableCenters.map(
+                          center => (
+                            <button
+                              key={
+                                center.id
+                              }
+                              type="button"
+                              className={
+                                String(
+                                  centerId
+                                ) ===
+                                String(
+                                  center.id
+                                )
+                                  ? "center-option selected"
+                                  : "center-option"
+                              }
+                              onClick={() =>
+                                handleCenterSelect(
+                                  center.id
+                                )
+                              }
+                            >
+
+                              <div className="center-option-icon">
+
+                                <MapPin
+                                  size={17}
+                                />
+
+                              </div>
+
+
+                              <div>
+
+                                <strong>
+                                  {
+                                    center.name
+                                  }
+                                </strong>
+
+
+                                <span>
+                                  {
+                                    center.address ||
+                                    [
+                                      center.village,
+                                      center.mandal_id,
+                                      center.district_id,
+                                      center.state_id,
+                                    ]
+                                      .filter(Boolean)
+                                      .join(", ")
+                                  }
+                                </span>
+
+
+                                {
+                                  center.landmark && (
+                                    <small>
+
+                                      {
+                                        copy.near
+                                      }
+
+                                      {" "}
+
+                                      {
+                                        center.landmark
+                                      }
+
+                                    </small>
+                                  )
+                                }
+
+                              </div>
+
+
+                              {
+                                String(
+                                  centerId
+                                ) ===
+                                String(
+                                  center.id
+                                ) && (
+                                  <Check
+                                    size={16}
+                                  />
+                                )
+                              }
+
+                            </button>
+                          )
+                        )
+
+                      )
+                    }
+
+                  </PortalDropdown>
+
+                </div>
+
+
+                {
+                  selectedCenter && (
+
+                    <div className="center-detail-card">
+
+                      <div className="center-detail-top">
+
+                        <div className="center-detail-icon">
+
+                          <MapPin
+                            size={17}
+                          />
+
+                        </div>
+
+
+                        <div>
+
+                          <strong>
+                            {
+                              selectedCenter.name
+                            }
+                          </strong>
+
+
+                          <span>
+                            {
+                              selectedCenter.address ||
+                              [
+                                selectedCenter.village,
+                                selectedCenter.mandal_id,
+                                selectedCenter.district_id,
+                                selectedCenter.state_id,
+                              ]
+                                .filter(Boolean)
+                                .join(", ") ||
+                              copy.chooseCenter
+                            }
+                          </span>
+
+                        </div>
+
+                      </div>
+
+
+                      <div className="center-detail-meta">
+
+                        <span>
+
+                          <Clock3
+                            size={13}
+                          />
+
+                          {
+                            formatTime(
+                              selectedCenter.opening_time ||
+                              selectedCenter.openingTime ||
+                              "09:00"
+                            )
+                          }
+
+                          {" – "}
+
+                          {
+                            formatTime(
+                              selectedCenter.closing_time ||
+                              selectedCenter.closingTime ||
+                              "17:00"
+                            )
+                          }
+
+                        </span>
+
+
+                        <span>
+
+                          <Leaf
+                            size={13}
+                          />
+
+                          {
+                            copy.produceIntake
+                          }
+
+                        </span>
+
+
+                        <span>
+
+                          <Scale
+                            size={13}
+                          />
+
+                          {
+                            getCenterCapacity(
+                              selectedCenter,
+                              settings
+                            )
+                          }
+
+                          {" "}
+
+                          {
+                            copy.bookingsSlot
+                          }
+
+                        </span>
+
+                      </div>
+
+                    </div>
+
+                  )
+                }
+
+              </div>
+
+
+              <div className="booking-form-field booking-date-field">
+
+                <div className="field-heading-row">
+
+                  <label>
+                    {
+                      copy.preferredDate
+                    }
+                  </label>
+
+
+                  <span>
+                    {
+                      copy.chooseDate
+                    }
+                  </span>
+
+                </div>
+
+
+                <div className="date-options">
+
+                  {
+                    dates.map(
+                      item => (
+
+                        <button
+                          key={
+                            item.id
+                          }
+                          type="button"
+                          className={
+                            date ===
+                            item.id
+                              ? "date-option selected"
+                              : "date-option"
+                          }
+                          onClick={() =>
+                            handleDateSelect(
+                              item.id
+                            )
+                          }
+                        >
+
+                          <span className="date-weekday">
+
+                            {
+                              item.label
+                            }
+
+                          </span>
+
+
+                          <strong>
+
+                            {
+                              item.day
+                            }
+
+                          </strong>
+
+
+                          <small>
+
+                            {
+                              item.month
+                            }
+
+                          </small>
+
+
+                          {
+                            date ===
+                            item.id && (
+
+                              <div className="date-check">
+
+                                <Check
+                                  size={13}
+                                />
+
+                              </div>
+
+                            )
+                          }
+
+                        </button>
+
+                      )
+                    )
+                  }
+
+                </div>
+
+              </div>
+
+            </section>
+
+
+            <section className="booking-check-card">
+
+              <div className="booking-check-icon">
+
+                <CalendarDays
+                  size={24}
+                />
+
+              </div>
+
+
+              <div className="booking-check-copy">
+
+                <span>
+
+                  {
+                    copy.readyCheck
+                  }
+
+                </span>
+
+
+                <h3>
+
+                  {
+                    copy.findWindow
+                  }
+
+                </h3>
+
+
+                <p>
+
+                  {
+                    copy.checkText
+                  }
+
+                </p>
+
+              </div>
+
+
+              <div className="booking-check-action">
+
+                <Button
+                  fullWidth
+                  onClick={
+                    handleCheckAvailability
+                  }
+                  disabled={
+                    loadingAvailability ||
+                    loadingBookings ||
+                    settingsLoading ||
+                    centersLoading ||
+                    !selectedCenter
+                  }
+                >
+
+                  {
+                    loadingAvailability ||
+                    loadingBookings ||
+                    settingsLoading ||
+                    centersLoading ? (
+
+                      <>
+
+                        <LoaderCircle
+                          size={18}
+                          className="loading-spin"
+                        />
+
+                        {
+                          copy.checking
+                        }
+
+                      </>
+
+                    ) : (
+
+                      <>
+
+                        {
+                          tr(
+                            "booking.checkAvailability",
+                            "Check Available Windows"
+                          )
+                        }
+
+
+                        <ArrowRight
+                          size={18}
+                        />
+
+                      </>
+
+                    )
+                  }
+
+                </Button>
+
+              </div>
+
+            </section>
+
+
+            {
+              centerSwitchMessage && (
+
+                <div className="booking-error prominent">
+
+                  <CheckCircle2
+                    size={17}
+                  />
+
+
+                  <span>
+
+                    {
+                      centerSwitchMessage
+                    }
+
+                  </span>
+
+                </div>
+
+              )
+            }
+
+
+            {
+              error && (
+
+                <div className="booking-error prominent">
+
+                  <Info
+                    size={17}
+                  />
+
+
+                  <span>
+
+                    {
+                      error
+                    }
+
+                  </span>
+
+                </div>
+
+              )
+            }
+
+
+            {
+              settingsError && (
+
+                <div className="booking-error prominent">
+
+                  <Info
+                    size={17}
+                  />
+
+
+                  <span>
+
+                    {
+                      settingsError
+                    }
+
+                  </span>
+
+                </div>
+
+              )
+            }
+
+          </div>
+
+
+          <aside className="booking-summary-column">
+
+            <div className="booking-summary-card">
+
+              <div className="summary-header">
+
+                <div>
+
+                  <span>
+                    {
+                      copy.yourBooking
+                    }
+                  </span>
+
+
+                  <h2>
+                    {
+                      copy.review
+                    }
+                  </h2>
+
+                </div>
+
+
+                <div className="summary-header-icon">
+
+                  <CalendarDays
+                    size={19}
+                  />
+
+                </div>
+
+              </div>
+
+
+              <div className="summary-crop">
+
+                <div
+                  className={
+                    `crop-visual crop-visual-large crop-${
+                      selectedCrop?.id ||
+                      "wheat"
+                    }`
+                  }
+                >
+
+                  <CropIcon
+                    crop={
+                      selectedCrop?.id ||
+                      "wheat"
+                    }
+                    size={34}
+                  />
+
+                </div>
+
+
+                <div>
+
+                  <span>
+                    {
+                      copy.crop
+                    }
+                  </span>
+
+
+                  <strong>
+                    {
+                      cropLabel(
+                        selectedCrop?.id ||
+                        "wheat"
+                      )
+                    }
+                  </strong>
+
+
+                  <small>
+
+                    {
+                      estimatedQuantity >
+                      0
+                        ? `${estimatedQuantity.toLocaleString()} kg ${copy.estimated}`
+                        : copy.notEntered
+                    }
+
+                  </small>
+
+                </div>
+
+              </div>
+
+
+              <div className="summary-list">
+
+                <SummaryRow
+                  icon={
+                    <MapPin
+                      size={15}
+                    />
+                  }
+                  label={
+                    copy.center
+                  }
+                  value={
+                    selectedCenter?.name ||
+                    copy.selectCenter
+                  }
+                />
+
+
+                <SummaryRow
+                  icon={
+                    <CalendarDays
+                      size={15}
+                    />
+                  }
+                  label={
+                    tr(
+                      "booking.date",
+                      "Date"
+                    )
+                  }
+                  value={
+                    selectedDate
+                      ? `${selectedDate.label}, ${selectedDate.day} ${selectedDate.month}`
+                      : copy.chooseDate
+                  }
+                />
+
+
+                <SummaryRow
+                  icon={
+                    <Clock3
+                      size={15}
+                    />
+                  }
+                  label={
+                    tr(
+                      "booking.arrivalWindow",
+                      language ===
+                        "hi"
+                        ? "आने का समय"
+                        : language ===
+                            "te"
+                          ? "రాక సమయం"
+                          : "Arrival window"
+                    )
+                  }
+                  value={
+                    selectedSlotRecord?.display ||
+                    copy.chooseWindow
+                  }
+                />
+
+
+                <SummaryRow
+                  icon={
+                    <Scale
+                      size={15}
+                    />
+                  }
+                  label={
+                    copy.quantity
+                  }
+                  value={
+                    estimatedQuantity >
+                    0
+                      ? `${estimatedQuantity.toLocaleString()} kg`
+                      : copy.notEntered
+                  }
+                />
+
+              </div>
+
+
+              <div className="summary-total-row">
+
+                <span>
+                  {
+                    copy.bookingStatus
+                  }
+                </span>
+
+
+                <strong>
+
+                  {
+                    selectedSlotRecord
+                      ? copy.readyConfirm
+                      : available
+                        ? copy.chooseArrival
+                        : copy.detailsProgress
+                  }
+
+                </strong>
+
+              </div>
+
+
+              <div className="summary-security">
+
+                <ShieldCheck
+                  size={16}
+                />
+
+                <span>
+
+                  {
+                    copy.finalSecurity
+                  }
+
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <div className="booking-help-card">
+
+              <div className="booking-help-icon">
+
+                <CircleHelp
+                  size={20}
+                />
+
+              </div>
+
+
+              <div>
+
+                <strong>
+                  {
+                    copy.needHelp
+                  }
+                </strong>
+
+
+                <p>
+                  {
+                    copy.helpText
+                  }
+                </p>
+
+
+                <Link
+                  to="/farmer/help"
+                >
+
+                  {
+                    copy.bookingHelp
+                  }
+
+
+                  <ArrowRight
+                    size={14}
+                  />
+
+                </Link>
+
+              </div>
+
+            </div>
+
+          </aside>
+
+        </section>
+
+
+        {
+          available && (
+
+            <section className="booking-availability-section">
+
+              <div className="availability-section-top">
+
+                <div>
+
+                  <div className="availability-title-row">
+
+                    <span className="page-eyebrow">
+
+                      {
+                        tr(
+                          "booking.availableWindows",
+                          copy.availableWindows
+                        )
+                      }
+
+                    </span>
+
+
+                    <span className="availability-found-pill">
+
+                      <CheckCircle2
+                        size={14}
+                      />
+
+
+                      {
+                        copy.windowsAvailable
+                      }
+
+                    </span>
+
+                  </div>
+
+
+                  <h2>
+
+                    {
+                      copy.chooseArrivalWindow
+                    }
+
+                  </h2>
+
+
+                  <p>
+
+                    {
+                      copy.availabilityText
+                    }
+
+                  </p>
+
+                </div>
+
+
+                <div className="availability-date-card">
+
+                  <CalendarDays
+                    size={19}
+                  />
+
+
+                  <div>
+
+                    <span>
+
+                      {
+                        copy.selectedDate
+                      }
+
+                    </span>
+
+
+                    <strong>
+
+                      {
+                        selectedDate?.label
+                      }
+
+                      {", "}
+
+                      {
+                        selectedDate?.day
+                      }
+
+                      {" "}
+
+                      {
+                        selectedDate?.month
+                      }
+
+                    </strong>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              <div className="availability-overview">
+
+                <div className="availability-overview-item">
+
+                  <div className="availability-overview-icon blue">
+
+                    <Clock3
+                      size={18}
+                    />
+
+                  </div>
+
+
+                  <div>
+
+                    <span>
+
+                      {
+                        copy.availableWindows
+                      }
+
+                    </span>
+
+
+                    <strong>
+
+                      {
+                        availability.filter(
+                          slot =>
+                            slot.remaining >
+                            0
+                        ).length
+                      }
+
+                    </strong>
+
+                  </div>
+
+                </div>
+
+
+                <div className="availability-overview-item">
+
+                  <div className="availability-overview-icon green">
+
+                    <CheckCircle2
+                      size={18}
+                    />
+
+                  </div>
+
+
+                  <div>
+
+                    <span>
+
+                      {
+                        copy.openCapacity
+                      }
+
+                    </span>
+
+
+                    <strong>
+
+                      {
+                        totalRemaining
+                      }
+
+                    </strong>
+
+
+                    <small>
+
+                      {
+                        copy.placesRemaining
+                      }
+
+                    </small>
+
+                  </div>
+
+                </div>
+
+
+                <div className="availability-overview-item">
+
+                  <div className="availability-overview-icon gold">
+
+                    <MapPin
+                      size={18}
+                    />
+
+                  </div>
+
+
+                  <div>
+
+                    <span>
+
+                      {
+                        copy.center
+                      }
+
+                    </span>
+
+
+                    <strong>
+
+                      {
+                        selectedCenter?.name ||
+                        "-"
+                      }
+
+                    </strong>
+
+                  </div>
+
+                </div>
+
+
+                {
+                  availabilityCheckedAt && (
+
+                    <div className="availability-overview-item">
+
+                      <div className="availability-overview-icon blue">
+
+                        <Clock3
+                          size={18}
+                        />
+
+                      </div>
+
+
+                      <div>
+
+                        <span>
+
+                          {
+                            language ===
+                              "hi"
+                              ? "अंतिम जांच"
+                              : language ===
+                                  "te"
+                                ? "చివరి తనిఖీ"
+                                : "Last checked"
+                          }
+
+                        </span>
+
+
+                        <strong>
+
+                          {
+                            availabilityCheckedAt.toLocaleTimeString(
+                              language ===
+                                "hi"
+                                ? "hi-IN"
+                                : language ===
+                                    "te"
+                                  ? "te-IN"
+                                  : "en-IN",
+                              {
+                                hour:
+                                  "numeric",
+
+                                minute:
+                                  "2-digit",
+
+                              }
+                            )
+                          }
+
+                        </strong>
+
+                      </div>
+
+                    </div>
+
+                  )
+                }
+
+              </div>
+
+
+              <div className="slot-instruction">
+
+                <div className="slot-instruction-icon">
+
+                  <Info
+                    size={16}
+                  />
+
+                </div>
+
+
+                <p>
+
+                  {
+                    language ===
+                      "hi"
+                      ? "हर समय स्लॉट में सीमित बुकिंग उपलब्ध हैं। अपनी यात्रा के अनुसार सबसे उपयुक्त समय चुनें।"
+                      : language ===
+                          "te"
+                        ? "ప్రతి సమయ స్లాట్‌లో పరిమిత బుకింగ్‌లు ఉంటాయి. మీ ప్రయాణానికి అనుకూలమైన సమయాన్ని ఎంచుకోండి."
+                        : "Each window has a limited number of bookings. Select the slot that best fits your travel time."
+                  }
+
+                </p>
+
+              </div>
+
+
+              <div className="slot-grid">
+
+                {
+                  availability.map(
+                    slot => {
+
+                      const isSelected =
+                        selectedSlot?.id ===
+                        slot.id;
+
+
+                      const isPast =
+                        slot.loadClass ===
+                        "past";
+
+
+                      const isFull =
+                        slot.remaining <=
+                          0 ||
+                        isPast;
+
+
+                      let availabilityLabel =
+                        copy.goodAvailability;
+
+
+                      if (
+                        isPast
+                      ) {
+
+                        availabilityLabel =
+                          language ===
+                            "hi"
+                            ? "समय निकल चुका"
+                            : language ===
+                                "te"
+                              ? "సమయం ముగిసింది"
+                              : "Past";
+
+                      } else if (
+                        slot.remaining ===
+                        0
+                      ) {
+
+                        availabilityLabel =
+                          copy.full;
+
+                      } else if (
+                        slot.loadClass ===
+                        "busy"
+                      ) {
+
+                        availabilityLabel =
+                          copy.nearlyFull;
+
+                      } else if (
+                        slot.loadClass ===
+                        "limited"
+                      ) {
+
+                        availabilityLabel =
+                          copy.limitedAvailability;
+
+                      }
+
+
+                      return (
+
+                        <button
+                          key={
+                            slot.id
+                          }
+                          type="button"
+                          disabled={
+                            isFull
+                          }
+                          className={
+                            `slot-card ${
+                              isSelected
+                                ? "selected"
+                                : ""
+                            } ${
+                              isFull
+                                ? "slot-full"
+                                : ""
+                            } ${
+                              slot.loadClass
+                            }`
+                          }
+                          onClick={() =>
+                            !isPast &&
+                            handleSelectSlot(
+                              slot
+                            )
+                          }
+                        >
+
+                          <div className="slot-card-header">
+
+                            <div className="slot-card-clock">
+
+                              <Clock3
+                                size={19}
+                              />
+
+                            </div>
+
+
+                            {
+                              isSelected && (
+
+                                <div className="slot-card-selected">
+
+                                  <Check
+                                    size={14}
+                                  />
+
+                                </div>
+
+                              )
+                            }
+
+                          </div>
+
+
+                          <div className="slot-card-time">
+
+                            <strong>
+
+                              {
+                                slot.display
+                              }
+
+                            </strong>
+
+                          </div>
+
+
+                          <div className="slot-capacity-label">
+
+                            <span
+                              className={
+                                isPast
+                                  ? "slot-full-label"
+                                  : slot.remaining ===
+                                    0
+                                    ? "slot-full-label"
+                                    : slot.loadClass ===
+                                      "busy"
+                                      ? "slot-busy-label"
+                                      : slot.loadClass ===
+                                        "limited"
+                                        ? "slot-limited-label"
+                                        : "slot-normal-label"
+                              }
+                            >
+
+                              {
+                                availabilityLabel
+                              }
+
+                            </span>
+
+                          </div>
+
+
+                          <div className="slot-capacity-bar">
+
+                            <div
+                              style={{
+                                width:
+                                  `${isPast
+                                    ? 100
+                                    : Math.min(
+                                        100,
+                                        (
+                                          Math.min(
+                                            slot.booked,
+                                            slot.capacity
+                                          ) /
+                                          Math.max(
+                                            slot.capacity,
+                                            1
+                                          )
+                                        ) *
+                                        100
+                                      )}%`,
+                              }}
+                            />
+
+                          </div>
+
+
+                          <div className="slot-card-footer">
+
+                            <span>
+
+                              {
+                                isPast
+                                  ? (
+                                      language ===
+                                        "hi"
+                                        ? "समय निकल चुका"
+                                        : language ===
+                                            "te"
+                                          ? "సమయం ముగిసింది"
+                                          : "Time passed"
+                                    )
+                                  : isFull
+                                    ? copy.noPlaces
+                                    : `${Math.max(
+                                        0,
+                                        Math.min(
+                                          slot.remaining,
+                                          slot.capacity
+                                        )
+                                      )} ${copy.placesRemaining}`
+                              }
+
+                            </span>
+
+
+                            {
+                              !isFull && (
+
+                                <ArrowRight
+                                  size={16}
+                                />
+
+                              )
+                            }
+
+                          </div>
+
+                        </button>
+
+                      );
+
+                    }
+                  )
+                }
+
+              </div>
+
+
+              {
+                selectedSlotRecord && (
+
+                  <div className="selected-slot-banner">
+
+                    <div className="selected-slot-check">
+
+                      <Check
+                        size={18}
+                      />
+
+                    </div>
+
+
+                    <div>
+
+                      <span>
+
+                        {
+                          copy.selectedWindow
+                        }
+
+                      </span>
+
+
+                      <strong>
+
+                        {
+                          selectedSlotRecord.display
+                        }
+
+                      </strong>
+
+                    </div>
+
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelectedSlot(
+                          null
+                        )
+                      }
+                    >
+
+                      {
+                        copy.change
+                      }
+
+                    </button>
+
+                  </div>
+
+                )
+              }
+
+            </section>
+
+          )
+        }
+
+
+        {
+          available &&
+          selectedSlotRecord && (
+
+            <section className="booking-confirm-section">
+
+              <div className="confirm-section-heading">
+
+                <div>
+
+                  <span className="page-eyebrow">
+
+                    {
+                      copy.finalStep
+                    }
+
+                  </span>
+
+
+                  <h2>
+
+                    {
+                      copy.checkEverything
+                    }
+
+                  </h2>
+
+
+                  <p>
+
+                    {
+                      copy.finalText
+                    }
+
+                  </p>
+
+                </div>
+
+
+                <span className="confirm-ready-pill">
+
+                  <CheckCircle2
+                    size={15}
+                  />
+
+
+                  {
+                    copy.readyConfirm
+                  }
+
+                </span>
+
+              </div>
+
+
+              <div className="confirm-review-grid">
+
+                <ConfirmCard
+                  icon={
+                    <Wheat
+                      size={21}
+                    />
+                  }
+                  tone="green"
+                  title={
+                    copy.crop
+                  }
+                  value={
+                    cropLabel(
+                      selectedCrop?.id
+                    )
+                  }
+                  detail={
+                    estimatedQuantity >
+                    0
+                      ? `${estimatedQuantity.toLocaleString()} kg`
+                      : copy.notEntered
+                  }
+                />
+
+
+                <ConfirmCard
+                  icon={
+                    <MapPin
+                      size={21}
+                    />
+                  }
+                  tone="blue"
+                  title={
+                    copy.center
+                  }
+                  value={
+                    selectedCenter?.name ||
+                    "-"
+                  }
+                  detail={
+                    selectedCenter?.address ||
+                    ""
+                  }
+                />
+
+
+                <ConfirmCard
+                  icon={
+                    <CalendarDays
+                      size={21}
+                    />
+                  }
+                  tone="gold"
+                  title={
+                    tr(
+                      "booking.date",
+                      language ===
+                        "hi"
+                        ? "तारीख"
+                        : language ===
+                            "te"
+                          ? "తేదీ"
+                          : "Date"
+                    )
+                  }
+                  value={
+                    selectedDate?.label ||
+                    "-"
+                  }
+                  detail={
+                    selectedDate
+                      ? `${selectedDate.day} ${selectedDate.month}`
+                      : ""
+                  }
+                />
+
+
+                <ConfirmCard
+                  icon={
+                    <Clock3
+                      size={21}
+                    />
+                  }
+                  tone="orange"
+                  title={
+                    copy.selectedWindow
+                  }
+                  value={
+                    selectedSlotRecord.display
+                  }
+                  detail={
+                    `${Math.max(
+                      0,
+                      Math.min(
+                        selectedSlotRecord.remaining,
+                        selectedSlotRecord.capacity
+                      )
+                    )} ${copy.placesRemaining}`
+                  }
+                />
+
+              </div>
+
+
+              <div className="confirm-notice">
+
+                <div className="confirm-notice-icon">
+
+                  <ShieldCheck
+                    size={20}
+                  />
+
+                </div>
+
+
+                <div>
+
+                  <strong>
+
+                    {
+                      copy.whatHappens
+                    }
+
+                  </strong>
+
+
+                  <p>
+
+                    {
+                      copy.afterText
+                    }
+
+                  </p>
+
+                </div>
+
+              </div>
+
+
+              {
+                error && (
+
+                  <div className="booking-error prominent">
+
+                    <Info
+                      size={17}
+                    />
+
+                    <span>
+
+                      {
+                        error
+                      }
+
+                    </span>
+
+                  </div>
+
+                )
+              }
+
+
+              <div className="confirm-bottom">
+
+                <div className="confirm-arrival-reminder">
+
+                  <Clock3
+                    size={17}
+                  />
+
+                  <span>
+
+                    {
+                      copy.arriveText
+                    }
+
+                  </span>
+
+                </div>
+
+
+                <Button
+                  onClick={() =>
+                    handleConfirmBooking()
+                  }
+                  disabled={
+                    confirming
+                  }
+                >
+
+                  {
+                    confirming ? (
+
+                      <>
+
+                        <LoaderCircle
+                          size={18}
+                          className="loading-spin"
+                        />
+
+                        {
+                          copy.saving
+                        }
+
+                      </>
+
+                    ) : (
+
+                      <>
+
+                        {
+                          isEditMode
+                            ? copy.saveChanges
+                            : copy.confirm
+                        }
+
+
+                        <ArrowRight
+                          size={18}
+                        />
+
+                      </>
+
+                    )
+                  }
+
+                </Button>
+
+              </div>
+
+            </section>
+
+          )
+        }
+
+
+        <section className="booking-bottom-information">
+
+          <div className="booking-bottom-card green">
+
+            <div className="bottom-card-icon">
+
+              <ShieldCheck
+                size={21}
+              />
+
+            </div>
+
+
+            <div>
+
+              <strong>
+
+                {
+                  copy.traceable
+                }
+
+              </strong>
+
+
+              <span>
+
+                {
+                  copy.traceableText
+                }
+
+              </span>
+
+            </div>
+
+          </div>
+
+
+          <div className="booking-bottom-card blue">
+
+            <div className="bottom-card-icon">
+
+              <Clock3
+                size={21}
+              />
+
+            </div>
+
+
+            <div>
+
+              <strong>
+
+                {
+                  copy.arriveDuring
+                }
+
+              </strong>
+
+
+              <span>
+
+                {
+                  copy.arriveDuringText
+                }
+
+              </span>
+
+            </div>
+
+          </div>
+
+
+          <Link
+            to="/farmer/help"
+            className="booking-bottom-card gold"
+          >
+
+            <div className="bottom-card-icon">
+
+              <CircleHelp
+                size={21}
+              />
+
+            </div>
+
+
+            <div>
+
+              <strong>
+
+                {
+                  copy.assistance
+                }
+
+              </strong>
+
+
+              <span>
+
+                {
+                  copy.assistanceText
+                }
+
+              </span>
+
+            </div>
+
+
+            <ArrowRight
+              size={17}
+            />
+
+          </Link>
+
+        </section>
+
+      </main>
+
+
+      <footer className="booking-page-footer">
+
+        <div>
+
+          <strong>
+            KrishiSetu
+          </strong>
+
+
+          <span>
+
+            {
+              language ===
+                "hi"
+                ? "स्मार्ट कृषि खरीद"
+                : language ===
+                    "te"
+                  ? "స్మార్ట్ వ్యవసాయ కొనుగోలు"
+                  : "Smart agricultural procurement"
+            }
+
+          </span>
+
+        </div>
+
+
+        <span>
+
+          {
+            language ===
+              "hi"
+              ? "बुकिंग जानकारी आपके खरीद रिकॉर्ड में सुरक्षित रूप से संग्रहीत है।"
+              : language ===
+                  "te"
+                ? "బుకింగ్ సమాచారం మీ కొనుగోలు రికార్డులో సురక్షితంగా నిల్వ చేయబడుతుంది."
+                : "Booking information is stored securely in your procurement record."
+          }
+
+        </span>
+
+      </footer>
+
+    </div>
+
+  );
+
+}
+
+
+/* =========================================================
+   CONFIRM CARD
+========================================================= */
+
+function ConfirmCard({
+  icon,
+  tone,
+  title,
+  value,
+  detail,
+}) {
+
+  return (
+
+    <div className="confirm-review-card">
+
+      <div
+        className={
+          `confirm-review-icon ${tone}`
+        }
+      >
+
+        {
+          icon
+        }
+
+      </div>
+
+
+      <div>
+
+        <span>
+          {
+            title
+          }
+        </span>
+
+
+        <strong>
+          {
+            value
+          }
+        </strong>
+
+
+        <small>
+          {
+            detail
+          }
+        </small>
+
+      </div>
+
+    </div>
+
+  );
+
+}
+
+
+/* =========================================================
+   SUMMARY ROW
+========================================================= */
+
+function SummaryRow({
+  icon,
+  label,
+  value,
+}) {
+
+  return (
+
+    <div className="summary-row">
+
+      <div className="summary-row-label">
+
+        <div className="summary-row-icon">
+
+          {
+            icon
+          }
+
+        </div>
+
+
+        <span>
+          {
+            label
+          }
+        </span>
+
+      </div>
+
+
+      <strong>
+        {
+          value
+        }
+      </strong>
+
+    </div>
+
+  );
+
+}
+
+
+function sameSlot(a, b) {
+
+  if (!a || !b) {
+    return !a && !b;
+  }
+
+  return (
+    String(a.id || '') === String(b.id || '') &&
+    String(a.start || '') === String(b.start || '') &&
+    String(a.end || '') === String(b.end || '')
+  );
+}
+
+
+function dateOptionIdToIso(value) {
+
+  const text =
+    String(value || '').trim().toLowerCase();
+
+  if (!text) {
+    return null;
+  }
+
+  if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(text)) {
+    return text;
+  }
+
+  const match =
+    text.match(/^(\d{1,2})-(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)$/);
+
+  if (!match) {
+    return null;
+  }
+
+  const months = {
+    jan: 0,
+    feb: 1,
+    mar: 2,
+    apr: 3,
+    may: 4,
+    jun: 5,
+    jul: 6,
+    aug: 7,
+    sep: 8,
+    oct: 9,
+    nov: 10,
+    dec: 11,
+  };
+
+  const day = Number(match[1]);
+  const month = months[match[2]];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  let candidate =
+    new Date(
+      today.getFullYear(),
+      month,
+      day
+    );
+
+  candidate.setHours(0, 0, 0, 0);
+
+  if (candidate < today) {
+    candidate =
+      new Date(
+        today.getFullYear() + 1,
+        month,
+        day
+      );
+  }
+
+  return [
+    candidate.getFullYear(),
+    String(candidate.getMonth() + 1).padStart(2, '0'),
+    String(candidate.getDate()).padStart(2, '0'),
+  ].join('-');
+}
+
+
+function dateToOptionId(value) {
+
+  const text =
+    String(value || '').trim();
+
+  const match =
+    text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+
+  if (!match) {
+    return text;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+
+  const dateValue =
+    new Date(year, month - 1, day);
+
+  if (
+    dateValue.getFullYear() !== year ||
+    dateValue.getMonth() !== month - 1 ||
+    dateValue.getDate() !== day
+  ) {
+    return text;
+  }
+
+  const monthName =
+    dateValue
+      .toLocaleString('en-US', { month: 'short' })
+      .toLowerCase();
+
+  return `${String(day).padStart(2, '0')}-${monthName}`;
+}
+
+
+/* =========================================================
+   CENTER CAPACITY
+========================================================= */
+
+function getCenterCapacity(
+  center,
+  settings
+) {
+
+  const capacity =
+    Number(
+      center?.capacity ??
+      center?.capacityPerSlot ??
+      center?.capacity_per_slot ??
+      settings?.defaultCapacity ??
+      20
+    );
+
+
+  if (
+    !Number.isFinite(
+      capacity
+    ) ||
+    capacity <=
+    0
+  ) {
+
+    return Number(
+      settings?.defaultCapacity ||
+      20
+    );
+
+  }
+
+
+  return capacity;
+
+}
+
+
+/* =========================================================
+   BOOKING COUNT
+========================================================= */
+
+function getBookedCount(
+  bookingRows,
+  centerId,
+  date,
+  slotStart,
+  slotEnd,
+  excludeBookingId = null
+) {
+
+  if (
+    !Array.isArray(
+      bookingRows
+    )
+  ) {
+
+    return 0;
+
+  }
+
+
+  return bookingRows.filter(
+    booking => {
+
+      const bookingCenterId =
+        String(
+          booking?.center_id ??
+          booking?.centerId ??
+          ""
+        );
+
+
+      const bookingDate =
+        String(
+          booking?.date ??
+          ""
+        );
+
+
+      const bookingStart =
+        String(
+          booking?.slot_start ??
+          booking?.slotStart ??
+          ""
+        );
+
+
+      const bookingEnd =
+        String(
+          booking?.slot_end ??
+          booking?.slotEnd ??
+          ""
+        );
+
+
+      const status =
+        String(
+          booking?.status ??
+          ""
+        );
+
+
+      const ignoredStatuses = new Set([
+        'CANCELLED',
+        'CANCELED',
+        'REJECTED',
+        'EXPIRED',
+      ]);
+
+      const excluded =
+        excludeBookingId &&
+        String(booking?.id ?? "") ===
+        String(excludeBookingId);
+
+      return (
+
+        bookingCenterId ===
+        String(
+          centerId
+        ) &&
+
+        bookingDate ===
+        String(
+          date
+        ) &&
+
+        bookingStart ===
+        String(
+          slotStart
+        ) &&
+
+        bookingEnd ===
+        String(
+          slotEnd
+        ) &&
+
+        !excluded &&
+        !ignoredStatuses.has(status)
+
+      );
+
+    }
+  ).length;
+
+}
+
+
+/* =========================================================
+   FARMER NORMALIZATION
+========================================================= */
+
+function normalizeFarmer(
+  farmer
+) {
+
+  if (
+    !farmer
+  ) {
+
+    return null;
+
+  }
+
+
+  return {
+
+    ...farmer,
+
+    id:
+      String(
+        farmer.id ||
+        ""
+      ),
+
+    name:
+      farmer.name ||
+      "",
+
+    phone:
+      normalisePhone(
+        farmer.phone
+      ),
+
+    stateId:
+      farmer.state_id ??
+      farmer.stateId ??
+      null,
+
+    districtId:
+      farmer.district_id ??
+      farmer.districtId ??
+      null,
+
+    mandalId:
+      farmer.mandal_id ??
+      farmer.mandalId ??
+      null,
+
+    village:
+      farmer.village ||
+      "",
+
+    language:
+      farmer.language ||
+      "en",
+
+    preferredCenterId:
+      farmer.preferred_center_id ??
+      farmer.preferredCenterId ??
+      null,
+
+    primaryCrop:
+      farmer.primary_crop ??
+      farmer.primaryCrop ??
+      null,
+
+    estimatedQuantity:
+      Number(
+        farmer.estimated_quantity ??
+        farmer.estimatedQuantity ??
+        0
+      ),
+
+  };
+
+}
+
+
+function normalisePhone(
+  value
+) {
+
+  return String(
+    value ||
+    ""
+  ).replace(
+    /\D/g,
+    ""
+  );
+
+}
+
+
+/* =========================================================
+   SLOT TIME CHECK
+========================================================= */
+
+function isSlotInPast(
+  slot,
+  selectedDate
+) {
+
+  if (
+    !selectedDate ||
+    !slot
+  ) {
+
+    return false;
+
+  }
+
+
+  const today =
+    new Date();
+
+
+  const todayString =
+    [
+      today.getFullYear(),
+
+      String(
+        today.getMonth() + 1
+      ).padStart(
+        2,
+        "0"
+      ),
+
+      String(
+        today.getDate()
+      ).padStart(
+        2,
+        "0"
+      ),
+
+    ].join("-");
+
+
+  if (
+    selectedDate.date !==
+    todayString
+  ) {
+
+    return false;
+
+  }
+
+
+  const currentMinutes =
+    today.getHours() *
+      60 +
+    today.getMinutes();
+
+
+  return (
+    timeToMinutes(
+      slot.end
+    ) <=
+    currentMinutes
+  );
+
+}
+
+
+/* =========================================================
+   TIME HELPERS
+========================================================= */
+
+function generateTimeSlots(
+  openingTime,
+  closingTime,
+  duration,
+  capacity = 20
+) {
+
+  const slots =
+    [];
+
+
+  let current =
+    timeToMinutes(
+      openingTime
+    );
+
+
+  const end =
+    timeToMinutes(
+      closingTime
+    );
+
+
+  const safeDuration =
+    Math.max(
+      5,
+      Number(
+        duration
+      ) ||
+      30
+    );
+
+
+  const safeCapacity =
+    Math.max(
+      1,
+      Number(
+        capacity
+      ) ||
+      20
+    );
+
+
+  if (
+    end <=
+    current
+  ) {
+
+    return slots;
+
+  }
+
+
+  while (
+    current +
+    safeDuration <=
+    end
+  ) {
+
+    const start =
+      minutesToTime(
+        current
+      );
+
+
+    const finish =
+      minutesToTime(
+        current +
+        safeDuration
+      );
+
+
+    slots.push({
+
+      id:
+        start.replace(
+          ":",
+          "-"
+        ),
+
+      start,
+
+      end:
+        finish,
+
+      display:
+        formatTimeRange(
+          start,
+          finish
+        ),
+
+      capacity:
+        safeCapacity,
+
+    });
+
+
+    current +=
+      safeDuration;
+
+  }
+
+
+  return slots;
+
+}
+
+
+function timeToMinutes(
+  value
+) {
+
+  const text =
+    String(
+      value ||
+      ""
+    )
+      .trim()
+      .toUpperCase();
+
+
+  const match =
+    text.match(
+      /^(\d{1,2}):(\d{2})\s*(AM|PM)?$/
+    );
+
+
+  if (
+    !match
+  ) {
+
+    return 0;
+
+  }
+
+
+  let hours =
+    Number(
+      match[1]
+    );
+
+
+  const minutes =
+    Number(
+      match[2]
+    );
+
+
+  const period =
+    match[3];
+
+
+  if (
+    !Number.isFinite(
+      hours
+    ) ||
+    !Number.isFinite(
+      minutes
+    ) ||
+    minutes >
+    59
+  ) {
+
+    return 0;
+
+  }
+
+
+  if (
+    period ===
+    "AM"
+  ) {
+
+    if (
+      hours ===
+      12
+    ) {
+
+      hours =
+        0;
+
+    }
+
+  } else if (
+    period ===
+    "PM"
+  ) {
+
+    if (
+      hours !==
+      12
+    ) {
+
+      hours +=
+        12;
+
+    }
+
+  }
+
+
+  if (
+    hours >
+    23
+  ) {
+
+    return 0;
+
+  }
+
+
+  return (
+    hours *
+    60 +
+    minutes
+  );
+
+}
+
+
+function minutesToTime(
+  total
+) {
+
+  const hours =
+    Math.floor(
+      total /
+      60
+    );
+
+
+  const minutes =
+    total %
+    60;
+
+
+  return (
+
+    String(
+      hours
+    ).padStart(
+      2,
+      "0"
+    ) +
+
+    ":" +
+
+    String(
+      minutes
+    ).padStart(
+      2,
+      "0"
+    )
+
+  );
+
+}
+
+
+function formatTime(
+  value
+) {
+
+  const minutes =
+    timeToMinutes(
+      value
+    );
+
+
+  const hours =
+    Math.floor(
+      minutes /
+      60
+    );
+
+
+  const minute =
+    minutes %
+    60;
+
+
+  const suffix =
+    hours >=
+    12
+      ? "PM"
+      : "AM";
+
+
+  const displayHour =
+    hours %
+      12 ||
+    12;
+
+
+  return (
+
+    `${displayHour}:` +
+
+    `${String(
+      minute
+    ).padStart(
+      2,
+      "0"
+    )} ${suffix}`
+
+  );
+
+}
+
+
+function formatTimeRange(
+  start,
+  end
+) {
+
+  return (
+
+    `${formatTime(
+      start
+    )} – ${formatTime(
+      end
+    )}`
+
+  );
+
+}
+
+
+/* =========================================================
+   BOOKING DATES
+========================================================= */
+
+function generateBookingDates(
+  days
+) {
+
+  const result =
+    [];
+
+
+  const safeDays =
+    Math.max(
+      0,
+      Number(
+        days
+      ) ||
+      7
+    );
+
+
+  const today =
+    new Date();
+
+
+  today.setHours(
+    0,
+    0,
+    0,
+    0
+  );
+
+
+  for (
+    let index =
+      0;
+    index <=
+    safeDays;
+    index++
+  ) {
+
+    const date =
+      new Date(
+        today
+      );
+
+
+    date.setDate(
+      today.getDate() +
+      index
+    );
+
+
+    const year =
+      date.getFullYear();
+
+
+    const monthNumber =
+      String(
+        date.getMonth() +
+        1
+      ).padStart(
+        2,
+        "0"
+      );
+
+
+    const dayNumber =
+      String(
+        date.getDate()
+      ).padStart(
+        2,
+        "0"
+      );
+
+
+    const monthName =
+      date.toLocaleString(
+        "en-US",
+        {
+          month:
+            "short",
+        }
+      );
+
+
+    const iso =
+      `${year}-${monthNumber}-${dayNumber}`;
+
+
+    result.push({
+
+      id:
+        `${dayNumber}-${monthName.toLowerCase()}`,
+
+      date:
+        iso,
+
+      day:
+        dayNumber,
+
+      month:
+        monthName.toUpperCase(),
+
+      label:
+        index ===
+        0
+          ? "Today"
+          : index ===
+            1
+            ? "Tomorrow"
+            : date.toLocaleString(
+                "en-US",
+                {
+                  weekday:
+                    "long",
+                }
+              ),
+
+    });
+
+  }
+
+
+  return result;
+
+}
+
+
+export default FarmerBook;
