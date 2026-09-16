@@ -1,15 +1,12 @@
 import en from "./en";
 import hi from "./hi";
 import te from "./te";
-import mr from "./mr";
-import ta from "./ta";
-import bn from "./bn";
-import gu from "./gu";
-import kn from "./kn";
-import ml from "./ml";
-import pa from "./pa";
 
-const translations = { en, hi, te, mr, ta, bn, gu, kn, ml, pa };
+const translations = {
+  en,
+  hi,
+  te,
+};
 
 const LANGUAGE_KEY = "krishisetu-language";
 
@@ -29,41 +26,6 @@ export const supportedLanguages = [
     label: "Telugu",
     nativeLabel: "తెలుగు",
   },
-  {
-    id: "mr",
-    label: "Marathi",
-    nativeLabel: "मराठी",
-  },
-  {
-    id: "ta",
-    label: "Tamil",
-    nativeLabel: "தமிழ்",
-  },
-  {
-    id: "bn",
-    label: "Bengali",
-    nativeLabel: "বাংলা",
-  },
-  {
-    id: "gu",
-    label: "Gujarati",
-    nativeLabel: "ગુજરાતી",
-  },
-  {
-    id: "kn",
-    label: "Kannada",
-    nativeLabel: "ಕನ್ನಡ",
-  },
-  {
-    id: "ml",
-    label: "Malayalam",
-    nativeLabel: "മലയാളം",
-  },
-  {
-    id: "pa",
-    label: "Punjabi",
-    nativeLabel: "ਪੰਜਾਬੀ",
-  }
 ];
 
 function getNestedValue(object, path) {
