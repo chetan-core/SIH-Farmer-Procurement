@@ -25,6 +25,39 @@ import {
 
 dotenv.config();
 
+// ==========================================
+// FIX: Booking Status Helpers
+// ==========================================
+function isValidStatus(status) {
+  const valid = [
+    "PENDING",
+    "CONFIRMED",
+    "ARRIVED",
+    "LATE",
+    "WEIGHING",
+    "PROCURED",
+    "PAYMENT_PENDING",
+    "PAYMENT_SENT",
+    "CANCELLED"
+  ];
+  return valid.includes(status);
+}
+
+function getAllowedNextStatuses(currentStatus) {
+  const validTransitions = {
+    "PENDING": ["CONFIRMED", "CANCELLED"],
+    "CONFIRMED": ["ARRIVED", "LATE", "CANCELLED"],
+    "ARRIVED": ["WEIGHING", "CANCELLED"],
+    "LATE": ["WEIGHING", "CANCELLED"],
+    "WEIGHING": ["PROCURED", "CANCELLED"],
+    "PROCURED": ["PAYMENT_PENDING", "PAYMENT_SENT", "CANCELLED"],
+    "PAYMENT_PENDING": ["PAYMENT_SENT", "CANCELLED"]
+  };
+  return validTransitions[currentStatus] || [];
+}
+// ==========================================
+
+
 const app =
   express();
 
