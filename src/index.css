@@ -355835,3 +355835,43 @@ body:has(.admin-farmer-drawer) .admin-farmers-page {
   font-size: 1.05rem !important;
 }
 /* --------------------------------------------------- */
+/* --- INJECTED BY AI: ADJUSTED TEXT SIZES (AVERAGE) --- */
+.landing-page p, 
+.landing-page span,
+.landing-page a {
+  font-size: 1.05rem !important;
+}
+
+.landing-hero-description {
+  font-size: 1.2rem !important;
+  line-height: 1.6 !important;
+}
+
+.landing-primary-button, 
+.landing-secondary-button {
+  font-size: 1.05rem !important;
+  padding: 12px 24px !important;
+}
+
+.landing-feature-card h3,
+.landing-process-step h3 {
+  font-size: 1.25rem !important;
+}
+
+.landing-feature-card p,
+.landing-process-step p {
+  font-size: 1.05rem !important;
+}
+
+.landing-trust-strip span {
+  font-size: 1.02rem !important;
+}
+
+.landing-nav a {
+  font-size: 1.05rem !important;
+}
+
+.landing-hero-badge {
+  font-size: 0.95rem !important;
+}
+/* --------------------------------------------------- */
