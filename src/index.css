@@ -355885,3 +355885,11 @@ body:has(.admin-farmer-drawer) .admin-farmers-page {
   font-size: inherit !important;
 }
 /* ------------------------------------------- */
+/* --- INJECTED BY AI: ENLARGE DIGITAL CLOCK --- */
+.orbital-digital-time {
+  font-size: 1.6rem !important;
+  padding: 10px 16px !important;
+  font-weight: 600 !important;
+  letter-spacing: 1px !important;
+}
+/* ------------------------------------------- */
