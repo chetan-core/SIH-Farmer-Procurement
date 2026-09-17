@@ -355875,3 +355875,8 @@ body:has(.admin-farmer-drawer) .admin-farmers-page {
   font-size: 0.95rem !important;
 }
 /* --------------------------------------------------- */
+/* --- INJECTED BY AI: FIX HERO TITLE SPAN --- */
+.landing-hero-title span {
+  font-size: inherit !important;
+}
+/* ------------------------------------------- */
