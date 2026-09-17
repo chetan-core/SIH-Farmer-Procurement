@@ -355880,3 +355880,8 @@ body:has(.admin-farmer-drawer) .admin-farmers-page {
   font-size: inherit !important;
 }
 /* ------------------------------------------- */
+/* --- INJECTED BY AI: FIX HERO H1 SPAN --- */
+.landing-hero-content h1 span {
+  font-size: inherit !important;
+}
+/* ------------------------------------------- */
