@@ -1050,47 +1050,16 @@ function FarmerToken() {
 
       try {
 
-        const qrData =
-          JSON.stringify({
-
-            type:
-              "KRISHISETU_BOOKING",
-
-            token:
-              booking.token ||
-              booking.id,
-
-            bookingId:
-              booking.id,
-
-            farmer:
-              farmerName,
-
-            crop:
-              cropName,
-
-            estimatedQuantity:
-              estimatedQuantity,
-
-            actualQuantity:
-              actualQuantity,
-
-            center:
-              center.name,
-
-            date:
-              booking.date,
-
-            arrivalWindow:
-              formatTime(
-                booking.slot_start,
-                booking.slot_end
-              ),
-
-            status:
-              statusLabel,
-
-          });
+        const qrData = `===== KRISHISETU BOOKING =====
+Token: ${booking.token || booking.id}
+Farmer: ${farmerName}
+Crop: ${cropName}
+Est. Qty: ${estimatedQuantity}
+Center: ${center.name}
+Date: ${booking.date}
+Time: ${formatTime(booking.slot_start, booking.slot_end)}
+Status: ${booking.status || "CONFIRMED"}
+==============================`;
 
 
         const url =
@@ -1555,47 +1524,16 @@ function FarmerToken() {
 
     try {
 
-      const qrData =
-        JSON.stringify({
-
-          type:
-            "KRISHISETU_BOOKING",
-
-          token:
-            booking.token ||
-            booking.id,
-
-          bookingId:
-            booking.id,
-
-          farmer:
-            farmerName,
-
-          crop:
-            cropName,
-
-          estimatedQuantity:
-            estimatedQuantity,
-
-          actualQuantity:
-            actualQuantity,
-
-          center:
-            center.name,
-
-          date:
-            booking.date,
-
-          arrivalWindow:
-            formatTime(
-              booking.slot_start,
-              booking.slot_end
-            ),
-
-          status:
-            statusLabel,
-
-        });
+      const qrData = `===== KRISHISETU BOOKING =====
+Token: ${booking.token || booking.id}
+Farmer: ${farmerName}
+Crop: ${cropName}
+Est. Qty: ${estimatedQuantity}
+Center: ${center.name}
+Date: ${booking.date}
+Time: ${formatTime(booking.slot_start, booking.slot_end)}
+Status: ${booking.status || "CONFIRMED"}
+==============================`;
 
 
       const qrDataUrl =
@@ -2189,54 +2127,19 @@ function FarmerToken() {
 
     try {
 
-      const receiptQrData =
-        JSON.stringify({
-
-          type:
-            "KRISHISETU_PROCUREMENT_RECEIPT",
-
-          receipt:
-            booking.payment_reference ||
-            booking.id,
-
-          token:
-            booking.token ||
-            booking.id,
-
-          bookingId:
-            booking.id,
-
-          farmer:
-            farmerName,
-
-          crop:
-            cropName,
-
-          actualQuantity:
-            actualQuantity,
-
-          ratePerKg:
-            calculatedRatePerKg,
-
-          amount:
-            paymentAmount,
-
-          paymentMethod:
-            paymentMethod,
-
-          paymentReference:
-            paymentReference,
-
-          center:
-            center.name,
-
-          date:
-            booking.date,
-
-          status:
-            "PAYMENT_SENT",
-
-        });
+      const receiptQrData = `==== KRISHISETU RECEIPT ====
+Receipt: ${booking.payment_reference || booking.id}
+Token: ${booking.token || booking.id}
+Farmer: ${farmerName}
+Crop: ${cropName}
+Procured Qty: ${actualQuantity}
+Rate/Kg: ${calculatedRatePerKg}
+Total: ${paymentAmount}
+Method: ${paymentMethod}
+Ref: ${paymentReference}
+Center: ${center.name}
+Date: ${booking.date}
+============================`;
 
 
       const receiptQrUrl =
